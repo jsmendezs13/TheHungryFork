@@ -3,130 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Hungry Fork — Menu &amp; Ratings | Seb's Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+<title>The Hungry Fork — Menu &amp; Ratings</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --navy: #1a18a0;
-    --navy-dark: #12107a;
-    --navy-light: #e8ebf7;
+    --red: #C0180C;
+    --red-dark: #8B1010;
+    --red-light: #fdecea;
     --white: #ffffff;
-    --off-white: #f7f8fc;
-    --text: #1a1a2e;
-    --muted: #5a5a7a;
-    --border: #d0d4e8;
+    --off-white: #f8f6f6;
+    --text: #1a1a1a;
+    --muted: #666666;
+    --border: #e8e0e0;
     --star-on: #f59e0b;
-    --star-off: #d0d4e8;
+    --star-off: #ddd;
     --green: #16a34a;
   }
   html { scroll-behavior: smooth; }
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text); background: var(--off-white); line-height: 1.6; }
+  body { font-family: 'Cinzel', 'Georgia', serif; color: var(--text); background: var(--white); line-height: 1.6; }
 
   /* NAV */
-  nav { background: var(--navy); position: sticky; top: 0; z-index: 100; }
+  nav { background: var(--red); position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--red-dark); box-shadow: 0 2px 10px rgba(192,24,12,0.25); }
   .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
-  .nav-logo { font-size: 0.95rem; font-weight: 700; color: #fff; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; }
-  .nav-back { color: rgba(255,255,255,0.7); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-  .nav-back:hover { color: #fff; }
+  .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .nav-logo img { height: 40px; width: auto; }
+  .nav-logo-text { font-size: 1rem; font-weight: 700; color: var(--white); font-family: 'Cinzel', serif; letter-spacing: 0.03em; }
+  .nav-back { color: rgba(255,255,255,0.8); font-size: 0.82rem; text-decoration: none; font-family: 'Segoe UI', sans-serif; }
+  .nav-back:hover { color: var(--white); }
 
-  /* RESTAURANT HERO */
-  .rest-hero { background: var(--navy); color: #fff; padding: 3rem 2rem 2.5rem; text-align: center; }
-  .rest-badge { display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 14px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.8); margin-bottom: 1rem; }
-  .rest-name { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.5rem; }
-  .rest-meta { display: flex; align-items: center; justify-content: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.88rem; color: rgba(255,255,255,0.65); margin-bottom: 1.5rem; }
-  .rest-meta span { display: flex; align-items: center; gap: 5px; }
-  .overall-rating { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 0.6rem 1.25rem; }
-  .overall-num { font-size: 1.6rem; font-weight: 700; color: #fff; }
+  /* HERO */
+  .hero { background: var(--white); text-align: center; padding: 3rem 2rem 2rem; border-bottom: 0.5px solid var(--border); }
+  .hero-logo { width: 200px; height: auto; margin: 0 auto 1.5rem; display: block; }
+  .hero-title { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 700; color: var(--red); font-family: 'Cinzel', serif; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+  .hero-tagline { font-size: 1rem; color: var(--text); font-family: 'Segoe UI', sans-serif; margin-bottom: 0; }
+  .hero-meta { display: flex; align-items: center; justify-content: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.83rem; color: rgba(255,255,255,0.9); margin-bottom: 1.25rem; font-family: 'Segoe UI', sans-serif; }
+  .hero-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 14px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); margin-bottom: 0.75rem; font-family: 'Segoe UI', sans-serif; border: 1px solid rgba(255,255,255,0.35); }
+  .hero-info-bar { background: var(--red); padding: 1.25rem 2rem 1.5rem; text-align: center; }
+  .overall-rating { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 0.6rem 1.5rem; }
+  .overall-num { font-size: 1.8rem; font-weight: 700; color: var(--white); font-family: 'Cinzel', serif; }
   .overall-stars { color: var(--star-on); font-size: 1.1rem; letter-spacing: 2px; }
-  .overall-count { font-size: 0.78rem; color: rgba(255,255,255,0.55); }
+  .overall-count { font-size: 0.75rem; color: rgba(255,255,255,0.8); font-family: 'Segoe UI', sans-serif; }
+
+  /* DIVIDER */
+  .red-divider { height: 3px; background: var(--red); }
 
   /* FILTER BAR */
   .filter-bar { background: var(--white); border-bottom: 0.5px solid var(--border); padding: 0.75rem 2rem; position: sticky; top: 60px; z-index: 90; }
-  .filter-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
-  .filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); color: var(--muted); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-  .filter-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
-  .filter-btn:hover:not(.active) { border-color: var(--navy); color: var(--navy); }
+  .filter-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--white); color: var(--muted); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: 'Segoe UI', sans-serif; }
+  .filter-btn.active { background: var(--red); color: var(--white); border-color: var(--red); }
+  .filter-btn:hover:not(.active) { border-color: var(--red); color: var(--red); }
 
-  /* MENU GRID */
+  /* MENU */
   .menu-section { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
-  .category-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid var(--border); }
+  .category-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); font-family: 'Segoe UI', sans-serif; }
   .dishes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-bottom: 3rem; }
 
   /* DISH CARD */
-  .dish-card { background: var(--white); border-radius: 14px; border: 0.5px solid var(--border); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-  .dish-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(26,24,160,0.08); }
-  .dish-img { height: 160px; background: var(--navy-light); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; position: relative; }
-  .dish-img .dish-rating-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95); border-radius: 8px; padding: 3px 8px; font-size: 0.78rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; }
+  .dish-card { background: var(--white); border-radius: 8px; border: 0.5px solid var(--border); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+  .dish-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(192,24,12,0.1); }
+  .dish-img { height: 160px; background: var(--off-white); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; position: relative; }
+  .dish-rating-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95); border-radius: 4px; padding: 3px 8px; font-size: 0.78rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; font-family: 'Segoe UI', sans-serif; border: 0.5px solid var(--border); }
   .dish-rating-badge .star { color: var(--star-on); }
   .dish-body { padding: 1rem 1.25rem 1.25rem; }
-  .dish-name { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
-  .dish-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.75rem; }
+  .dish-name { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 3px; font-family: 'Cinzel', serif; }
+  .dish-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.75rem; font-family: 'Segoe UI', sans-serif; font-style: italic; }
   .dish-footer { display: flex; align-items: center; justify-content: space-between; }
-  .dish-price { font-size: 1.1rem; font-weight: 700; color: var(--navy); }
-  .dish-review-count { font-size: 0.75rem; color: var(--muted); }
-  .rate-btn { padding: 7px 14px; border-radius: 8px; background: var(--navy-light); color: var(--navy); border: none; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-  .rate-btn:hover { background: var(--navy); color: #fff; }
+  .dish-price { font-size: 1.15rem; font-weight: 700; color: var(--red); font-family: 'Cinzel', serif; }
+  .dish-review-count { font-size: 0.75rem; color: var(--muted); font-family: 'Segoe UI', sans-serif; }
+  .rate-btn { padding: 7px 14px; border-radius: 4px; background: var(--red-light); color: var(--red); border: 1px solid var(--red); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: 'Segoe UI', sans-serif; }
+  .rate-btn:hover { background: var(--red); color: var(--white); }
 
-  /* MODAL OVERLAY */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,10,40,0.55); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--white); border-radius: 18px; width: 100%; max-width: 500px; overflow: hidden; animation: slideUp 0.2s ease; }
+  .modal { background: var(--white); border-radius: 10px; width: 100%; max-width: 500px; overflow: hidden; animation: slideUp 0.2s ease; }
   @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  .modal-hero { background: var(--navy-light); height: 140px; display: flex; align-items: center; justify-content: center; font-size: 4rem; position: relative; }
-  .modal-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); }
+  .modal-hero { background: var(--red-light); height: 140px; display: flex; align-items: center; justify-content: center; font-size: 4rem; position: relative; border-bottom: 3px solid var(--red); }
+  .modal-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.9); border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); }
+  .modal-close:hover { background: var(--red); color: var(--white); border-color: var(--red); }
   .modal-body { padding: 1.5rem; }
-  .modal-dish-name { font-size: 1.3rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
-  .modal-dish-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
-  .modal-section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; }
-
-  /* STAR PICKER */
+  .modal-dish-name { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 3px; font-family: 'Cinzel', serif; }
+  .modal-dish-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; font-style: italic; font-family: 'Segoe UI', sans-serif; }
+  .modal-section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); margin-bottom: 0.6rem; font-family: 'Segoe UI', sans-serif; }
   .star-picker { display: flex; gap: 8px; margin-bottom: 1.25rem; }
   .star-pick { font-size: 2rem; cursor: pointer; color: var(--star-off); transition: color 0.1s, transform 0.1s; }
   .star-pick:hover, .star-pick.selected { color: var(--star-on); transform: scale(1.15); }
-
-  /* REVIEW INPUT */
-  .review-input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1rem; font-size: 0.9rem; font-family: inherit; color: var(--text); resize: vertical; min-height: 90px; outline: none; transition: border-color 0.2s; }
-  .review-input:focus { border-color: var(--navy); }
-  .name-input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.9rem; font-family: inherit; color: var(--text); outline: none; transition: border-color 0.2s; margin-bottom: 1rem; }
-  .name-input:focus { border-color: var(--navy); }
-  .submit-review-btn { width: 100%; background: var(--navy); color: #fff; border: none; border-radius: 10px; padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 1rem; transition: background 0.2s; }
-  .submit-review-btn:hover { background: var(--navy-dark); }
+  .name-input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.9rem; font-family: 'Segoe UI', sans-serif; color: var(--text); outline: none; transition: border-color 0.2s; margin-bottom: 1rem; }
+  .name-input:focus { border-color: var(--red); }
+  .review-input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 0.8rem 1rem; font-size: 0.9rem; font-family: 'Segoe UI', sans-serif; color: var(--text); resize: vertical; min-height: 90px; outline: none; transition: border-color 0.2s; }
+  .review-input:focus { border-color: var(--red); }
+  .submit-review-btn { width: 100%; background: var(--red); color: var(--white); border: none; border-radius: 6px; padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 1rem; transition: background 0.2s; font-family: 'Segoe UI', sans-serif; letter-spacing: 0.04em; }
+  .submit-review-btn:hover { background: var(--red-dark); }
   .submit-review-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
-
-  /* REVIEWS LIST */
   .reviews-divider { border: none; border-top: 0.5px solid var(--border); margin: 1.25rem 0; }
-  .reviews-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 4px; }
-  .review-item { background: var(--off-white); border-radius: 10px; padding: 0.75rem 1rem; }
+  .reviews-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+  .review-item { background: var(--off-white); border-radius: 6px; padding: 0.75rem 1rem; border-left: 3px solid var(--red); }
   .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .reviewer-name { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+  .reviewer-name { font-size: 0.85rem; font-weight: 600; color: var(--text); font-family: 'Segoe UI', sans-serif; }
   .review-stars { color: var(--star-on); font-size: 0.85rem; }
-  .review-text { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-  .review-date { font-size: 0.72rem; color: var(--border); margin-top: 3px; }
-  .no-reviews { font-size: 0.85rem; color: var(--muted); text-align: center; padding: 1rem 0; }
+  .review-text { font-size: 0.82rem; color: var(--muted); line-height: 1.5; font-style: italic; font-family: 'Segoe UI', sans-serif; }
+  .review-date { font-size: 0.72rem; color: #bbb; margin-top: 3px; font-family: 'Segoe UI', sans-serif; }
+  .no-reviews { font-size: 0.85rem; color: var(--muted); text-align: center; padding: 1rem 0; font-family: 'Segoe UI', sans-serif; }
+
+  /* FOOTER */
+  footer { background: var(--white); color: var(--muted); text-align: center; padding: 2.5rem 2rem; border-top: 2px solid var(--red); margin-top: 2rem; font-family: 'Segoe UI', sans-serif; font-size: 0.85rem; }
+  footer img { height: 60px; margin-bottom: 0.75rem; }
+  footer a { color: var(--red); text-decoration: none; }
 
   /* TOAST */
-  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--green); color: #fff; padding: 0.75rem 1.5rem; border-radius: 10px; font-size: 0.9rem; font-weight: 600; z-index: 300; transition: transform 0.3s; pointer-events: none; }
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--green); color: #fff; padding: 0.75rem 1.5rem; border-radius: 6px; font-size: 0.9rem; font-weight: 600; z-index: 300; transition: transform 0.3s; pointer-events: none; font-family: 'Segoe UI', sans-serif; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  @media (max-width: 600px) {
-    .dishes-grid { grid-template-columns: 1fr; }
-    .rest-meta { gap: 0.75rem; }
-  }
+  @media (max-width: 600px) { .dishes-grid { grid-template-columns: 1fr; } .hero-meta { gap: 0.75rem; } .hero-logo { width: 150px; } }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo">Seb's Analytics LLC</a>
-    <a href="index.html" class="nav-back">← Back to main site</a>
+    <a href="index.html" class="nav-logo">
+      <img src="hungry-fork-logo.png" alt="The Hungry Fork">
+      <span class="nav-logo-text">The Hungry Fork</span>
+    </a>
+    <a href="index.html" class="nav-back">← Seb's Analytics</a>
   </div>
 </nav>
 
-<div class="rest-hero">
-  <div class="rest-badge">Partner Restaurant · New York, NY</div>
-  <h1 class="rest-name">The Hungry Fork</h1>
-  <div class="rest-meta">
+<!-- HERO -->
+<div class="hero">
+  <img src="hungry-fork-logo.png" alt="The Hungry Fork" class="hero-logo">
+  <h1 class="hero-title">The Hungry Fork</h1>
+  <p class="hero-tagline">Delicious Cousin</p>
+</div>
+
+<!-- RED INFO BAR -->
+<div class="hero-info-bar">
+  <div class="hero-badge">Partner Restaurant · New York, NY</div>
+  <div class="hero-meta">
     <span>🍽️ American · Bistro</span>
     <span>📍 123 Stone St, Manhattan, NY</span>
     <span>🕐 Mon–Sun 12pm–11pm</span>
@@ -140,46 +156,53 @@
   </div>
 </div>
 
+<!-- FILTER BAR -->
 <div class="filter-bar">
   <div class="filter-inner">
-    <button class="filter-btn active" onclick="filterDishes('all', this)">All dishes</button>
-    <button class="filter-btn" onclick="filterDishes('starters', this)">Starters</button>
-    <button class="filter-btn" onclick="filterDishes('entree', this)">Entrées</button>
-    <button class="filter-btn" onclick="filterDishes('salads', this)">Salads</button>
-    <button class="filter-btn" onclick="filterDishes('sides', this)">Sides</button>
-    <button class="filter-btn" onclick="filterDishes('top-rated', this)">⭐ Top rated</button>
+    <button class="filter-btn active" onclick="filterDishes('all',this)">All dishes</button>
+    <button class="filter-btn" onclick="filterDishes('starters',this)">Starters</button>
+    <button class="filter-btn" onclick="filterDishes('entree',this)">Entrées</button>
+    <button class="filter-btn" onclick="filterDishes('salads',this)">Salads</button>
+    <button class="filter-btn" onclick="filterDishes('sides',this)">Sides</button>
+    <button class="filter-btn" onclick="filterDishes('top-rated',this)">⭐ Top rated</button>
   </div>
 </div>
 
+<!-- MENU -->
 <div class="menu-section">
   <div id="menu-container"></div>
 </div>
 
+<!-- FOOTER -->
+<footer>
+  <img src="hungry-fork-logo.png" alt="The Hungry Fork logo">
+  <p style="font-size:1rem;font-weight:700;color:var(--red);font-family:'Georgia',serif;margin-bottom:4px;">The Hungry Fork</p>
+  <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
+  <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
+</footer>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
   <div class="modal">
-    <div class="modal-hero" id="modal-emoji">
+    <div class="modal-hero">
       <button class="modal-close" onclick="closeModal()">✕</button>
-      <span id="modal-dish-emoji" style="font-size:4rem;">🍽️</span>
+      <span id="modal-dish-emoji">🍽️</span>
     </div>
     <div class="modal-body">
       <div class="modal-dish-name" id="modal-name"></div>
       <div class="modal-dish-desc" id="modal-desc"></div>
-
       <div class="modal-section-label">Your rating</div>
-      <div class="star-picker" id="star-picker">
+      <div class="star-picker">
         <span class="star-pick" data-val="1" onclick="pickStar(1)">★</span>
         <span class="star-pick" data-val="2" onclick="pickStar(2)">★</span>
         <span class="star-pick" data-val="3" onclick="pickStar(3)">★</span>
         <span class="star-pick" data-val="4" onclick="pickStar(4)">★</span>
         <span class="star-pick" data-val="5" onclick="pickStar(5)">★</span>
       </div>
-
       <input class="name-input" id="reviewer-name" type="text" placeholder="Your name (optional)">
       <div class="modal-section-label">Your review</div>
-      <textarea class="review-input" id="review-text" placeholder="What did you think of this dish? (optional)"></textarea>
-      <button class="submit-review-btn" id="submit-btn" onclick="submitReview()">Post review</button>
-
+      <textarea class="review-input" id="review-text" placeholder="What did you think of this dish?"></textarea>
+      <button class="submit-review-btn" id="submit-btn" onclick="submitReview()" disabled>Post review</button>
       <hr class="reviews-divider">
       <div class="modal-section-label" id="reviews-label">Reviews</div>
       <div class="reviews-list" id="reviews-list"></div>
@@ -191,90 +214,47 @@
 
 <script>
 const DISHES = [
-  { id: 'korean-bbq-wing', name: 'Korean BBQ Wing', desc: 'Mango Habanero Sauce', price: 16, emoji: '🍗', category: 'starters' },
-  { id: 'steak-frites', name: 'Steak Frites', desc: 'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce', price: 26, emoji: '🥩', category: 'entree' },
-  { id: 'lobster-ravioli', name: 'Lobster Ravioli', desc: 'Shaved Fennel, Cherry Tomato, Pink Sauce', price: 25, emoji: '🦞', category: 'entree' },
-  { id: 'atlantic-salmon', name: 'Pan Seared Atlantic Salmon', desc: 'Shaved Fennel, Cherry Tomato, Pink Sauce', price: 25, emoji: '🐟', category: 'entree' },
-  { id: 'burrata-salad', name: 'Burrata Mozzarella Salad', desc: 'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze', price: 20, emoji: '🥗', category: 'salads' },
-  { id: 'french-fries', name: 'French Fries', desc: 'Classic golden fries, crispy outside, fluffy inside', price: 8, emoji: '🍟', category: 'sides' },
-  { id: 'sweet-potato-fries', name: 'Sweet Potato Fries', desc: 'Lightly seasoned, naturally sweet', price: 8, emoji: '🍠', category: 'sides' },
+  { id:'korean-bbq-wing', name:'Korean BBQ Wing', desc:'Mango Habanero Sauce', price:16, emoji:'🍗', category:'starters' },
+  { id:'steak-frites', name:'Steak Frites', desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce', price:26, emoji:'🥩', category:'entree' },
+  { id:'lobster-ravioli', name:'Lobster Ravioli', desc:'Shaved Fennel, Cherry Tomato, Pink Sauce', price:25, emoji:'🦞', category:'entree' },
+  { id:'atlantic-salmon', name:'Pan Seared Atlantic Salmon', desc:'Shaved Fennel, Cherry Tomato, Pink Sauce', price:25, emoji:'🐟', category:'entree' },
+  { id:'burrata-salad', name:'Burrata Mozzarella Salad', desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze', price:20, emoji:'🥗', category:'salads' },
+  { id:'french-fries', name:'French Fries', desc:'Classic golden fries, crispy outside, fluffy inside', price:8, emoji:'🍟', category:'sides' },
+  { id:'sweet-potato-fries', name:'Sweet Potato Fries', desc:'Lightly seasoned, naturally sweet', price:8, emoji:'🍠', category:'sides' },
 ];
-
 const CATEGORIES = [
-  { key: 'starters', label: 'Starters' },
-  { key: 'entree', label: 'Entrées' },
-  { key: 'salads', label: 'Salads' },
-  { key: 'sides', label: 'Sides' },
+  {key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'}
 ];
-
-let ratings = {};
-let currentDishId = null;
-let selectedStar = 0;
-let activeFilter = 'all';
-
-function storageKey(dishId) { return 'hf_reviews_' + dishId; }
-
-function loadRatings() {
-  DISHES.forEach(d => {
-    try {
-      const raw = localStorage.getItem(storageKey(d.id));
-      ratings[d.id] = raw ? JSON.parse(raw) : [];
-    } catch(e) { ratings[d.id] = []; }
-  });
-}
-
-function saveRatings(dishId) {
-  try { localStorage.setItem(storageKey(dishId), JSON.stringify(ratings[dishId])); } catch(e) {}
-}
-
-function avgRating(dishId) {
-  const r = ratings[dishId];
-  if (!r || r.length === 0) return null;
-  return r.reduce((s, x) => s + x.stars, 0) / r.length;
-}
-
-function starsHtml(avg, size) {
-  if (avg === null) return '<span style="color:var(--border)">☆☆☆☆☆</span>';
-  const full = Math.floor(avg);
-  const half = avg - full >= 0.5 ? 1 : 0;
-  const empty = 5 - full - half;
-  const s = size || '1em';
-  return `<span style="color:var(--star-on);font-size:${s}">` +
-    '★'.repeat(full) + (half ? '½' : '') + '<span style="color:var(--star-off)">★'.repeat(empty) + '</span></span>';
-}
-
-function renderMenu(filter) {
-  const container = document.getElementById('menu-container');
-  container.innerHTML = '';
-
-  let groups = [];
-  if (filter === 'top-rated') {
-    const sorted = [...DISHES].filter(d => avgRating(d.id) !== null).sort((a,b) => avgRating(b.id) - avgRating(a.id));
-    if (sorted.length === 0) {
-      container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:3rem 0;">No rated dishes yet — be the first to review!</p>';
-      return;
-    }
-    groups = [{ label: 'Top rated dishes', dishes: sorted }];
-  } else if (filter === 'all') {
-    groups = CATEGORIES.map(c => ({ label: c.label, dishes: DISHES.filter(d => d.category === c.key) })).filter(g => g.dishes.length > 0);
-  } else {
-    groups = [{ label: CATEGORIES.find(c => c.key === filter)?.label || filter, dishes: DISHES.filter(d => d.category === filter) }];
+let ratings={},currentDishId=null,selectedStar=0,activeFilter='all';
+function storageKey(id){return 'hf_reviews_'+id;}
+function loadRatings(){DISHES.forEach(d=>{try{const r=localStorage.getItem(storageKey(d.id));ratings[d.id]=r?JSON.parse(r):[];}catch(e){ratings[d.id]=[];}});}
+function saveRatings(id){try{localStorage.setItem(storageKey(id),JSON.stringify(ratings[id]));}catch(e){}}
+function avgRating(id){const r=ratings[id];if(!r||!r.length)return null;return r.reduce((s,x)=>s+x.stars,0)/r.length;}
+function renderMenu(filter){
+  const container=document.getElementById('menu-container');container.innerHTML='';
+  let groups=[];
+  if(filter==='top-rated'){
+    const sorted=[...DISHES].filter(d=>avgRating(d.id)!==null).sort((a,b)=>avgRating(b.id)-avgRating(a.id));
+    if(!sorted.length){container.innerHTML='<p style="color:var(--muted);text-align:center;padding:3rem 0;font-family:Segoe UI,sans-serif;">No rated dishes yet — be the first to review!</p>';return;}
+    groups=[{label:'Top rated dishes',dishes:sorted}];
+  }else if(filter==='all'){
+    groups=CATEGORIES.map(c=>({label:c.label,dishes:DISHES.filter(d=>d.category===c.key)})).filter(g=>g.dishes.length);
+  }else{
+    groups=[{label:CATEGORIES.find(c=>c.key===filter)?.label||filter,dishes:DISHES.filter(d=>d.category===filter)}];
   }
-
-  groups.forEach(g => {
-    const section = document.createElement('div');
-    section.innerHTML = `<div class="category-label">${g.label}</div><div class="dishes-grid" id="grid-${g.label}"></div>`;
-    container.appendChild(section);
-    const grid = section.querySelector('.dishes-grid');
-    g.dishes.forEach(d => {
-      const avg = avgRating(d.id);
-      const count = ratings[d.id]?.length || 0;
-      const card = document.createElement('div');
-      card.className = 'dish-card';
-      card.innerHTML = `
+  groups.forEach(g=>{
+    const sec=document.createElement('div');
+    sec.innerHTML=`<div class="category-label">${g.label}</div><div class="dishes-grid"></div>`;
+    container.appendChild(sec);
+    const grid=sec.querySelector('.dishes-grid');
+    g.dishes.forEach(d=>{
+      const avg=avgRating(d.id),count=ratings[d.id]?.length||0;
+      const card=document.createElement('div');
+      card.className='dish-card';
+      card.innerHTML=`
         <div class="dish-img">
           <span>${d.emoji}</span>
-          ${avg !== null ? `<div class="dish-rating-badge"><span class="star">★</span>${avg.toFixed(1)}</div>` : ''}
+          ${avg!==null?`<div class="dish-rating-badge"><span class="star">★</span>${avg.toFixed(1)}</div>`:''}
         </div>
         <div class="dish-body">
           <div class="dish-name">${d.name}</div>
@@ -282,116 +262,61 @@ function renderMenu(filter) {
           <div class="dish-footer">
             <div>
               <div class="dish-price">$${d.price}</div>
-              <div class="dish-review-count">${count > 0 ? `${count} review${count > 1 ? 's' : ''} · ${avg.toFixed(1)} avg` : 'No reviews yet'}</div>
+              <div class="dish-review-count">${count>0?`${count} review${count>1?'s':''} · ${avg.toFixed(1)} avg`:'No reviews yet'}</div>
             </div>
-            <button class="rate-btn" onclick="openModal('${d.id}', event)">Rate & Review</button>
+            <button class="rate-btn" onclick="openModal('${d.id}',event)">Rate & Review</button>
           </div>
         </div>`;
       grid.appendChild(card);
     });
   });
-
-  updateOverallRating();
+  updateOverall();
 }
-
-function updateOverallRating() {
-  const allReviews = DISHES.flatMap(d => ratings[d.id] || []);
-  const numEl = document.getElementById('overall-num');
-  const starsEl = document.getElementById('overall-stars');
-  const countEl = document.getElementById('overall-count');
-  if (allReviews.length === 0) {
-    numEl.textContent = '—';
-    starsEl.innerHTML = '☆☆☆☆☆';
-    countEl.textContent = 'No ratings yet';
-  } else {
-    const avg = allReviews.reduce((s, r) => s + r.stars, 0) / allReviews.length;
-    numEl.textContent = avg.toFixed(1);
-    const full = Math.floor(avg), half = avg - full >= 0.5 ? 1 : 0, empty = 5 - full - half;
-    starsEl.innerHTML = '★'.repeat(full) + (half ? '½' : '') + '<span style="color:rgba(255,255,255,0.25)">★</span>'.repeat(empty);
-    countEl.textContent = `${allReviews.length} review${allReviews.length > 1 ? 's' : ''} across all dishes`;
-  }
+function updateOverall(){
+  const all=DISHES.flatMap(d=>ratings[d.id]||[]);
+  const n=document.getElementById('overall-num'),s=document.getElementById('overall-stars'),c=document.getElementById('overall-count');
+  if(!all.length){n.textContent='—';s.innerHTML='☆☆☆☆☆';c.textContent='No ratings yet';return;}
+  const avg=all.reduce((s,r)=>s+r.stars,0)/all.length;
+  n.textContent=avg.toFixed(1);
+  const full=Math.floor(avg),half=avg-full>=0.5?1:0,empty=5-full-half;
+  s.innerHTML='★'.repeat(full)+(half?'½':'')+'<span style="color:#ddd">★</span>'.repeat(empty);
+  c.textContent=`${all.length} review${all.length>1?'s':''} across all dishes`;
 }
-
-function filterDishes(filter, btn) {
-  activeFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderMenu(filter);
-}
-
-function openModal(dishId, e) {
-  e.stopPropagation();
-  currentDishId = dishId;
-  selectedStar = 0;
-  const dish = DISHES.find(d => d.id === dishId);
-  document.getElementById('modal-dish-emoji').textContent = dish.emoji;
-  document.getElementById('modal-name').textContent = dish.name;
-  document.getElementById('modal-desc').textContent = `$${dish.price} · ${dish.desc}`;
-  document.getElementById('review-text').value = '';
-  document.getElementById('reviewer-name').value = '';
-  document.querySelectorAll('.star-pick').forEach(s => s.classList.remove('selected'));
-  document.getElementById('submit-btn').disabled = true;
-  renderReviews(dishId);
+function filterDishes(f,btn){activeFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMenu(f);}
+function openModal(id,e){
+  e.stopPropagation();currentDishId=id;selectedStar=0;
+  const d=DISHES.find(x=>x.id===id);
+  document.getElementById('modal-dish-emoji').textContent=d.emoji;
+  document.getElementById('modal-name').textContent=d.name;
+  document.getElementById('modal-desc').textContent=`$${d.price} · ${d.desc}`;
+  document.getElementById('review-text').value='';
+  document.getElementById('reviewer-name').value='';
+  document.querySelectorAll('.star-pick').forEach(s=>s.classList.remove('selected'));
+  document.getElementById('submit-btn').disabled=true;
+  renderReviews(id);
   document.getElementById('modal').classList.add('open');
 }
-
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-function closeModalOnOverlay(e) { if (e.target === document.getElementById('modal')) closeModal(); }
-
-function pickStar(val) {
-  selectedStar = val;
-  document.querySelectorAll('.star-pick').forEach(s => {
-    s.classList.toggle('selected', parseInt(s.dataset.val) <= val);
-  });
-  document.getElementById('submit-btn').disabled = false;
-}
-
-function renderReviews(dishId) {
-  const list = document.getElementById('reviews-list');
-  const revs = ratings[dishId] || [];
-  const label = document.getElementById('reviews-label');
-  label.textContent = `Reviews (${revs.length})`;
-  if (revs.length === 0) {
-    list.innerHTML = '<div class="no-reviews">No reviews yet. Be the first!</div>';
-    return;
-  }
-  list.innerHTML = [...revs].reverse().map(r => `
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function closeModalOnOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
+function pickStar(val){selectedStar=val;document.querySelectorAll('.star-pick').forEach(s=>s.classList.toggle('selected',parseInt(s.dataset.val)<=val));document.getElementById('submit-btn').disabled=false;}
+function renderReviews(id){
+  const list=document.getElementById('reviews-list'),revs=ratings[id]||[];
+  document.getElementById('reviews-label').textContent=`Reviews (${revs.length})`;
+  if(!revs.length){list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';return;}
+  list.innerHTML=[...revs].reverse().map(r=>`
     <div class="review-item">
-      <div class="review-header">
-        <span class="reviewer-name">${r.name || 'Anonymous'}</span>
-        <span class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</span>
-      </div>
-      ${r.text ? `<div class="review-text">${r.text}</div>` : ''}
+      <div class="review-header"><span class="reviewer-name">${r.name||'Anonymous'}</span><span class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span></div>
+      ${r.text?`<div class="review-text">${r.text}</div>`:''}
       <div class="review-date">${r.date}</div>
     </div>`).join('');
 }
-
-function submitReview() {
-  if (!selectedStar) return;
-  const name = document.getElementById('reviewer-name').value.trim();
-  const text = document.getElementById('review-text').value.trim();
-  const review = {
-    stars: selectedStar,
-    name: name || 'Anonymous',
-    text: text,
-    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  };
-  ratings[currentDishId].push(review);
-  saveRatings(currentDishId);
-  closeModal();
-  renderMenu(activeFilter);
-  showToast('Review posted! Thank you ⭐');
+function submitReview(){
+  if(!selectedStar)return;
+  const review={stars:selectedStar,name:document.getElementById('reviewer-name').value.trim()||'Anonymous',text:document.getElementById('review-text').value.trim(),date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+  ratings[currentDishId].push(review);saveRatings(currentDishId);closeModal();renderMenu(activeFilter);
+  const t=document.getElementById('toast');t.textContent='Review posted! Thank you ⭐';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
 }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-loadRatings();
-renderMenu('all');
+loadRatings();renderMenu('all');
 </script>
 </body>
 </html>
