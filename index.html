@@ -252,6 +252,19 @@
       Our signature T-Bone, sourced and hand-selected daily, grilled over open flame and finished with a house-made BBQ glaze. Served alongside crispy cassava fries, roasted asparagus, caramelized onion, sweet carrot, and colorful bell pepper. A true celebration of bold, honest flavor.
     </p>
 
+    <!-- SEB'S RATE FOR CHEF'S PICK -->
+    <div style="margin-bottom:1.5rem; text-align:center;">
+      <div id="chefs-pick-stars" style="display:flex; justify-content:center; gap:6px; margin-bottom:0.4rem;">
+        <span class="cp-star" data-val="1" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
+        <span class="cp-star" data-val="2" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
+        <span class="cp-star" data-val="3" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
+        <span class="cp-star" data-val="4" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
+        <span class="cp-star" data-val="5" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
+      </div>
+      <div style="font-size:0.75rem; font-family:'Segoe UI',sans-serif; color:var(--muted); font-weight:600; letter-spacing:0.05em;">Seb's Rate</div>
+      <div id="chefs-pick-rated-msg" style="font-size:0.8rem; color:var(--muted); font-family:'Segoe UI',sans-serif; display:none; margin-top:4px;">Thanks for rating! ⭐</div>
+    </div>
+
     <div style="margin-bottom:0.5rem; font-size:0.72rem; font-family:'Segoe UI',sans-serif; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase;">Allergens</div>
     <div class="allergen-row">
       <span class="allergen-tag">🧄 Allium (onion)</span>
@@ -462,7 +475,23 @@ loadRatings();
 document.querySelector('.chefs-pick-section').style.display='block';
 document.querySelector('.menu-section').style.display='none';
 
-// CAROUSEL
+// CHEF'S PICK STAR RATING
+const cpStars = document.querySelectorAll('.cp-star');
+let cpRated = localStorage.getItem('chefs-pick-rating');
+if(cpRated){
+  cpStars.forEach((s,i)=>s.style.color=i<cpRated?'#f59e0b':'#ddd');
+  document.getElementById('chefs-pick-rated-msg').style.display='block';
+}
+cpStars.forEach(star=>{
+  star.addEventListener('mouseover',()=>cpStars.forEach((s,i)=>s.style.color=i<star.dataset.val?'#f59e0b':'#ddd'));
+  star.addEventListener('mouseout',()=>{if(!cpRated)cpStars.forEach(s=>s.style.color='#ddd');else cpStars.forEach((s,i)=>s.style.color=i<cpRated?'#f59e0b':'#ddd');});
+  star.addEventListener('click',()=>{
+    cpRated=star.dataset.val;
+    localStorage.setItem('chefs-pick-rating',cpRated);
+    cpStars.forEach((s,i)=>s.style.color=i<cpRated?'#f59e0b':'#ddd');
+    document.getElementById('chefs-pick-rated-msg').style.display='block';
+  });
+});
 let currentSlide=0;
 const track=document.getElementById('chefs-track');
 const dots=document.querySelectorAll('.chefs-dot');
