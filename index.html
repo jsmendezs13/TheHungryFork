@@ -118,9 +118,10 @@
   .maps-modal.open { display:flex; }
   .maps-sheet { background:var(--white); border-radius:16px; width:100%; max-width:400px; overflow:hidden; animation:slideUp 0.2s ease; }
   .maps-sheet-title { text-align:center; padding:1rem; font-size:0.85rem; color:var(--muted); font-family:'Segoe UI',sans-serif; border-bottom:0.5px solid var(--border); }
+  .maps-sheet-title { text-align:center; padding:1rem; font-size:0.85rem; color:var(--muted); font-family:'Segoe UI',sans-serif; border-bottom:0.5px solid var(--border); display:flex; align-items:center; justify-content:center; gap:8px; }
   .maps-option { display:flex; align-items:center; gap:12px; padding:1rem 1.5rem; font-size:1rem; font-family:'Segoe UI',sans-serif; color:var(--text); text-decoration:none; border-bottom:0.5px solid var(--border); transition:background 0.15s; }
   .maps-option:hover { background:var(--off-white); }
-  .maps-option img { width:32px; height:32px; border-radius:8px; }
+  .maps-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
   .maps-cancel { display:block; text-align:center; padding:1rem; font-size:1rem; font-family:'Segoe UI',sans-serif; color:var(--red); font-weight:600; cursor:pointer; }
   .maps-cancel:hover { background:var(--off-white); }
 
@@ -224,17 +225,20 @@
 <!-- MAPS CHOOSER -->
 <div class="maps-modal" id="maps-modal" onclick="if(event.target===this)closeMapsChooser()">
   <div class="maps-sheet">
-    <div class="maps-sheet-title">Open location in…</div>
+    <div class="maps-sheet-title">
+      <img src="hungry-fork-logo.png" alt="" style="height:28px; width:auto; border-radius:4px; background:white; padding:2px;">
+      Open location in…
+    </div>
     <a class="maps-option" href="https://www.google.com/maps/place/Stone+St,+New+York,+NY+10004/@40.7040321,-74.0115947,17z" target="_blank" onclick="closeMapsChooser()">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/512px-Google_Maps_icon_%282020%29.svg.png" alt="Google Maps">
+      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🗺️</div>
       Google Maps
     </a>
     <a class="maps-option" href="https://waze.com/ul?ll=40.7040321,-74.0115947&navigate=yes" target="_blank" onclick="closeMapsChooser()">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Waze_logo_2023.svg/512px-Waze_logo_2023.svg.png" alt="Waze">
+      <div class="maps-icon" style="background:#05c8f7; color:white;">W</div>
       Waze
     </a>
     <a class="maps-option" href="https://maps.apple.com/?q=Stone+Street&ll=40.7040321,-74.0115947" target="_blank" onclick="closeMapsChooser()">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/AppleMaps_logo.svg/512px-AppleMaps_logo.svg.png" alt="Apple Maps">
+      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🍎</div>
       Apple Maps
     </a>
     <span class="maps-cancel" onclick="closeMapsChooser()">Cancel</span>
