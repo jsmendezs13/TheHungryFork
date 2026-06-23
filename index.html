@@ -55,11 +55,11 @@
   .chefs-pick-title { font-family: 'Cinzel', serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
   .chefs-pick-subtitle { font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; color: var(--muted); font-style: italic; margin-bottom: 1.5rem; }
   .chefs-pick-price { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; color: var(--red); margin-bottom: 1.5rem; }
-  .chefs-pick-media { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-  .chefs-pick-media video { width: 100%; border-radius: 8px; object-fit: cover; max-height: 280px; }
-  .chefs-pick-media img { width: 100%; border-radius: 8px; object-fit: cover; max-height: 280px; }
+  .chefs-pick-media { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; max-width: 100%; overflow: hidden; }
+  .chefs-pick-media video { width: 100%; border-radius: 8px; object-fit: cover; height: 300px; }
+  .chefs-pick-photo-col { display: flex; flex-direction: column; gap: 1rem; overflow: hidden; }
   .chefs-pick-photo-col { display: flex; flex-direction: column; gap: 1rem; }
-  .chefs-pick-photo-col img { width: 100%; border-radius: 8px; object-fit: cover; flex: 1; max-height: 134px; }
+  .chefs-pick-photo-col img { width: 100%; height: 143px; border-radius: 8px; object-fit: cover; }
   .chefs-pick-desc { font-family: 'Segoe UI', sans-serif; font-size: 0.92rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; max-width: 700px; }
   .allergen-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 0.75rem; }
   .allergen-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--off-white); border: 0.5px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; font-family: 'Segoe UI', sans-serif; color: var(--muted); }
