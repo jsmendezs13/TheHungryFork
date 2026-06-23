@@ -51,12 +51,12 @@
   /* CAROUSEL */
   .chefs-carousel { position: relative; width: 100%; margin-bottom: 1.5rem; border-radius: 12px; overflow: hidden; }
   .chefs-carousel-track { display: flex; transition: transform 0.35s ease; touch-action: pan-y; }
-  .chefs-carousel-slide { min-width: 100%; height: 320px; }
-  .chefs-carousel-slide video, .chefs-carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .chefs-carousel-slide { min-width: 100%; height: 500px; }
+  .chefs-carousel-slide video, .chefs-carousel-slide img { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--off-white); }
   .chefs-carousel-dots { display: flex; justify-content: center; gap: 8px; padding: 10px 0 4px; }
   .chefs-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s; }
   .chefs-dot.active { background: var(--red); }
-  @media (max-width: 600px) { .chefs-carousel-slide { height: 220px; } }
+  @media (max-width: 600px) { .chefs-carousel-slide { height: 300px; } }
 
   /* CHEF'S PICK */
   .chefs-pick-section { background: var(--white); padding: 3rem 2rem; border-bottom: 0.5px solid var(--border); }
