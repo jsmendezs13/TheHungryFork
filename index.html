@@ -48,9 +48,33 @@
   /* DIVIDER */
   .red-divider { height: 3px; background: var(--red); }
 
+  /* CHEF'S PICK */
+  .chefs-pick-section { background: var(--white); padding: 3rem 2rem; border-bottom: 0.5px solid var(--border); }
+  .chefs-pick-inner { max-width: 1100px; margin: 0 auto; }
+  .chefs-pick-label { display: inline-flex; align-items: center; gap: 8px; background: var(--red); color: white; font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 5px 14px; border-radius: 4px; margin-bottom: 1.25rem; }
+  .chefs-pick-title { font-family: 'Cinzel', serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+  .chefs-pick-subtitle { font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; color: var(--muted); font-style: italic; margin-bottom: 1.5rem; }
+  .chefs-pick-price { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; color: var(--red); margin-bottom: 1.5rem; }
+  .chefs-pick-media { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .chefs-pick-media video { width: 100%; border-radius: 8px; object-fit: cover; max-height: 280px; }
+  .chefs-pick-media img { width: 100%; border-radius: 8px; object-fit: cover; max-height: 280px; }
+  .chefs-pick-photo-col { display: flex; flex-direction: column; gap: 1rem; }
+  .chefs-pick-photo-col img { width: 100%; border-radius: 8px; object-fit: cover; flex: 1; max-height: 134px; }
+  .chefs-pick-desc { font-family: 'Segoe UI', sans-serif; font-size: 0.92rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; max-width: 700px; }
+  .allergen-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 0.75rem; }
+  .allergen-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--off-white); border: 0.5px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; font-family: 'Segoe UI', sans-serif; color: var(--muted); }
+  .mod-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mod-tag { display: inline-flex; align-items: center; gap: 5px; border-radius: 4px; padding: 4px 10px; font-size: 0.72rem; font-family: 'Segoe UI', sans-serif; }
+  .mod-tag.can { background: rgba(22,163,74,0.1); border: 0.5px solid rgba(22,163,74,0.35); color: #15803d; }
+  .mod-tag.cannot { background: rgba(192,24,12,0.08); border: 0.5px solid rgba(192,24,12,0.3); color: var(--red); }
+  @media (max-width: 600px) { .chefs-pick-media { grid-template-columns: 1fr; } .chefs-pick-photo-col { flex-direction: row; } .chefs-pick-photo-col img { max-height: 160px; } }
+
   /* FILTER BAR */
-  .filter-bar { background: var(--white); border-bottom: 0.5px solid var(--border); padding: 0.75rem 2rem; position: sticky; top: 60px; z-index: 90; }
-  .filter-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+  .filter-bar { background: var(--white); border-bottom: 0.5px solid var(--border); padding: 0.6rem 1rem; position: sticky; top: 60px; z-index: 90; }
+  .filter-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 0.4rem; flex-wrap: nowrap; justify-content: center; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .filter-btn { border: 1px solid var(--border); border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 0.75rem; font-family: 'Segoe UI', sans-serif; color: var(--text); background: var(--white); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .filter-btn:hover { border-color: var(--red); color: var(--red); }
+  .filter-btn.active { background: var(--red); color: var(--white); border-color: var(--red); }
   .filter-btn { padding: 6px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--white); color: var(--muted); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: 'Segoe UI', sans-serif; }
   .filter-btn.active { background: var(--red); color: var(--white); border-color: var(--red); }
   .filter-btn:hover:not(.active) { border-color: var(--red); color: var(--red); }
@@ -168,9 +192,51 @@
   </div>
 </div>
 
+<!-- CHEF'S PICK -->
+<div class="chefs-pick-section">
+  <div class="chefs-pick-inner">
+    <div class="chefs-pick-label">👨‍🍳 Chef's Pick</div>
+    <h2 class="chefs-pick-title">T-Bone Fork Steak</h2>
+    <p class="chefs-pick-subtitle">Grilled to perfection, BBQ glaze, cassava fries & roasted vegetables</p>
+    <div class="chefs-pick-price">$26</div>
+
+    <div class="chefs-pick-media">
+      <video autoplay muted loop playsinline>
+        <source src="chef-video.mp4" type="video/mp4">
+      </video>
+      <div class="chefs-pick-photo-col">
+        <img src="1_T_Bone_Fork_Steak_I.jpeg" alt="T-Bone Fork Steak plated">
+        <img src="1_T_Bone_Fork_Steak_II.png" alt="T-Bone Fork Steak ingredients">
+      </div>
+    </div>
+
+    <p class="chefs-pick-desc">
+      Our signature T-Bone, sourced and hand-selected daily, grilled over open flame and finished with a house-made BBQ glaze. Served alongside crispy cassava fries, roasted asparagus, caramelized onion, sweet carrot, and colorful bell pepper. A true celebration of bold, honest flavor.
+    </p>
+
+    <div style="margin-bottom:0.5rem; font-size:0.72rem; font-family:'Segoe UI',sans-serif; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase;">Allergens</div>
+    <div class="allergen-row">
+      <span class="allergen-tag">🧄 Allium (onion)</span>
+      <span class="allergen-tag">🌶️ Bell Pepper</span>
+      <span class="allergen-tag">🥩 Red Meat</span>
+      <span class="allergen-tag">🍠 Cassava</span>
+    </div>
+
+    <div style="margin:1rem 0 0.5rem; font-size:0.72rem; font-family:'Segoe UI',sans-serif; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase;">Modifications</div>
+    <div class="mod-row">
+      <span class="mod-tag can">✅ Bell pepper — can be removed</span>
+      <span class="mod-tag can">✅ Onion — can be removed</span>
+      <span class="mod-tag can">✅ Cassava fries — can substitute for french fries</span>
+      <span class="mod-tag cannot">❌ BBQ glaze — pre-applied, cannot remove</span>
+      <span class="mod-tag cannot">❌ T-Bone cut — cannot be changed</span>
+    </div>
+  </div>
+</div>
+
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <div class="filter-inner">
+    <button class="filter-btn" onclick="filterDishes('chefs-pick',this)" style="background:#C0180C;color:white;border-color:#C0180C;">👨‍🍳 Chef's Pick</button>
     <button class="filter-btn active" onclick="filterDishes('all',this)">All dishes</button>
     <button class="filter-btn" onclick="filterDishes('starters',this)">Starters</button>
     <button class="filter-btn" onclick="filterDishes('entree',this)">Entrées</button>
@@ -317,7 +383,16 @@ function updateOverall(){
   s.innerHTML='★'.repeat(full)+(half?'½':'')+'<span style="color:#ddd">★</span>'.repeat(empty);
   c.textContent=`${all.length} review${all.length>1?'s':''} across all dishes`;
 }
-function filterDishes(f,btn){activeFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMenu(f);}
+function filterDishes(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='';b.style.borderColor='';});
+  btn.classList.add('active');
+  if(f==='chefs-pick'){
+    document.querySelector('.chefs-pick-section').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  renderMenu(f);
+}
 function openModal(id,e){
   e.stopPropagation();currentDishId=id;selectedStar=0;
   const d=DISHES.find(x=>x.id===id);
