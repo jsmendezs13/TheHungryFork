@@ -8,47 +8,32 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --red: #C0180C;
-    --red-dark: #8B1010;
-    --red-light: #fdecea;
-    --white: #ffffff;
-    --off-white: #f8f6f6;
-    --text: #1a1a1a;
-    --muted: #666666;
-    --border: #e8e0e0;
-    --star-on: #f59e0b;
-    --star-off: #ddd;
-    --green: #16a34a;
+    --red: #C0180C; --red-dark: #8B1010; --red-light: #fdecea;
+    --white: #ffffff; --off-white: #f8f6f6; --text: #1a1a1a;
+    --muted: #666666; --border: #e8e0e0; --star-on: #f59e0b;
+    --star-off: #ddd; --green: #16a34a;
   }
   html { scroll-behavior: smooth; }
   body { font-family: 'Cinzel', 'Georgia', serif; color: var(--text); background: var(--white); line-height: 1.6; }
-
-  /* NAV */
   nav { background: var(--red); position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--red-dark); box-shadow: 0 2px 10px rgba(192,24,12,0.25); }
   .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
   .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
   .nav-logo img { height: 40px; width: auto; background: white; border-radius: 6px; padding: 3px; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
   .nav-logo-text { font-size: 1rem; font-weight: 700; color: var(--white); font-family: 'Cinzel', serif; letter-spacing: 0.03em; }
+  .nav-right { display: flex; align-items: center; gap: 1rem; }
   .nav-back { color: rgba(255,255,255,0.8); font-size: 0.82rem; text-decoration: none; font-family: 'Segoe UI', sans-serif; }
   .nav-back:hover { color: var(--white); }
-
-  /* HERO */
-  .hero { background: var(--white); text-align: center; padding: 1.5rem 2rem 0.4rem; border-bottom: none; }
+  .nav-taster-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; border-radius: 4px; padding: 5px 12px; font-size: 0.78rem; font-family: 'Segoe UI', sans-serif; cursor: pointer; transition: all 0.15s; }
+  .nav-taster-btn:hover { background: rgba(255,255,255,0.35); }
+  .hero { background: var(--white); text-align: center; padding: 1.5rem 2rem 0.4rem; }
   .hero-logo { width: 200px; height: auto; margin: 0 auto; display: block; }
-  .hero-title { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 700; color: var(--red); font-family: 'Cinzel', serif; letter-spacing: 0.04em; margin-bottom: 0; }
+  .hero-title { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 700; color: var(--red); font-family: 'Cinzel', serif; letter-spacing: 0.04em; }
   .hero-tagline { font-size: 1.9rem; color: #1a1a1a; font-family: 'Cinzel', serif; letter-spacing: 0.08em; margin-top: 0.1rem; margin-bottom: 1.5rem; font-weight: 700; }
   .hero-meta { display: flex; align-items: center; justify-content: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.83rem; color: rgba(255,255,255,0.9); margin-bottom: 1.25rem; font-family: 'Segoe UI', sans-serif; }
-  .hero-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 14px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); margin-bottom: 0.75rem; font-family: 'Segoe UI', sans-serif; border: 1px solid rgba(255,255,255,0.35); }
   .hero-info-bar { background: var(--red); padding: 1.25rem 2rem 1.5rem; text-align: center; }
-  .overall-rating { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 0.6rem 1.5rem; }
-  .overall-num { font-size: 1.8rem; font-weight: 700; color: var(--white); font-family: 'Cinzel', serif; }
   .overall-stars { color: var(--star-on); font-size: 1.1rem; letter-spacing: 2px; }
   .overall-count { font-size: 0.75rem; color: rgba(255,255,255,0.8); font-family: 'Segoe UI', sans-serif; }
-
-  /* DIVIDER */
   .red-divider { height: 3px; background: var(--red); }
-
-  /* CAROUSEL */
   .chefs-carousel { position: relative; width: 100%; margin-bottom: 1.5rem; border-radius: 12px; overflow: hidden; }
   .chefs-carousel-track { display: flex; transition: transform 0.35s ease; touch-action: pan-y; }
   .chefs-carousel-slide { min-width: 100%; height: 500px; }
@@ -57,8 +42,6 @@
   .chefs-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s; }
   .chefs-dot.active { background: var(--red); }
   @media (max-width: 600px) { .chefs-carousel-slide { height: 300px; } }
-
-  /* CHEF'S PICK */
   .chefs-pick-section { background: var(--white); padding: 3rem 2rem; border-bottom: 0.5px solid var(--border); }
   .chefs-pick-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
   .chefs-pick-label { display: inline-flex; align-items: center; gap: 8px; background: var(--red); color: white; font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 5px 14px; border-radius: 4px; margin-bottom: 1.25rem; }
@@ -67,7 +50,6 @@
   .chefs-pick-price { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; color: var(--red); margin-bottom: 1.5rem; }
   .chefs-pick-media { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; max-width: 100%; overflow: hidden; }
   .chefs-pick-media video { width: 100%; border-radius: 8px; object-fit: cover; height: 300px; }
-  .chefs-pick-photo-col { display: flex; flex-direction: column; gap: 1rem; overflow: hidden; }
   .chefs-pick-photo-col { display: flex; flex-direction: column; gap: 1rem; }
   .chefs-pick-photo-col img { width: 100%; height: 143px; border-radius: 8px; object-fit: cover; }
   .chefs-pick-desc { font-family: 'Segoe UI', sans-serif; font-size: 0.92rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; text-align: center; }
@@ -78,24 +60,15 @@
   .mod-tag.can { background: rgba(22,163,74,0.1); border: 0.5px solid rgba(22,163,74,0.35); color: #15803d; }
   .mod-tag.cannot { background: rgba(192,24,12,0.08); border: 0.5px solid rgba(192,24,12,0.3); color: var(--red); }
   @media (max-width: 600px) { .chefs-pick-media { grid-template-columns: 1fr; } .chefs-pick-photo-col { flex-direction: row; } .chefs-pick-photo-col img { max-height: 160px; } }
-
-  /* FILTER BAR */
   .filter-bar { background: var(--white); border-bottom: 0.5px solid var(--border); padding: 0.6rem 1rem; position: sticky; top: 60px; z-index: 90; }
   .filter-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 0.4rem; flex-wrap: nowrap; justify-content: center; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .filter-btn { border: 1px solid var(--border); border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 0.75rem; font-family: 'Segoe UI', sans-serif; color: var(--text); background: var(--white); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
-  .filter-btn:hover { border-color: var(--red); color: var(--red); }
-  .filter-btn.active { background: var(--red); color: var(--white); border-color: var(--red); }
-  .filter-btn { padding: 6px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--white); color: var(--muted); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: 'Segoe UI', sans-serif; }
+  .filter-btn { padding: 6px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--white); color: var(--muted); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: 'Segoe UI', sans-serif; white-space: nowrap; }
   .filter-btn.active { background: var(--red); color: var(--white); border-color: var(--red); }
   .filter-btn:hover:not(.active) { border-color: var(--red); color: var(--red); }
-
-  /* MENU */
   .menu-section { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
   .category-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); font-family: 'Segoe UI', sans-serif; }
   .dishes-grid { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 3rem; justify-content: center; }
   .dishes-grid .dish-card { width: 300px; flex-shrink: 0; }
-
-  /* DISH CARD */
   .dish-card { background: var(--white); border-radius: 8px; border: 0.5px solid var(--border); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
   .dish-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(192,24,12,0.1); }
   .dish-img { height: 160px; background: var(--off-white); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; position: relative; }
@@ -109,61 +82,124 @@
   .dish-review-count { font-size: 0.75rem; color: var(--muted); font-family: 'Segoe UI', sans-serif; }
   .rate-btn { padding: 7px 14px; border-radius: 4px; background: var(--red-light); color: var(--red); border: 1px solid var(--red); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: 'Segoe UI', sans-serif; }
   .rate-btn:hover { background: var(--red); color: var(--white); }
-
-  /* MODAL */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--white); border-radius: 10px; width: 100%; max-width: 500px; overflow: hidden; animation: slideUp 0.2s ease; }
-  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  .modal-hero { background: var(--red-light); height: 140px; display: flex; align-items: center; justify-content: center; font-size: 4rem; position: relative; border-bottom: 3px solid var(--red); }
-  .modal-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.9); border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); }
-  .modal-close:hover { background: var(--red); color: var(--white); border-color: var(--red); }
-  .modal-body { padding: 1.5rem; }
-  .modal-dish-name { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 3px; font-family: 'Cinzel', serif; }
-  .modal-dish-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; font-style: italic; font-family: 'Segoe UI', sans-serif; }
-  .modal-section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); margin-bottom: 0.6rem; font-family: 'Segoe UI', sans-serif; }
-  .star-picker { display: flex; gap: 8px; margin-bottom: 1.25rem; }
-  .star-pick { font-size: 2rem; cursor: pointer; color: var(--star-off); transition: color 0.1s, transform 0.1s; }
-  .star-pick:hover, .star-pick.selected { color: var(--star-on); transform: scale(1.15); }
-  .name-input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.9rem; font-family: 'Segoe UI', sans-serif; color: var(--text); outline: none; transition: border-color 0.2s; margin-bottom: 1rem; }
-  .name-input:focus { border-color: var(--red); }
-  .review-input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 0.8rem 1rem; font-size: 0.9rem; font-family: 'Segoe UI', sans-serif; color: var(--text); resize: vertical; min-height: 90px; outline: none; transition: border-color 0.2s; }
-  .review-input:focus { border-color: var(--red); }
-  .submit-review-btn { width: 100%; background: var(--red); color: var(--white); border: none; border-radius: 6px; padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 1rem; transition: background 0.2s; font-family: 'Segoe UI', sans-serif; letter-spacing: 0.04em; }
-  .submit-review-btn:hover { background: var(--red-dark); }
-  .submit-review-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
-  .reviews-divider { border: none; border-top: 0.5px solid var(--border); margin: 1.25rem 0; }
-  .reviews-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
-  .review-item { background: var(--off-white); border-radius: 6px; padding: 0.75rem 1rem; border-left: 3px solid var(--red); }
-  .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .reviewer-name { font-size: 0.85rem; font-weight: 600; color: var(--text); font-family: 'Segoe UI', sans-serif; }
-  .review-stars { color: var(--star-on); font-size: 0.85rem; }
-  .review-text { font-size: 0.82rem; color: var(--muted); line-height: 1.5; font-style: italic; font-family: 'Segoe UI', sans-serif; }
-  .review-date { font-size: 0.72rem; color: #bbb; margin-top: 3px; font-family: 'Segoe UI', sans-serif; }
-  .no-reviews { font-size: 0.85rem; color: var(--muted); text-align: center; padding: 1rem 0; font-family: 'Segoe UI', sans-serif; }
-
-  /* FOOTER */
   footer { background: var(--white); color: var(--muted); text-align: center; padding: 2.5rem 2rem; border-top: 2px solid var(--red); margin-top: 2rem; font-family: 'Segoe UI', sans-serif; font-size: 0.85rem; }
   footer img { height: 60px; margin-bottom: 0.75rem; }
   footer a { color: var(--red); text-decoration: none; }
-
-  /* MAPS CHOOSER */
   .maps-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:500; align-items:flex-end; justify-content:center; padding-bottom:2rem; }
   .maps-modal.open { display:flex; }
   .maps-sheet { background:var(--white); border-radius:16px; width:100%; max-width:400px; overflow:hidden; animation:slideUp 0.2s ease; }
-  .maps-sheet-title { text-align:center; padding:1rem; font-size:0.85rem; color:var(--muted); font-family:'Segoe UI',sans-serif; border-bottom:0.5px solid var(--border); }
   .maps-sheet-title { text-align:center; padding:1rem; font-size:0.85rem; color:var(--muted); font-family:'Segoe UI',sans-serif; border-bottom:0.5px solid var(--border); display:flex; align-items:center; justify-content:center; gap:8px; }
   .maps-option { display:flex; align-items:center; gap:12px; padding:1rem 1.5rem; font-size:1rem; font-family:'Segoe UI',sans-serif; color:var(--text); text-decoration:none; border-bottom:0.5px solid var(--border); transition:background 0.15s; }
   .maps-option:hover { background:var(--off-white); }
   .maps-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
   .maps-cancel { display:block; text-align:center; padding:1rem; font-size:1rem; font-family:'Segoe UI',sans-serif; color:var(--red); font-weight:600; cursor:pointer; }
   .maps-cancel:hover { background:var(--off-white); }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--green); color: #fff; padding: 0.75rem 1.5rem; border-radius: 6px; font-size: 0.9rem; font-weight: 600; z-index: 300; transition: transform 0.3s; pointer-events: none; font-family: 'Segoe UI', sans-serif; }
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--green); color: #fff; padding: 0.75rem 1.5rem; border-radius: 6px; font-size: 0.9rem; font-weight: 600; z-index: 9999; transition: transform 0.3s; pointer-events: none; font-family: 'Segoe UI', sans-serif; }
   .toast.show { transform: translateX(-50%) translateY(0); }
-
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   @media (max-width: 600px) { .dishes-grid .dish-card { width: 100%; } .hero-meta { gap: 0.75rem; } .hero-logo { width: 150px; } .hero-title { font-size: 2rem; } .hero-tagline { font-size: 1.1rem; } }
+
+  /* ── TASTER MODAL ── */
+  .t-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:800; align-items:center; justify-content:center; padding:1rem; }
+  .t-overlay.open { display:flex; }
+  .t-box { background:var(--white); border-radius:12px; width:100%; max-width:420px; overflow:hidden; animation:slideUp 0.2s ease; max-height:90vh; overflow-y:auto; }
+  .t-header { background:var(--red); padding:1.25rem 1.5rem; display:flex; align-items:center; justify-content:space-between; }
+  .t-header h3 { color:white; font-family:'Cinzel',serif; font-size:1rem; font-weight:700; }
+  .t-close { background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; opacity:0.8; line-height:1; }
+  .t-close:hover { opacity:1; }
+  .t-body { padding:1.5rem; }
+  .t-step { display:none; }
+  .t-step.active { display:block; }
+  .t-label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); margin-bottom:0.4rem; font-family:'Segoe UI',sans-serif; }
+  .t-sub { font-size:0.85rem; color:var(--muted); font-family:'Segoe UI',sans-serif; margin-bottom:1.1rem; line-height:1.5; }
+  .t-input { width:100%; border:1px solid var(--border); border-radius:6px; padding:0.7rem 1rem; font-size:0.9rem; font-family:'Segoe UI',sans-serif; color:var(--text); outline:none; transition:border-color 0.2s; margin-bottom:0.85rem; }
+  .t-input:focus { border-color:var(--red); }
+  .t-input-code { text-align:center; font-size:2rem; letter-spacing:0.5em; font-weight:700; }
+  .t-btn { width:100%; background:var(--red); color:white; border:none; border-radius:6px; padding:0.85rem; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; letter-spacing:0.04em; transition:background 0.2s; }
+  .t-btn:hover { background:var(--red-dark); }
+  .t-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+  .t-btn-ghost { width:100%; background:transparent; color:var(--red); border:1px solid var(--red); border-radius:6px; padding:0.85rem; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; transition:all 0.2s; margin-top:0.6rem; }
+  .t-btn-ghost:hover { background:var(--red-light); }
+  .t-err { color:var(--red); font-size:0.82rem; font-family:'Segoe UI',sans-serif; margin-bottom:0.75rem; display:none; }
+  .t-resend { text-align:center; margin-top:0.75rem; font-size:0.82rem; color:var(--muted); font-family:'Segoe UI',sans-serif; }
+  .t-resend a { color:var(--red); cursor:pointer; text-decoration:underline; }
+  .t-divider { border:none; border-top:0.5px solid var(--border); margin:1rem 0; }
+  .t-choice { display:flex; flex-direction:column; gap:0.75rem; }
+  .t-choice-header { text-align:center; margin-bottom:0.5rem; }
+  .t-choice-icon { font-size:2.5rem; display:block; margin-bottom:0.5rem; }
+  .t-choice-title { font-family:'Cinzel',serif; font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:0.25rem; }
+  .t-choice-sub { font-size:0.82rem; color:var(--muted); font-family:'Segoe UI',sans-serif; }
+  .t-select { width:100%; border:1px solid var(--border); border-radius:6px; padding:0.7rem 1rem; font-size:0.9rem; font-family:'Segoe UI',sans-serif; color:var(--text); outline:none; background:white; margin-bottom:0.85rem; }
+  .t-select:focus { border-color:var(--red); }
+  .t-checkbox-row { display:flex; align-items:flex-start; gap:0.6rem; margin-bottom:0.85rem; font-family:'Segoe UI',sans-serif; font-size:0.82rem; color:var(--muted); }
+  .t-checkbox-row input { margin-top:3px; accent-color:var(--red); }
+
+  /* ── RATING MODAL ── */
+  .r-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:700; align-items:center; justify-content:center; padding:1rem; }
+  .r-overlay.open { display:flex; }
+  .r-box { background:var(--white); border-radius:12px; width:100%; max-width:460px; overflow:hidden; animation:slideUp 0.2s ease; max-height:90vh; overflow-y:auto; }
+  .r-hero { background:var(--red-light); height:120px; display:flex; align-items:center; justify-content:center; font-size:3.5rem; position:relative; border-bottom:3px solid var(--red); }
+  .r-close { position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.9); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .r-close:hover { background:var(--red); color:white; border-color:var(--red); }
+  .r-body { padding:1.25rem 1.5rem; }
+  .r-dish-name { font-size:1.2rem; font-weight:700; color:var(--text); font-family:'Cinzel',serif; margin-bottom:2px; }
+  .r-dish-desc { font-size:0.82rem; color:var(--muted); font-style:italic; font-family:'Segoe UI',sans-serif; margin-bottom:1.25rem; }
+  .r-section { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); margin-bottom:0.75rem; font-family:'Segoe UI',sans-serif; }
+  .r-slider-row { margin-bottom:1rem; }
+  .r-slider-label { display:flex; justify-content:space-between; font-size:0.82rem; font-family:'Segoe UI',sans-serif; color:var(--text); margin-bottom:0.3rem; }
+  .r-slider-label span:last-child { font-weight:700; color:var(--red); }
+  .r-slider { width:100%; accent-color:var(--red); }
+  .r-textarea { width:100%; border:1px solid var(--border); border-radius:6px; padding:0.7rem 1rem; font-size:0.88rem; font-family:'Segoe UI',sans-serif; resize:vertical; min-height:75px; outline:none; margin-bottom:0.85rem; }
+  .r-textarea:focus { border-color:var(--red); }
+  .r-file-label { display:block; border:1px dashed var(--border); border-radius:6px; padding:0.75rem; text-align:center; font-size:0.82rem; color:var(--muted); font-family:'Segoe UI',sans-serif; cursor:pointer; margin-bottom:0.85rem; transition:border-color 0.2s; }
+  .r-file-label:hover { border-color:var(--red); color:var(--red); }
+  .r-file-input { display:none; }
+  .r-submit { width:100%; background:var(--red); color:white; border:none; border-radius:6px; padding:0.9rem; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; letter-spacing:0.04em; transition:background 0.2s; margin-top:0.5rem; }
+  .r-submit:hover { background:var(--red-dark); }
+  .r-submit:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+  .r-divider { border:none; border-top:0.5px solid var(--border); margin:1.25rem 0; }
+  .r-reviews-label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); margin-bottom:0.75rem; font-family:'Segoe UI',sans-serif; }
+  .r-reviews-list { max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:0.75rem; }
+  .r-review-item { background:var(--off-white); border-radius:6px; padding:0.75rem 1rem; border-left:3px solid var(--red); }
+  .r-review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .r-reviewer-name { font-size:0.85rem; font-weight:600; color:var(--text); font-family:'Segoe UI',sans-serif; }
+  .r-review-score { font-size:0.82rem; color:var(--red); font-family:'Segoe UI',sans-serif; font-weight:700; }
+  .r-review-text { font-size:0.82rem; color:var(--muted); line-height:1.5; font-style:italic; font-family:'Segoe UI',sans-serif; }
+  .r-review-date { font-size:0.72rem; color:#bbb; margin-top:3px; font-family:'Segoe UI',sans-serif; }
+  .r-no-reviews { font-size:0.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:'Segoe UI',sans-serif; }
+
+  /* MODAL (dish view) */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--white); border-radius:10px; width:100%; max-width:500px; overflow:hidden; animation:slideUp 0.2s ease; max-height:90vh; overflow-y:auto; }
+  .modal-hero { background:var(--red-light); height:140px; display:flex; align-items:center; justify-content:center; font-size:4rem; position:relative; border-bottom:3px solid var(--red); }
+  .modal-close { position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.9); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text); }
+  .modal-close:hover { background:var(--red); color:var(--white); border-color:var(--red); }
+  .modal-body { padding:1.5rem; }
+  .modal-dish-name { font-size:1.3rem; font-weight:700; color:var(--text); margin-bottom:3px; font-family:'Cinzel',serif; }
+  .modal-dish-desc { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; font-style:italic; font-family:'Segoe UI',sans-serif; }
+  .modal-section-label { font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); margin-bottom:0.6rem; font-family:'Segoe UI',sans-serif; }
+  .reviews-divider { border:none; border-top:0.5px solid var(--border); margin:1.25rem 0; }
+  .reviews-list { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:0.75rem; }
+  .review-item { background:var(--off-white); border-radius:6px; padding:0.75rem 1rem; border-left:3px solid var(--red); }
+  .review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .reviewer-name { font-size:0.85rem; font-weight:600; color:var(--text); font-family:'Segoe UI',sans-serif; }
+  .review-stars { color:var(--star-on); font-size:0.85rem; }
+  .review-text { font-size:0.82rem; color:var(--muted); line-height:1.5; font-style:italic; font-family:'Segoe UI',sans-serif; }
+  .review-date { font-size:0.72rem; color:#bbb; margin-top:3px; font-family:'Segoe UI',sans-serif; }
+  .no-reviews { font-size:0.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:'Segoe UI',sans-serif; }
+  .rate-dish-btn { width:100%; background:var(--red); color:white; border:none; border-radius:6px; padding:0.85rem; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; transition:background 0.2s; }
+  .rate-dish-btn:hover { background:var(--red-dark); }
+
+  /* LUCKY BITE WIN SCREEN */
+  .lucky-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:900; align-items:center; justify-content:center; padding:1rem; }
+  .lucky-overlay.open { display:flex; }
+  .lucky-box { background:var(--white); border-radius:16px; width:100%; max-width:380px; padding:2.5rem 2rem; text-align:center; animation:slideUp 0.3s ease; }
+  .lucky-emoji { font-size:4rem; display:block; margin-bottom:1rem; }
+  .lucky-title { font-family:'Cinzel',serif; font-size:1.6rem; font-weight:700; color:var(--red); margin-bottom:0.5rem; }
+  .lucky-number { font-size:3rem; font-weight:900; color:var(--red); font-family:'Cinzel',serif; margin:1rem 0; }
+  .lucky-sub { font-family:'Segoe UI',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.6; }
+  .lucky-claim-btn { width:100%; background:var(--red); color:white; border:none; border-radius:8px; padding:1rem; font-size:1rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; }
 </style>
 </head>
 <body>
@@ -175,7 +211,10 @@
       <img src="hungry-fork-logo.png" alt="The Hungry Fork">
       <span class="nav-logo-text">The Hungry Fork</span>
     </a>
-    <a href="index.html" class="nav-back">← Seb's Analytics LLC</a>
+    <div class="nav-right">
+      <button class="nav-taster-btn" id="nav-taster-btn" onclick="openTasterModal()">🍴 Log In</button>
+      <a href="index.html" class="nav-back">← Seb's Analytics LLC</a>
+    </div>
   </div>
 </nav>
 
@@ -220,84 +259,62 @@
 </div>
 
 <!-- CHEF'S PICK -->
-<div class="chefs-pick-section" style="display:none;">
+<section class="chefs-pick-section">
   <div class="chefs-pick-inner">
     <div class="chefs-pick-label">👨‍🍳 Chef's Pick</div>
     <h2 class="chefs-pick-title">T-Bone Fork Steak</h2>
-    <p class="chefs-pick-subtitle">Grilled to perfection, BBQ glaze, cassava fries & roasted vegetables</p>
-    <div class="chefs-pick-price">$26</div>
-
+    <p class="chefs-pick-subtitle">Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables</p>
+    <div class="chefs-pick-price">$38</div>
     <div class="chefs-carousel">
       <div class="chefs-carousel-track" id="chefs-track">
-        <div class="chefs-carousel-slide">
-          <video autoplay muted loop playsinline>
-            <source src="chef-video.mp4" type="video/mp4">
-          </video>
-        </div>
-        <div class="chefs-carousel-slide">
-          <img src="1_T_Bone_Fork_Steak_I.jpeg" alt="T-Bone Fork Steak plated">
-        </div>
-        <div class="chefs-carousel-slide">
-          <img src="1_T_Bone_Fork_Steak_II.png" alt="T-Bone Fork Steak ingredients">
-        </div>
+        <div class="chefs-carousel-slide"><video src="chef-video.mp4" autoplay muted loop playsinline></video></div>
+        <div class="chefs-carousel-slide"><img src="1_T_Bone_Fork_Steak_I.jpeg" alt="T-Bone Fork Steak"></div>
+        <div class="chefs-carousel-slide"><img src="1_T_Bone_Fork_Steak_II.png" alt="T-Bone Fork Steak II"></div>
       </div>
       <div class="chefs-carousel-dots">
-        <span class="chefs-dot active" onclick="goToSlide(0)"></span>
-        <span class="chefs-dot" onclick="goToSlide(1)"></span>
-        <span class="chefs-dot" onclick="goToSlide(2)"></span>
+        <div class="chefs-dot active" onclick="goToSlide(0)"></div>
+        <div class="chefs-dot" onclick="goToSlide(1)"></div>
+        <div class="chefs-dot" onclick="goToSlide(2)"></div>
       </div>
     </div>
-
-    <p class="chefs-pick-desc">
-      Our signature T-Bone, sourced and hand-selected daily, grilled over open flame and finished with a house-made BBQ glaze. Served alongside crispy cassava fries, roasted asparagus, caramelized onion, sweet carrot, and colorful bell pepper. A true celebration of bold, honest flavor.
-    </p>
-
-    <!-- SEB'S RATE FOR CHEF'S PICK -->
-    <div style="margin-bottom:1.5rem; text-align:center;">
-      <div id="chefs-pick-stars" style="display:flex; justify-content:center; gap:6px; margin-bottom:0.4rem;">
-        <span class="cp-star" data-val="1" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
-        <span class="cp-star" data-val="2" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
-        <span class="cp-star" data-val="3" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
-        <span class="cp-star" data-val="4" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
-        <span class="cp-star" data-val="5" style="font-size:2rem; cursor:pointer; color:#ddd;">★</span>
-      </div>
-      <div style="font-size:0.75rem; font-family:'Segoe UI',sans-serif; color:var(--muted); font-weight:600; letter-spacing:0.05em;">Seb's Rate</div>
-      <div id="chefs-pick-rated-msg" style="font-size:0.8rem; color:var(--muted); font-family:'Segoe UI',sans-serif; display:none; margin-top:4px;">Thanks for rating! ⭐</div>
-    </div>
-
-    <div style="margin-bottom:0.5rem; font-size:0.72rem; font-family:'Segoe UI',sans-serif; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase;">Allergens</div>
+    <p class="chefs-pick-desc">Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.</p>
     <div class="allergen-row">
-      <span class="allergen-tag">🧄 Allium (onion)</span>
-      <span class="allergen-tag">🌶️ Bell Pepper</span>
-      <span class="allergen-tag">🥩 Red Meat</span>
-      <span class="allergen-tag">🍠 Cassava</span>
+      <span class="allergen-tag">🌾 Gluten</span>
+      <span class="allergen-tag">🥛 Dairy</span>
+      <span class="allergen-tag">🥚 Eggs</span>
     </div>
-
-    <div style="margin:1rem 0 0.5rem; font-size:0.72rem; font-family:'Segoe UI',sans-serif; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase;">Modifications</div>
     <div class="mod-row">
-      <span class="mod-tag can">✅ Bell pepper — can be removed</span>
-      <span class="mod-tag can">✅ Onion — can be removed</span>
-      <span class="mod-tag can">✅ Cassava fries — can substitute for french fries</span>
-      <span class="mod-tag cannot">❌ BBQ glaze — pre-applied, cannot remove</span>
-      <span class="mod-tag cannot">❌ T-Bone cut — cannot be changed</span>
+      <span class="mod-tag can">✓ Can remove fries</span>
+      <span class="mod-tag can">✓ Sauce on the side</span>
+      <span class="mod-tag cannot">✗ Cannot be made vegan</span>
+    </div>
+    <div style="margin-top:1.5rem;">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:0.5rem;font-family:'Segoe UI',sans-serif;">Rate this dish</div>
+      <div style="display:flex;gap:6px;justify-content:center;font-size:2rem;margin-bottom:0.5rem;" id="cp-stars-row">
+        <span class="cp-star" data-val="1" style="cursor:pointer;color:#ddd;">★</span>
+        <span class="cp-star" data-val="2" style="cursor:pointer;color:#ddd;">★</span>
+        <span class="cp-star" data-val="3" style="cursor:pointer;color:#ddd;">★</span>
+        <span class="cp-star" data-val="4" style="cursor:pointer;color:#ddd;">★</span>
+        <span class="cp-star" data-val="5" style="cursor:pointer;color:#ddd;">★</span>
+      </div>
+      <div id="chefs-pick-rated-msg" style="display:none;font-size:0.82rem;color:var(--green);font-family:'Segoe UI',sans-serif;">Thanks for rating! ⭐</div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- MENU -->
-<div class="menu-section">
+<section class="menu-section" id="menu-section" style="display:none;">
   <div id="menu-container"></div>
-</div>
+</section>
 
 <!-- FOOTER -->
 <footer>
-  <img src="hungry-fork-logo.png" alt="The Hungry Fork logo">
-  <p style="font-size:1rem;font-weight:700;color:var(--red);font-family:'Georgia',serif;margin-bottom:4px;">The Hungry Fork</p>
+  <img src="hungry-fork-logo.png" alt="The Hungry Fork">
   <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
   <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
 </footer>
 
-<!-- MODAL -->
+<!-- DISH VIEW MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
   <div class="modal">
     <div class="modal-hero">
@@ -307,21 +324,167 @@
     <div class="modal-body">
       <div class="modal-dish-name" id="modal-name"></div>
       <div class="modal-dish-desc" id="modal-desc"></div>
-      <div class="modal-section-label">Your rating</div>
-      <div class="star-picker">
-        <span class="star-pick" data-val="1" onclick="pickStar(1)">★</span>
-        <span class="star-pick" data-val="2" onclick="pickStar(2)">★</span>
-        <span class="star-pick" data-val="3" onclick="pickStar(3)">★</span>
-        <span class="star-pick" data-val="4" onclick="pickStar(4)">★</span>
-        <span class="star-pick" data-val="5" onclick="pickStar(5)">★</span>
-      </div>
-      <input class="name-input" id="reviewer-name" type="text" placeholder="Your name (optional)">
-      <div class="modal-section-label">Your review</div>
-      <textarea class="review-input" id="review-text" placeholder="What did you think of this dish?"></textarea>
-      <button class="submit-review-btn" id="submit-btn" onclick="submitReview()" disabled>Post review</button>
+      <button class="rate-dish-btn" onclick="startRating()">⭐ Rate this dish</button>
       <hr class="reviews-divider">
       <div class="modal-section-label" id="reviews-label">Reviews</div>
       <div class="reviews-list" id="reviews-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TASTER AUTH MODAL -->
+<div class="t-overlay" id="taster-modal">
+  <div class="t-box">
+    <div class="t-header">
+      <h3>🍴 Hungry for Your Opinion</h3>
+      <button class="t-close" onclick="closeTasterModal()">✕</button>
+    </div>
+    <div class="t-body">
+
+      <!-- STEP 0: Choose login or signup -->
+      <div class="t-step active" id="t-step-0">
+        <div class="t-choice-header">
+          <span class="t-choice-icon">🍽️</span>
+          <div class="t-choice-title">Welcome, Taster!</div>
+          <div class="t-choice-sub">Log in or create your free account to rate dishes and earn Seb's Lucky Bite!</div>
+        </div>
+        <div class="t-choice" style="margin-top:1.25rem;">
+          <button class="t-btn" onclick="goTStep(1)">Log In</button>
+          <button class="t-btn-ghost" onclick="goTStep(10)">New Taster? Join Us 🍴</button>
+        </div>
+      </div>
+
+      <!-- STEP 1: LOGIN - phone + PIN -->
+      <div class="t-step" id="t-step-1">
+        <div class="t-label">Log In</div>
+        <div class="t-sub">Enter your phone number and 6-digit PIN.</div>
+        <input class="t-input" id="login-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
+        <input class="t-input" id="login-pin" type="password" placeholder="6-digit PIN" maxlength="6" inputmode="numeric">
+        <div class="t-err" id="login-err">Invalid phone or PIN. Please try again.</div>
+        <button class="t-btn" onclick="doLogin()">Log In</button>
+        <button class="t-btn-ghost" onclick="goTStep(0)">← Back</button>
+      </div>
+
+      <!-- STEP 10: SIGNUP - phone + OTP -->
+      <div class="t-step" id="t-step-10">
+        <div class="t-label">Step 1 of 3 — Verify your number</div>
+        <div class="t-sub">We'll send a 4-digit code to confirm it's really you.</div>
+        <input class="t-input" id="signup-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
+        <div class="t-err" id="signup-phone-err">Please enter a valid phone number.</div>
+        <button class="t-btn" onclick="sendSignupOtp()">Send Code</button>
+        <button class="t-btn-ghost" onclick="goTStep(0)">← Back</button>
+      </div>
+
+      <!-- STEP 11: SIGNUP - enter OTP -->
+      <div class="t-step" id="t-step-11">
+        <div class="t-label">Step 1 of 3 — Enter your code</div>
+        <div class="t-sub" id="signup-sent-to">We sent a 4-digit code to your number.</div>
+        <input class="t-input t-input-code" id="signup-otp" type="number" placeholder="0000" maxlength="4" autocomplete="one-time-code">
+        <div class="t-err" id="signup-otp-err">Invalid code. Please try again.</div>
+        <button class="t-btn" onclick="verifySignupOtp()">Verify</button>
+        <div class="t-resend">Didn't get it? <a onclick="goTStep(10)">Resend code</a></div>
+      </div>
+
+      <!-- STEP 12: SIGNUP - personal info -->
+      <div class="t-step" id="t-step-12">
+        <div class="t-label">Step 2 of 3 — Your profile</div>
+        <div class="t-sub">Tell us a little about yourself.</div>
+        <input class="t-input" id="signup-first" type="text" placeholder="First name">
+        <input class="t-input" id="signup-last" type="text" placeholder="Last name">
+        <input class="t-input" id="signup-dob" type="date" placeholder="Date of birth">
+        <select class="t-select" id="signup-gender">
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="non-binary">Non-binary</option>
+          <option value="prefer-not">Prefer not to say</option>
+        </select>
+        <div class="t-err" id="signup-info-err">Please fill in all fields.</div>
+        <button class="t-btn" onclick="goTStep(13)">Continue →</button>
+      </div>
+
+      <!-- STEP 13: SIGNUP - PIN + privacy -->
+      <div class="t-step" id="t-step-13">
+        <div class="t-label">Step 3 of 3 — Create your PIN</div>
+        <div class="t-sub">Choose a 6-digit PIN to log in next time. Keep it safe!</div>
+        <input class="t-input" id="signup-pin" type="password" placeholder="6-digit PIN" maxlength="6" inputmode="numeric">
+        <input class="t-input" id="signup-pin2" type="password" placeholder="Confirm PIN" maxlength="6" inputmode="numeric">
+        <div class="t-checkbox-row">
+          <input type="checkbox" id="signup-privacy">
+          <label for="signup-privacy">I agree to the <a href="#" style="color:var(--red);">Privacy Policy</a> and <a href="#" style="color:var(--red);">Terms of Service</a>.</label>
+        </div>
+        <div class="t-checkbox-row">
+          <input type="checkbox" id="signup-promos">
+          <label for="signup-promos">I'd like to receive promotions and special offers.</label>
+        </div>
+        <div class="t-err" id="signup-pin-err">Please check your PIN and accept the privacy policy.</div>
+        <button class="t-btn" onclick="doSignup()">Create My Account 🍴</button>
+      </div>
+
+      <!-- STEP 99: SUCCESS -->
+      <div class="t-step" id="t-step-99">
+        <div style="text-align:center; padding:1rem 0;">
+          <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
+          <div style="font-family:'Cinzel',serif; font-size:1.2rem; font-weight:700; color:var(--red); margin-bottom:0.5rem;" id="t-welcome-msg">Welcome!</div>
+          <div style="font-family:'Segoe UI',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">You're now logged in. Let's rate some dishes!</div>
+          <button class="t-btn" onclick="closeTasterModal();openRatingModal();">Rate This Dish ⭐</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div class="r-overlay" id="rating-modal">
+  <div class="r-box">
+    <div class="r-hero">
+      <button class="r-close" onclick="closeRatingModal()">✕</button>
+      <span id="r-dish-emoji">🍽️</span>
+    </div>
+    <div class="r-body">
+      <div class="r-dish-name" id="r-dish-name"></div>
+      <div class="r-dish-desc" id="r-dish-desc"></div>
+
+      <div class="r-section">🍽️ Dish Rating</div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
+        <input type="range" class="r-slider" id="sl-flavor" min="1" max="5" value="3" oninput="document.getElementById('lbl-flavor').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
+        <input type="range" class="r-slider" id="sl-worth" min="1" max="5" value="3" oninput="document.getElementById('lbl-worth').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
+        <input type="range" class="r-slider" id="sl-sig" min="1" max="5" value="3" oninput="document.getElementById('lbl-sig').textContent=this.value">
+      </div>
+
+      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
+        <input type="range" class="r-slider" id="sl-hosp" min="1" max="5" value="3" oninput="document.getElementById('lbl-hosp').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
+        <input type="range" class="r-slider" id="sl-atm" min="1" max="5" value="3" oninput="document.getElementById('lbl-atm').textContent=this.value">
+      </div>
+
+      <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
+      <textarea class="r-textarea" id="r-dish-comment" placeholder="What did you think of this dish?"></textarea>
+      <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
+
+      <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
+      <label class="r-file-label" for="r-photo-input">📷 Tap to add a photo of your dish</label>
+      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" onchange="handlePhotoSelect(this)">
+      <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Segoe UI',sans-serif;margin-bottom:0.5rem;display:none;"></div>
+
+      <div class="t-err" id="r-err" style="display:none;"></div>
+      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review ⭐</button>
+
+      <hr class="r-divider">
+      <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
+      <div class="r-reviews-list" id="r-reviews-list"></div>
     </div>
   </div>
 </div>
@@ -334,48 +497,165 @@
       Open location in…
     </div>
     <a class="maps-option" href="https://www.google.com/maps/place/Stone+St,+New+York,+NY+10004/@40.7040321,-74.0115947,17z" target="_blank" onclick="closeMapsChooser()">
-      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🗺️</div>
-      Google Maps
+      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🗺️</div>Google Maps
     </a>
     <a class="maps-option" href="https://waze.com/ul?ll=40.7040321,-74.0115947&navigate=yes" target="_blank" onclick="closeMapsChooser()">
-      <div class="maps-icon" style="background:#05c8f7; color:white;">W</div>
-      Waze
+      <div class="maps-icon" style="background:#05c8f7; color:white;">W</div>Waze
     </a>
     <a class="maps-option" href="https://maps.apple.com/?q=Stone+Street&ll=40.7040321,-74.0115947" target="_blank" onclick="closeMapsChooser()">
-      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🍎</div>
-      Apple Maps
+      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🍎</div>Apple Maps
     </a>
     <span class="maps-cancel" onclick="closeMapsChooser()">Cancel</span>
   </div>
 </div>
 
-<div class="toast" id="toast">Review posted!</div>
+<!-- LUCKY BITE WIN SCREEN -->
+<div class="lucky-overlay" id="lucky-overlay">
+  <div class="lucky-box">
+    <span class="lucky-emoji">🎉</span>
+    <div class="lucky-title">You Won Seb's Lucky Bite!</div>
+    <div class="lucky-number" id="lucky-number">#1000</div>
+    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free meal and drink</strong>! Tap below to confirm you received it.</div>
+    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const DISHES = [
-  { id:'korean-bbq-wing', name:'Korean BBQ Wing', desc:'Mango Habanero Sauce', price:16, emoji:'🍗', category:'starters' },
-  { id:'steak-frites', name:'Steak Frites', desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce', price:26, emoji:'🥩', category:'entree' },
-  { id:'lobster-ravioli', name:'Lobster Ravioli', desc:'Shaved Fennel, Cherry Tomato, Pink Sauce', price:25, emoji:'🦞', category:'entree' },
-  { id:'atlantic-salmon', name:'Pan Seared Atlantic Salmon', desc:'Shaved Fennel, Cherry Tomato, Pink Sauce', price:25, emoji:'🐟', category:'entree' },
-  { id:'burrata-salad', name:'Burrata Mozzarella Salad', desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze', price:20, emoji:'🥗', category:'salads' },
-  { id:'french-fries', name:'French Fries', desc:'Classic golden fries, crispy outside, fluffy inside', price:8, emoji:'🍟', category:'sides' },
-  { id:'sweet-potato-fries', name:'Sweet Potato Fries', desc:'Lightly seasoned, naturally sweet', price:8, emoji:'🍠', category:'sides' },
+// ── SUPABASE CLIENT ──
+const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_JhrwUG3L0zl2UzMOE9MSkw_EP21hhjhV';
+async function sbFetch(path, method='GET', body=null){
+  const opts={method,headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}};
+  if(body)opts.body=JSON.stringify(body);
+  const res=await fetch(SUPABASE_URL+path,opts);
+  const data=await res.json();
+  return{ok:res.ok,data,status:res.status};
+}
+
+// ── DISHES (local for now — will come from Supabase later) ──
+const DISHES=[
+  {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters'},
+  {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree'},
+  {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree'},
+  {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree'},
+  {id:'burrata-salad',name:'Burrata Mozzarella Salad',desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze',price:20,emoji:'🥗',category:'salads'},
+  {id:'french-fries',name:'French Fries',desc:'Classic golden fries, crispy outside, fluffy inside',price:8,emoji:'🍟',category:'sides'},
+  {id:'sweet-potato-fries',name:'Sweet Potato Fries',desc:'Lightly seasoned, naturally sweet',price:8,emoji:'🍠',category:'sides'},
 ];
-const CATEGORIES = [
-  {key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'}
-];
-let ratings={},currentDishId=null,selectedStar=0,activeFilter='all';
-function storageKey(id){return 'hf_reviews_'+id;}
-function loadRatings(){DISHES.forEach(d=>{try{const r=localStorage.getItem(storageKey(d.id));ratings[d.id]=r?JSON.parse(r):[];}catch(e){ratings[d.id]=[];}});}
-function saveRatings(id){try{localStorage.setItem(storageKey(id),JSON.stringify(ratings[id]));}catch(e){}}
-function avgRating(id){const r=ratings[id];if(!r||!r.length)return null;return r.reduce((s,x)=>s+x.stars,0)/r.length;}
+const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'}];
+
+// ── STATE ──
+let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, selectedPhoto=null;
+const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'steak-frites':2,'lobster-ravioli':3,'atlantic-salmon':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7};
+
+// ── SESSION ──
+function saveSession(t){localStorage.setItem('hf_taster',JSON.stringify(t));currentTaster=t;updateNavBtn();}
+function loadSession(){try{const s=localStorage.getItem('hf_taster');if(s){currentTaster=JSON.parse(s);updateNavBtn();}}catch(e){}}
+function logout(){localStorage.removeItem('hf_taster');currentTaster=null;updateNavBtn();showToast('Logged out. See you next time!');}
+function updateNavBtn(){
+  const btn=document.getElementById('nav-taster-btn');
+  if(currentTaster){btn.textContent='🍴 '+currentTaster.first_name;btn.onclick=()=>{if(confirm('Log out?'))logout();};}
+  else{btn.textContent='🍴 Log In';btn.onclick=openTasterModal;}
+}
+
+// ── TASTER MODAL ──
+function openTasterModal(){document.getElementById('taster-modal').classList.add('open');goTStep(currentTaster?99:0);}
+function closeTasterModal(){document.getElementById('taster-modal').classList.remove('open');}
+function goTStep(n){document.querySelectorAll('.t-step').forEach(s=>s.classList.remove('active'));document.getElementById('t-step-'+n)?.classList.add('active');}
+
+// ── LOGIN ──
+async function doLogin(){
+  const phone=document.getElementById('login-phone').value.trim();
+  const pin=document.getElementById('login-pin').value.trim();
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!phone||!pin){err.textContent='Please enter your phone and PIN.';err.style.display='block';return;}
+  try{
+    const{ok,data}=await sbFetch(`/rest/v1/tasters?phone_number=eq.${encodeURIComponent(phone)}&select=*`);
+    if(!ok||!data.length){err.textContent='Phone number not found.';err.style.display='block';return;}
+    const taster=data[0];
+    if(taster.pin!==pin){err.textContent='Incorrect PIN. Please try again.';err.style.display='block';return;}
+    saveSession(taster);
+    document.getElementById('t-welcome-msg').textContent='Welcome back, '+taster.first_name+'!';
+    goTStep(99);
+  }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
+}
+
+// ── SIGNUP OTP ──
+async function sendSignupOtp(){
+  const phone=document.getElementById('signup-phone').value.trim();
+  const err=document.getElementById('signup-phone-err');
+  err.style.display='none';
+  if(!phone){err.textContent='Please enter a phone number.';err.style.display='block';return;}
+  const btn=document.querySelector('#t-step-10 .t-btn');
+  btn.disabled=true;btn.textContent='Sending…';
+  try{
+    const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
+    const d=await res.json();
+    if(d.success){document.getElementById('signup-sent-to').textContent='We sent a 4-digit code to '+phone+'.';goTStep(11);}
+    else{err.textContent=d.error||'Could not send code. Check the number.';err.style.display='block';}
+  }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Send Code';
+}
+async function verifySignupOtp(){
+  const phone=document.getElementById('signup-phone').value.trim();
+  const code=document.getElementById('signup-otp').value.trim();
+  const err=document.getElementById('signup-otp-err');
+  err.style.display='none';
+  if(code.length!==4){err.textContent='Enter the 4-digit code.';err.style.display='block';return;}
+  const btn=document.querySelector('#t-step-11 .t-btn');
+  btn.disabled=true;btn.textContent='Verifying…';
+  try{
+    const res=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});
+    const d=await res.json();
+    if(d.success)goTStep(12);
+    else{err.textContent=d.error||'Invalid code.';err.style.display='block';}
+  }catch(e){err.textContent='Network error.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Verify';
+}
+
+// ── SIGNUP ACCOUNT ──
+async function doSignup(){
+  const first=document.getElementById('signup-first').value.trim();
+  const last=document.getElementById('signup-last').value.trim();
+  const dob=document.getElementById('signup-dob').value;
+  const gender=document.getElementById('signup-gender').value;
+  const pin=document.getElementById('signup-pin').value.trim();
+  const pin2=document.getElementById('signup-pin2').value.trim();
+  const privacy=document.getElementById('signup-privacy').checked;
+  const promos=document.getElementById('signup-promos').checked;
+  const err=document.getElementById('signup-pin-err');
+  err.style.display='none';
+  if(!first||!last||!dob||!gender){err.textContent='Please fill in all profile fields (step 2).';err.style.display='block';return;}
+  if(pin.length!==6||pin!==pin2){err.textContent='PINs must be 6 digits and match.';err.style.display='block';return;}
+  if(!privacy){err.textContent='Please accept the Privacy Policy to continue.';err.style.display='block';return;}
+  const phone=document.getElementById('signup-phone').value.trim();
+  const btn=document.querySelector('#t-step-13 .t-btn');
+  btn.disabled=true;btn.textContent='Creating account…';
+  try{
+    const{ok,data}=await sbFetch('/rest/v1/tasters','POST',{first_name:first,last_name:last,date_of_birth:dob,gender,phone_number:phone,pin,privacy_accepted:true,promotions_accepted:promos});
+    if(ok){
+      // Fetch the created taster
+      const{data:td}=await sbFetch(`/rest/v1/tasters?phone_number=eq.${encodeURIComponent(phone)}&select=*`);
+      if(td&&td.length){saveSession(td[0]);document.getElementById('t-welcome-msg').textContent='Welcome, '+first+'! 🍴';goTStep(99);}
+    }else{
+      if(data&&JSON.stringify(data).includes('unique')){err.textContent='This phone number already has an account. Please log in instead.';}
+      else{err.textContent='Could not create account. Please try again.';}
+      err.style.display='block';
+    }
+  }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Create My Account 🍴';
+}
+
+// ── MENU ──
 function renderMenu(filter){
   const container=document.getElementById('menu-container');container.innerHTML='';
   let groups=[];
   if(filter==='top-rated'){
-    const sorted=[...DISHES].filter(d=>avgRating(d.id)!==null).sort((a,b)=>avgRating(b.id)-avgRating(a.id));
-    if(!sorted.length){container.innerHTML='<p style="color:var(--muted);text-align:center;padding:3rem 0;font-family:Segoe UI,sans-serif;">No rated dishes yet — be the first to review!</p>';return;}
-    groups=[{label:'Top rated dishes',dishes:sorted}];
+    const sorted=[...DISHES].filter(d=>true).sort((a,b)=>a.name.localeCompare(b.name));
+    groups=[{label:'All Dishes',dishes:sorted}];
   }else if(filter==='all'){
     groups=CATEGORIES.map(c=>({label:c.label,dishes:DISHES.filter(d=>d.category===c.key)})).filter(g=>g.dishes.length);
   }else{
@@ -387,131 +667,183 @@ function renderMenu(filter){
     container.appendChild(sec);
     const grid=sec.querySelector('.dishes-grid');
     g.dishes.forEach(d=>{
-      const avg=avgRating(d.id),count=ratings[d.id]?.length||0;
       const card=document.createElement('div');
       card.className='dish-card';
       card.innerHTML=`
-        <div class="dish-img">
-          <span>${d.emoji}</span>
-          ${avg!==null?`<div class="dish-rating-badge"><span class="star">★</span>${avg.toFixed(1)}</div>`:''}
-        </div>
+        <div class="dish-img"><span>${d.emoji}</span></div>
         <div class="dish-body">
           <div class="dish-name">${d.name}</div>
           <div class="dish-desc">${d.desc}</div>
           <div class="dish-footer">
-            <div>
-              <div class="dish-price">$${d.price}</div>
-              <div class="dish-review-count">${count>0?`${count} review${count>1?'s':''} · ${avg.toFixed(1)} avg`:'No reviews yet'}</div>
-            </div>
+            <div><div class="dish-price">$${d.price}</div></div>
             <button class="rate-btn" onclick="openModal('${d.id}',event)">Rate & Review</button>
           </div>
         </div>`;
       grid.appendChild(card);
     });
   });
-  updateOverall();
-}
-function updateOverall(){
-  const all=DISHES.flatMap(d=>ratings[d.id]||[]);
-  const n=document.getElementById('overall-num'),s=document.getElementById('overall-stars'),c=document.getElementById('overall-count');
-  if(!all.length){n.textContent='—';s.innerHTML='☆☆☆☆☆';c.textContent='No ratings yet';return;}
-  const avg=all.reduce((s,r)=>s+r.stars,0)/all.length;
-  n.textContent=avg.toFixed(1);
-  const full=Math.floor(avg),half=avg-full>=0.5?1:0,empty=5-full-half;
-  s.innerHTML='★'.repeat(full)+(half?'½':'')+'<span style="color:#ddd">★</span>'.repeat(empty);
-  c.textContent=`${all.length} review${all.length>1?'s':''} across all dishes`;
 }
 function filterDishes(f,btn){
   activeFilter=f;
   document.querySelectorAll('.filter-btn').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='';b.style.borderColor='';});
   btn.classList.add('active');
-  const chefsPickSection = document.querySelector('.chefs-pick-section');
-  if(f==='chefs-pick'){
-    chefsPickSection.style.display='block';
-    document.querySelector('.menu-section').style.display='none';
-    chefsPickSection.scrollIntoView({behavior:'smooth'});
-  } else {
-    chefsPickSection.style.display='none';
-    document.querySelector('.menu-section').style.display='block';
-    renderMenu(f);
-  }
+  const chefs=document.querySelector('.chefs-pick-section');
+  const menu=document.getElementById('menu-section');
+  if(f==='chefs-pick'){chefs.style.display='block';menu.style.display='none';chefs.scrollIntoView({behavior:'smooth'});}
+  else{chefs.style.display='none';menu.style.display='block';renderMenu(f);}
 }
+
+// ── DISH MODAL ──
 function openModal(id,e){
-  e.stopPropagation();currentDishId=id;selectedStar=0;
+  e.stopPropagation();currentDishId=id;
   const d=DISHES.find(x=>x.id===id);
   document.getElementById('modal-dish-emoji').textContent=d.emoji;
   document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent=`$${d.price} · ${d.desc}`;
-  document.getElementById('review-text').value='';
-  document.getElementById('reviewer-name').value='';
-  document.querySelectorAll('.star-pick').forEach(s=>s.classList.remove('selected'));
-  document.getElementById('submit-btn').disabled=true;
-  renderReviews(id);
+  document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
+  loadReviews(id);
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function closeModalOnOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
-function pickStar(val){selectedStar=val;document.querySelectorAll('.star-pick').forEach(s=>s.classList.toggle('selected',parseInt(s.dataset.val)<=val));document.getElementById('submit-btn').disabled=false;}
-function renderReviews(id){
-  const list=document.getElementById('reviews-list'),revs=ratings[id]||[];
-  document.getElementById('reviews-label').textContent=`Reviews (${revs.length})`;
-  if(!revs.length){list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';return;}
-  list.innerHTML=[...revs].reverse().map(r=>`
-    <div class="review-item">
-      <div class="review-header"><span class="reviewer-name">${r.name||'Anonymous'}</span><span class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span></div>
-      ${r.text?`<div class="review-text">${r.text}</div>`:''}
-      <div class="review-date">${r.date}</div>
-    </div>`).join('');
+function startRating(){
+  closeModal();
+  if(!currentTaster){openTasterModal();return;}
+  openRatingModal();
 }
-function submitReview(){
-  if(!selectedStar)return;
-  const review={stars:selectedStar,name:document.getElementById('reviewer-name').value.trim()||'Anonymous',text:document.getElementById('review-text').value.trim(),date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
-  ratings[currentDishId].push(review);saveRatings(currentDishId);closeModal();renderMenu(activeFilter);
-  const t=document.getElementById('toast');t.textContent='Review posted! Thank you ⭐';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+
+// ── RATING MODAL ──
+function openRatingModal(){
+  if(!currentDishId)return;
+  const d=DISHES.find(x=>x.id===currentDishId);
+  document.getElementById('r-dish-emoji').textContent=d.emoji;
+  document.getElementById('r-dish-name').textContent=d.name;
+  document.getElementById('r-dish-desc').textContent='$'+d.price+' · '+d.desc;
+  ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
+  ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
+  document.getElementById('r-dish-comment').value='';
+  document.getElementById('r-rest-comment').value='';
+  document.getElementById('r-photo-name').style.display='none';
+  document.getElementById('r-err').style.display='none';
+  selectedPhoto=null;
+  loadReviews(currentDishId,'r-reviews-list','r-reviews-label');
+  document.getElementById('rating-modal').classList.add('open');
 }
+function closeRatingModal(){document.getElementById('rating-modal').classList.remove('open');}
+function handlePhotoSelect(input){
+  if(input.files&&input.files[0]){
+    selectedPhoto=input.files[0];
+    const el=document.getElementById('r-photo-name');
+    el.textContent='📷 '+selectedPhoto.name;el.style.display='block';
+  }
+}
+
+// ── SUBMIT RATING ──
+async function submitRating(){
+  if(!currentTaster||!currentDishId)return;
+  const btn=document.getElementById('r-submit-btn');
+  const err=document.getElementById('r-err');
+  err.style.display='none';
+  btn.disabled=true;btn.textContent='Posting…';
+  const payload={
+    taster_id:currentTaster.id,
+    restaurant_id:RESTAURANT_ID,
+    dish_id:DISH_ID_MAP[currentDishId]||1,
+    flavor:parseInt(document.getElementById('sl-flavor').value),
+    worth_every_bite:parseInt(document.getElementById('sl-worth').value),
+    signature_style:parseInt(document.getElementById('sl-sig').value),
+    hospitality:parseInt(document.getElementById('sl-hosp').value),
+    atmosphere_vibe:parseInt(document.getElementById('sl-atm').value),
+    dish_comment:document.getElementById('r-dish-comment').value.trim()||null,
+    restaurant_comment:document.getElementById('r-rest-comment').value.trim()||null,
+    photo_url:null,
+  };
+  try{
+    // Get global rating number
+    const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
+    const globalNum=(countData?.length||0)+1;
+    payload.global_rating_number=globalNum;
+    const{ok,data}=await sbFetch('/rest/v1/reviews','POST',payload);
+    if(ok){
+      closeRatingModal();
+      showToast('Review posted! Thank you ⭐');
+      if(globalNum%1000===0)showLuckyBite(globalNum);
+    }else{
+      err.textContent='Could not post review. Please try again.';err.style.display='block';
+    }
+  }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Post Review ⭐';
+}
+
+// ── LOAD REVIEWS ──
+async function loadReviews(dishId,listId='reviews-list',labelId='reviews-label'){
+  const dbDishId=DISH_ID_MAP[dishId]||1;
+  try{
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
+    const list=document.getElementById(listId);
+    const label=document.getElementById(labelId);
+    if(!ok||!data.length){
+      label.textContent='Reviews (0)';
+      list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';
+      return;
+    }
+    label.textContent=`Reviews (${data.length})`;
+    list.innerHTML=data.map(r=>{
+      const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
+      const name=r.tasters?.first_name||'Anonymous';
+      const date=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      return`<div class="review-item">
+        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">⭐ ${score}</span></div>
+        ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
+        <div class="review-date">${date}</div>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+// ── LUCKY BITE ──
+function showLuckyBite(num){
+  document.getElementById('lucky-number').textContent='#'+num;
+  document.getElementById('lucky-overlay').classList.add('open');
+}
+async function claimLuckyBite(){
+  document.getElementById('lucky-overlay').classList.remove('open');
+  showToast('🎉 Lucky Bite claimed! Enjoy your free meal!');
+}
+
+// ── MAPS ──
 function showMapsChooser(e){e.preventDefault();document.getElementById('maps-modal').classList.add('open');}
 function closeMapsChooser(){document.getElementById('maps-modal').classList.remove('open');}
-loadRatings();
-document.querySelector('.chefs-pick-section').style.display='block';
-document.querySelector('.menu-section').style.display='none';
 
-// CHEF'S PICK STAR RATING
-const cpStars = document.querySelectorAll('.cp-star');
-let cpRated = localStorage.getItem('chefs-pick-rating');
-if(cpRated){
-  cpStars.forEach((s,i)=>s.style.color=i<cpRated?'#f59e0b':'#ddd');
-  document.getElementById('chefs-pick-rated-msg').style.display='block';
-}
+// ── TOAST ──
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+
+// ── CHEF'S PICK STARS ──
+const cpStars=document.querySelectorAll('.cp-star');
 cpStars.forEach(star=>{
   star.addEventListener('mouseover',()=>cpStars.forEach((s,i)=>s.style.color=i<star.dataset.val?'#f59e0b':'#ddd'));
-  star.addEventListener('mouseout',()=>{if(!cpRated)cpStars.forEach(s=>s.style.color='#ddd');else cpStars.forEach((s,i)=>s.style.color=i<cpRated?'#f59e0b':'#ddd');});
+  star.addEventListener('mouseout',()=>cpStars.forEach(s=>s.style.color='#ddd'));
   star.addEventListener('click',()=>{
-    cpRated=star.dataset.val;
-    localStorage.setItem('chefs-pick-rating',cpRated);
-    cpStars.forEach((s,i)=>s.style.color=i<cpRated?'#f59e0b':'#ddd');
-    document.getElementById('chefs-pick-rated-msg').style.display='block';
+    currentDishId='steak-frites';
+    if(!currentTaster){openTasterModal();}
+    else{openRatingModal();}
   });
 });
+
+// ── CAROUSEL ──
 let currentSlide=0;
 const track=document.getElementById('chefs-track');
 const dots=document.querySelectorAll('.chefs-dot');
 function goToSlide(n){currentSlide=n;track.style.transform=`translateX(-${n*100}%)`;dots.forEach((d,i)=>d.classList.toggle('active',i===n));}
-let startX=0, startY=0, isDragging=false;
+let startX=0,startY=0,isDragging=false;
 const carousel=document.querySelector('.chefs-carousel');
 carousel.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;isDragging=true;},{passive:true});
-carousel.addEventListener('touchmove',e=>{
-  if(!isDragging)return;
-  const diffX=Math.abs(startX-e.touches[0].clientX);
-  const diffY=Math.abs(startY-e.touches[0].clientY);
-  if(diffX>diffY)e.preventDefault();
-},{passive:false});
-carousel.addEventListener('touchend',e=>{
-  if(!isDragging)return;
-  isDragging=false;
-  const diff=startX-e.changedTouches[0].clientX;
-  if(diff>40&&currentSlide<2)goToSlide(currentSlide+1);
-  else if(diff<-40&&currentSlide>0)goToSlide(currentSlide-1);
-},{passive:true});
+carousel.addEventListener('touchmove',e=>{if(!isDragging)return;const dx=Math.abs(startX-e.touches[0].clientX);const dy=Math.abs(startY-e.touches[0].clientY);if(dx>dy)e.preventDefault();},{passive:false});
+carousel.addEventListener('touchend',e=>{if(!isDragging)return;isDragging=false;const diff=startX-e.changedTouches[0].clientX;if(diff>40&&currentSlide<2)goToSlide(currentSlide+1);else if(diff<-40&&currentSlide>0)goToSlide(currentSlide-1);},{passive:true});
+
+// ── INIT ──
+loadSession();
+document.querySelector('.chefs-pick-section').style.display='block';
+document.getElementById('menu-section').style.display='none';
 </script>
 </body>
 </html>
