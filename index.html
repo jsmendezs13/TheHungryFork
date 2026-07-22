@@ -525,7 +525,7 @@
 <script>
 // ── SUPABASE CLIENT ──
 const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_JhrwUG3L0zl2UzMOE9MSkw_EP21hhjhV';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHdyandzcXJsZmR4Z3FtcHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjczMTksImV4cCI6MjA5ODM0MzMxOX0.eeD6NYU4u-heag5LbkZJT-jENI3AuodlMzebOsxOv2c';
 async function sbFetch(path, method='GET', body=null){
   const opts={method,headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}};
   if(body)opts.body=JSON.stringify(body);
