@@ -400,7 +400,8 @@
   <option value="other">Other</option>
         </select>
         <div class="t-err" id="signup-info-err">Please fill in all fields.</div>
-        <button class="t-btn" onclick="goTStep(13)">Continue →</button>
+        <button class="t-btn" onclick="validateStep12()">Continue →</button>
+        <button class="t-btn-ghost" onclick="goTStep(11)">← Back</button>
       </div>
 
       <!-- STEP 13: SIGNUP - PIN + privacy -->
@@ -419,6 +420,7 @@
         </div>
         <div class="t-err" id="signup-pin-err">Please check your PIN and accept the privacy policy.</div>
         <button class="t-btn" onclick="doSignup()">Create My Account 🍴</button>
+        <button class="t-btn-ghost" onclick="goTStep(12)">← Back</button>
       </div>
 
       <!-- STEP 99: SUCCESS -->
@@ -527,10 +529,13 @@
 const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHdyandzcXJsZmR4Z3FtcHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjczMTksImV4cCI6MjA5ODM0MzMxOX0.eeD6NYU4u-heag5LbkZJT-jENI3AuodlMzebOsxOv2c';
 async function sbFetch(path, method='GET', body=null){
-  const opts={method,headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}};
+  const headers={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+  if(method==='POST')headers['Prefer']='return=representation';
+  const opts={method,headers};
   if(body)opts.body=JSON.stringify(body);
   const res=await fetch(SUPABASE_URL+path,opts);
-  const data=await res.json();
+  let data=null;
+  try{data=await res.json();}catch(e){data=[];}
   return{ok:res.ok,data,status:res.status};
 }
 
@@ -565,9 +570,33 @@ function openTasterModal(){document.getElementById('taster-modal').classList.add
 function closeTasterModal(){document.getElementById('taster-modal').classList.remove('open');}
 function goTStep(n){document.querySelectorAll('.t-step').forEach(s=>s.classList.remove('active'));document.getElementById('t-step-'+n)?.classList.add('active');}
 
+// ── VALIDATE STEP 12 ──
+function validateStep12(){
+  const first=document.getElementById('signup-first').value.trim();
+  const last=document.getElementById('signup-last').value.trim();
+  const dob=document.getElementById('signup-dob').value;
+  const gender=document.getElementById('signup-gender').value;
+  const err=document.getElementById('signup-info-err');
+  if(!first){err.textContent='Please enter your first name.';err.style.display='block';return;}
+  if(!last){err.textContent='Please enter your last name.';err.style.display='block';return;}
+  if(!dob){err.textContent='Please enter your date of birth.';err.style.display='block';return;}
+  if(!gender){err.textContent='Please select your gender.';err.style.display='block';return;}
+  err.style.display='none';
+  goTStep(13);
+}
+
+// ── FORMAT PHONE ──
+function formatPhone(phone){
+  phone=phone.replace(/\D/g,'');
+  if(phone.length===10)return'+1'+phone;
+  if(phone.length===11&&phone.startsWith('1'))return'+'+phone;
+  if(!phone.startsWith('+'))return'+'+phone;
+  return phone;
+}
+
 // ── LOGIN ──
 async function doLogin(){
-  const phone=document.getElementById('login-phone').value.trim();
+  const phone=formatPhone(document.getElementById('login-phone').value.trim());
   const pin=document.getElementById('login-pin').value.trim();
   const err=document.getElementById('login-err');
   err.style.display='none';
@@ -631,7 +660,7 @@ async function doSignup(){
   if(!first||!last||!dob||!gender){err.textContent='Please fill in all profile fields (step 2).';err.style.display='block';return;}
   if(pin.length!==6||pin!==pin2){err.textContent='PINs must be 6 digits and match.';err.style.display='block';return;}
   if(!privacy){err.textContent='Please accept the Privacy Policy to continue.';err.style.display='block';return;}
-  const phone=document.getElementById('signup-phone').value.trim();
+  const phone=formatPhone(document.getElementById('signup-phone').value.trim());
   const btn=document.querySelector('#t-step-13 .t-btn');
   btn.disabled=true;btn.textContent='Creating account…';
   try{
