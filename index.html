@@ -508,8 +508,8 @@
       <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
 
       <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <label class="r-file-label" for="r-photo-input">📷 Tap to add a photo of your dish</label>
-      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" onchange="handlePhotoSelect(this)">
+      <label class="r-file-label" for="r-photo-input">📷 Tap to take a photo of your dish</label>
+      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
       <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Segoe UI',sans-serif;margin-bottom:0.5rem;display:none;"></div>
 
       <div class="t-err" id="r-err" style="display:none;"></div>
@@ -660,7 +660,18 @@ async function sendSignupOtp(){
   err.style.display='none';
   if(!phone){err.textContent='Please enter a phone number.';err.style.display='block';return;}
   const btn=document.querySelector('#t-step-10 .t-btn');
-  btn.disabled=true;btn.textContent='Sending…';
+  btn.disabled=true;btn.textContent='Checking…';
+  try{
+    const formattedPhone=formatPhone(phone);
+    const{ok,data}=await sbFetch(`/rest/v1/tasters?phone_number=eq.${encodeURIComponent(formattedPhone)}&select=id`);
+    if(ok&&data.length){
+      err.innerHTML='This phone number already has an account. <a onclick="document.getElementById(\'login-phone\').value=\''+phone+'\';goTStep(1);" style="text-decoration:underline;cursor:pointer;">Log in instead</a>';
+      err.style.display='block';
+      btn.disabled=false;btn.textContent='Send Code';
+      return;
+    }
+  }catch(e){/* if the check itself fails, fall through — the final signup step still catches duplicates */}
+  btn.textContent='Sending…';
   try{
     const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
     const d=await res.json();
