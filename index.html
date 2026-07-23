@@ -190,6 +190,10 @@
   .no-reviews { font-size:0.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:'Segoe UI',sans-serif; }
   .rate-dish-btn { width:100%; background:var(--red); color:white; border:none; border-radius:6px; padding:0.85rem; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; transition:background 0.2s; }
   .rate-dish-btn:hover { background:var(--red-dark); }
+  .review-reply { margin-top:8px; padding:8px 10px; background:var(--red-light); border-radius:6px; font-size:0.8rem; color:var(--text); font-family:'Segoe UI',sans-serif; }
+  .review-reply-form { margin-top:8px; }
+  .reply-textarea { width:100%; border:1px solid var(--border); border-radius:6px; padding:0.5rem 0.75rem; font-size:0.8rem; font-family:'Segoe UI',sans-serif; resize:vertical; min-height:50px; margin-bottom:0.4rem; }
+  .reply-btn { background:var(--red); color:white; border:none; border-radius:6px; padding:0.5rem 0.9rem; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; }
 
   /* LUCKY BITE WIN SCREEN */
   .lucky-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:900; align-items:center; justify-content:center; padding:1rem; }
@@ -212,6 +216,7 @@
       <span class="nav-logo-text">The Hungry Fork</span>
     </a>
     <div class="nav-right">
+      <button class="nav-taster-btn" id="nav-tastings-btn" onclick="openMyTastings()" style="display:none;">🍽️ My Tastings</button>
       <button class="nav-taster-btn" id="nav-taster-btn" onclick="openTasterModal()">🍴 Log In</button>
       <a href="index.html" class="nav-back">← Seb's Analytics LLC</a>
     </div>
@@ -522,6 +527,20 @@
   </div>
 </div>
 
+<!-- MY TASTINGS MODAL -->
+<div class="t-overlay" id="tastings-modal">
+  <div class="t-box">
+    <div class="t-header">
+      <h3>🍽️ My Tastings</h3>
+      <button class="t-close" onclick="closeMyTastings()">✕</button>
+    </div>
+    <div class="t-body">
+      <div class="t-sub">Every dish you've rated, and where you had it.</div>
+      <div id="tastings-list" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MAPS CHOOSER -->
 <div class="maps-modal" id="maps-modal" onclick="if(event.target===this)closeMapsChooser()">
   <div class="maps-sheet">
@@ -560,7 +579,7 @@
 const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHdyandzcXJsZmR4Z3FtcHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjczMTksImV4cCI6MjA5ODM0MzMxOX0.eeD6NYU4u-heag5LbkZJT-jENI3AuodlMzebOsxOv2c';
 async function sbFetch(path, method='GET', body=null){
-  const headers={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+  const headers={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(currentSession||SUPABASE_KEY)};
   if(method==='POST')headers['Prefer']='return=representation';
   const opts={method,headers};
   if(body)opts.body=JSON.stringify(body);
@@ -583,17 +602,35 @@ const DISHES=[
 const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'}];
 
 // ── STATE ──
-let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, selectedPhoto=null;
+let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, currentSession=null, pendingVerificationTicket=null, selectedPhoto=null;
 const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'steak-frites':2,'lobster-ravioli':3,'atlantic-salmon':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7};
 
 // ── SESSION ──
-function saveSession(t){localStorage.setItem('hf_taster',JSON.stringify(t));currentTaster=t;updateNavBtn();}
-function loadSession(){try{const s=localStorage.getItem('hf_taster');if(s){currentTaster=JSON.parse(s);updateNavBtn();}}catch(e){}}
-function logout(){localStorage.removeItem('hf_taster');currentTaster=null;updateNavBtn();showToast('Logged out. See you next time!');}
+function saveSession(t,s){localStorage.setItem('hf_taster',JSON.stringify({taster:t,session:s}));currentTaster=t;currentSession=s;updateNavBtn();}
+function loadSession(){
+  try{
+    const raw=localStorage.getItem('hf_taster');
+    if(raw){
+      const parsed=JSON.parse(raw);
+      if(parsed&&parsed.taster){currentTaster=parsed.taster;currentSession=parsed.session||null;}
+      else{currentTaster=parsed;currentSession=null;}
+      updateNavBtn();
+    }
+  }catch(e){}
+}
+function logout(){localStorage.removeItem('hf_taster');currentTaster=null;currentSession=null;updateNavBtn();showToast('Logged out. See you next time!');}
 function updateNavBtn(){
   const btn=document.getElementById('nav-taster-btn');
-  if(currentTaster){btn.textContent='🍴 '+currentTaster.first_name;btn.onclick=()=>{if(confirm('Log out?'))logout();};}
-  else{btn.textContent='🍴 Log In';btn.onclick=openTasterModal;}
+  const tastingsBtn=document.getElementById('nav-tastings-btn');
+  if(currentTaster){
+    btn.textContent='🍴 '+currentTaster.first_name;
+    btn.onclick=()=>{if(confirm('Log out?'))logout();};
+    if(tastingsBtn)tastingsBtn.style.display='inline-block';
+  }else{
+    btn.textContent='🍴 Log In';
+    btn.onclick=openTasterModal;
+    if(tastingsBtn)tastingsBtn.style.display='none';
+  }
 }
 
 // ── TASTER MODAL ──
@@ -642,15 +679,21 @@ async function doLogin(){
   const err=document.getElementById('login-err');
   err.style.display='none';
   if(!phone||!pin){err.textContent='Please enter your phone and PIN.';err.style.display='block';return;}
+  const btn=document.querySelector('#t-step-1 .t-btn');
+  btn.disabled=true;btn.textContent='Logging in…';
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/tasters?phone_number=eq.${encodeURIComponent(phone)}&select=*`);
-    if(!ok||!data.length){err.textContent='Phone number not found.';err.style.display='block';return;}
-    const taster=data[0];
-    if(taster.pin!==pin){err.textContent='Incorrect PIN. Please try again.';err.style.display='block';return;}
-    saveSession(taster);
-    document.getElementById('t-welcome-msg').textContent='Welcome back, '+taster.first_name+'!';
-    goTStep(99);
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,pin})});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      saveSession(d.taster,d.session);
+      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+'!';
+      goTStep(99);
+    }else{
+      err.textContent=d.error||'Invalid phone or PIN. Please try again.';
+      err.style.display='block';
+    }
   }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Log In';
 }
 
 // ── SIGNUP OTP ──
@@ -660,22 +703,15 @@ async function sendSignupOtp(){
   err.style.display='none';
   if(!phone){err.textContent='Please enter a phone number.';err.style.display='block';return;}
   const btn=document.querySelector('#t-step-10 .t-btn');
-  btn.disabled=true;btn.textContent='Checking…';
-  try{
-    const formattedPhone=formatPhone(phone);
-    const{ok,data}=await sbFetch(`/rest/v1/tasters?phone_number=eq.${encodeURIComponent(formattedPhone)}&select=id`);
-    if(ok&&data.length){
-      err.innerHTML='This phone number already has an account. <a onclick="document.getElementById(\'login-phone\').value=\''+phone+'\';goTStep(1);" style="text-decoration:underline;cursor:pointer;">Log in instead</a>';
-      err.style.display='block';
-      btn.disabled=false;btn.textContent='Send Code';
-      return;
-    }
-  }catch(e){/* if the check itself fails, fall through — the final signup step still catches duplicates */}
-  btn.textContent='Sending…';
+  btn.disabled=true;btn.textContent='Sending…';
   try{
     const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
     const d=await res.json();
     if(d.success){document.getElementById('signup-sent-to').textContent='We sent a 4-digit code to '+phone+'.';goTStep(11);}
+    else if(d.code==='ALREADY_REGISTERED'){
+      err.innerHTML='This phone number already has an account. <a onclick="document.getElementById(\'login-phone\').value=\''+phone+'\';goTStep(1);" style="text-decoration:underline;cursor:pointer;">Log in instead</a>';
+      err.style.display='block';
+    }
     else{err.textContent=d.error||'Could not send code. Check the number.';err.style.display='block';}
   }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
   btn.disabled=false;btn.textContent='Send Code';
@@ -691,7 +727,7 @@ async function verifySignupOtp(){
   try{
     const res=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});
     const d=await res.json();
-    if(d.success)goTStep(12);
+    if(d.success){pendingVerificationTicket=d.verificationTicket;goTStep(12);}
     else{err.textContent=d.error||'Invalid code.';err.style.display='block';}
   }catch(e){err.textContent='Network error.';err.style.display='block';}
   btn.disabled=false;btn.textContent='Verify';
@@ -715,18 +751,24 @@ async function doSignup(){
   if(!first||!last||!dob||!gender){err.textContent='Please fill in all profile fields (step 2).';err.style.display='block';return;}
   if(pin.length!==6||pin!==pin2){err.textContent='PINs must be 6 digits and match.';err.style.display='block';return;}
   if(!privacy){err.textContent='Please accept the Privacy Policy to continue.';err.style.display='block';return;}
+  if(!pendingVerificationTicket){err.textContent='Verification expired. Please verify your phone again.';err.style.display='block';return;}
   const phone=formatPhone(document.getElementById('signup-phone').value.trim());
   const btn=document.querySelector('#t-step-13 .t-btn');
   btn.disabled=true;btn.textContent='Creating account…';
   try{
-    const{ok,data}=await sbFetch('/rest/v1/tasters','POST',{first_name:first,last_name:last,date_of_birth:dob,gender,phone_number:phone,pin,privacy_accepted:true,promotions_accepted:promos});
-    if(ok){
-      // Fetch the created taster
-      const{data:td}=await sbFetch(`/rest/v1/tasters?phone_number=eq.${encodeURIComponent(phone)}&select=*`);
-      if(td&&td.length){saveSession(td[0]);document.getElementById('t-welcome-msg').textContent='Welcome, '+first+'! 🍴';goTStep(99);}
+    const res=await fetch('/api/complete-signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      verificationTicket:pendingVerificationTicket,
+      first_name:first,last_name:last,date_of_birth:dob,gender,phone_number:phone,pin,
+      privacy_accepted:true,promotions_accepted:promos
+    })});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      pendingVerificationTicket=null;
+      saveSession(d.taster,d.session);
+      document.getElementById('t-welcome-msg').textContent='Welcome, '+first+'! 🍴';
+      goTStep(99);
     }else{
-      if(data&&JSON.stringify(data).includes('unique')){err.textContent='This phone number already has an account. Please log in instead.';}
-      else{err.textContent='Could not create account. Please try again.';}
+      err.textContent=d.error||'Could not create account. Please try again.';
       err.style.display='block';
     }
   }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
@@ -784,7 +826,7 @@ function openModal(id,e){
   document.getElementById('modal-dish-emoji').textContent=d.emoji;
   document.getElementById('modal-name').textContent=d.name;
   document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
-  loadReviews(id);
+  loadReviews(id,RESTAURANT_ID);
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
@@ -809,7 +851,7 @@ function openRatingModal(){
   document.getElementById('r-photo-name').style.display='none';
   document.getElementById('r-err').style.display='none';
   selectedPhoto=null;
-  loadReviews(currentDishId,'r-reviews-list','r-reviews-label');
+  loadReviews(currentDishId,RESTAURANT_ID,'r-reviews-list','r-reviews-label');
   document.getElementById('rating-modal').classList.add('open');
 }
 function closeRatingModal(){document.getElementById('rating-modal').classList.remove('open');}
@@ -865,7 +907,7 @@ async function submitRating(){
 }
 
 // ── LOAD REVIEWS ──
-async function loadReviews(dishId,listId='reviews-list',labelId='reviews-label'){
+async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-list',labelId='reviews-label'){
   const dbDishId=DISH_ID_MAP[dishId]||1;
   try{
     const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
@@ -877,17 +919,76 @@ async function loadReviews(dishId,listId='reviews-list',labelId='reviews-label')
       return;
     }
     label.textContent=`Reviews (${data.length})`;
+    const canReply=currentTaster&&currentTaster.is_restaurant_admin&&currentTaster.restaurant_id===restaurantId;
     list.innerHTML=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const name=r.tasters?.first_name||'Anonymous';
       const date=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      let replyHtml='';
+      if(r.reply_text){
+        replyHtml=`<div class="review-reply"><strong>Restaurant reply:</strong> ${r.reply_text}</div>`;
+      }else if(canReply){
+        replyHtml=`<div class="review-reply-form">
+          <textarea class="reply-textarea" id="reply-input-${r.id}" placeholder="Write a reply as the restaurant…"></textarea>
+          <button class="reply-btn" onclick="postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')">Post Reply</button>
+        </div>`;
+      }
       return`<div class="review-item">
         <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">⭐ ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
         <div class="review-date">${date}</div>
+        ${replyHtml}
       </div>`;
     }).join('');
   }catch(e){}
+}
+
+// ── RESTAURANT REPLY ──
+async function postReply(reviewId,dishId,restaurantId,listId,labelId){
+  const textarea=document.getElementById('reply-input-'+reviewId);
+  const text=textarea.value.trim();
+  if(!text)return;
+  try{
+    const{ok}=await sbFetch(`/rest/v1/reviews?id=eq.${reviewId}`,'PATCH',{reply_text:text,reply_created_at:new Date().toISOString()});
+    if(ok){
+      showToast('Reply posted!');
+      loadReviews(dishId,restaurantId,listId,labelId);
+    }else{
+      showToast('Could not post reply.');
+    }
+  }catch(e){showToast('Network error.');}
+}
+
+// ── MY TASTINGS ──
+function openMyTastings(){
+  if(!currentTaster){openTasterModal();return;}
+  document.getElementById('tastings-modal').classList.add('open');
+  loadMyTastings();
+}
+function closeMyTastings(){document.getElementById('tastings-modal').classList.remove('open');}
+async function loadMyTastings(){
+  const list=document.getElementById('tastings-list');
+  list.innerHTML='<div class="no-reviews">Loading…</div>';
+  try{
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*,dishes(name),restaurants(name)&order=created_at.desc`);
+    if(!ok||!data.length){
+      list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
+      return;
+    }
+    list.innerHTML=data.map(r=>{
+      const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
+      const dishName=r.dishes?.name||('Dish #'+r.dish_id);
+      const restName=r.restaurants?.name||('Restaurant #'+r.restaurant_id);
+      const date=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      return`<div class="review-item">
+        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">⭐ ${score}</span></div>
+        <div class="review-text">${restName}</div>
+        <div class="review-date">${date}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    list.innerHTML='<div class="no-reviews">Could not load your tastings.</div>';
+  }
 }
 
 // ── LUCKY BITE ──
