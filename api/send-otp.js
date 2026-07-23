@@ -1,14 +1,34 @@
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   let { phone } = req.body;
   if (!phone) return res.status(400).json({ error: 'Phone number is required' });
-
   // Auto-format to E.164
   phone = phone.replace(/\D/g, '');
   if (phone.length === 10) phone = '+1' + phone;
   else if (phone.length === 11 && phone.startsWith('1')) phone = '+' + phone;
   else if (!phone.startsWith('+')) phone = '+' + phone;
+
+  // Check if this phone number is already registered before spending a Twilio send.
+  try {
+    const lookupRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/tasters?phone_number=eq.${encodeURIComponent(phone)}&select=id`,
+      {
+        headers: {
+          'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+          'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY,
+        },
+      }
+    );
+    const existing = await lookupRes.json();
+    if (lookupRes.ok && existing.length) {
+      return res.status(409).json({ error: 'This phone number already has an account.', code: 'ALREADY_REGISTERED' });
+    }
+  } catch (e) {
+    // If the check itself fails, fall through and let the OTP send proceed —
+    // account creation still catches duplicates as a backstop.
+  }
 
   try {
     const response = await fetch(
