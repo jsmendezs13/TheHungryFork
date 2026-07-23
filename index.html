@@ -970,15 +970,17 @@ async function loadMyTastings(){
   const list=document.getElementById('tastings-list');
   list.innerHTML='<div class="no-reviews">Loading…</div>';
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*,dishes(name),restaurants(name)&order=created_at.desc`);
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
     if(!ok||!data.length){
       list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
       return;
     }
     list.innerHTML=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const dishName=r.dishes?.name||('Dish #'+r.dish_id);
-      const restName=r.restaurants?.name||('Restaurant #'+r.restaurant_id);
+      const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);
+      const dishInfo=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
+      const dishName=dishInfo?dishInfo.name:('Dish #'+r.dish_id);
+      const restName='The Hungry Fork';
       const date=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       return`<div class="review-item">
         <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">⭐ ${score}</span></div>
