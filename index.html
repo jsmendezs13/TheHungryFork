@@ -25,6 +25,17 @@
   .nav-back:hover { color: var(--white); }
   .nav-taster-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; border-radius: 4px; padding: 5px 12px; font-size: 0.78rem; font-family: 'Segoe UI', sans-serif; cursor: pointer; transition: all 0.15s; }
   .nav-taster-btn:hover { background: rgba(255,255,255,0.35); }
+  .video-hero { position: relative; width: 100%; height: calc(100vh - 60px); min-height: 480px; overflow: hidden; background: #000; }
+  .video-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .video-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.7)); }
+  .video-hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 2.5rem 2rem; text-align: center; color: white; }
+  .video-hero-logo { width: 84px; height: auto; margin-bottom: 0.75rem; background: white; border-radius: 12px; padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .video-hero-title { font-family: 'Cinzel', serif; font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 700; letter-spacing: 0.04em; text-shadow: 0 2px 14px rgba(0,0,0,0.55); }
+  .video-hero-tagline { font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 0.08em; margin-top: 0.2rem; margin-bottom: 1.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.55); }
+  .video-hero-cta { background: var(--red); color: white; border: none; border-radius: 30px; padding: 0.9rem 2.2rem; font-size: 1rem; font-weight: 700; font-family: 'Segoe UI', sans-serif; letter-spacing: 0.04em; cursor: pointer; box-shadow: 0 6px 20px rgba(192,24,12,0.5); }
+  .video-hero-cta:hover { background: var(--red-dark); }
+  .video-hero-scroll-hint { position: absolute; bottom: 1.75rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.85); font-size: 1.4rem; animation: bounce 1.8s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(8px);} }
   .hero { background: var(--white); text-align: center; padding: 1.5rem 2rem 0.4rem; }
   .hero-logo { width: 200px; height: auto; margin: 0 auto; display: block; }
   .hero-title { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 700; color: var(--red); font-family: 'Cinzel', serif; letter-spacing: 0.04em; }
@@ -67,8 +78,10 @@
   .filter-btn:hover:not(.active) { border-color: var(--red); color: var(--red); }
   .menu-section { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
   .category-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); font-family: 'Segoe UI', sans-serif; }
-  .dishes-grid { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 3rem; justify-content: center; }
-  .dishes-grid .dish-card { width: 300px; flex-shrink: 0; }
+  .dishes-grid { display: flex; flex-wrap: nowrap; gap: 1.25rem; margin-bottom: 3rem; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 0.25rem 0.5rem; }
+  .dishes-grid .dish-card { width: 300px; flex-shrink: 0; scroll-snap-align: start; }
+  .dishes-grid::-webkit-scrollbar { height: 6px; }
+  .dishes-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   .dish-card { background: var(--white); border-radius: 8px; border: 0.5px solid var(--border); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
   .dish-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(192,24,12,0.1); }
   .dish-img { height: 160px; background: var(--off-white); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; position: relative; }
@@ -97,7 +110,7 @@
   .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--green); color: #fff; padding: 0.75rem 1.5rem; border-radius: 6px; font-size: 0.9rem; font-weight: 600; z-index: 9999; transition: transform 0.3s; pointer-events: none; font-family: 'Segoe UI', sans-serif; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  @media (max-width: 600px) { .dishes-grid .dish-card { width: 100%; } .hero-meta { gap: 0.75rem; } .hero-logo { width: 150px; } .hero-title { font-size: 2rem; } .hero-tagline { font-size: 1.1rem; } }
+  @media (max-width: 600px) { .dishes-grid .dish-card { width: 85vw; } .hero-meta { gap: 0.75rem; } .hero-logo { width: 150px; } .hero-title { font-size: 2rem; } .hero-tagline { font-size: 1.1rem; } }
 
   /* ── TASTER MODAL ── */
   .t-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:800; align-items:center; justify-content:center; padding:1rem; }
@@ -223,11 +236,17 @@
   </div>
 </nav>
 
-<!-- HERO -->
-<div class="hero">
-  <img src="hungry-fork-logo.png" alt="The Hungry Fork" class="hero-logo">
-  <h1 class="hero-title">The Hungry Fork</h1>
-  <p class="hero-tagline">Delicious Cousin</p>
+<!-- VIDEO HERO -->
+<div class="video-hero">
+  <video class="video-hero-bg" src="chef-video.mp4" autoplay muted loop playsinline></video>
+  <div class="video-hero-overlay"></div>
+  <div class="video-hero-content">
+    <img src="hungry-fork-logo.png" alt="The Hungry Fork" class="video-hero-logo">
+    <h1 class="video-hero-title">The Hungry Fork</h1>
+    <p class="video-hero-tagline">Delicious Cousin</p>
+    <button class="video-hero-cta" onclick="scrollToMenu()">🍴 View Menu</button>
+  </div>
+  <div class="video-hero-scroll-hint">⌄</div>
 </div>
 
 <!-- RED INFO BAR -->
@@ -254,15 +273,18 @@
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <div class="filter-inner">
-    <button class="filter-btn active" onclick="filterDishes('chefs-pick',this)" style="background:#C0180C;color:white;border-color:#C0180C;">👨‍🍳 Chef's Pick</button>
-    <button class="filter-btn" onclick="filterDishes('starters',this)">Starters</button>
-    <button class="filter-btn" onclick="filterDishes('entree',this)">Entrées</button>
-    <button class="filter-btn" onclick="filterDishes('salads',this)">Salads</button>
-    <button class="filter-btn" onclick="filterDishes('sides',this)">Sides</button>
+    <button class="filter-btn active" data-cat="chefs-pick" onclick="filterDishes('chefs-pick',this)" style="background:#C0180C;color:white;border-color:#C0180C;">👨‍🍳 Chef's Pick</button>
+    <button class="filter-btn" data-cat="starters" onclick="filterDishes('starters',this)">Starters</button>
+    <button class="filter-btn" data-cat="entree" onclick="filterDishes('entree',this)">Entrées</button>
+    <button class="filter-btn" data-cat="salads" onclick="filterDishes('salads',this)">Salads</button>
+    <button class="filter-btn" data-cat="sides" onclick="filterDishes('sides',this)">Sides</button>
+    <button class="filter-btn" data-cat="drinks" onclick="filterDishes('drinks',this)">🥤 Drinks</button>
     <button class="filter-btn" onclick="filterDishes('top-rated',this)">⭐ Top rated</button>
   </div>
 </div>
 
+<!-- SWIPEABLE MENU AREA -->
+<div id="menu-swipe-zone">
 <!-- CHEF'S PICK -->
 <section class="chefs-pick-section">
   <div class="chefs-pick-inner">
@@ -311,6 +333,8 @@
 <section class="menu-section" id="menu-section" style="display:none;">
   <div id="menu-container"></div>
 </section>
+</div>
+<!-- END SWIPEABLE MENU AREA -->
 
 <!-- FOOTER -->
 <footer>
@@ -330,6 +354,7 @@
       <div class="modal-dish-name" id="modal-name"></div>
       <div class="modal-dish-desc" id="modal-desc"></div>
       <button class="rate-dish-btn" onclick="startRating()">⭐ Rate this dish</button>
+      <button class="rate-dish-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:0.6rem;" onclick="shareDish()">🔗 Share this dish</button>
       <hr class="reviews-divider">
       <div class="modal-section-label" id="reviews-label">Reviews</div>
       <div class="reviews-list" id="reviews-list"></div>
@@ -599,7 +624,8 @@ const DISHES=[
   {id:'french-fries',name:'French Fries',desc:'Classic golden fries, crispy outside, fluffy inside',price:8,emoji:'🍟',category:'sides'},
   {id:'sweet-potato-fries',name:'Sweet Potato Fries',desc:'Lightly seasoned, naturally sweet',price:8,emoji:'🍠',category:'sides'},
 ];
-const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'}];
+const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
+const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks'];
 
 // ── STATE ──
 let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, currentSession=null, pendingVerificationTicket=null, selectedPhoto=null;
@@ -789,6 +815,11 @@ function renderMenu(filter){
   }
   groups.forEach(g=>{
     const sec=document.createElement('div');
+    if(g.dishes.length===0){
+      sec.innerHTML=`<div class="category-label">${g.label}</div><div class="no-reviews" style="padding:2rem 0;">Coming soon — check back for our ${g.label.toLowerCase()} menu!</div>`;
+      container.appendChild(sec);
+      return;
+    }
     sec.innerHTML=`<div class="category-label">${g.label}</div><div class="dishes-grid"></div>`;
     container.appendChild(sec);
     const grid=sec.querySelector('.dishes-grid');
@@ -815,22 +846,73 @@ function filterDishes(f,btn){
   btn.classList.add('active');
   const chefs=document.querySelector('.chefs-pick-section');
   const menu=document.getElementById('menu-section');
-  if(f==='chefs-pick'){chefs.style.display='block';menu.style.display='none';chefs.scrollIntoView({behavior:'smooth'});}
+  if(f==='chefs-pick'){chefs.style.display='block';menu.style.display='none';}
   else{chefs.style.display='none';menu.style.display='block';renderMenu(f);}
+}
+function scrollToMenu(){document.querySelector('.filter-bar').scrollIntoView({behavior:'smooth'});}
+function goToCategory(dir){
+  const idx=CATEGORY_ORDER.indexOf(activeFilter);
+  const from=idx===-1?0:idx;
+  let next=from+dir;
+  if(next<0)next=0;
+  if(next>=CATEGORY_ORDER.length)next=CATEGORY_ORDER.length-1;
+  if(next===from)return;
+  const key=CATEGORY_ORDER[next];
+  const btn=document.querySelector(`.filter-btn[data-cat="${key}"]`);
+  if(btn)filterDishes(key,btn);
 }
 
 // ── DISH MODAL ──
-function openModal(id,e){
-  e.stopPropagation();currentDishId=id;
+function renderDishModal(id){
   const d=DISHES.find(x=>x.id===id);
+  if(!d)return;
+  currentDishId=id;
   document.getElementById('modal-dish-emoji').textContent=d.emoji;
   document.getElementById('modal-name').textContent=d.name;
   document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
   loadReviews(id,RESTAURANT_ID);
   document.getElementById('modal').classList.add('open');
 }
-function closeModal(){document.getElementById('modal').classList.remove('open');}
+function showDishModal(id){
+  renderDishModal(id);
+  const url=new URL(window.location);
+  url.searchParams.set('dish',id);
+  history.pushState({dish:id},'',url);
+}
+function openModal(id,e){
+  e.stopPropagation();
+  showDishModal(id);
+}
+function closeModalUI(){document.getElementById('modal').classList.remove('open');}
+function closeModal(){
+  closeModalUI();
+  const url=new URL(window.location);
+  if(url.searchParams.has('dish')){
+    url.searchParams.delete('dish');
+    history.pushState({},'',url);
+  }
+}
 function closeModalOnOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
+async function shareDish(){
+  if(!currentDishId)return;
+  const d=DISHES.find(x=>x.id===currentDishId);
+  if(!d)return;
+  const url=new URL(window.location);
+  url.searchParams.set('dish',currentDishId);
+  const shareUrl=url.toString();
+  if(navigator.share){
+    try{await navigator.share({title:d.name+' — The Hungry Fork',text:'Check out '+d.name+' at The Hungry Fork!',url:shareUrl});}catch(e){}
+  }else{
+    try{await navigator.clipboard.writeText(shareUrl);showToast('Link copied!');}
+    catch(e){showToast('Could not copy link.');}
+  }
+}
+window.addEventListener('popstate',()=>{
+  const params=new URLSearchParams(window.location.search);
+  const dishId=params.get('dish');
+  if(dishId&&DISHES.find(d=>d.id===dishId))renderDishModal(dishId);
+  else closeModalUI();
+});
 function startRating(){
   closeModal();
   if(!currentTaster){openTasterModal();return;}
@@ -999,12 +1081,7 @@ function viewTastingDish(dishId){
   const d=DISHES.find(x=>x.id===dishId);
   if(!d)return;
   closeMyTastings();
-  currentDishId=dishId;
-  document.getElementById('modal-dish-emoji').textContent=d.emoji;
-  document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
-  loadReviews(dishId,RESTAURANT_ID);
-  document.getElementById('modal').classList.add('open');
+  showDishModal(dishId);
 }
 
 // ── LUCKY BITE ──
@@ -1074,11 +1151,40 @@ async function loadOverallRating(){
   }catch(e){}
 }
 
+// ── CATEGORY SWIPE ──
+let catStartX=0, catStartY=0, catDragging=false, catSwipeBlocked=false;
+const menuSwipeZone=document.getElementById('menu-swipe-zone');
+if(menuSwipeZone){
+  menuSwipeZone.addEventListener('touchstart',e=>{
+    catSwipeBlocked=!!(e.target.closest('.dishes-grid')||e.target.closest('.chefs-carousel'));
+    if(catSwipeBlocked)return;
+    catStartX=e.touches[0].clientX;catStartY=e.touches[0].clientY;catDragging=true;
+  },{passive:true});
+  menuSwipeZone.addEventListener('touchmove',e=>{
+    if(catSwipeBlocked||!catDragging)return;
+    const dx=Math.abs(catStartX-e.touches[0].clientX);
+    const dy=Math.abs(catStartY-e.touches[0].clientY);
+    if(dx>dy)e.preventDefault();
+  },{passive:false});
+  menuSwipeZone.addEventListener('touchend',e=>{
+    if(catSwipeBlocked||!catDragging)return;
+    catDragging=false;
+    const diff=catStartX-e.changedTouches[0].clientX;
+    if(diff>50)goToCategory(1);
+    else if(diff<-50)goToCategory(-1);
+  },{passive:true});
+}
+
 // ── INIT ──
 loadSession();
 loadOverallRating();
 document.querySelector('.chefs-pick-section').style.display='block';
 document.getElementById('menu-section').style.display='none';
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const dishId=params.get('dish');
+  if(dishId&&DISHES.find(d=>d.id===dishId))renderDishModal(dishId);
+})();
 </script>
 </body>
 </html>
