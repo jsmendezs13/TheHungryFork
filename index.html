@@ -11,7 +11,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --red: #9A3324; --red-dark: #7C2318; --red-light: #F3E3DC;
+    --red: #B01015; --red-dark: #7E0A0E; --red-light: #F7E3E1;
     --white: #FCF9F4; --off-white: #F5EEE3; --text: #2B211A;
     --muted: #8A7B6E; --border: #E9E0D3; --star-on: #D9A441;
     --star-off: #DCD2C4; --green: #4C7A4C; --ink: #2B211A;
@@ -37,7 +37,7 @@
   .nav-taster-btn:hover { background: var(--text); color: var(--white); }
 
   /* ── VIDEO HERO ── */
-  .video-hero { position: relative; width: 100%; height: calc(100vh - 62px); min-height: 520px; overflow: hidden; background: #14100D; }
+  .video-hero { position: relative; width: 100%; height: 100svh; min-height: 560px; overflow: hidden; background: #14100D; }
   .video-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .video-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20,16,13,.35) 0%, rgba(20,16,13,.05) 35%, rgba(20,16,13,.45) 72%, rgba(20,16,13,.75) 100%); }
   .video-hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 2.5rem 1.6rem 4.2rem; text-align: center; color: var(--white); }
@@ -250,37 +250,52 @@
     .chefs-pick-section { padding: 2.6rem 1.1rem 2.4rem; }
     .hero-meta { gap:.7rem; font-size:.74rem; }
   }
+
+  /* ── HERO ELEMENTS (grade, flag, rating, menu button) ── */
+  .hero-grade { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 16px); left:16px; width:72px; height:auto; z-index:6; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .vh-center { margin:auto 0; display:flex; flex-direction:column; align-items:center; }
+  .vh-flag { height:19px; width:auto; vertical-align:-4px; margin-left:8px; cursor:pointer; display:inline-block; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+  .vh-rating { width:min(300px, 72vw); height:auto; margin-top:1.2rem; filter:drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
+  .vh-rating-caption { font-family:var(--sans); font-size:.7rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--white); margin-top:.45rem; text-shadow:0 1px 8px rgba(0,0,0,.65); }
+  .vh-menu-btn { width:126px; height:auto; cursor:pointer; filter:drop-shadow(0 8px 22px rgba(0,0,0,.55)); transition:transform .18s; margin-bottom:.4rem; }
+  .vh-menu-btn:active { transform:scale(.94); }
+  .video-hero-content { padding:1.8rem 1.4rem 1.4rem; }
+
+  /* ── MENU ACCORDION (C&W style) ── */
+  .cat-row { text-align:center; padding:1.1rem 1rem 1.02rem; font-family:var(--sans); font-size:.82rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); background:var(--white); border-top:1px solid var(--border); cursor:pointer; transition:color .2s, background .2s; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+  #menu-swipe-zone .cat-row:last-of-type { border-bottom:1px solid var(--border); }
+  .cat-row:hover { color:var(--text); }
+  .cat-row.active { color:var(--red); font-weight:600; background:var(--off-white); }
+  .cat-panel { display:none; background:var(--white); border-top:1px solid var(--border); }
+  .cat-panel.open { display:block; }
+  .cat-panel-inner { max-width:1100px; margin:0 auto; padding:1.9rem 1.1rem .7rem; }
+
+  /* ── SANITARY GRADE ON DISHES ── */
+  .dish-grade { position:absolute; top:8px; left:8px; width:42px; height:auto; z-index:4; filter:drop-shadow(0 2px 6px rgba(0,0,0,.3)); }
+
+  /* ── FOOTER ACCOUNT LINKS ── */
+  .footer-link { background:none; border:none; color:var(--white); opacity:.75; text-decoration:underline; cursor:pointer; font-family:var(--sans); font-size:.8rem; margin:0 .55rem; letter-spacing:.04em; }
+  .footer-link:hover { opacity:1; }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo">
-      <img src="hungry-fork-logo.png" alt="The Hungry Fork">
-      <span class="nav-logo-text">The Hungry Fork</span>
-    </a>
-    <div class="nav-right">
-      <button class="nav-taster-btn" id="nav-tastings-btn" onclick="openMyTastings()" style="display:none;">My Tastings</button>
-      <button class="nav-taster-btn" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
-      <a href="index.html" class="nav-back">← Seb's Analytics LLC</a>
-    </div>
-  </div>
-</nav>
 
 <!-- VIDEO HERO -->
 <div class="video-hero">
   <video class="video-hero-bg" src="chef-video.mp4" autoplay muted loop playsinline></video>
   <div class="video-hero-overlay"></div>
+  <img src="grade-a.png" class="hero-grade" alt="Sanitary Inspection Grade A">
   <div class="video-hero-content">
-    <img src="hungry-fork-logo.png" alt="The Hungry Fork" class="video-hero-logo">
-    <div class="video-hero-eyebrow">Steakhouse &middot; Stone Street, New York</div>
-    <h1 class="video-hero-title">The Hungry Fork</h1>
-    <p class="video-hero-tagline">Delicious Cousin</p>
-    <button class="video-hero-cta" onclick="scrollToMenu()">View Menu</button>
+    <div class="vh-center">
+      <div class="video-hero-eyebrow">Steakhouse &middot; Stone Street, New York<img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)"></div>
+      <h1 class="video-hero-title">The Hungry Fork</h1>
+      <p class="video-hero-tagline">Delicious Cousin</p>
+      <img src="forks-rating.png" class="vh-rating" alt="Fork's Rating">
+      <div class="vh-rating-caption">Fork's Rating</div>
+    </div>
+    <img src="menu-button.png" class="vh-menu-btn" alt="Menu" onclick="scrollToMenu()">
   </div>
-  <div class="video-hero-scroll-hint">⌄</div>
 </div>
 
 <!-- RED INFO BAR -->
@@ -289,36 +304,12 @@
     <span>📍 <a href="#" onclick="showMapsChooser(event)" style="color:rgba(255,255,255,0.9); text-decoration:underline;">Stone Street, Manhattan, NY</a></span>
     <span>🕐 Mon–Sun 12pm–11pm</span>
   </div>
-  <div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; margin-top:0.75rem;">
-    <div style="text-align:center;">
-      <div class="overall-stars" id="overall-stars" style="font-size:1.3rem; letter-spacing:3px;">☆☆☆☆☆</div>
-      <div class="overall-count" id="overall-count" style="font-size:0.7rem; color:rgba(255,255,255,0.7); font-family:'Inter',sans-serif; margin-top:2px;">No ratings yet</div>
-      <div style="font-size:0.72rem; color:white; font-family:'Inter',sans-serif; font-weight:700; letter-spacing:0.05em; margin-top:4px;">Seb's Rate</div>
-    </div>
-    <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
-    <div style="text-align:center;">
-      <div style="color:#f59e0b; font-size:1.3rem; letter-spacing:3px;">★★★★½</div>
-      <div style="font-size:0.7rem; color:rgba(255,255,255,0.7); font-family:'Inter',sans-serif; margin-top:2px;">4.5 · Google Maps</div>
-      <div style="font-size:0.72rem; color:white; font-family:'Inter',sans-serif; font-weight:700; letter-spacing:0.05em; margin-top:4px;">Google Rate</div>
-    </div>
   </div>
-</div>
 
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <div class="filter-inner">
-    <button class="filter-btn active" data-cat="chefs-pick" onclick="filterDishes('chefs-pick',this)">Chef's Pick</button>
-    <button class="filter-btn" data-cat="starters" onclick="filterDishes('starters',this)">Starters</button>
-    <button class="filter-btn" data-cat="entree" onclick="filterDishes('entree',this)">Entrées</button>
-    <button class="filter-btn" data-cat="salads" onclick="filterDishes('salads',this)">Salads</button>
-    <button class="filter-btn" data-cat="sides" onclick="filterDishes('sides',this)">Sides</button>
-    <button class="filter-btn" data-cat="drinks" onclick="filterDishes('drinks',this)">Drinks</button>
-    <button class="filter-btn" onclick="filterDishes('top-rated',this)">Top Rated</button>
-  </div>
-</div>
-
-<!-- SWIPEABLE MENU AREA -->
+<!-- MENU ACCORDION -->
 <div id="menu-swipe-zone">
+  <div class="cat-row active" data-cat="chefs-pick" onclick="toggleCat('chefs-pick')">Chef's Pick</div>
+  <div class="cat-panel open" id="panel-chefs-pick">
 <!-- CHEF'S PICK -->
 <section class="chefs-pick-section">
   <div class="chefs-pick-inner">
@@ -327,6 +318,7 @@
     <p class="chefs-pick-subtitle">Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables</p>
     <div class="chefs-pick-price">$38</div>
     <div class="chefs-carousel">
+      <img src="grade-a.png" class="dish-grade" alt="Sanitary grade A">
       <div class="chefs-carousel-track" id="chefs-track">
         <div class="chefs-carousel-slide"><video src="chef-video.mp4" autoplay muted loop playsinline></video></div>
         <div class="chefs-carousel-slide"><img src="1_T_Bone_Fork_Steak_I.jpeg" alt="T-Bone Fork Steak"></div>
@@ -362,19 +354,31 @@
     </div>
   </div>
 </section>
-
-<!-- MENU -->
-<section class="menu-section" id="menu-section" style="display:none;">
-  <div id="menu-container"></div>
-</section>
+  </div>
+  <div class="cat-row" data-cat="starters" onclick="toggleCat('starters')">Starters</div>
+  <div class="cat-panel" id="panel-starters"></div>
+  <div class="cat-row" data-cat="entree" onclick="toggleCat('entree')">Entr&eacute;es</div>
+  <div class="cat-panel" id="panel-entree"></div>
+  <div class="cat-row" data-cat="salads" onclick="toggleCat('salads')">Salads</div>
+  <div class="cat-panel" id="panel-salads"></div>
+  <div class="cat-row" data-cat="sides" onclick="toggleCat('sides')">Sides</div>
+  <div class="cat-panel" id="panel-sides"></div>
+  <div class="cat-row" data-cat="drinks" onclick="toggleCat('drinks')">Drinks</div>
+  <div class="cat-panel" id="panel-drinks"></div>
+  <div class="cat-row" data-cat="top-rated" onclick="toggleCat('top-rated')">Top Rated</div>
+  <div class="cat-panel" id="panel-top-rated"></div>
 </div>
-<!-- END SWIPEABLE MENU AREA -->
+<!-- END MENU ACCORDION -->
 
 <!-- FOOTER -->
 <footer>
   <img src="hungry-fork-logo.png" alt="The Hungry Fork">
   <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
   <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
+  <p style="margin-top:14px;">
+    <button class="footer-link" id="nav-tastings-btn" onclick="openMyTastings()" style="display:none;">My Tastings</button>
+    <button class="footer-link" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
+  </p>
 </footer>
 
 <!-- DISH VIEW MODAL -->
@@ -682,6 +686,7 @@ function logout(){localStorage.removeItem('hf_taster');currentTaster=null;curren
 function updateNavBtn(){
   const btn=document.getElementById('nav-taster-btn');
   const tastingsBtn=document.getElementById('nav-tastings-btn');
+  if(!btn)return;
   if(currentTaster){
     btn.textContent=currentTaster.first_name;
     btn.onclick=()=>{if(confirm('Log out?'))logout();};
@@ -836,64 +841,62 @@ async function doSignup(){
 }
 
 // ── MENU ──
-function renderMenu(filter){
-  const container=document.getElementById('menu-container');container.innerHTML='';
-  let groups=[];
-  if(filter==='top-rated'){
-    const sorted=[...DISHES].filter(d=>true).sort((a,b)=>a.name.localeCompare(b.name));
-    groups=[{label:'All Dishes',dishes:sorted}];
-  }else if(filter==='all'){
-    groups=CATEGORIES.map(c=>({label:c.label,dishes:DISHES.filter(d=>d.category===c.key)})).filter(g=>g.dishes.length);
-  }else{
-    groups=[{label:CATEGORIES.find(c=>c.key===filter)?.label||filter,dishes:DISHES.filter(d=>d.category===filter)}];
+function renderMenuInto(key){
+  const panel=document.getElementById('panel-'+key);
+  if(!panel)return;
+  let dishes;
+  if(key==='top-rated')dishes=[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
+  else dishes=DISHES.filter(d=>d.category===key);
+  if(!dishes.length){
+    panel.innerHTML='<div class="cat-panel-inner"><div class="no-reviews" style="padding:2rem 0;">Coming soon — check back for this menu!</div></div>';
+    return;
   }
-  groups.forEach(g=>{
-    const sec=document.createElement('div');
-    if(g.dishes.length===0){
-      sec.innerHTML=`<div class="category-label">${g.label}</div><div class="no-reviews" style="padding:2rem 0;">Coming soon — check back for our ${g.label.toLowerCase()} menu!</div>`;
-      container.appendChild(sec);
-      return;
-    }
-    sec.innerHTML=`<div class="category-label">${g.label}</div><div class="dishes-grid"></div>`;
-    container.appendChild(sec);
-    const grid=sec.querySelector('.dishes-grid');
-    g.dishes.forEach(d=>{
-      const card=document.createElement('div');
-      card.className='dish-card';
-      card.innerHTML=`
-        <div class="dish-img"><span>${d.emoji}</span></div>
-        <div class="dish-body">
-          <div class="dish-name">${d.name}</div>
-          <div class="dish-desc">${d.desc}</div>
-          <div class="dish-footer">
-            <div><div class="dish-price">$${d.price}</div></div>
-            <button class="rate-btn" onclick="openModal('${d.id}',event)">Rate & Review</button>
-          </div>
-        </div>`;
-      grid.appendChild(card);
-    });
+  const inner=document.createElement('div');inner.className='cat-panel-inner';
+  const grid=document.createElement('div');grid.className='dishes-grid';
+  dishes.forEach(d=>{
+    const card=document.createElement('div');
+    card.className='dish-card';
+    card.innerHTML=`
+      <div class="dish-img"><img src="grade-a.png" class="dish-grade" alt="Sanitary grade A"><span>${d.emoji}</span></div>
+      <div class="dish-body">
+        <div class="dish-name">${d.name}</div>
+        <div class="dish-desc">${d.desc}</div>
+        <div class="dish-footer">
+          <div><div class="dish-price">$${d.price}</div></div>
+          <button class="rate-btn" onclick="openModal('${d.id}',event)">Rate & Review</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
   });
+  inner.appendChild(grid);
+  panel.innerHTML='';
+  panel.appendChild(inner);
 }
-function filterDishes(f,btn){
-  activeFilter=f;
-  document.querySelectorAll('.filter-btn').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='';b.style.borderColor='';});
-  btn.classList.add('active');
-  const chefs=document.querySelector('.chefs-pick-section');
-  const menu=document.getElementById('menu-section');
-  if(f==='chefs-pick'){chefs.style.display='block';menu.style.display='none';}
-  else{chefs.style.display='none';menu.style.display='block';renderMenu(f);}
+function toggleCat(key){
+  const panel=document.getElementById('panel-'+key);
+  if(!panel)return;
+  const wasOpen=panel.classList.contains('open');
+  document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('.cat-row').forEach(r=>r.classList.remove('active'));
+  if(wasOpen){activeFilter=null;return;}
+  panel.classList.add('open');
+  const row=document.querySelector('.cat-row[data-cat="'+key+'"]');
+  if(row)row.classList.add('active');
+  activeFilter=key;
+  if(key!=='chefs-pick')renderMenuInto(key);
+  if(row)setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'start'}),80);
 }
-function scrollToMenu(){document.querySelector('.filter-bar').scrollIntoView({behavior:'smooth'});}
+function scrollToMenu(){
+  if(!activeFilter)toggleCat('chefs-pick');
+  const zone=document.getElementById('menu-swipe-zone');
+  if(zone)zone.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function goToCategory(dir){
   const idx=CATEGORY_ORDER.indexOf(activeFilter);
   const from=idx===-1?0:idx;
-  let next=from+dir;
-  if(next<0)next=0;
-  if(next>=CATEGORY_ORDER.length)next=CATEGORY_ORDER.length-1;
-  if(next===from)return;
-  const key=CATEGORY_ORDER[next];
-  const btn=document.querySelector(`.filter-btn[data-cat="${key}"]`);
-  if(btn)filterDishes(key,btn);
+  const next=from+dir;
+  if(next<0||next>=CATEGORY_ORDER.length)return;
+  toggleCat(CATEGORY_ORDER[next]);
 }
 
 // ── DISH MODAL ──
@@ -1212,8 +1215,6 @@ if(menuSwipeZone){
 // ── INIT ──
 loadSession();
 loadOverallRating();
-document.querySelector('.chefs-pick-section').style.display='block';
-document.getElementById('menu-section').style.display='none';
 (function(){
   const params=new URLSearchParams(window.location.search);
   const dishId=params.get('dish');
