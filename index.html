@@ -310,6 +310,52 @@
   .warp-dot { width:8px; height:8px; border-radius:50%; background:rgba(252,249,244,.28); cursor:pointer; transition:all .25s; }
   .warp-dot.active { background:var(--red); transform:scale(1.3); box-shadow:0 0 8px rgba(200,20,15,.7); }
   #warp-content { background:var(--white); }
+
+  /* ── WARP EXTRAS ── */
+  .warp-cat-name { text-align:center; font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--white); margin-top:.9rem; position:relative; z-index:5; }
+  .warp-tap-hint { text-align:center; font-family:var(--sans); font-size:.62rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:rgba(252,249,244,.5); margin-top:.3rem; position:relative; z-index:5; }
+  #warp-stage.warp-zoom { transition:transform .42s ease-in; transform:translateZ(560px); }
+
+  /* ── CAVE INTERIOR ── */
+  .cave-overlay { display:none; position:fixed; inset:0; z-index:600; background:radial-gradient(140% 100% at 50% 0%, #38261D 0%, #1E130D 55%, #120B07 100%); }
+  .cave-overlay.open { display:flex; animation:caveIn .5s cubic-bezier(.22,.8,.3,1); }
+  @keyframes caveIn { from{opacity:0; transform:scale(1.18);} to{opacity:1; transform:scale(1);} }
+  .cave-inner { position:relative; flex:1; display:flex; flex-direction:column; padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 14px); max-width:560px; margin:0 auto; width:100%; min-height:0; }
+  .cave-back { position:absolute; top:calc(env(safe-area-inset-top,0px) + 10px); left:12px; z-index:20; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:38px; height:38px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .cave-cat { text-align:center; font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.75); padding:.7rem 0 .95rem; }
+  .cave-card-zone { position:relative; flex:1; display:flex; align-items:stretch; min-height:0; }
+  .cave-card { position:relative; flex:1; background:var(--white); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.55); padding:2.7rem 1.3rem 1.4rem; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; min-height:0; }
+  .cave-grade { position:absolute; top:12px; left:12px; width:46px; height:auto; z-index:5; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
+  .cave-photo { max-width:100%; max-height:48vh; object-fit:contain; flex:0 1 auto; min-height:0; }
+  .cave-photo-fallback { font-size:5rem; display:flex; align-items:center; justify-content:center; padding:2.5rem 0; }
+  .cave-stars-wrap { text-align:center; margin-top:.75rem; }
+  .cave-stars { position:relative; display:inline-block; font-size:1.7rem; letter-spacing:.1em; line-height:1; }
+  .cave-stars-base { color:#42100C; -webkit-text-stroke:1px rgba(120,20,14,.5); }
+  .cave-stars-fill { position:absolute; top:0; left:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#FF7A6B 0%,#EF2318 42%,#C01108 60%,#7E0A05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.5); transition:width .6s ease; }
+  .cave-stars-caption { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-top:.35rem; }
+  .cave-dish-name { font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); text-align:center; margin-top:.5rem; line-height:1.15; }
+  .cave-dish-price { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--red); margin-top:.15rem; }
+  .cave-view-caption { font-family:var(--serif); font-style:italic; color:var(--muted); font-size:.95rem; margin-top:.25rem; }
+  .cave-text-view { width:100%; height:100%; overflow-y:auto; padding:0 .3rem; -webkit-overflow-scrolling:touch; }
+  .cave-about { font-family:var(--sans); font-weight:300; font-size:.95rem; line-height:1.8; color:var(--text); margin:.9rem 0 1rem; }
+  .cave-meta-line { font-family:var(--sans); font-weight:300; font-size:.88rem; line-height:1.7; color:var(--muted); }
+  .cave-meta-line strong { color:var(--text); font-weight:600; }
+  .cave-vdots { position:absolute; right:5px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:9px; z-index:15; }
+  .cave-vdot { width:7px; height:7px; border-radius:50%; background:rgba(252,249,244,.3); cursor:pointer; transition:all .25s; }
+  .cave-vdot.active { background:var(--red); transform:scale(1.35); box-shadow:0 0 8px rgba(200,20,15,.7); }
+  .cave-hdots { display:flex; gap:8px; justify-content:center; padding:.95rem 0 .25rem; }
+  .cave-hint { text-align:center; font-family:var(--sans); font-size:.62rem; letter-spacing:.22em; text-transform:uppercase; color:rgba(252,249,244,.5); padding-bottom:.7rem; }
+  .cave-actions { display:flex; gap:.7rem; justify-content:center; }
+  .cave-rate-btn { flex:1; max-width:260px; background:var(--red); color:#fff; border:none; border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
+  .cave-share-btn { background:transparent; border:1px solid rgba(252,249,244,.5); color:var(--white); border-radius:999px; padding:.85rem 1.2rem; font-size:.78rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
+  .cave-card.anim-l { animation:cardL .32s ease; }
+  .cave-card.anim-r { animation:cardR .32s ease; }
+  .cave-card.anim-u { animation:cardU .32s ease; }
+  .cave-card.anim-d { animation:cardD .32s ease; }
+  @keyframes cardL { from{opacity:0; transform:translateX(46px);} to{opacity:1; transform:translateX(0);} }
+  @keyframes cardR { from{opacity:0; transform:translateX(-46px);} to{opacity:1; transform:translateX(0);} }
+  @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 </style>
 </head>
 <body>
@@ -343,62 +389,36 @@
 <div id="warp-room">
   <div class="warp-bg" id="warp-bg-far"></div>
   <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
-  <div class="warp-hint">Swipe to explore the menu</div>
+  <div class="warp-hint">Swipe to explore &middot; Tap a cave to enter</div>
   <div class="warp-viewport" id="warp-viewport">
     <div id="warp-stage"></div>
     <button class="warp-arrow warp-arrow-l" onclick="warpGo(-1)" aria-label="Previous">&#8249;</button>
     <button class="warp-arrow warp-arrow-r" onclick="warpGo(1)" aria-label="Next">&#8250;</button>
   </div>
   <div class="warp-dots" id="warp-dots"></div>
+  <div class="warp-cat-name" id="warp-cat-name"></div>
+  <div class="warp-tap-hint">Tap the cave to enter</div>
 </div>
-<div id="warp-content">
-  <div id="chefs-holder">
-<!-- CHEF'S PICK -->
-<section class="chefs-pick-section">
-  <div class="chefs-pick-inner">
-    <div class="chefs-pick-label">Chef's Pick</div>
-    <h2 class="chefs-pick-title">T-Bone Fork Steak</h2>
-    <p class="chefs-pick-subtitle">Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables</p>
-    <div class="chefs-pick-price">$38</div>
-    <div class="chefs-carousel">
-      <img src="grade-a.png" class="dish-grade" alt="Sanitary grade A">
-      <div class="chefs-carousel-track" id="chefs-track">
-        <div class="chefs-carousel-slide"><video src="chef-video.mp4" autoplay muted loop playsinline></video></div>
-        <div class="chefs-carousel-slide"><img src="1_T_Bone_Fork_Steak_I.jpeg" alt="T-Bone Fork Steak"></div>
-        <div class="chefs-carousel-slide"><img src="1_T_Bone_Fork_Steak_II.png" alt="T-Bone Fork Steak II"></div>
-      </div>
-      <div class="chefs-carousel-dots">
-        <div class="chefs-dot active" onclick="goToSlide(0)"></div>
-        <div class="chefs-dot" onclick="goToSlide(1)"></div>
-        <div class="chefs-dot" onclick="goToSlide(2)"></div>
+<!-- CAVE INTERIOR -->
+<div id="cave" class="cave-overlay">
+  <div class="cave-inner">
+    <button class="cave-back" onclick="exitCave()" aria-label="Back">&#8249;</button>
+    <div class="cave-cat" id="cave-cat"></div>
+    <div class="cave-card-zone" id="cave-card-zone">
+      <div class="cave-card" id="cave-card"></div>
+      <div class="cave-vdots">
+        <span class="cave-vdot active" onclick="caveSetView(0)"></span>
+        <span class="cave-vdot" onclick="caveSetView(1)"></span>
+        <span class="cave-vdot" onclick="caveSetView(2)"></span>
       </div>
     </div>
-    <p class="chefs-pick-desc">Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.</p>
-    <div class="allergen-row">
-      <span class="allergen-tag">🌾 Gluten</span>
-      <span class="allergen-tag">🥛 Dairy</span>
-      <span class="allergen-tag">🥚 Eggs</span>
-    </div>
-    <div class="mod-row">
-      <span class="mod-tag can">✓ Can remove fries</span>
-      <span class="mod-tag can">✓ Sauce on the side</span>
-      <span class="mod-tag cannot">✗ Cannot be made vegan</span>
-    </div>
-    <div style="margin-top:1.5rem;">
-      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:0.5rem;font-family:'Inter',sans-serif;">Rate this dish</div>
-      <div style="display:flex;gap:6px;justify-content:center;font-size:2rem;margin-bottom:0.5rem;" id="cp-stars-row">
-        <span class="cp-star" data-val="1" style="cursor:pointer;color:#ddd;">★</span>
-        <span class="cp-star" data-val="2" style="cursor:pointer;color:#ddd;">★</span>
-        <span class="cp-star" data-val="3" style="cursor:pointer;color:#ddd;">★</span>
-        <span class="cp-star" data-val="4" style="cursor:pointer;color:#ddd;">★</span>
-        <span class="cp-star" data-val="5" style="cursor:pointer;color:#ddd;">★</span>
-      </div>
-      <div id="chefs-pick-rated-msg" style="display:none;font-size:0.82rem;color:var(--green);font-family:'Inter',sans-serif;">Thanks for rating! ⭐</div>
+    <div class="cave-hdots" id="cave-hdots"></div>
+    <div class="cave-hint">Swipe &#10231; plates &nbsp;&middot;&nbsp; &#8597; views</div>
+    <div class="cave-actions">
+      <button class="cave-rate-btn" onclick="caveRate()">Rate &amp; Review</button>
+      <button class="cave-share-btn" onclick="caveShare()">Share</button>
     </div>
   </div>
-</section>
-  </div>
-  <div id="warp-dishes"></div>
 </div>
 <!-- END 3D WARP MENU -->
 
@@ -686,13 +706,27 @@ async function sbFetch(path, method='GET', body=null){
 
 // ── DISHES (local for now — will come from Supabase later) ──
 const DISHES=[
-  {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters'},
-  {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree'},
-  {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree'},
-  {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree'},
-  {id:'burrata-salad',name:'Burrata Mozzarella Salad',desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze',price:20,emoji:'🥗',category:'salads'},
-  {id:'french-fries',name:'French Fries',desc:'Classic golden fries, crispy outside, fluffy inside',price:8,emoji:'🍟',category:'sides'},
-  {id:'sweet-potato-fries',name:'Sweet Potato Fries',desc:'Lightly seasoned, naturally sweet',price:8,emoji:'🍠',category:'sides'},
+  {id:'tbone-fork-steak',name:'T-Bone Fork Steak',desc:'Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables',price:38,emoji:'🥩',category:'chefs-pick',
+   img:'1_T_Bone_Fork_Steak_I.jpeg',imgOpen:'1_T_Bone_Fork_Steak_II.png',
+   about:'Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.',
+   allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan'},
+  {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters',
+   img:'korean-bbq-wing-plate.jpg',imgOpen:'korean-bbq-wing-open.jpg'},
+  {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree',
+   img:'steak-frites-plate.jpg',imgOpen:'steak-frites-open.jpg',
+   about:'The strip steak is also known as a Sirloin steak, ours is served with the bone, a great steak! Roquefort butter is served on the side. Choice of mashed potato or french fries.',
+   allergens:'Dairy, Allium, Citrus, Alcohol',mods:'No Butter',
+   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"]},
+  {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree',
+   img:'lobster-ravioli-plate.jpg',imgOpen:'lobster-ravioli-open.jpg'},
+  {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree',
+   img:'atlantic-salmon-plate.jpg',imgOpen:'atlantic-salmon-open.jpg'},
+  {id:'burrata-salad',name:'Burrata Mozzarella Salad',desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze',price:20,emoji:'🥗',category:'salads',
+   img:'burrata-salad-plate.jpg',imgOpen:'burrata-salad-open.jpg'},
+  {id:'french-fries',name:'French Fries',desc:'Classic golden fries, crispy outside, fluffy inside',price:8,emoji:'🍟',category:'sides',
+   img:'french-fries-plate.jpg',imgOpen:'french-fries-open.jpg'},
+  {id:'sweet-potato-fries',name:'Sweet Potato Fries',desc:'Lightly seasoned, naturally sweet',price:8,emoji:'🍠',category:'sides',
+   img:'sweet-potato-fries-plate.jpg',imgOpen:'sweet-potato-fries-open.jpg'},
 ];
 const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
 const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks','top-rated'];
@@ -700,7 +734,7 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 
 // ── STATE ──
 let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, currentSession=null, pendingVerificationTicket=null, selectedPhoto=null;
-const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'steak-frites':2,'lobster-ravioli':3,'atlantic-salmon':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7};
+const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'steak-frites':2,'lobster-ravioli':3,'atlantic-salmon':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7,'tbone-fork-steak':2};
 
 // ── SESSION ──
 function saveSession(t,s){localStorage.setItem('hf_taster',JSON.stringify({taster:t,session:s}));currentTaster=t;currentSession=s;updateNavBtn();}
@@ -886,7 +920,7 @@ function warpBuild(){
     const p=document.createElement('div');
     p.className='warp-portal';p.dataset.idx=i;
     p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
-    p.addEventListener('click',()=>{if(Math.abs(i-warpPos)>0.3)warpTo(i);});
+    p.addEventListener('click',()=>{if(Math.abs(i-warpPos)>0.3)warpTo(i);else enterCave();});
     stage.appendChild(p);
   });
   document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
@@ -909,7 +943,7 @@ function warpTo(i){
   i=Math.max(0,Math.min(CATEGORY_ORDER.length-1,i));
   warpIdx=i;
   activeFilter=CATEGORY_ORDER[i];
-  warpContent();
+  updateWarpCatName();
   if(warpRAF)cancelAnimationFrame(warpRAF);
   const step=()=>{
     const diff=warpIdx-warpPos;
@@ -921,33 +955,137 @@ function warpTo(i){
   warpRAF=requestAnimationFrame(step);
 }
 function warpGo(dir){warpTo(warpIdx+dir);}
-function warpContent(){
+function updateWarpCatName(){
+  const el=document.getElementById('warp-cat-name');
+  if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
+}
+
+// ── CAVE INTERIOR (enter a category) ──
+let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
+function caveListFor(key){
+  if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
+  return DISHES.filter(d=>d.category===key);
+}
+function enterCave(){
   const key=CATEGORY_ORDER[warpIdx];
-  const chefs=document.getElementById('chefs-holder');
-  const dishes=document.getElementById('warp-dishes');
-  if(!chefs||!dishes)return;
-  if(key==='chefs-pick'){chefs.style.display='block';dishes.innerHTML='';return;}
-  chefs.style.display='none';
-  let list;
-  if(key==='top-rated')list=[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
-  else list=DISHES.filter(d=>d.category===key);
-  const label=WARP_META[key].label;
-  if(!list.length){
-    dishes.innerHTML=`<div class="cat-panel-inner"><div class="category-label">${label}</div><div class="no-reviews" style="padding:1.5rem 0;">Coming soon \u2014 check back for this menu!</div></div>`;
+  caveDishes=caveListFor(key);
+  caveDishIdx=0;caveViewIdx=0;
+  document.getElementById('cave-cat').textContent=WARP_META[key].label;
+  const stage=document.getElementById('warp-stage');
+  stage.classList.add('warp-zoom');
+  setTimeout(()=>{
+    document.getElementById('cave').classList.add('open');
+    document.body.style.overflow='hidden';
+    renderCave();
+    setTimeout(()=>stage.classList.remove('warp-zoom'),200);
+  },380);
+}
+function exitCave(){
+  document.getElementById('cave').classList.remove('open');
+  document.body.style.overflow='';
+}
+function caveImgErr(img,emoji){
+  const div=document.createElement('div');
+  div.className='cave-photo-fallback';
+  div.textContent=emoji;
+  img.replaceWith(div);
+}
+async function caveDishRating(dbId){
+  if(caveRatings[dbId])return caveRatings[dbId];
+  try{
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);
+    if(ok&&data.length){
+      const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
+      caveRatings[dbId]={avg,count:data.length};
+    }else caveRatings[dbId]={avg:0,count:0};
+  }catch(e){caveRatings[dbId]={avg:0,count:0};}
+  return caveRatings[dbId];
+}
+function renderCave(animClass){
+  const card=document.getElementById('cave-card');
+  const hdots=document.getElementById('cave-hdots');
+  if(!card)return;
+  if(!caveDishes.length){
+    card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A"><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
+    hdots.innerHTML='';
+    updateCaveDots();playCardAnim(card,animClass);
     return;
   }
-  dishes.innerHTML=`<div class="cat-panel-inner"><div class="category-label">${label}</div><div class="dishes-grid">${list.map(d=>`
-    <div class="dish-card">
-      <div class="dish-img"><img src="grade-a.png" class="dish-grade" alt="Sanitary grade A"><span>${d.emoji}</span></div>
-      <div class="dish-body">
-        <div class="dish-name">${d.name}</div>
-        <div class="dish-desc">${d.desc}</div>
-        <div class="dish-footer">
-          <div><div class="dish-price">$${d.price}</div></div>
-          <button class="rate-btn" onclick="openModal('${d.id}',event)">Rate & Review</button>
-        </div>
-      </div>
-    </div>`).join('')}</div></div>`;
+  const d=caveDishes[caveDishIdx];
+  currentDishId=d.id;
+  let inner='';
+  if(caveViewIdx===0){
+    inner=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
+      <div class="cave-stars-wrap"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="cave-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>`;
+  }else if(caveViewIdx===1){
+    inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
+      <div class="cave-dish-name">${d.name}</div><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
+  }else{
+    inner=`<div class="cave-text-view"><div class="cave-dish-name" style="text-align:left;">${d.name}</div>
+      <p class="cave-about">${d.about||d.desc}</p>
+      ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
+      ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
+      ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.7rem;"><strong>Choice of the following:</strong></p>${d.choices.map(c=>`<p class="cave-meta-line">${c}</p>`).join('')}`:''}
+    </div>`;
+  }
+  card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A">`+inner;
+  hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
+  updateCaveDots();playCardAnim(card,animClass);
+  if(caveViewIdx===0){
+    const dbId=DISH_ID_MAP[d.id]||1;
+    caveDishRating(dbId).then(r=>{
+      const fill=document.getElementById('cave-stars-fill');
+      const cap=document.getElementById('cave-stars-caption');
+      if(!fill)return;
+      fill.style.width=(r.avg/5*100)+'%';
+      if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:'Fork\u2019s Rating · No ratings yet';
+    });
+  }
+}
+function updateCaveDots(){document.querySelectorAll('.cave-vdot').forEach((v,i)=>v.classList.toggle('active',i===caveViewIdx));}
+function playCardAnim(card,cls){if(!cls)return;card.classList.remove('anim-l','anim-r','anim-u','anim-d');void card.offsetWidth;card.classList.add(cls);}
+function caveDish(dir){if(!caveDishes.length)return;const n=caveDishIdx+dir;if(n<0||n>=caveDishes.length)return;caveDishIdx=n;caveViewIdx=0;renderCave(dir>0?'anim-l':'anim-r');}
+function caveView(dir){if(!caveDishes.length)return;const n=caveViewIdx+dir;if(n<0||n>2)return;caveViewIdx=n;renderCave(dir>0?'anim-u':'anim-d');}
+function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
+function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;caveViewIdx=0;renderCave(dir);}
+function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
+function caveShare(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;shareDish();}
+function caveInitTouch(){
+  const zone=document.getElementById('cave-card-zone');
+  if(!zone)return;
+  let sx=0,sy=0,tracking=false,mdown=false;
+  zone.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;},{passive:true});
+  zone.addEventListener('touchmove',e=>{
+    if(!tracking)return;
+    const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
+    if(adx>ady||caveViewIdx!==2)e.preventDefault();
+  },{passive:false});
+  zone.addEventListener('touchend',e=>{
+    if(!tracking)return;tracking=false;
+    const dx=sx-e.changedTouches[0].clientX,dy=sy-e.changedTouches[0].clientY;
+    caveGesture(dx,dy);
+  },{passive:true});
+  zone.addEventListener('mousedown',e=>{mdown=true;sx=e.clientX;sy=e.clientY;e.preventDefault();});
+  window.addEventListener('mouseup',e=>{if(!mdown)return;mdown=false;caveGesture(sx-e.clientX,sy-e.clientY);});
+  window.addEventListener('keydown',e=>{
+    if(!document.getElementById('cave').classList.contains('open'))return;
+    if(e.key==='Escape')exitCave();
+    else if(e.key==='ArrowRight')caveDish(1);
+    else if(e.key==='ArrowLeft')caveDish(-1);
+    else if(e.key==='ArrowDown')caveView(1);
+    else if(e.key==='ArrowUp')caveView(-1);
+  });
+}
+function caveGesture(dx,dy){
+  if(Math.abs(dx)<36&&Math.abs(dy)<36)return;
+  if(Math.abs(dx)>Math.abs(dy)){caveDish(dx>0?1:-1);return;}
+  if(caveViewIdx===2){
+    const tv=document.querySelector('.cave-text-view');
+    if(dy<0&&tv&&tv.scrollTop<=0)caveView(-1);
+    return;
+  }
+  caveView(dy>0?1:-1);
 }
 function scrollToMenu(){
   const room=document.getElementById('warp-room');
@@ -955,7 +1093,7 @@ function scrollToMenu(){
 }
 function warpInit(){
   warpBuild();
-  warpContent();
+  updateWarpCatName();
   warpRender();
   const vp=document.getElementById('warp-viewport');
   if(!vp)return;
@@ -981,6 +1119,7 @@ function warpInit(){
   window.addEventListener('mousemove',e=>move(e.clientX));
   window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
   window.addEventListener('resize',warpRender);
+  caveInitTouch();
 }
 
 // ── DISH MODAL ──
@@ -1095,6 +1234,8 @@ async function submitRating(){
       closeRatingModal();
       showToast('Review posted! Thank you ⭐');
       loadOverallRating();
+      caveRatings={};
+      if(document.getElementById('cave').classList.contains('open'))renderCave();
       if(globalNum%1000===0)showLuckyBite(globalNum);
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
@@ -1221,29 +1362,6 @@ function closeMapsChooser(){document.getElementById('maps-modal').classList.remo
 
 // ── TOAST ──
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
-
-// ── CHEF'S PICK STARS ──
-const cpStars=document.querySelectorAll('.cp-star');
-cpStars.forEach(star=>{
-  star.addEventListener('mouseover',()=>cpStars.forEach((s,i)=>s.style.color=i<star.dataset.val?'#f59e0b':'#ddd'));
-  star.addEventListener('mouseout',()=>cpStars.forEach(s=>s.style.color='#ddd'));
-  star.addEventListener('click',()=>{
-    currentDishId='steak-frites';
-    if(!currentTaster){openTasterModal();}
-    else{openRatingModal();}
-  });
-});
-
-// ── CAROUSEL ──
-let currentSlide=0;
-const track=document.getElementById('chefs-track');
-const dots=document.querySelectorAll('.chefs-dot');
-function goToSlide(n){currentSlide=n;track.style.transform=`translateX(-${n*100}%)`;dots.forEach((d,i)=>d.classList.toggle('active',i===n));}
-let startX=0,startY=0,isDragging=false;
-const carousel=document.querySelector('.chefs-carousel');
-carousel.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;isDragging=true;},{passive:true});
-carousel.addEventListener('touchmove',e=>{if(!isDragging)return;const dx=Math.abs(startX-e.touches[0].clientX);const dy=Math.abs(startY-e.touches[0].clientY);if(dx>dy)e.preventDefault();},{passive:false});
-carousel.addEventListener('touchend',e=>{if(!isDragging)return;isDragging=false;const diff=startX-e.changedTouches[0].clientX;if(diff>40&&currentSlide<2)goToSlide(currentSlide+1);else if(diff<-40&&currentSlide>0)goToSlide(currentSlide-1);},{passive:true});
 
 // ── OVERALL RATING (Seb's Rate) ──
 function renderStars(val){
