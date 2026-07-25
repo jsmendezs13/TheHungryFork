@@ -276,6 +276,16 @@
   /* ── FOOTER ACCOUNT LINKS ── */
   .footer-link { background:none; border:none; color:var(--white); opacity:.75; text-decoration:underline; cursor:pointer; font-family:var(--sans); font-size:.8rem; margin:0 .55rem; letter-spacing:.04em; }
   .footer-link:hover { opacity:1; }
+
+  /* ── LIVE FORK'S RATING (glossy red stars) ── */
+  .vh-rating-live { display:flex; align-items:center; gap:10px; margin-top:1.2rem; }
+  .vh-laurel { height:74px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
+  .vh-laurel-r { transform:scaleX(-1); }
+  .vh-stars { position:relative; font-size:2.4rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
+  .vh-stars-base { color:#42100c; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 1px #661410; -webkit-text-stroke:1px rgba(120,20,14,.6); }
+  .vh-stars-fill { position:absolute; top:0; left:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#ff7a6b 0%,#ef2318 42%,#c01108 60%,#7e0a05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.55); filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)); transition:width .8s ease; }
+  #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
+  @media (max-width:600px){ .vh-stars{font-size:2rem;} .vh-laurel{height:60px;} }
 </style>
 </head>
 <body>
@@ -291,20 +301,19 @@
       <div class="video-hero-eyebrow">Steakhouse &middot; Stone Street, New York<img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)"></div>
       <h1 class="video-hero-title">The Hungry Fork</h1>
       <p class="video-hero-tagline">Delicious Cousin</p>
-      <img src="forks-rating.png" class="vh-rating" alt="Fork's Rating">
-      <div class="vh-rating-caption">Fork's Rating</div>
+      <div class="vh-rating-live">
+        <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'">
+        <div class="vh-stars">
+          <div class="vh-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <div class="vh-stars-fill" id="vh-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        </div>
+        <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'">
+      </div>
+      <div class="vh-rating-caption">Fork's Rating<span id="vh-rating-num"></span></div>
     </div>
     <img src="menu-button.png" class="vh-menu-btn" alt="Menu" onclick="scrollToMenu()">
   </div>
 </div>
-
-<!-- RED INFO BAR -->
-<div class="hero-info-bar">
-  <div class="hero-meta">
-    <span>📍 <a href="#" onclick="showMapsChooser(event)" style="color:rgba(255,255,255,0.9); text-decoration:underline;">Stone Street, Manhattan, NY</a></span>
-    <span>🕐 Mon–Sun 12pm–11pm</span>
-  </div>
-  </div>
 
 <!-- MENU ACCORDION -->
 <div id="menu-swipe-zone">
@@ -1172,19 +1181,19 @@ function renderStars(val){
   return s;
 }
 async function loadOverallRating(){
-  const starsEl=document.getElementById('overall-stars');
-  const countEl=document.getElementById('overall-count');
-  if(!starsEl||!countEl)return;
+  const fill=document.getElementById('vh-stars-fill');
+  const num=document.getElementById('vh-rating-num');
+  if(!fill)return;
   try{
     const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe`);
     if(!ok||!data.length){
-      starsEl.textContent='☆☆☆☆☆';
-      countEl.textContent='No ratings yet';
+      fill.style.width='0%';
+      if(num)num.textContent='';
       return;
     }
     const avg=data.reduce((sum,r)=>sum+((r.hospitality+r.atmosphere_vibe)/2),0)/data.length;
-    starsEl.textContent=avg.toFixed(1)+' '+renderStars(avg);
-    countEl.textContent='('+data.length+(data.length===1?' rating)':' ratings)');
+    fill.style.width=(avg/5*100)+'%';
+    if(num)num.textContent=' · '+avg.toFixed(1)+' ('+data.length+(data.length===1?' rating)':' ratings)');
   }catch(e){}
 }
 
