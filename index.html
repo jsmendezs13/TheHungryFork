@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#2B211A">
-<title>The Hungry Fork — Menu &amp; Ratings</title>
+<title>The Hungry Fork — Menu</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -365,48 +365,63 @@
   @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 
-  /* ── PAGE TRANSITION ── */
-  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); transition:opacity .5s ease .12s; }
-  body.warping #page-warp { opacity:1; }
+  /* ── MENU PAGE ── */
+  body { background:#150D09; }
+  #warp-room { animation:pageIn .55s ease; }
+  @keyframes pageIn { from{opacity:0; transform:scale(1.1);} to{opacity:1; transform:scale(1);} }
+  .menu-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px; background:rgba(21,13,9,.92); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-bottom:1px solid rgba(252,249,244,.08); }
+  .menu-home { color:rgba(252,249,244,.8); text-decoration:none; font-family:var(--sans); font-size:.8rem; letter-spacing:.06em; }
+  .menu-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
+  #arrive-flash { position:fixed; inset:0; z-index:960; pointer-events:none; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); animation:arriveOut .65s ease .1s forwards; }
+  @keyframes arriveOut { from{opacity:1;} to{opacity:0; visibility:hidden;} }
 </style>
 </head>
 <body>
 
 
-<!-- VIDEO HERO -->
-<div class="video-hero">
-  <video class="video-hero-bg" src="chef-video.mp4" autoplay muted loop playsinline></video>
-  <div class="video-hero-overlay"></div>
-  <img src="grade-a.png" class="hero-grade" alt="Sanitary Inspection Grade A">
-  <div class="video-hero-content">
-    <div class="vh-center">
-      <img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)">
-      <div class="video-hero-eyebrow">Steakhouse &middot; Stone Street, New York</div>
-      <h1 class="video-hero-title">The Hungry Fork</h1>
-      <p class="video-hero-tagline">Delicious Cousin</p>
-      <div class="vh-rating-live">
-        <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'">
-        <div class="vh-stars">
-          <div class="vh-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <div class="vh-stars-fill" id="vh-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        </div>
-        <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'">
+<!-- TOP BAR -->
+<div class="menu-topbar">
+  <a href="index.html" class="menu-home">&#8249; Home</a>
+  <div class="menu-topbar-title">The Menu</div>
+  <span style="width:58px;"></span>
+</div>
+
+<!-- 3D WARP MENU -->
+<div id="warp-room">
+  <div class="warp-bg" id="warp-bg-far"></div>
+  <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
+  <div class="warp-hint">Swipe to explore &middot; Tap a cave to enter</div>
+  <div class="warp-viewport" id="warp-viewport">
+    <div id="warp-stage"></div>
+    <button class="warp-arrow warp-arrow-l" onclick="warpGo(-1)" aria-label="Previous">&#8249;</button>
+    <button class="warp-arrow warp-arrow-r" onclick="warpGo(1)" aria-label="Next">&#8250;</button>
+  </div>
+  <div class="warp-dots" id="warp-dots"></div>
+  <div class="warp-cat-name" id="warp-cat-name"></div>
+  <div class="warp-tap-hint">Tap the cave to enter</div>
+</div>
+<!-- CAVE INTERIOR -->
+<div id="cave" class="cave-overlay">
+  <div class="cave-inner">
+    <button class="cave-back" onclick="exitCave()" aria-label="Back">&#8249;</button>
+    <div class="cave-cat" id="cave-cat"></div>
+    <div class="cave-card-zone" id="cave-card-zone">
+      <div class="cave-card" id="cave-card"></div>
+      <div class="cave-vdots">
+        <span class="cave-vdot active" onclick="caveSetView(0)"></span>
+        <span class="cave-vdot" onclick="caveSetView(1)"></span>
+        <span class="cave-vdot" onclick="caveSetView(2)"></span>
       </div>
-      <div class="vh-rating-caption">Fork's Rating<span id="vh-rating-num"></span></div>
     </div>
-    <div class="vh-btn-rail" id="vh-btn-rail">
-      <div class="vh-btn" data-idx="0" data-name="About Us"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
-      <div class="vh-btn" data-idx="1" data-name="Promotions"><img src="menu-button-blank.png" alt=""><span>Promotions</span></div>
-      <div class="vh-btn" data-idx="2" data-name="Career"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
-      <div class="vh-btn" data-idx="3" data-name="Menu" data-menu="1"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
-      <div class="vh-btn" data-idx="4" data-name="Events"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
-      <div class="vh-btn" data-idx="5" data-name="Reservations"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
-      <div class="vh-btn" data-idx="6" data-name="Help"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
+    <div class="cave-hdots" id="cave-hdots"></div>
+    <div class="cave-hint">Swipe &#10231; plates &nbsp;&middot;&nbsp; &#8597; views</div>
+    <div class="cave-actions">
+      <button class="cave-rate-btn" onclick="caveRate()">Rate &amp; Review</button>
+      <button class="cave-share-btn" onclick="caveShare()">Share</button>
     </div>
   </div>
 </div>
-
-
+<!-- END 3D WARP MENU -->
 
 <!-- FOOTER -->
 <footer>
@@ -418,6 +433,25 @@
     <button class="footer-link" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
   </p>
 </footer>
+
+<!-- DISH VIEW MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-hero">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <span id="modal-dish-emoji">🍽️</span>
+    </div>
+    <div class="modal-body">
+      <div class="modal-dish-name" id="modal-name"></div>
+      <div class="modal-dish-desc" id="modal-desc"></div>
+      <button class="rate-dish-btn" onclick="startRating()">⭐ Rate this dish</button>
+      <button class="rate-dish-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:0.6rem;" onclick="shareDish()">🔗 Share this dish</button>
+      <hr class="reviews-divider">
+      <div class="modal-section-label" id="reviews-label">Reviews</div>
+      <div class="reviews-list" id="reviews-list"></div>
+    </div>
+  </div>
+</div>
 
 <!-- TASTER AUTH MODAL -->
 <div class="t-overlay" id="taster-modal">
@@ -547,10 +581,64 @@
           <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
           <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:700; color:var(--red); margin-bottom:0.5rem;" id="t-welcome-msg">Welcome!</div>
           <div style="font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">You're now logged in. Let's rate some dishes!</div>
-          <button class="t-btn" onclick="closeTasterModal();menuEnter();">Explore the Menu 🍴</button>
+          <button class="t-btn" onclick="closeTasterModal();openRatingModal();">Rate This Dish ⭐</button>
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div class="r-overlay" id="rating-modal">
+  <div class="r-box">
+    <div class="r-hero">
+      <button class="r-close" onclick="closeRatingModal()">✕</button>
+      <span id="r-dish-emoji">🍽️</span>
+    </div>
+    <div class="r-body">
+      <div class="r-dish-name" id="r-dish-name"></div>
+      <div class="r-dish-desc" id="r-dish-desc"></div>
+
+      <div class="r-section">🍽️ Dish Rating</div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
+        <input type="range" class="r-slider" id="sl-flavor" min="1" max="5" value="3" oninput="document.getElementById('lbl-flavor').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
+        <input type="range" class="r-slider" id="sl-worth" min="1" max="5" value="3" oninput="document.getElementById('lbl-worth').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
+        <input type="range" class="r-slider" id="sl-sig" min="1" max="5" value="3" oninput="document.getElementById('lbl-sig').textContent=this.value">
+      </div>
+
+      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
+        <input type="range" class="r-slider" id="sl-hosp" min="1" max="5" value="3" oninput="document.getElementById('lbl-hosp').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
+        <input type="range" class="r-slider" id="sl-atm" min="1" max="5" value="3" oninput="document.getElementById('lbl-atm').textContent=this.value">
+      </div>
+
+      <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
+      <textarea class="r-textarea" id="r-dish-comment" placeholder="What did you think of this dish?"></textarea>
+      <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
+
+      <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
+      <label class="r-file-label" for="r-photo-input">📷 Tap to take a photo of your dish</label>
+      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
+      <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Inter',sans-serif;margin-bottom:0.5rem;display:none;"></div>
+
+      <div class="t-err" id="r-err" style="display:none;"></div>
+      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review ⭐</button>
+
+      <hr class="r-divider">
+      <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
+      <div class="r-reviews-list" id="r-reviews-list"></div>
     </div>
   </div>
 </div>
@@ -589,6 +677,17 @@
   </div>
 </div>
 
+<!-- LUCKY BITE WIN SCREEN -->
+<div class="lucky-overlay" id="lucky-overlay">
+  <div class="lucky-box">
+    <span class="lucky-emoji">🎉</span>
+    <div class="lucky-title">You Won Seb's Lucky Bite!</div>
+    <div class="lucky-number" id="lucky-number">#1000</div>
+    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free meal and drink</strong>! Tap below to confirm you received it.</div>
+    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
+  </div>
+</div>
+
 <!-- COMING SOON -->
 <div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
   <div class="cs-box">
@@ -599,7 +698,7 @@
   </div>
 </div>
 
-<div id="page-warp"></div>
+<div id="arrive-flash"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -879,10 +978,11 @@ function caveListFor(key){
   if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
   return DISHES.filter(d=>d.category===key);
 }
-function enterCave(){
+function enterCave(startId){
   const key=CATEGORY_ORDER[warpIdx];
   caveDishes=caveListFor(key);
-  caveDishIdx=0;caveViewIdx=0;
+  caveDishIdx=Math.max(0,caveDishes.findIndex(d=>d.id===startId));
+  caveViewIdx=0;
   document.getElementById('cave-cat').textContent=WARP_META[key].label;
   const stage=document.getElementById('warp-stage');
   stage.classList.add('warp-zoom');
@@ -962,6 +1062,13 @@ function caveDish(dir){if(!caveDishes.length)return;const n=caveDishIdx+dir;if(n
 function caveView(dir){if(!caveDishes.length)return;const n=caveViewIdx+dir;if(n<0||n>2)return;caveViewIdx=n;renderCave(dir>0?'anim-u':'anim-d');}
 function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
 function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;caveViewIdx=0;renderCave(dir);}
+function caveOpenDish(id){
+  const d=DISHES.find(x=>x.id===id);
+  if(!d)return;
+  const ci=CATEGORY_ORDER.indexOf(d.category);
+  if(ci>=0){warpIdx=ci;warpPos=ci;updateWarpCatName();warpRender();}
+  enterCave(id);
+}
 function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
 function caveShare(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;shareDish();}
 function caveInitTouch(){
@@ -1253,7 +1360,8 @@ async function loadMyTastings(){
   }
 }
 function viewTastingDish(dishId){
-  window.location.href='menu.html?dish='+encodeURIComponent(dishId);
+  closeMyTastings();
+  caveOpenDish(dishId);
 }
 
 // ── LUCKY BITE ──
@@ -1300,40 +1408,6 @@ async function loadOverallRating(){
   }catch(e){}
 }
 
-// ── ENTER MENU PAGE ──
-function menuEnter(){
-  const btn=document.querySelector('.vh-btn[data-menu]');
-  const hero=document.querySelector('.video-hero');
-  if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}
-  document.body.classList.add('warping');
-  if(btn&&hero){
-    const img=btn.querySelector('img');
-    if(img){
-      img.style.transition='filter .28s ease';
-      img.style.filter='brightness(2) saturate(1.6) drop-shadow(0 0 28px rgba(255,45,28,.95)) drop-shadow(0 0 70px rgba(255,25,15,.75))';
-    }
-    const br=btn.getBoundingClientRect(), hr=hero.getBoundingClientRect();
-    const ox=br.left-hr.left+br.width/2;
-    const oy=br.top-hr.top+br.height*0.42;
-    hero.style.transformOrigin=ox+'px '+oy+'px';
-    hero.style.transition='transform .68s cubic-bezier(.5,0,.8,.3) .1s';
-    hero.style.transform='scale(9)';
-  }
-  setTimeout(()=>{window.location.href='menu.html';},680);
-}
-
-// reset if the user swipes back from the menu (iOS restores the frozen page)
-window.addEventListener('pageshow',()=>{
-  document.body.classList.remove('warping');
-  const hero=document.querySelector('.video-hero');
-  if(hero){hero.style.transition='none';hero.style.transform='';setTimeout(()=>{hero.style.transition='';},60);}
-  document.querySelectorAll('.vh-btn').forEach(b=>{
-    b.style.opacity='';
-    const im=b.querySelector('img');
-    if(im){im.style.transition='none';im.style.filter='';setTimeout(()=>{im.style.transition='';},60);}
-  });
-});
-
 // ── COMING SOON ──
 function openComingSoon(name){
   document.getElementById('cs-title').textContent=name;
@@ -1374,7 +1448,7 @@ function railInit(){
     b.addEventListener('click',()=>{
       const i=parseInt(b.dataset.idx);
       if(Math.abs(i-railPos)>0.3){railTo(i);return;}
-      if(b.dataset.menu)menuEnter();
+      if(b.dataset.menu)scrollToMenu();
       else openComingSoon(b.dataset.name);
     });
   });
@@ -1409,7 +1483,10 @@ loadOverallRating();
 warpInit();
 (function(){
   const params=new URLSearchParams(window.location.search);
-  if(params.get('dish'))window.location.replace('menu.html'+window.location.search);
+  const dishId=params.get('dish');
+  const cat=params.get('cat');
+  if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);return;}
+  if(cat&&CATEGORY_ORDER.includes(cat)){warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();}
 })();
 </script>
 </body>
