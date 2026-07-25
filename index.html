@@ -257,14 +257,10 @@
   .vh-flag { height:26px; width:auto; display:block; margin:0 auto .55rem; cursor:pointer; filter:drop-shadow(0 1px 4px rgba(0,0,0,.55)); }
   .vh-rating { width:min(300px, 72vw); height:auto; margin-top:1.2rem; filter:drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
   .vh-rating-caption { font-family:var(--sans); font-size:.7rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--white); margin-top:.45rem; text-shadow:0 1px 8px rgba(0,0,0,.65); }
-  .vh-btn-rail { display:flex; align-items:flex-end; gap:1.15rem; width:100%; overflow-x:auto; scroll-snap-type:x proximity; padding:0 36vw .5rem; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-  .vh-btn-rail::-webkit-scrollbar { display:none; }
-  .vh-btn { flex-shrink:0; scroll-snap-align:center; display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-  .vh-btn img { width:70px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); transition:transform .18s; }
-  .vh-btn-main img { width:116px; }
-  .vh-btn:active img { transform:scale(.93); }
-  .vh-btn span { font-family:var(--sans); font-size:.6rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; }
-  .vh-btn-main span { font-size:.78rem; }
+  .vh-btn-rail { position:relative; width:100%; height:150px; perspective:700px; perspective-origin:50% 28%; touch-action:pan-y; }
+  .vh-btn { position:absolute; left:50%; top:6px; transform-style:preserve-3d; display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; -webkit-tap-highlight-color:transparent; will-change:transform,opacity; }
+  .vh-btn img { width:76px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); pointer-events:none; }
+  .vh-btn span { font-family:var(--sans); font-size:.62rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; pointer-events:none; }
   .cs-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.72); z-index:850; align-items:center; justify-content:center; padding:1.4rem; }
   .cs-overlay.open { display:flex; }
   .cs-box { background:var(--white); border-radius:20px; width:100%; max-width:340px; padding:2.4rem 1.8rem 1.8rem; text-align:center; animation:slideUp .25s ease; box-shadow:var(--shadow-lg); }
@@ -395,13 +391,13 @@
       <div class="vh-rating-caption">Fork's Rating<span id="vh-rating-num"></span></div>
     </div>
     <div class="vh-btn-rail" id="vh-btn-rail">
-      <div class="vh-btn" onclick="openComingSoon('About Us')"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
-      <div class="vh-btn" onclick="openComingSoon('Promotions')"><img src="menu-button-blank.png" alt=""><span>Promotions</span></div>
-      <div class="vh-btn" onclick="openComingSoon('Career')"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
-      <div class="vh-btn vh-btn-main" id="vh-btn-menu" onclick="scrollToMenu()"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
-      <div class="vh-btn" onclick="openComingSoon('Events')"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
-      <div class="vh-btn" onclick="openComingSoon('Reservations')"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
-      <div class="vh-btn" onclick="openComingSoon('Help')"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
+      <div class="vh-btn" data-idx="0" data-name="About Us"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
+      <div class="vh-btn" data-idx="1" data-name="Promotions"><img src="menu-button-blank.png" alt=""><span>Promotions</span></div>
+      <div class="vh-btn" data-idx="2" data-name="Career"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
+      <div class="vh-btn" data-idx="3" data-name="Menu" data-menu="1"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
+      <div class="vh-btn" data-idx="4" data-name="Events"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
+      <div class="vh-btn" data-idx="5" data-name="Reservations"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
+      <div class="vh-btn" data-idx="6" data-name="Help"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
     </div>
   </div>
 </div>
@@ -1427,11 +1423,68 @@ function openComingSoon(name){
   document.getElementById('cs-overlay').classList.add('open');
 }
 function closeComingSoon(){document.getElementById('cs-overlay').classList.remove('open');}
-(function(){
+// ── 3D BUTTON RAIL (moves like the warp room) ──
+let railPos=3, railIdx=3, railRAF=null;
+function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
+function railRender(){
+  const sp=railSpacing();
+  document.querySelectorAll('.vh-btn').forEach(b=>{
+    const d=b.dataset.idx-railPos, ad=Math.abs(d);
+    const sc=ad<1?1+(1-ad)*0.5:1;
+    b.style.transform=`translateX(-50%) translateX(${d*sp}px) translateZ(${-ad*85}px) rotateY(${-d*16}deg) scale(${sc})`;
+    b.style.opacity=ad>3?'0':String(1-ad*0.16);
+    b.style.zIndex=String(100-Math.round(ad*10));
+  });
+}
+function railTo(i){
+  i=Math.max(0,Math.min(6,i));
+  railIdx=i;
+  if(railRAF)cancelAnimationFrame(railRAF);
+  const step=()=>{
+    const diff=railIdx-railPos;
+    if(Math.abs(diff)<0.004){railPos=railIdx;railRender();railRAF=null;return;}
+    railPos+=diff*0.18;
+    railRender();
+    railRAF=requestAnimationFrame(step);
+  };
+  railRAF=requestAnimationFrame(step);
+}
+function railInit(){
   const rail=document.getElementById('vh-btn-rail');
-  const main=document.getElementById('vh-btn-menu');
-  if(rail&&main)requestAnimationFrame(()=>{rail.scrollLeft=main.offsetLeft-rail.clientWidth/2+main.clientWidth/2;});
-})();
+  if(!rail)return;
+  railRender();
+  document.querySelectorAll('.vh-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const i=parseInt(b.dataset.idx);
+      if(Math.abs(i-railPos)>0.3){railTo(i);return;}
+      if(b.dataset.menu)scrollToMenu();
+      else openComingSoon(b.dataset.name);
+    });
+  });
+  let sx=0,sy=0,p0=0,dragging=false,st=0,moved=false;
+  const down=(x,y)=>{dragging=true;moved=false;sx=x;sy=y;p0=railPos;st=Date.now();if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}};
+  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;railPos=Math.max(-0.3,Math.min(6.3,p0+(sx-x)/railSpacing()));railRender();};
+  const up=x=>{
+    if(!dragging)return;dragging=false;
+    const dx=sx-x,dt=Date.now()-st;
+    let t=Math.round(railPos);
+    if(Math.abs(dx)>40&&dt<350&&t===Math.round(p0))t=Math.round(p0)+(dx>0?1:-1);
+    railTo(t);
+  };
+  rail.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  rail.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
+    if(adx>ady)e.preventDefault();
+    move(e.touches[0].clientX);
+  },{passive:false});
+  rail.addEventListener('touchend',e=>up(e.changedTouches[0].clientX),{passive:true});
+  rail.addEventListener('mousedown',e=>{e.preventDefault();down(e.clientX,e.clientY);});
+  window.addEventListener('mousemove',e=>move(e.clientX));
+  window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
+  window.addEventListener('resize',railRender);
+}
+railInit();
 
 // ── INIT ──
 loadSession();
