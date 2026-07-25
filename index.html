@@ -1304,8 +1304,19 @@ async function loadOverallRating(){
 
 // ── ENTER MENU PAGE ──
 function menuEnter(){
+  const btn=document.querySelector('.vh-btn[data-menu]');
+  if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}
   document.body.classList.add('warping');
-  setTimeout(()=>{window.location.href='menu.html';},430);
+  if(btn){
+    btn.style.zIndex='999';
+    btn.style.transition='transform .58s cubic-bezier(.55,0,.85,.36), opacity .4s ease .22s';
+    btn.style.transform='translateX(-50%) translateZ(600px) scale(4)';
+    btn.style.opacity='0';
+    document.querySelectorAll('.vh-btn').forEach(b=>{
+      if(b!==btn){b.style.transition='opacity .3s ease';b.style.opacity='0';}
+    });
+  }
+  setTimeout(()=>{window.location.href='menu.html';},560);
 }
 
 // ── COMING SOON ──
