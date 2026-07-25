@@ -257,8 +257,21 @@
   .vh-flag { height:26px; width:auto; display:block; margin:0 auto .55rem; cursor:pointer; filter:drop-shadow(0 1px 4px rgba(0,0,0,.55)); }
   .vh-rating { width:min(300px, 72vw); height:auto; margin-top:1.2rem; filter:drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
   .vh-rating-caption { font-family:var(--sans); font-size:.7rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--white); margin-top:.45rem; text-shadow:0 1px 8px rgba(0,0,0,.65); }
-  .vh-menu-btn { width:126px; height:auto; cursor:pointer; filter:drop-shadow(0 8px 22px rgba(0,0,0,.55)); transition:transform .18s; margin-bottom:.4rem; }
-  .vh-menu-btn:active { transform:scale(.94); }
+  .vh-btn-rail { display:flex; align-items:flex-end; gap:1.15rem; width:100%; overflow-x:auto; scroll-snap-type:x proximity; padding:0 36vw .5rem; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .vh-btn-rail::-webkit-scrollbar { display:none; }
+  .vh-btn { flex-shrink:0; scroll-snap-align:center; display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .vh-btn img { width:70px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); transition:transform .18s; }
+  .vh-btn-main img { width:116px; }
+  .vh-btn:active img { transform:scale(.93); }
+  .vh-btn span { font-family:var(--sans); font-size:.6rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; }
+  .vh-btn-main span { font-size:.78rem; }
+  .cs-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.72); z-index:850; align-items:center; justify-content:center; padding:1.4rem; }
+  .cs-overlay.open { display:flex; }
+  .cs-box { background:var(--white); border-radius:20px; width:100%; max-width:340px; padding:2.4rem 1.8rem 1.8rem; text-align:center; animation:slideUp .25s ease; box-shadow:var(--shadow-lg); }
+  .cs-icon { width:72px; height:auto; margin-bottom:1rem; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); }
+  .cs-title { font-family:var(--serif); font-size:1.7rem; font-weight:600; color:var(--text); margin-bottom:.4rem; }
+  .cs-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); line-height:1.7; margin-bottom:1.4rem; }
+  .cs-close { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.8rem 2.4rem; font-size:.76rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
   .video-hero-content { padding:1.8rem 1.4rem 1.4rem; }
 
   /* ── MENU ACCORDION (C&W style) ── */
@@ -381,7 +394,15 @@
       </div>
       <div class="vh-rating-caption">Fork's Rating<span id="vh-rating-num"></span></div>
     </div>
-    <img src="menu-button.png" class="vh-menu-btn" alt="Menu" onclick="scrollToMenu()">
+    <div class="vh-btn-rail" id="vh-btn-rail">
+      <div class="vh-btn" onclick="openComingSoon('About Us')"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
+      <div class="vh-btn" onclick="openComingSoon('Promotions')"><img src="menu-button-blank.png" alt=""><span>Promotions</span></div>
+      <div class="vh-btn" onclick="openComingSoon('Career')"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
+      <div class="vh-btn vh-btn-main" id="vh-btn-menu" onclick="scrollToMenu()"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
+      <div class="vh-btn" onclick="openComingSoon('Events')"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
+      <div class="vh-btn" onclick="openComingSoon('Reservations')"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
+      <div class="vh-btn" onclick="openComingSoon('Help')"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
+    </div>
   </div>
 </div>
 
@@ -684,6 +705,16 @@
     <div class="lucky-number" id="lucky-number">#1000</div>
     <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free meal and drink</strong>! Tap below to confirm you received it.</div>
     <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
+  </div>
+</div>
+
+<!-- COMING SOON -->
+<div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
+  <div class="cs-box">
+    <img src="menu-button-blank.png" class="cs-icon" alt="">
+    <div class="cs-title" id="cs-title"></div>
+    <p class="cs-sub">Coming soon &mdash; we are cooking something special for you.</p>
+    <button class="cs-close" onclick="closeComingSoon()">Close</button>
   </div>
 </div>
 
@@ -1389,6 +1420,18 @@ async function loadOverallRating(){
     if(num)num.textContent=' · '+avg.toFixed(1)+' ('+data.length+(data.length===1?' rating)':' ratings)');
   }catch(e){}
 }
+
+// ── COMING SOON ──
+function openComingSoon(name){
+  document.getElementById('cs-title').textContent=name;
+  document.getElementById('cs-overlay').classList.add('open');
+}
+function closeComingSoon(){document.getElementById('cs-overlay').classList.remove('open');}
+(function(){
+  const rail=document.getElementById('vh-btn-rail');
+  const main=document.getElementById('vh-btn-menu');
+  if(rail&&main)requestAnimationFrame(()=>{rail.scrollLeft=main.offsetLeft-rail.clientWidth/2+main.clientWidth/2;});
+})();
 
 // ── INIT ──
 loadSession();
