@@ -364,6 +364,12 @@
   @keyframes cardR { from{opacity:0; transform:translateX(-46px);} to{opacity:1; transform:translateX(0);} }
   @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ── PAGE TRANSITION ── */
+  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 100% at 50% 40%, rgba(21,13,9,.2) 0%, #150D09 78%); transition:opacity .42s ease; }
+  body.warping #page-warp { opacity:1; }
+  body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
+  .video-hero-content { transition:transform .5s ease; }
 </style>
 </head>
 <body>
@@ -402,42 +408,7 @@
   </div>
 </div>
 
-<!-- 3D WARP MENU -->
-<div id="warp-room">
-  <div class="warp-bg" id="warp-bg-far"></div>
-  <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
-  <div class="warp-hint">Swipe to explore &middot; Tap a cave to enter</div>
-  <div class="warp-viewport" id="warp-viewport">
-    <div id="warp-stage"></div>
-    <button class="warp-arrow warp-arrow-l" onclick="warpGo(-1)" aria-label="Previous">&#8249;</button>
-    <button class="warp-arrow warp-arrow-r" onclick="warpGo(1)" aria-label="Next">&#8250;</button>
-  </div>
-  <div class="warp-dots" id="warp-dots"></div>
-  <div class="warp-cat-name" id="warp-cat-name"></div>
-  <div class="warp-tap-hint">Tap the cave to enter</div>
-</div>
-<!-- CAVE INTERIOR -->
-<div id="cave" class="cave-overlay">
-  <div class="cave-inner">
-    <button class="cave-back" onclick="exitCave()" aria-label="Back">&#8249;</button>
-    <div class="cave-cat" id="cave-cat"></div>
-    <div class="cave-card-zone" id="cave-card-zone">
-      <div class="cave-card" id="cave-card"></div>
-      <div class="cave-vdots">
-        <span class="cave-vdot active" onclick="caveSetView(0)"></span>
-        <span class="cave-vdot" onclick="caveSetView(1)"></span>
-        <span class="cave-vdot" onclick="caveSetView(2)"></span>
-      </div>
-    </div>
-    <div class="cave-hdots" id="cave-hdots"></div>
-    <div class="cave-hint">Swipe &#10231; plates &nbsp;&middot;&nbsp; &#8597; views</div>
-    <div class="cave-actions">
-      <button class="cave-rate-btn" onclick="caveRate()">Rate &amp; Review</button>
-      <button class="cave-share-btn" onclick="caveShare()">Share</button>
-    </div>
-  </div>
-</div>
-<!-- END 3D WARP MENU -->
+
 
 <!-- FOOTER -->
 <footer>
@@ -449,25 +420,6 @@
     <button class="footer-link" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
   </p>
 </footer>
-
-<!-- DISH VIEW MODAL -->
-<div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
-  <div class="modal">
-    <div class="modal-hero">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-      <span id="modal-dish-emoji">🍽️</span>
-    </div>
-    <div class="modal-body">
-      <div class="modal-dish-name" id="modal-name"></div>
-      <div class="modal-dish-desc" id="modal-desc"></div>
-      <button class="rate-dish-btn" onclick="startRating()">⭐ Rate this dish</button>
-      <button class="rate-dish-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:0.6rem;" onclick="shareDish()">🔗 Share this dish</button>
-      <hr class="reviews-divider">
-      <div class="modal-section-label" id="reviews-label">Reviews</div>
-      <div class="reviews-list" id="reviews-list"></div>
-    </div>
-  </div>
-</div>
 
 <!-- TASTER AUTH MODAL -->
 <div class="t-overlay" id="taster-modal">
@@ -597,64 +549,10 @@
           <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
           <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:700; color:var(--red); margin-bottom:0.5rem;" id="t-welcome-msg">Welcome!</div>
           <div style="font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">You're now logged in. Let's rate some dishes!</div>
-          <button class="t-btn" onclick="closeTasterModal();openRatingModal();">Rate This Dish ⭐</button>
+          <button class="t-btn" onclick="closeTasterModal();menuEnter();">Explore the Menu 🍴</button>
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
-
-<!-- RATING MODAL -->
-<div class="r-overlay" id="rating-modal">
-  <div class="r-box">
-    <div class="r-hero">
-      <button class="r-close" onclick="closeRatingModal()">✕</button>
-      <span id="r-dish-emoji">🍽️</span>
-    </div>
-    <div class="r-body">
-      <div class="r-dish-name" id="r-dish-name"></div>
-      <div class="r-dish-desc" id="r-dish-desc"></div>
-
-      <div class="r-section">🍽️ Dish Rating</div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
-        <input type="range" class="r-slider" id="sl-flavor" min="1" max="5" value="3" oninput="document.getElementById('lbl-flavor').textContent=this.value">
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
-        <input type="range" class="r-slider" id="sl-worth" min="1" max="5" value="3" oninput="document.getElementById('lbl-worth').textContent=this.value">
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
-        <input type="range" class="r-slider" id="sl-sig" min="1" max="5" value="3" oninput="document.getElementById('lbl-sig').textContent=this.value">
-      </div>
-
-      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
-        <input type="range" class="r-slider" id="sl-hosp" min="1" max="5" value="3" oninput="document.getElementById('lbl-hosp').textContent=this.value">
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
-        <input type="range" class="r-slider" id="sl-atm" min="1" max="5" value="3" oninput="document.getElementById('lbl-atm').textContent=this.value">
-      </div>
-
-      <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <textarea class="r-textarea" id="r-dish-comment" placeholder="What did you think of this dish?"></textarea>
-      <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
-
-      <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <label class="r-file-label" for="r-photo-input">📷 Tap to take a photo of your dish</label>
-      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
-      <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Inter',sans-serif;margin-bottom:0.5rem;display:none;"></div>
-
-      <div class="t-err" id="r-err" style="display:none;"></div>
-      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review ⭐</button>
-
-      <hr class="r-divider">
-      <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
-      <div class="r-reviews-list" id="r-reviews-list"></div>
     </div>
   </div>
 </div>
@@ -693,17 +591,6 @@
   </div>
 </div>
 
-<!-- LUCKY BITE WIN SCREEN -->
-<div class="lucky-overlay" id="lucky-overlay">
-  <div class="lucky-box">
-    <span class="lucky-emoji">🎉</span>
-    <div class="lucky-title">You Won Seb's Lucky Bite!</div>
-    <div class="lucky-number" id="lucky-number">#1000</div>
-    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free meal and drink</strong>! Tap below to confirm you received it.</div>
-    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
-  </div>
-</div>
-
 <!-- COMING SOON -->
 <div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
   <div class="cs-box">
@@ -714,6 +601,7 @@
   </div>
 </div>
 
+<div id="page-warp"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1367,10 +1255,7 @@ async function loadMyTastings(){
   }
 }
 function viewTastingDish(dishId){
-  const d=DISHES.find(x=>x.id===dishId);
-  if(!d)return;
-  closeMyTastings();
-  showDishModal(dishId);
+  window.location.href='menu.html?dish='+encodeURIComponent(dishId);
 }
 
 // ── LUCKY BITE ──
@@ -1417,6 +1302,12 @@ async function loadOverallRating(){
   }catch(e){}
 }
 
+// ── ENTER MENU PAGE ──
+function menuEnter(){
+  document.body.classList.add('warping');
+  setTimeout(()=>{window.location.href='menu.html';},430);
+}
+
 // ── COMING SOON ──
 function openComingSoon(name){
   document.getElementById('cs-title').textContent=name;
@@ -1457,7 +1348,7 @@ function railInit(){
     b.addEventListener('click',()=>{
       const i=parseInt(b.dataset.idx);
       if(Math.abs(i-railPos)>0.3){railTo(i);return;}
-      if(b.dataset.menu)scrollToMenu();
+      if(b.dataset.menu)menuEnter();
       else openComingSoon(b.dataset.name);
     });
   });
@@ -1492,8 +1383,7 @@ loadOverallRating();
 warpInit();
 (function(){
   const params=new URLSearchParams(window.location.search);
-  const dishId=params.get('dish');
-  if(dishId&&DISHES.find(d=>d.id===dishId))renderDishModal(dishId);
+  if(params.get('dish'))window.location.replace('menu.html'+window.location.search);
 })();
 </script>
 </body>
