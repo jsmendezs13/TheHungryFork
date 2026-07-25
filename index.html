@@ -368,6 +368,8 @@
   /* ── PAGE TRANSITION ── */
   #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 100% at 50% 40%, rgba(21,13,9,.2) 0%, #150D09 78%); transition:opacity .42s ease; }
   body.warping #page-warp { opacity:1; }
+  body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
+  .video-hero-content { transition:transform .5s ease; }
 </style>
 </head>
 <body>
@@ -1302,19 +1304,8 @@ async function loadOverallRating(){
 
 // ── ENTER MENU PAGE ──
 function menuEnter(){
-  const btn=document.querySelector('.vh-btn[data-menu]');
-  const hero=document.querySelector('.video-hero');
-  if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}
   document.body.classList.add('warping');
-  if(btn&&hero){
-    const br=btn.getBoundingClientRect(), hr=hero.getBoundingClientRect();
-    const ox=br.left-hr.left+br.width/2;
-    const oy=br.top-hr.top+br.height*0.42;
-    hero.style.transformOrigin=ox+'px '+oy+'px';
-    hero.style.transition='transform .62s cubic-bezier(.45,0,.8,.3)';
-    hero.style.transform='scale(9)';
-  }
-  setTimeout(()=>{window.location.href='menu.html';},600);
+  setTimeout(()=>{window.location.href='menu.html';},430);
 }
 
 // ── COMING SOON ──
