@@ -366,7 +366,7 @@
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 
   /* ── PAGE TRANSITION ── */
-  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 110% at 50% 62%, #FF4A38 0%, #D91508 38%, #8E0A05 68%, #4A0402 100%); transition:opacity .5s ease .12s; }
+  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); transition:opacity .5s ease .12s; }
   body.warping #page-warp { opacity:1; }
 </style>
 </head>
@@ -1321,6 +1321,18 @@ function menuEnter(){
   }
   setTimeout(()=>{window.location.href='menu.html';},680);
 }
+
+// reset if the user swipes back from the menu (iOS restores the frozen page)
+window.addEventListener('pageshow',()=>{
+  document.body.classList.remove('warping');
+  const hero=document.querySelector('.video-hero');
+  if(hero){hero.style.transition='none';hero.style.transform='';setTimeout(()=>{hero.style.transition='';},60);}
+  document.querySelectorAll('.vh-btn').forEach(b=>{
+    b.style.opacity='';
+    const im=b.querySelector('img');
+    if(im){im.style.transition='none';im.style.filter='';setTimeout(()=>{im.style.transition='';},60);}
+  });
+});
 
 // ── COMING SOON ──
 function openComingSoon(name){
