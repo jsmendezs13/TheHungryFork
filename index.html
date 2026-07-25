@@ -286,6 +286,30 @@
   .vh-stars-fill { position:absolute; top:0; left:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#ff7a6b 0%,#ef2318 42%,#c01108 60%,#7e0a05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.55); filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)); transition:width .8s ease; }
   #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
   @media (max-width:600px){ .vh-stars{font-size:2rem;} .vh-laurel{height:60px;} }
+
+  /* ── 3D WARP ROOM ── */
+  #warp-room { position:relative; overflow:hidden; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:2rem 0 1.6rem; }
+  .warp-bg { position:absolute; inset:-10% -40%; pointer-events:none; opacity:.55; will-change:transform; }
+  #warp-bg-far { background:radial-gradient(240px 140px at 20% 30%, rgba(176,16,21,.10), transparent 70%), radial-gradient(300px 180px at 75% 25%, rgba(255,200,140,.05), transparent 70%); }
+  .warp-bg-near { background:radial-gradient(200px 120px at 35% 75%, rgba(176,16,21,.14), transparent 70%), radial-gradient(260px 150px at 85% 70%, rgba(255,170,90,.06), transparent 70%); }
+  .warp-hint { text-align:center; font-family:var(--sans); font-size:.68rem; font-weight:500; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.55); margin-bottom:1.2rem; position:relative; z-index:5; }
+  .warp-viewport { position:relative; height:clamp(320px, 92vw, 440px); perspective:950px; perspective-origin:50% 40%; touch-action:pan-y; }
+  #warp-stage { position:absolute; inset:0; transform-style:preserve-3d; }
+  .warp-portal { position:absolute; top:50%; left:50%; width:min(62vw, 330px); height:min(78vw, 415px); transform-style:preserve-3d; cursor:pointer; will-change:transform, opacity; }
+  .portal-arch { width:100%; height:100%; border-radius:50% 50% 10px 10px / 42% 42% 10px 10px; background:linear-gradient(160deg, #6E6459 0%, #544A40 45%, #3E352D 100%); box-shadow:inset 0 0 0 6px rgba(0,0,0,.25), inset 0 6px 14px rgba(255,255,255,.12), 0 24px 50px rgba(0,0,0,.55); padding:16px 14px 14px; display:flex; flex-direction:column; }
+  .portal-arch-title { text-align:center; font-family:var(--sans); font-weight:600; font-size:.78rem; letter-spacing:.24em; text-transform:uppercase; color:#EFE7D5; text-shadow:0 2px 2px rgba(0,0,0,.65); padding:6px 4px 12px; white-space:nowrap; overflow:hidden; }
+  .portal-opening { position:relative; flex:1; border-radius:50% 50% 8px 8px / 46% 46% 8px 8px; background:radial-gradient(80% 55% at 50% 42%, #3A1210 0%, #1C0908 55%, #0D0505 100%); box-shadow:inset 0 0 30px rgba(0,0,0,.9), inset 0 0 0 5px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .portal-ring { position:absolute; width:58%; aspect-ratio:1; border-radius:50%; border:4px solid rgba(230,40,30,.75); box-shadow:0 0 22px 6px rgba(200,20,15,.5), inset 0 0 18px 4px rgba(200,20,15,.45); animation:portalPulse 2.6s ease-in-out infinite; }
+  .portal-ring::after { content:''; position:absolute; inset:14%; border-radius:50%; border:2px solid rgba(255,90,70,.5); box-shadow:0 0 14px 3px rgba(200,30,20,.4); }
+  @keyframes portalPulse { 0%,100%{transform:scale(1);opacity:.85;} 50%{transform:scale(1.06);opacity:1;} }
+  .portal-emoji { position:relative; font-size:3rem; filter:drop-shadow(0 5px 12px rgba(0,0,0,.7)); }
+  .warp-arrow { position:absolute; top:50%; transform:translateY(-50%); z-index:200; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1.4rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+  .warp-arrow:hover { background:rgba(252,249,244,.25); }
+  .warp-arrow-l { left:10px; } .warp-arrow-r { right:10px; }
+  .warp-dots { display:flex; gap:9px; justify-content:center; margin-top:1.3rem; position:relative; z-index:5; }
+  .warp-dot { width:8px; height:8px; border-radius:50%; background:rgba(252,249,244,.28); cursor:pointer; transition:all .25s; }
+  .warp-dot.active { background:var(--red); transform:scale(1.3); box-shadow:0 0 8px rgba(200,20,15,.7); }
+  #warp-content { background:var(--white); }
 </style>
 </head>
 <body>
@@ -315,10 +339,20 @@
   </div>
 </div>
 
-<!-- MENU ACCORDION -->
-<div id="menu-swipe-zone">
-  <div class="cat-row active" data-cat="chefs-pick" onclick="toggleCat('chefs-pick')">Chef's Pick</div>
-  <div class="cat-panel open" id="panel-chefs-pick">
+<!-- 3D WARP MENU -->
+<div id="warp-room">
+  <div class="warp-bg" id="warp-bg-far"></div>
+  <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
+  <div class="warp-hint">Swipe to explore the menu</div>
+  <div class="warp-viewport" id="warp-viewport">
+    <div id="warp-stage"></div>
+    <button class="warp-arrow warp-arrow-l" onclick="warpGo(-1)" aria-label="Previous">&#8249;</button>
+    <button class="warp-arrow warp-arrow-r" onclick="warpGo(1)" aria-label="Next">&#8250;</button>
+  </div>
+  <div class="warp-dots" id="warp-dots"></div>
+</div>
+<div id="warp-content">
+  <div id="chefs-holder">
 <!-- CHEF'S PICK -->
 <section class="chefs-pick-section">
   <div class="chefs-pick-inner">
@@ -364,20 +398,9 @@
   </div>
 </section>
   </div>
-  <div class="cat-row" data-cat="starters" onclick="toggleCat('starters')">Starters</div>
-  <div class="cat-panel" id="panel-starters"></div>
-  <div class="cat-row" data-cat="entree" onclick="toggleCat('entree')">Entr&eacute;es</div>
-  <div class="cat-panel" id="panel-entree"></div>
-  <div class="cat-row" data-cat="salads" onclick="toggleCat('salads')">Salads</div>
-  <div class="cat-panel" id="panel-salads"></div>
-  <div class="cat-row" data-cat="sides" onclick="toggleCat('sides')">Sides</div>
-  <div class="cat-panel" id="panel-sides"></div>
-  <div class="cat-row" data-cat="drinks" onclick="toggleCat('drinks')">Drinks</div>
-  <div class="cat-panel" id="panel-drinks"></div>
-  <div class="cat-row" data-cat="top-rated" onclick="toggleCat('top-rated')">Top Rated</div>
-  <div class="cat-panel" id="panel-top-rated"></div>
+  <div id="warp-dishes"></div>
 </div>
-<!-- END MENU ACCORDION -->
+<!-- END 3D WARP MENU -->
 
 <!-- FOOTER -->
 <footer>
@@ -672,7 +695,8 @@ const DISHES=[
   {id:'sweet-potato-fries',name:'Sweet Potato Fries',desc:'Lightly seasoned, naturally sweet',price:8,emoji:'🍠',category:'sides'},
 ];
 const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
-const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks'];
+const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks','top-rated'];
+const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},'top-rated':{label:'Top Rated',emoji:'\u2B50'}};
 
 // ── STATE ──
 let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, currentSession=null, pendingVerificationTicket=null, selectedPhoto=null;
@@ -850,22 +874,70 @@ async function doSignup(){
 }
 
 // ── MENU ──
-function renderMenuInto(key){
-  const panel=document.getElementById('panel-'+key);
-  if(!panel)return;
-  let dishes;
-  if(key==='top-rated')dishes=[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
-  else dishes=DISHES.filter(d=>d.category===key);
-  if(!dishes.length){
-    panel.innerHTML='<div class="cat-panel-inner"><div class="no-reviews" style="padding:2rem 0;">Coming soon — check back for this menu!</div></div>';
+// ── 3D WARP ROOM ──
+let warpPos=0, warpIdx=0, warpRAF=null;
+function warpSpacing(){return Math.min(window.innerWidth*0.62,380);}
+function warpBuild(){
+  const stage=document.getElementById('warp-stage');
+  if(!stage)return;
+  stage.innerHTML='';
+  CATEGORY_ORDER.forEach((k,i)=>{
+    const m=WARP_META[k];
+    const p=document.createElement('div');
+    p.className='warp-portal';p.dataset.idx=i;
+    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
+    p.addEventListener('click',()=>{if(Math.abs(i-warpPos)>0.3)warpTo(i);});
+    stage.appendChild(p);
+  });
+  document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
+}
+function warpRender(){
+  const sp=warpSpacing();
+  document.querySelectorAll('.warp-portal').forEach(p=>{
+    const d=p.dataset.idx-warpPos, ad=Math.abs(d);
+    p.style.transform=`translate(-50%,-50%) translateX(${d*sp}px) translateZ(${-ad*240}px) rotateY(${-d*22}deg)`;
+    p.style.opacity=ad>2.6?'0':String(1-ad*0.22);
+    p.style.filter=`brightness(${Math.max(1-ad*0.3,0.4)})`;
+    p.style.zIndex=String(100-Math.round(ad*10));
+  });
+  const far=document.getElementById('warp-bg-far'),near=document.getElementById('warp-bg-near');
+  if(far)far.style.transform=`translateX(${-warpPos*sp*0.15}px)`;
+  if(near)near.style.transform=`translateX(${-warpPos*sp*0.35}px)`;
+  document.querySelectorAll('.warp-dot').forEach(dt=>dt.classList.toggle('active',parseInt(dt.dataset.i)===warpIdx));
+}
+function warpTo(i){
+  i=Math.max(0,Math.min(CATEGORY_ORDER.length-1,i));
+  warpIdx=i;
+  activeFilter=CATEGORY_ORDER[i];
+  warpContent();
+  if(warpRAF)cancelAnimationFrame(warpRAF);
+  const step=()=>{
+    const diff=warpIdx-warpPos;
+    if(Math.abs(diff)<0.004){warpPos=warpIdx;warpRender();warpRAF=null;return;}
+    warpPos+=diff*0.16;
+    warpRender();
+    warpRAF=requestAnimationFrame(step);
+  };
+  warpRAF=requestAnimationFrame(step);
+}
+function warpGo(dir){warpTo(warpIdx+dir);}
+function warpContent(){
+  const key=CATEGORY_ORDER[warpIdx];
+  const chefs=document.getElementById('chefs-holder');
+  const dishes=document.getElementById('warp-dishes');
+  if(!chefs||!dishes)return;
+  if(key==='chefs-pick'){chefs.style.display='block';dishes.innerHTML='';return;}
+  chefs.style.display='none';
+  let list;
+  if(key==='top-rated')list=[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
+  else list=DISHES.filter(d=>d.category===key);
+  const label=WARP_META[key].label;
+  if(!list.length){
+    dishes.innerHTML=`<div class="cat-panel-inner"><div class="category-label">${label}</div><div class="no-reviews" style="padding:1.5rem 0;">Coming soon \u2014 check back for this menu!</div></div>`;
     return;
   }
-  const inner=document.createElement('div');inner.className='cat-panel-inner';
-  const grid=document.createElement('div');grid.className='dishes-grid';
-  dishes.forEach(d=>{
-    const card=document.createElement('div');
-    card.className='dish-card';
-    card.innerHTML=`
+  dishes.innerHTML=`<div class="cat-panel-inner"><div class="category-label">${label}</div><div class="dishes-grid">${list.map(d=>`
+    <div class="dish-card">
       <div class="dish-img"><img src="grade-a.png" class="dish-grade" alt="Sanitary grade A"><span>${d.emoji}</span></div>
       <div class="dish-body">
         <div class="dish-name">${d.name}</div>
@@ -874,38 +946,41 @@ function renderMenuInto(key){
           <div><div class="dish-price">$${d.price}</div></div>
           <button class="rate-btn" onclick="openModal('${d.id}',event)">Rate & Review</button>
         </div>
-      </div>`;
-    grid.appendChild(card);
-  });
-  inner.appendChild(grid);
-  panel.innerHTML='';
-  panel.appendChild(inner);
-}
-function toggleCat(key){
-  const panel=document.getElementById('panel-'+key);
-  if(!panel)return;
-  const wasOpen=panel.classList.contains('open');
-  document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('open'));
-  document.querySelectorAll('.cat-row').forEach(r=>r.classList.remove('active'));
-  if(wasOpen){activeFilter=null;return;}
-  panel.classList.add('open');
-  const row=document.querySelector('.cat-row[data-cat="'+key+'"]');
-  if(row)row.classList.add('active');
-  activeFilter=key;
-  if(key!=='chefs-pick')renderMenuInto(key);
-  if(row)setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'start'}),80);
+      </div>
+    </div>`).join('')}</div></div>`;
 }
 function scrollToMenu(){
-  if(!activeFilter)toggleCat('chefs-pick');
-  const zone=document.getElementById('menu-swipe-zone');
-  if(zone)zone.scrollIntoView({behavior:'smooth',block:'start'});
+  const room=document.getElementById('warp-room');
+  if(room)room.scrollIntoView({behavior:'smooth',block:'start'});
 }
-function goToCategory(dir){
-  const idx=CATEGORY_ORDER.indexOf(activeFilter);
-  const from=idx===-1?0:idx;
-  const next=from+dir;
-  if(next<0||next>=CATEGORY_ORDER.length)return;
-  toggleCat(CATEGORY_ORDER[next]);
+function warpInit(){
+  warpBuild();
+  warpContent();
+  warpRender();
+  const vp=document.getElementById('warp-viewport');
+  if(!vp)return;
+  let sx=0,sy=0,p0=0,dragging=false,st=0;
+  const down=(x,y)=>{dragging=true;sx=x;sy=y;p0=warpPos;st=Date.now();if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}};
+  const move=x=>{if(!dragging)return;warpPos=Math.max(-0.35,Math.min(CATEGORY_ORDER.length-0.65,p0+(sx-x)/warpSpacing()));warpRender();};
+  const up=x=>{
+    if(!dragging)return;dragging=false;
+    const dx=sx-x, dt=Date.now()-st;
+    let t=Math.round(warpPos);
+    if(Math.abs(dx)>45&&dt<350&&t===Math.round(p0))t=Math.round(p0)+(dx>0?1:-1);
+    warpTo(t);
+  };
+  vp.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  vp.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const dx=Math.abs(sx-e.touches[0].clientX),dy=Math.abs(sy-e.touches[0].clientY);
+    if(dx>dy)e.preventDefault();
+    move(e.touches[0].clientX);
+  },{passive:false});
+  vp.addEventListener('touchend',e=>up(e.changedTouches[0].clientX),{passive:true});
+  vp.addEventListener('mousedown',e=>{e.preventDefault();down(e.clientX,e.clientY);});
+  window.addEventListener('mousemove',e=>move(e.clientX));
+  window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
+  window.addEventListener('resize',warpRender);
 }
 
 // ── DISH MODAL ──
@@ -1197,33 +1272,10 @@ async function loadOverallRating(){
   }catch(e){}
 }
 
-// ── CATEGORY SWIPE ──
-let catStartX=0, catStartY=0, catDragging=false, catSwipeBlocked=false;
-const menuSwipeZone=document.getElementById('menu-swipe-zone');
-if(menuSwipeZone){
-  menuSwipeZone.addEventListener('touchstart',e=>{
-    catSwipeBlocked=!!(e.target.closest('.dishes-grid')||e.target.closest('.chefs-carousel'));
-    if(catSwipeBlocked)return;
-    catStartX=e.touches[0].clientX;catStartY=e.touches[0].clientY;catDragging=true;
-  },{passive:true});
-  menuSwipeZone.addEventListener('touchmove',e=>{
-    if(catSwipeBlocked||!catDragging)return;
-    const dx=Math.abs(catStartX-e.touches[0].clientX);
-    const dy=Math.abs(catStartY-e.touches[0].clientY);
-    if(dx>dy)e.preventDefault();
-  },{passive:false});
-  menuSwipeZone.addEventListener('touchend',e=>{
-    if(catSwipeBlocked||!catDragging)return;
-    catDragging=false;
-    const diff=catStartX-e.changedTouches[0].clientX;
-    if(diff>50)goToCategory(1);
-    else if(diff<-50)goToCategory(-1);
-  },{passive:true});
-}
-
 // ── INIT ──
 loadSession();
 loadOverallRating();
+warpInit();
 (function(){
   const params=new URLSearchParams(window.location.search);
   const dishId=params.get('dish');
