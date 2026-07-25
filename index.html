@@ -368,8 +368,6 @@
   /* ── PAGE TRANSITION ── */
   #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 100% at 50% 40%, rgba(21,13,9,.2) 0%, #150D09 78%); transition:opacity .42s ease; }
   body.warping #page-warp { opacity:1; }
-  body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
-  .video-hero-content { transition:transform .5s ease; }
 </style>
 </head>
 <body>
@@ -1305,18 +1303,18 @@ async function loadOverallRating(){
 // ── ENTER MENU PAGE ──
 function menuEnter(){
   const btn=document.querySelector('.vh-btn[data-menu]');
+  const hero=document.querySelector('.video-hero');
   if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}
   document.body.classList.add('warping');
-  if(btn){
-    btn.style.zIndex='999';
-    btn.style.transition='transform .58s cubic-bezier(.55,0,.85,.36), opacity .4s ease .22s';
-    btn.style.transform='translateX(-50%) translateZ(600px) scale(4)';
-    btn.style.opacity='0';
-    document.querySelectorAll('.vh-btn').forEach(b=>{
-      if(b!==btn){b.style.transition='opacity .3s ease';b.style.opacity='0';}
-    });
+  if(btn&&hero){
+    const br=btn.getBoundingClientRect(), hr=hero.getBoundingClientRect();
+    const ox=br.left-hr.left+br.width/2;
+    const oy=br.top-hr.top+br.height*0.42;
+    hero.style.transformOrigin=ox+'px '+oy+'px';
+    hero.style.transition='transform .62s cubic-bezier(.45,0,.8,.3)';
+    hero.style.transform='scale(9)';
   }
-  setTimeout(()=>{window.location.href='menu.html';},560);
+  setTimeout(()=>{window.location.href='menu.html';},600);
 }
 
 // ── COMING SOON ──
