@@ -923,6 +923,8 @@ async function doSignup(){
 // ── 3D WARP ROOM ──
 let warpPos=0, warpIdx=0, warpRAF=null;
 function warpSpacing(){return Math.min(window.innerWidth*0.62,380);}
+function warpWrap(d){const n=CATEGORY_ORDER.length;return((d%n)+n*1.5)%n-n/2;}
+function warpNorm(i){const n=CATEGORY_ORDER.length;return((Math.round(i)%n)+n)%n;}
 function warpBuild(){
   const stage=document.getElementById('warp-stage');
   if(!stage)return;
@@ -932,7 +934,7 @@ function warpBuild(){
     const p=document.createElement('div');
     p.className='warp-portal';p.dataset.idx=i;
     p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
-    p.addEventListener('click',()=>{if(Math.abs(i-warpPos)>0.3)warpTo(i);else enterCave();});
+    p.addEventListener('click',()=>{if(Math.abs(warpWrap(i-warpPos))>0.3)warpTo(i);else enterCave();});
     stage.appendChild(p);
   });
   document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
@@ -940,33 +942,33 @@ function warpBuild(){
 function warpRender(){
   const sp=warpSpacing();
   document.querySelectorAll('.warp-portal').forEach(p=>{
-    const d=p.dataset.idx-warpPos, ad=Math.abs(d);
+    const d=warpWrap(p.dataset.idx-warpPos), ad=Math.abs(d);
     p.style.transform=`translate(-50%,-50%) translateX(${d*sp}px) translateZ(${-ad*240}px) rotateY(${-d*22}deg)`;
     p.style.opacity=ad>2.6?'0':String(1-ad*0.22);
     p.style.filter=`brightness(${Math.max(1-ad*0.3,0.4)})`;
     p.style.zIndex=String(100-Math.round(ad*10));
   });
   const far=document.getElementById('warp-bg-far'),near=document.getElementById('warp-bg-near');
-  if(far)far.style.transform=`translateX(${-warpPos*sp*0.15}px)`;
-  if(near)near.style.transform=`translateX(${-warpPos*sp*0.35}px)`;
+  if(far)far.style.transform=`translateX(${-Math.sin(warpPos/CATEGORY_ORDER.length*2*Math.PI)*sp*0.5}px)`;
+  if(near)near.style.transform=`translateX(${-Math.sin(warpPos/CATEGORY_ORDER.length*2*Math.PI+1.3)*sp*0.9}px)`;
   document.querySelectorAll('.warp-dot').forEach(dt=>dt.classList.toggle('active',parseInt(dt.dataset.i)===warpIdx));
 }
 function warpTo(i){
-  i=Math.max(0,Math.min(CATEGORY_ORDER.length-1,i));
-  warpIdx=i;
-  activeFilter=CATEGORY_ORDER[i];
+  const target=warpPos+warpWrap(i-warpPos);
+  warpIdx=warpNorm(i);
+  activeFilter=CATEGORY_ORDER[warpIdx];
   updateWarpCatName();
   if(warpRAF)cancelAnimationFrame(warpRAF);
   const step=()=>{
-    const diff=warpIdx-warpPos;
-    if(Math.abs(diff)<0.004){warpPos=warpIdx;warpRender();warpRAF=null;return;}
+    const diff=target-warpPos;
+    if(Math.abs(diff)<0.004){warpPos=target;warpRender();warpRAF=null;return;}
     warpPos+=diff*0.16;
     warpRender();
     warpRAF=requestAnimationFrame(step);
   };
   warpRAF=requestAnimationFrame(step);
 }
-function warpGo(dir){warpTo(warpIdx+dir);}
+function warpGo(dir){warpTo(Math.round(warpPos)+dir);}
 function updateWarpCatName(){
   const el=document.getElementById('warp-cat-name');
   if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
@@ -1119,7 +1121,7 @@ function warpInit(){
   if(!vp)return;
   let sx=0,sy=0,p0=0,dragging=false,st=0;
   const down=(x,y)=>{dragging=true;sx=x;sy=y;p0=warpPos;st=Date.now();if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}};
-  const move=x=>{if(!dragging)return;warpPos=Math.max(-0.35,Math.min(CATEGORY_ORDER.length-0.65,p0+(sx-x)/warpSpacing()));warpRender();};
+  const move=x=>{if(!dragging)return;warpPos=p0+(sx-x)/warpSpacing();warpRender();};
   const up=x=>{
     if(!dragging)return;dragging=false;
     const dx=sx-x, dt=Date.now()-st;
