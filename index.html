@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<meta name="theme-color" content="#2B211A">
-<title>The Hungry Fork — Menu &amp; Ratings</title>
+<meta name="theme-color" content="#150D09">
+<title>The Hungry Fork</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -261,13 +261,13 @@
   .vh-btn { position:absolute; left:50%; top:6px; transform-style:preserve-3d; display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; -webkit-tap-highlight-color:transparent; will-change:transform,opacity; }
   .vh-btn img { width:76px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); pointer-events:none; }
   .vh-btn span { font-family:var(--sans); font-size:.62rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; pointer-events:none; }
-  .world-overlay { display:none; position:fixed; inset:0; z-index:960; background:radial-gradient(140% 110% at 50% 28%, #6E0906 0%, #3D0503 45%, #1C0908 100%); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2.2rem; }
-  .world-overlay.open { display:flex; }
-  .world-overlay { will-change:transform, opacity; }
-  .world-back { position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); left:14px; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .world-icon { width:110px; height:auto; filter:drop-shadow(0 10px 28px rgba(0,0,0,.6)); margin-bottom:1.2rem; }
-  .world-title { font-family:var(--serif); font-size:2.4rem; font-weight:600; color:var(--white); margin-bottom:.6rem; }
-  .world-sub { font-family:var(--sans); font-weight:300; color:rgba(252,249,244,.75); font-size:.95rem; line-height:1.8; max-width:300px; }
+  .cs-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.72); z-index:850; align-items:center; justify-content:center; padding:1.4rem; }
+  .cs-overlay.open { display:flex; }
+  .cs-box { background:var(--white); border-radius:20px; width:100%; max-width:340px; padding:2.4rem 1.8rem 1.8rem; text-align:center; animation:slideUp .25s ease; box-shadow:var(--shadow-lg); }
+  .cs-icon { width:72px; height:auto; margin-bottom:1rem; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); }
+  .cs-title { font-family:var(--serif); font-size:1.7rem; font-weight:600; color:var(--text); margin-bottom:.4rem; }
+  .cs-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); line-height:1.7; margin-bottom:1.4rem; }
+  .cs-close { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.8rem 2.4rem; font-size:.76rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
   .video-hero-content { padding:1.8rem 1.4rem 1.4rem; }
 
   /* ── MENU ACCORDION (C&W style) ── */
@@ -365,61 +365,129 @@
   @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 
-  /* ── PAGE TRANSITION ── */
-  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); transition:opacity .5s ease .1s; }
-  body.warping #page-warp { opacity:1; }
-  body.warping .video-hero-content { transform:scale(1.3); transition:transform 1s cubic-bezier(.5,.08,.16,1); }
-  .video-hero-content { transition:transform .5s ease; }
+  /* ── MENU PAGE ── */
+  body { background:#150D09; }
+  #warp-room { animation:pageIn .55s ease; }
+  @keyframes pageIn { from{opacity:0; transform:scale(1.1);} to{opacity:1; transform:scale(1);} }
+  .menu-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px; background:rgba(21,13,9,.92); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-bottom:1px solid rgba(252,249,244,.08); }
+  .menu-home { color:rgba(252,249,244,.8); text-decoration:none; font-family:var(--sans); font-size:.8rem; letter-spacing:.06em; }
+  .menu-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
+  #arrive-flash { position:fixed; inset:0; z-index:960; pointer-events:none; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); animation:arriveOut .65s ease .1s forwards; }
+  @keyframes arriveOut { from{opacity:1;} to{opacity:0; visibility:hidden;} }
+
+  /* ═══════════ ZUI (spatial canvas) ═══════════ */
+  html,body { height:100%; overflow:hidden; overscroll-behavior:none; }
+  body { background:radial-gradient(140% 100% at 50% 0%, #241812 0%, #170F0B 55%, #100906 100%); }
+  #viewport { position:fixed; inset:0; overflow:hidden; touch-action:none; }
+  #canvas { position:absolute; left:0; top:0; width:0; height:0; will-change:transform; transform-origin:0 0; }
+  .zone { position:absolute; width:420px; height:920px; transform-origin:center center; }
+  .zone [data-go], [data-go] { cursor:pointer; }
+  [data-go]:focus-visible, .zui-btn:focus-visible { outline:3px solid #FF6B5E; outline-offset:3px; border-radius:8px; }
+
+  /* HOME */
+  .zone-home { border-radius:22px; overflow:hidden; background:#000; box-shadow:0 40px 120px rgba(0,0,0,.6); }
+  .hz-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .hz-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(20,16,13,.35), rgba(20,16,13,.05) 34%, rgba(20,16,13,.55) 72%, rgba(20,16,13,.85) 100%); }
+  .hz-grade { position:absolute; top:14px; left:14px; width:64px; z-index:5; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .hz-content { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:1.6rem 1.2rem 1.4rem; text-align:center; color:var(--white); }
+  .hz-eyebrow { font-family:var(--sans); font-size:.66rem; letter-spacing:.3em; text-transform:uppercase; opacity:.85; margin-bottom:.5rem; }
+  .hz-title { font-family:var(--serif); font-size:2.7rem; font-weight:500; line-height:1.05; text-shadow:0 2px 18px rgba(0,0,0,.5); }
+  .hz-tag { font-family:var(--serif); font-style:italic; font-size:1.05rem; opacity:.9; margin:.3rem 0 .9rem; }
+  .hz-btns { display:flex; flex-wrap:wrap; justify-content:center; gap:.65rem .9rem; margin-top:1rem; }
+  .hz-btn { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:.3rem; cursor:pointer; -webkit-tap-highlight-color:transparent; padding:0; }
+  .hz-btn img { width:64px; height:auto; filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)); }
+  .hz-btn.hz-btn-main img { width:92px; }
+  .hz-btn span { font-family:var(--sans); font-size:.56rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
+  .hz-foot { margin-top:1.1rem; font-family:var(--sans); font-weight:300; font-size:.68rem; color:rgba(252,249,244,.65); }
+  .hz-foot .footer-link { font-size:.72rem; }
+
+  /* WORLD zones */
+  .zone-world { border-radius:22px; background:radial-gradient(140% 110% at 50% 28%, #6E0906 0%, #3D0503 45%, #1C0908 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem; box-shadow:0 40px 120px rgba(0,0,0,.55); }
+  .zw-icon { width:110px; filter:drop-shadow(0 10px 28px rgba(0,0,0,.6)); margin-bottom:1.1rem; }
+  .zw-title { font-family:var(--serif); font-size:2.3rem; font-weight:600; color:var(--white); margin-bottom:.5rem; }
+  .zw-sub { font-family:var(--sans); font-weight:300; color:rgba(252,249,244,.75); font-size:.92rem; line-height:1.8; max-width:280px; }
+
+  /* MENU zone */
+  .zone-menu { border-radius:22px; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:1.6rem 1rem; box-shadow:0 40px 120px rgba(0,0,0,.55); text-align:center; }
+  .zm-title { font-family:var(--serif); font-size:2rem; font-weight:600; color:var(--white); margin:.4rem 0 .2rem; }
+  .zm-hint { font-family:var(--sans); font-size:.6rem; letter-spacing:.26em; text-transform:uppercase; color:rgba(252,249,244,.5); margin-bottom:1.1rem; }
+  .zm-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:.8rem; }
+  .zm-portal { background:none; border:none; padding:0; width:118px; height:150px; position:relative; -webkit-tap-highlight-color:transparent; }
+  .zm-portal .portal-arch { padding:8px 7px 7px; }
+  .zm-portal .portal-arch-title { font-size:.5rem; letter-spacing:.14em; padding:2px 2px 6px; }
+  .zm-portal .portal-emoji { font-size:1.5rem; }
+  .zm-portal .portal-ring { border-width:2px; }
+
+  /* CATEGORY zones */
+  .zone-cat { border-radius:22px; background:var(--white); padding:1.5rem 1rem; box-shadow:0 40px 120px rgba(0,0,0,.5); }
+  .zc-grid { display:flex; flex-direction:column; gap:.8rem; }
+  .zc-card { position:relative; display:flex; align-items:center; gap:.8rem; background:#fff; border:1px solid var(--border); border-radius:12px; padding:.6rem .8rem; text-align:left; cursor:pointer; }
+  .zc-emoji { font-size:2rem; }
+  .zc-name { font-family:var(--serif); font-size:1.05rem; font-weight:600; color:var(--text); }
+  .zc-price { font-family:var(--serif); font-weight:600; color:var(--red); margin-left:auto; }
+  .zc-grade { width:26px; }
+
+  /* DISH zones */
+  .zone-dish { height:auto; min-height:920px; border-radius:22px; background:var(--white); padding:2.6rem 1.2rem 1.4rem; box-shadow:0 40px 120px rgba(0,0,0,.5); position:relative; text-align:center; }
+  .zd-photo { max-width:100%; max-height:300px; object-fit:contain; }
+  .zd-open { max-width:100%; max-height:330px; object-fit:contain; margin-top:1rem; }
+  .zd-caption { font-family:var(--serif); font-style:italic; color:var(--muted); font-size:.88rem; margin:.2rem 0 .6rem; }
+  .zd-text { text-align:left; margin-top:.9rem; }
+  .zd-actions { display:flex; gap:.6rem; justify-content:center; margin:1.1rem 0 .9rem; }
+  .zd-rate { background:var(--red); color:#fff; border:none; border-radius:999px; padding:.8rem 1.6rem; font-size:.74rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
+  .zd-share { background:transparent; border:1px solid var(--red); color:var(--red); border-radius:999px; padding:.8rem 1.2rem; font-size:.74rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
+  .zd-reviews { text-align:left; max-height:260px; overflow-y:auto; }
+
+  /* fixed UI */
+  #zui-back { position:fixed; top:calc(env(safe-area-inset-top,0px) + 12px); left:14px; z-index:400; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.45); color:var(--white); width:42px; height:42px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  #zui-back.show { display:flex; }
+  #zui-crumb { position:fixed; top:calc(env(safe-area-inset-top,0px) + 20px); left:64px; z-index:400; font-family:var(--sans); font-size:.68rem; letter-spacing:.18em; text-transform:uppercase; color:rgba(252,249,244,.7); display:none; }
+  #zui-crumb.show { display:block; }
+
+  /* fallback: linear page if the engine cannot start */
+  .zui-fallback #viewport { position:static; overflow:visible; }
+  .zui-fallback #canvas { position:static; transform:none !important; width:auto; height:auto; }
+  .zui-fallback .zone { position:static !important; transform:none !important; margin:24px auto; }
+  .zui-fallback body { overflow:auto; }
+  @media (prefers-reduced-motion: reduce) { #canvas { transition:none !important; } }
 </style>
 </head>
 <body>
 
-
-<!-- VIDEO HERO -->
-<div class="video-hero">
-  <video class="video-hero-bg" src="chef-video.mp4" autoplay muted loop playsinline></video>
-  <div class="video-hero-overlay"></div>
-  <img src="grade-a.png" class="hero-grade" alt="Sanitary Inspection Grade A">
-  <div class="video-hero-content">
-    <div class="vh-center">
-      <img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)">
-      <div class="video-hero-eyebrow">Steakhouse &middot; Stone Street, New York</div>
-      <h1 class="video-hero-title">The Hungry Fork</h1>
-      <p class="video-hero-tagline">Delicious Cousin</p>
-      <div class="vh-rating-live">
-        <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'">
-        <div class="vh-stars">
-          <div class="vh-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <div class="vh-stars-fill" id="vh-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div id="viewport">
+  <div id="canvas">
+    <section class="zone zone-home" id="zone-home" data-zone="home">
+      <video class="hz-video" src="chef-video.mp4" autoplay muted loop playsinline></video>
+      <div class="hz-overlay"></div>
+      <img src="grade-a.png" class="hz-grade" alt="Sanitary Inspection Grade A">
+      <div class="hz-content">
+        <img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)" style="height:24px;display:block;margin:0 auto .5rem;cursor:pointer;">
+        <div class="hz-eyebrow">Steakhouse &middot; Stone Street, New York</div>
+        <h1 class="hz-title">The Hungry Fork</h1>
+        <p class="hz-tag">Delicious Cousin</p>
+        <div class="vh-rating-live" style="margin-top:.4rem;">
+          <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'" style="height:52px;">
+          <div class="vh-stars" style="font-size:1.7rem;">
+            <div class="vh-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="vh-stars-fill" id="vh-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          </div>
+          <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'" style="height:52px;">
         </div>
-        <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'">
+        <div class="vh-rating-caption" style="font-size:.6rem;">Fork's Rating<span id="vh-rating-num"></span></div>
+        <div class="hz-btns" id="hz-btns"></div>
+        <div class="hz-foot">
+          <button class="footer-link" id="nav-tastings-btn" onclick="openMyTastings()" style="display:none;">My Tastings</button>
+          <button class="footer-link" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
+          <div style="margin-top:.4rem;">123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm &middot; Powered by Seb's Analytics LLC</div>
+        </div>
       </div>
-      <div class="vh-rating-caption">Fork's Rating<span id="vh-rating-num"></span></div>
-    </div>
-    <div class="vh-btn-rail" id="vh-btn-rail">
-      <div class="vh-btn" data-idx="0" data-name="About Us"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
-      <div class="vh-btn" data-idx="1" data-name="Promotions"><img src="menu-button-blank.png" alt=""><span>Promotions</span></div>
-      <div class="vh-btn" data-idx="2" data-name="Career"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
-      <div class="vh-btn" data-idx="3" data-name="Menu" data-menu="1"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
-      <div class="vh-btn" data-idx="4" data-name="Events"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
-      <div class="vh-btn" data-idx="5" data-name="Reservations"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
-      <div class="vh-btn" data-idx="6" data-name="Help"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
-    </div>
+    </section>
   </div>
 </div>
+<button id="zui-back" aria-label="Back">&#8249;</button>
+<div id="zui-crumb"></div>
+<noscript><div style="color:#fff;font-family:sans-serif;padding:2rem;text-align:center;">The Hungry Fork &middot; 123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm.<br>This experience needs JavaScript enabled.</div></noscript>
 
-
-
-<!-- FOOTER -->
-<footer>
-  <img src="hungry-fork-logo.png" alt="The Hungry Fork">
-  <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
-  <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
-  <p style="margin-top:14px;">
-    <button class="footer-link" id="nav-tastings-btn" onclick="openMyTastings()" style="display:none;">My Tastings</button>
-    <button class="footer-link" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
-  </p>
-</footer>
 
 <!-- TASTER AUTH MODAL -->
 <div class="t-overlay" id="taster-modal">
@@ -549,10 +617,64 @@
           <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
           <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:700; color:var(--red); margin-bottom:0.5rem;" id="t-welcome-msg">Welcome!</div>
           <div style="font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">You're now logged in. Let's rate some dishes!</div>
-          <button class="t-btn" onclick="closeTasterModal();menuEnter();">Explore the Menu 🍴</button>
+          <button class="t-btn" onclick="closeTasterModal();if(currentDishId)openRatingModal();">Continue 🍴</button>
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div class="r-overlay" id="rating-modal">
+  <div class="r-box">
+    <div class="r-hero">
+      <button class="r-close" onclick="closeRatingModal()">✕</button>
+      <span id="r-dish-emoji">🍽️</span>
+    </div>
+    <div class="r-body">
+      <div class="r-dish-name" id="r-dish-name"></div>
+      <div class="r-dish-desc" id="r-dish-desc"></div>
+
+      <div class="r-section">🍽️ Dish Rating</div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
+        <input type="range" class="r-slider" id="sl-flavor" min="1" max="5" value="3" oninput="document.getElementById('lbl-flavor').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
+        <input type="range" class="r-slider" id="sl-worth" min="1" max="5" value="3" oninput="document.getElementById('lbl-worth').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
+        <input type="range" class="r-slider" id="sl-sig" min="1" max="5" value="3" oninput="document.getElementById('lbl-sig').textContent=this.value">
+      </div>
+
+      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
+        <input type="range" class="r-slider" id="sl-hosp" min="1" max="5" value="3" oninput="document.getElementById('lbl-hosp').textContent=this.value">
+      </div>
+      <div class="r-slider-row">
+        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
+        <input type="range" class="r-slider" id="sl-atm" min="1" max="5" value="3" oninput="document.getElementById('lbl-atm').textContent=this.value">
+      </div>
+
+      <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
+      <textarea class="r-textarea" id="r-dish-comment" placeholder="What did you think of this dish?"></textarea>
+      <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
+
+      <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
+      <label class="r-file-label" for="r-photo-input">📷 Tap to take a photo of your dish</label>
+      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
+      <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Inter',sans-serif;margin-bottom:0.5rem;display:none;"></div>
+
+      <div class="t-err" id="r-err" style="display:none;"></div>
+      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review ⭐</button>
+
+      <hr class="r-divider">
+      <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
+      <div class="r-reviews-list" id="r-reviews-list"></div>
     </div>
   </div>
 </div>
@@ -591,15 +713,28 @@
   </div>
 </div>
 
-<!-- SECTION WORLD (Prezi-style) -->
-<div id="world" class="world-overlay">
-  <button class="world-back" onclick="closeWorld()" aria-label="Back">&#8249;</button>
-  <img src="menu-button-blank.png" class="world-icon" alt="">
-  <div class="world-title" id="world-title"></div>
-  <p class="world-sub">Coming soon &mdash; we are cooking something special for you.</p>
+<!-- LUCKY BITE WIN SCREEN -->
+<div class="lucky-overlay" id="lucky-overlay">
+  <div class="lucky-box">
+    <span class="lucky-emoji">🎉</span>
+    <div class="lucky-title">You Won Seb's Lucky Bite!</div>
+    <div class="lucky-number" id="lucky-number">#1000</div>
+    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free meal and drink</strong>! Tap below to confirm you received it.</div>
+    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
+  </div>
 </div>
 
-<div id="page-warp"></div>
+<!-- COMING SOON -->
+<div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
+  <div class="cs-box">
+    <img src="menu-button-blank.png" class="cs-icon" alt="">
+    <div class="cs-title" id="cs-title"></div>
+    <p class="cs-sub">Coming soon &mdash; we are cooking something special for you.</p>
+    <button class="cs-close" onclick="closeComingSoon()">Close</button>
+  </div>
+</div>
+
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -820,279 +955,8 @@ async function doSignup(){
   btn.disabled=false;btn.textContent='Create My Account 🍴';
 }
 
-// ── MENU ──
-// ── 3D WARP ROOM ──
-let warpPos=0, warpIdx=0, warpRAF=null;
-function warpSpacing(){return Math.min(window.innerWidth*0.62,380);}
-function warpBuild(){
-  const stage=document.getElementById('warp-stage');
-  if(!stage)return;
-  stage.innerHTML='';
-  CATEGORY_ORDER.forEach((k,i)=>{
-    const m=WARP_META[k];
-    const p=document.createElement('div');
-    p.className='warp-portal';p.dataset.idx=i;
-    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
-    p.addEventListener('click',()=>{if(Math.abs(i-warpPos)>0.3)warpTo(i);else enterCave();});
-    stage.appendChild(p);
-  });
-  document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
-}
-function warpRender(){
-  const sp=warpSpacing();
-  document.querySelectorAll('.warp-portal').forEach(p=>{
-    const d=p.dataset.idx-warpPos, ad=Math.abs(d);
-    p.style.transform=`translate(-50%,-50%) translateX(${d*sp}px) translateZ(${-ad*240}px) rotateY(${-d*22}deg)`;
-    p.style.opacity=ad>2.6?'0':String(1-ad*0.22);
-    p.style.filter=`brightness(${Math.max(1-ad*0.3,0.4)})`;
-    p.style.zIndex=String(100-Math.round(ad*10));
-  });
-  const far=document.getElementById('warp-bg-far'),near=document.getElementById('warp-bg-near');
-  if(far)far.style.transform=`translateX(${-warpPos*sp*0.15}px)`;
-  if(near)near.style.transform=`translateX(${-warpPos*sp*0.35}px)`;
-  document.querySelectorAll('.warp-dot').forEach(dt=>dt.classList.toggle('active',parseInt(dt.dataset.i)===warpIdx));
-}
-function warpTo(i){
-  i=Math.max(0,Math.min(CATEGORY_ORDER.length-1,i));
-  warpIdx=i;
-  activeFilter=CATEGORY_ORDER[i];
-  updateWarpCatName();
-  if(warpRAF)cancelAnimationFrame(warpRAF);
-  const step=()=>{
-    const diff=warpIdx-warpPos;
-    if(Math.abs(diff)<0.004){warpPos=warpIdx;warpRender();warpRAF=null;return;}
-    warpPos+=diff*0.16;
-    warpRender();
-    warpRAF=requestAnimationFrame(step);
-  };
-  warpRAF=requestAnimationFrame(step);
-}
-function warpGo(dir){warpTo(warpIdx+dir);}
-function updateWarpCatName(){
-  const el=document.getElementById('warp-cat-name');
-  if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
-}
 
-// ── CAVE INTERIOR (enter a category) ──
-let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
-function caveListFor(key){
-  if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
-  return DISHES.filter(d=>d.category===key);
-}
-function enterCave(){
-  const key=CATEGORY_ORDER[warpIdx];
-  caveDishes=caveListFor(key);
-  caveDishIdx=0;caveViewIdx=0;
-  document.getElementById('cave-cat').textContent=WARP_META[key].label;
-  const stage=document.getElementById('warp-stage');
-  stage.classList.add('warp-zoom');
-  setTimeout(()=>{
-    document.getElementById('cave').classList.add('open');
-    document.body.style.overflow='hidden';
-    renderCave();
-    setTimeout(()=>stage.classList.remove('warp-zoom'),200);
-  },380);
-}
-function exitCave(){
-  document.getElementById('cave').classList.remove('open');
-  document.body.style.overflow='';
-}
-function caveImgErr(img,emoji){
-  const div=document.createElement('div');
-  div.className='cave-photo-fallback';
-  div.textContent=emoji;
-  img.replaceWith(div);
-}
-async function caveDishRating(dbId){
-  if(caveRatings[dbId])return caveRatings[dbId];
-  try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);
-    if(ok&&data.length){
-      const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
-      caveRatings[dbId]={avg,count:data.length};
-    }else caveRatings[dbId]={avg:0,count:0};
-  }catch(e){caveRatings[dbId]={avg:0,count:0};}
-  return caveRatings[dbId];
-}
-function renderCave(animClass){
-  const card=document.getElementById('cave-card');
-  const hdots=document.getElementById('cave-hdots');
-  if(!card)return;
-  if(!caveDishes.length){
-    card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A"><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
-    hdots.innerHTML='';
-    updateCaveDots();playCardAnim(card,animClass);
-    return;
-  }
-  const d=caveDishes[caveDishIdx];
-  currentDishId=d.id;
-  let inner='';
-  if(caveViewIdx===0){
-    inner=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-stars-wrap"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="cave-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
-      <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>`;
-  }else if(caveViewIdx===1){
-    inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-dish-name">${d.name}</div><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
-  }else{
-    inner=`<div class="cave-text-view"><div class="cave-dish-name" style="text-align:left;">${d.name}</div>
-      <p class="cave-about">${d.about||d.desc}</p>
-      ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
-      ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
-      ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.7rem;"><strong>Choice of the following:</strong></p>${d.choices.map(c=>`<p class="cave-meta-line">${c}</p>`).join('')}`:''}
-    </div>`;
-  }
-  card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A">`+inner;
-  hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
-  updateCaveDots();playCardAnim(card,animClass);
-  if(caveViewIdx===0){
-    const dbId=DISH_ID_MAP[d.id]||1;
-    caveDishRating(dbId).then(r=>{
-      const fill=document.getElementById('cave-stars-fill');
-      const cap=document.getElementById('cave-stars-caption');
-      if(!fill)return;
-      fill.style.width=(r.avg/5*100)+'%';
-      if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:'Fork\u2019s Rating · No ratings yet';
-    });
-  }
-}
-function updateCaveDots(){document.querySelectorAll('.cave-vdot').forEach((v,i)=>v.classList.toggle('active',i===caveViewIdx));}
-function playCardAnim(card,cls){if(!cls)return;card.classList.remove('anim-l','anim-r','anim-u','anim-d');void card.offsetWidth;card.classList.add(cls);}
-function caveDish(dir){if(!caveDishes.length)return;const n=caveDishIdx+dir;if(n<0||n>=caveDishes.length)return;caveDishIdx=n;caveViewIdx=0;renderCave(dir>0?'anim-l':'anim-r');}
-function caveView(dir){if(!caveDishes.length)return;const n=caveViewIdx+dir;if(n<0||n>2)return;caveViewIdx=n;renderCave(dir>0?'anim-u':'anim-d');}
-function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
-function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;caveViewIdx=0;renderCave(dir);}
-function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
-function caveShare(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;shareDish();}
-function caveInitTouch(){
-  const zone=document.getElementById('cave-card-zone');
-  if(!zone)return;
-  let sx=0,sy=0,tracking=false,mdown=false;
-  zone.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;},{passive:true});
-  zone.addEventListener('touchmove',e=>{
-    if(!tracking)return;
-    const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
-    if(adx>ady||caveViewIdx!==2)e.preventDefault();
-  },{passive:false});
-  zone.addEventListener('touchend',e=>{
-    if(!tracking)return;tracking=false;
-    const dx=sx-e.changedTouches[0].clientX,dy=sy-e.changedTouches[0].clientY;
-    caveGesture(dx,dy);
-  },{passive:true});
-  zone.addEventListener('mousedown',e=>{mdown=true;sx=e.clientX;sy=e.clientY;e.preventDefault();});
-  window.addEventListener('mouseup',e=>{if(!mdown)return;mdown=false;caveGesture(sx-e.clientX,sy-e.clientY);});
-  window.addEventListener('keydown',e=>{
-    if(!document.getElementById('cave').classList.contains('open'))return;
-    if(e.key==='Escape')exitCave();
-    else if(e.key==='ArrowRight')caveDish(1);
-    else if(e.key==='ArrowLeft')caveDish(-1);
-    else if(e.key==='ArrowDown')caveView(1);
-    else if(e.key==='ArrowUp')caveView(-1);
-  });
-}
-function caveGesture(dx,dy){
-  if(Math.abs(dx)<36&&Math.abs(dy)<36)return;
-  if(Math.abs(dx)>Math.abs(dy)){caveDish(dx>0?1:-1);return;}
-  if(caveViewIdx===2){
-    const tv=document.querySelector('.cave-text-view');
-    if(dy<0&&tv&&tv.scrollTop<=0)caveView(-1);
-    return;
-  }
-  caveView(dy>0?1:-1);
-}
-function scrollToMenu(){
-  const room=document.getElementById('warp-room');
-  if(room)room.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function warpInit(){
-  warpBuild();
-  updateWarpCatName();
-  warpRender();
-  const vp=document.getElementById('warp-viewport');
-  if(!vp)return;
-  let sx=0,sy=0,p0=0,dragging=false,st=0;
-  const down=(x,y)=>{dragging=true;sx=x;sy=y;p0=warpPos;st=Date.now();if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}};
-  const move=x=>{if(!dragging)return;warpPos=Math.max(-0.35,Math.min(CATEGORY_ORDER.length-0.65,p0+(sx-x)/warpSpacing()));warpRender();};
-  const up=x=>{
-    if(!dragging)return;dragging=false;
-    const dx=sx-x, dt=Date.now()-st;
-    let t=Math.round(warpPos);
-    if(Math.abs(dx)>45&&dt<350&&t===Math.round(p0))t=Math.round(p0)+(dx>0?1:-1);
-    warpTo(t);
-  };
-  vp.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
-  vp.addEventListener('touchmove',e=>{
-    if(!dragging)return;
-    const dx=Math.abs(sx-e.touches[0].clientX),dy=Math.abs(sy-e.touches[0].clientY);
-    if(dx>dy)e.preventDefault();
-    move(e.touches[0].clientX);
-  },{passive:false});
-  vp.addEventListener('touchend',e=>up(e.changedTouches[0].clientX),{passive:true});
-  vp.addEventListener('mousedown',e=>{e.preventDefault();down(e.clientX,e.clientY);});
-  window.addEventListener('mousemove',e=>move(e.clientX));
-  window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
-  window.addEventListener('resize',warpRender);
-  caveInitTouch();
-}
-
-// ── DISH MODAL ──
-function renderDishModal(id){
-  const d=DISHES.find(x=>x.id===id);
-  if(!d)return;
-  currentDishId=id;
-  document.getElementById('modal-dish-emoji').textContent=d.emoji;
-  document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
-  loadReviews(id,RESTAURANT_ID);
-  document.getElementById('modal').classList.add('open');
-}
-function showDishModal(id){
-  renderDishModal(id);
-  const url=new URL(window.location);
-  url.searchParams.set('dish',id);
-  history.pushState({dish:id},'',url);
-}
-function openModal(id,e){
-  e.stopPropagation();
-  showDishModal(id);
-}
-function closeModalUI(){document.getElementById('modal').classList.remove('open');}
-function closeModal(){
-  closeModalUI();
-  const url=new URL(window.location);
-  if(url.searchParams.has('dish')){
-    url.searchParams.delete('dish');
-    history.pushState({},'',url);
-  }
-}
-function closeModalOnOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
-async function shareDish(){
-  if(!currentDishId)return;
-  const d=DISHES.find(x=>x.id===currentDishId);
-  if(!d)return;
-  const url=new URL(window.location);
-  url.searchParams.set('dish',currentDishId);
-  const shareUrl=url.toString();
-  if(navigator.share){
-    try{await navigator.share({title:d.name+' — The Hungry Fork',text:'Check out '+d.name+' at The Hungry Fork!',url:shareUrl});}catch(e){}
-  }else{
-    try{await navigator.clipboard.writeText(shareUrl);showToast('Link copied!');}
-    catch(e){showToast('Could not copy link.');}
-  }
-}
-window.addEventListener('popstate',()=>{
-  const params=new URLSearchParams(window.location.search);
-  const dishId=params.get('dish');
-  if(dishId&&DISHES.find(d=>d.id===dishId))renderDishModal(dishId);
-  else closeModalUI();
-});
-function startRating(){
-  closeModal();
-  if(!currentTaster){openTasterModal();return;}
-  openRatingModal();
-}
-
-// ── RATING MODAL ──
+// ── RATING MODAL ──// ── RATING MODAL ──
 function openRatingModal(){
   if(!currentDishId)return;
   const d=DISHES.find(x=>x.id===currentDishId);
@@ -1147,8 +1011,8 @@ async function submitRating(){
       closeRatingModal();
       showToast('Review posted! Thank you ⭐');
       loadOverallRating();
-      caveRatings={};
-      if(document.getElementById('cave').classList.contains('open'))renderCave();
+      dishRatingCache={};
+      refreshZoneStars();
       if(globalNum%1000===0)showLuckyBite(globalNum);
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
@@ -1253,10 +1117,11 @@ async function loadMyTastings(){
   }
 }
 function viewTastingDish(dishId){
-  window.location.href='menu.html?dish='+encodeURIComponent(dishId);
+  closeMyTastings();
+  zuiGo('dish:'+dishId);
 }
 
-// ── LUCKY BITE ──
+// ── LUCKY BITE ──// ── LUCKY BITE ──
 function showLuckyBite(num){
   document.getElementById('lucky-number').textContent='#'+num;
   document.getElementById('lucky-overlay').classList.add('open');
@@ -1273,7 +1138,7 @@ function closeMapsChooser(){document.getElementById('maps-modal').classList.remo
 // ── TOAST ──
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
-// ── OVERALL RATING (Seb's Rate) ──
+// ── OVERALL RATING (Seb's Rate) ──// ── OVERALL RATING (Seb's Rate) ──
 function renderStars(val){
   const full=Math.floor(val);
   const half=(val-full)>=0.5;
@@ -1300,82 +1165,12 @@ async function loadOverallRating(){
   }catch(e){}
 }
 
-// ── ENTER MENU PAGE ──
-function flyInto(btn,after,ms){
-  document.body.classList.add('warping');
-  if(btn){
-    const img=btn.querySelector('img');
-    if(img){
-      img.style.transition='filter .25s ease';
-      img.style.filter='brightness(2) saturate(1.5) drop-shadow(0 0 26px rgba(255,45,28,.95))';
-      const r=img.getBoundingClientRect();
-      const c=img.cloneNode();
-      c.className='fly-clone';
-      c.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;z-index:955;pointer-events:none;margin:0;transition:transform .6s cubic-bezier(.5,0,.8,.35),opacity .3s ease .35s;filter:brightness(1.6) saturate(1.4);`;
-      document.body.appendChild(c);
-      const cx=window.innerWidth/2-(r.left+r.width/2);
-      const cy=window.innerHeight/2-(r.top+r.height/2);
-      const sc=(Math.max(window.innerWidth,window.innerHeight)*2.4)/r.width;
-      requestAnimationFrame(()=>{requestAnimationFrame(()=>{
-        c.style.transform=`translate(${cx}px,${cy}px) scale(${sc})`;
-        c.style.opacity='0';
-      });});
-      setTimeout(()=>{c.remove();},950);
-    }
-  }
-  setTimeout(after,ms||620);
-}
-function menuEnter(){
-  const btn=document.querySelector('.vh-btn[data-menu]');
-  flyInto(btn,()=>{window.location.href='menu.html';});
-}
-window.addEventListener('pageshow',()=>{
-  document.body.classList.remove('warping');
-  document.querySelectorAll('.fly-clone').forEach(c=>c.remove());
-  document.querySelectorAll('.vh-btn img').forEach(im=>{
-    im.style.transition='none';im.style.filter='';
-    setTimeout(()=>{im.style.transition='';},60);
-  });
-});
-
 // ── COMING SOON ──
-function railGlowReset(){
-  document.body.classList.remove('warping');
-  document.querySelectorAll('.vh-btn img').forEach(im=>{
-    im.style.transition='none';im.style.filter='';
-    setTimeout(()=>{im.style.transition='';},60);
-  });
+function openComingSoon(name){
+  document.getElementById('cs-title').textContent=name;
+  document.getElementById('cs-overlay').classList.add('open');
 }
-let worldOrigin='50% 50%';
-function openWorld(name,btn){
-  flyInto(btn,railGlowReset,750);
-  const w=document.getElementById('world');
-  document.getElementById('world-title').textContent=name;
-  if(btn){
-    const r=btn.getBoundingClientRect();
-    worldOrigin=(r.left+r.width/2)+'px '+(r.top+r.height*0.42)+'px';
-  }
-  w.style.transition='none';
-  w.style.transformOrigin=worldOrigin;
-  w.style.transform='scale(.03)';
-  w.style.opacity='1';
-  w.style.borderRadius='50%';
-  w.classList.add('open');
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
-    w.style.transition='transform 1s cubic-bezier(.5,.08,.16,1), border-radius 1s cubic-bezier(.5,.08,.16,1)';
-    w.style.transform='scale(1)';
-    w.style.borderRadius='0%';
-  });});
-}
-function closeWorld(){
-  const w=document.getElementById('world');
-  w.style.transformOrigin=worldOrigin;
-  w.style.transition='transform .8s cubic-bezier(.55,0,.55,.5), border-radius .8s cubic-bezier(.55,0,.55,.5)';
-  w.style.transform='scale(.03)';
-  w.style.borderRadius='50%';
-  railGlowReset();
-  setTimeout(()=>{w.classList.remove('open');w.style.transition='none';},800);
-}
+function closeComingSoon(){document.getElementById('cs-overlay').classList.remove('open');}
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
 function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
@@ -1410,8 +1205,8 @@ function railInit(){
     b.addEventListener('click',()=>{
       const i=parseInt(b.dataset.idx);
       if(Math.abs(i-railPos)>0.3){railTo(i);return;}
-      if(b.dataset.menu)menuEnter();
-      else openWorld(b.dataset.name,b);
+      if(b.dataset.menu)scrollToMenu();
+      else openComingSoon(b.dataset.name);
     });
   });
   let sx=0,sy=0,p0=0,dragging=false,st=0,moved=false;
@@ -1439,14 +1234,222 @@ function railInit(){
 }
 railInit();
 
-// ── INIT ──
+
+// ═══════════ ZUI ENGINE ═══════════
+const WORLD_KEYS=['about-us','promotions','career','events','reservations','help'];
+const WORLD_LABELS={'about-us':'About Us','promotions':'Promotions','career':'Career','events':'Events','reservations':'Reservations','help':'Help'};
+const WORLD_POS=[[-1450,-950,-7],[0,-1650,4],[1450,-950,7],[-1600,350,-5],[1600,350,6],[-1450,1250,-6]];
+const NODES={};
+let CUR='home';
+const CAM={x:0,y:0,s:1,r:0};
+let tw=null, dishRatingCache={}, zoneReviewsLoaded={};
+const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const vw=()=>window.innerWidth, vh=()=>window.innerHeight;
+
+function regNode(id,x,y,s,r,el,h){NODES[id]={x,y,s,r,el,h:h||920};el.style.left=(x-210)+'px';el.style.top=(y-(h||920)/2)+'px';el.style.transform=`rotate(${r}deg) scale(${s})`;el.dataset.node=id;}
+
+function buildZones(){
+  const cv=document.getElementById('canvas');
+  regNode('home',0,0,1,0,document.getElementById('zone-home'));
+  // home buttons
+  const hb=document.getElementById('hz-btns');
+  const order=['about-us','promotions','career','menu','events','reservations','help'];
+  hb.innerHTML=order.map(k=>{
+    const main=k==='menu'?' hz-btn-main':'';
+    const lbl=k==='menu'?'Menu':WORLD_LABELS[k];
+    return `<button class="hz-btn${main}" data-go="${k==='menu'?'menu':k}"><img src="menu-button-blank.png" alt="" loading="lazy"><span>${lbl}</span></button>`;
+  }).join('');
+  // worlds
+  WORLD_KEYS.forEach((k,i)=>{
+    const s=document.createElement('section');
+    s.className='zone zone-world';
+    s.innerHTML=`<img src="menu-button-blank.png" class="zw-icon" alt="" loading="lazy"><div class="zw-title">${WORLD_LABELS[k]}</div><p class="zw-sub">Coming soon &mdash; we are cooking something special for you.</p>`;
+    cv.appendChild(s);
+    regNode(k,WORLD_POS[i][0],WORLD_POS[i][1],0.9,WORLD_POS[i][2],s);
+  });
+  // menu
+  const m=document.createElement('section');
+  m.className='zone zone-menu';
+  m.innerHTML=`<div class="zm-title">The Menu</div><div class="zm-hint">Tap a cave to zoom in</div><div class="zm-grid">`+CATEGORY_ORDER.map(k=>{
+    const meta=WARP_META[k];
+    return `<button class="zm-portal" data-go="cat:${k}"><div class="portal-arch"><div class="portal-arch-title">${meta.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${meta.emoji}</span></div></div></button>`;
+  }).join('')+`</div>`;
+  cv.appendChild(m);
+  regNode('menu',0,1600,0.9,0,m);
+  // categories + dishes
+  CATEGORY_ORDER.forEach((k,ki)=>{
+    const list=k==='top-rated'?[...DISHES].sort((a,b)=>a.name.localeCompare(b.name)):DISHES.filter(d=>d.category===k);
+    const cx=(ki-3)*720, cy=2750, cs=.42, cr=(ki-3)*2;
+    const c=document.createElement('section');
+    c.className='zone zone-cat';
+    c.innerHTML=`<div class="category-label">${WARP_META[k].label}</div>`+(list.length?`<div class="zc-grid">`+list.map(d=>
+      `<button class="zc-card" data-go="dish:${d.id}"><img src="grade-a.png" class="zc-grade" alt="A" loading="lazy"><span class="zc-emoji">${d.emoji}</span><span class="zc-name">${d.name}</span><span class="zc-price">$${d.price}</span></button>`).join('')+`</div>`
+      :`<div class="no-reviews" style="padding:2rem 0;">Coming soon &mdash; check back for this menu!</div>`);
+    cv.appendChild(c);
+    regNode('cat:'+k,cx,cy,cs,cr,c);
+    list.forEach((d,j)=>{
+      const dx=cx+(j-(list.length-1)/2)*180, dy=3620;
+      const z=document.createElement('section');
+      z.className='zone zone-dish';
+      z.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A">
+        <img src="${d.img||''}" class="zd-photo" alt="${d.name}" loading="lazy" onerror="this.outerHTML='<div class=cave-photo-fallback>${d.emoji}</div>'">
+        <div class="cave-stars-wrap"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="zstars-${d.id}">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="zcap-${d.id}">Fork's Rating</div></div>
+        <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>
+        ${d.imgOpen?`<img src="${d.imgOpen}" class="zd-open" alt="${d.name} ingredients" loading="lazy" onerror="this.remove()"><div class="zd-caption">Every ingredient, deconstructed</div>`:''}
+        <div class="zd-text">
+          <p class="cave-about">${d.about||d.desc}</p>
+          ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
+          ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
+          ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.5rem;"><strong>Choice of the following:</strong></p>`+d.choices.map(x=>`<p class="cave-meta-line">${x}</p>`).join(''):''}
+        </div>
+        <div class="zd-actions"><button class="zd-rate" onclick="openRatingFor('${d.id}')">Rate &amp; Review</button><button class="zd-share" onclick="shareZoneDish('${d.id}')">Share</button></div>
+        <div class="modal-section-label" id="zrevl-${d.id}">Reviews</div>
+        <div class="zd-reviews reviews-list" id="zrev-${d.id}"></div>`;
+      cv.appendChild(z);
+      regNode('dish:'+d.id,dx,dy,.15,0,z,1150);
+    });
+  });
+}
+
+// camera
+function applyCam(){document.getElementById('canvas').style.transform=`translate3d(${vw()/2}px,${vh()/2}px,0) scale(${CAM.s}) rotate(${CAM.r}deg) translate3d(${-CAM.x}px,${-CAM.y}px,0)`;}
+function fitFor(n){return Math.min(vw()/(440*n.s), vh()/((n.h+60)*n.s));}
+function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function flyTo(id,jump){
+  const n=NODES[id]; if(!n)return;
+  const tx=n.x,ty=n.y,ts=fitFor(n),tr=-n.r;
+  if(jump||REDUCED){CAM.x=tx;CAM.y=ty;CAM.s=ts;CAM.r=tr;applyCam();return;}
+  const f={x:CAM.x,y:CAM.y,s:CAM.s,r:CAM.r},t0=performance.now(),dur=1000;
+  let dr=tr-f.r; if(dr>180)dr-=360; if(dr<-180)dr+=360;
+  if(tw)cancelAnimationFrame(tw);
+  const step=now=>{
+    let t=Math.min(1,(now-t0)/dur), e=ease(t);
+    CAM.x=f.x+(tx-f.x)*e; CAM.y=f.y+(ty-f.y)*e;
+    CAM.s=Math.exp(Math.log(f.s)+(Math.log(ts)-Math.log(f.s))*e);
+    CAM.r=f.r+dr*e;
+    applyCam();
+    if(t<1)tw=requestAnimationFrame(step); else tw=null;
+  };
+  tw=requestAnimationFrame(step);
+}
+function nodeParent(id){if(id.startsWith('dish:')){const d=DISHES.find(x=>x.id===id.slice(5));return d?'cat:'+d.category:'menu';}if(id.startsWith('cat:'))return'menu';if(id==='home')return'home';return'home';}
+function nodeToHash(id){if(id==='home')return'#/';if(id==='menu')return'#/menu';if(id.startsWith('cat:'))return'#/menu/'+id.slice(4);if(id.startsWith('dish:'))return'#/dish/'+id.slice(5);return'#/'+id;}
+function parseHash(){
+  const h=(location.hash||'').replace(/^#\/?/,'');
+  if(!h)return'home';
+  const p=h.split('/').filter(Boolean);
+  if(p[0]==='menu')return p[1]&&CATEGORY_ORDER.includes(p[1])?'cat:'+p[1]:'menu';
+  if(p[0]==='dish')return DISHES.find(d=>d.id===p[1])?'dish:'+p[1]:'menu';
+  if(WORLD_KEYS.includes(p[0]))return p[0];
+  return'home';
+}
+function zuiGo(id){const h=nodeToHash(id);if(location.hash===h)focusNode(id);else location.hash=h;}
+function focusNode(id,jump){
+  CUR=id;
+  try{sessionStorage.setItem('hf_node',id);}catch(e){}
+  flyTo(id,jump);
+  const back=document.getElementById('zui-back'),crumb=document.getElementById('zui-crumb');
+  back.classList.toggle('show',id!=='home');
+  crumb.classList.toggle('show',id!=='home');
+  crumb.textContent=id==='menu'?'Menu':id.startsWith('cat:')?'Menu · '+WARP_META[id.slice(4)].label:id.startsWith('dish:')?(DISHES.find(d=>d.id===id.slice(5))||{}).name||'':WORLD_LABELS[id]||'';
+  if(id.startsWith('dish:')){const did=id.slice(5);loadZoneRating(did);if(!zoneReviewsLoaded[did]){zoneReviewsLoaded[did]=1;loadReviews(did,RESTAURANT_ID,'zrev-'+did,'zrevl-'+did);}}
+}
+async function loadZoneRating(id){
+  const dbId=DISH_ID_MAP[id]||1;
+  let r=dishRatingCache[dbId];
+  if(!r){
+    try{
+      const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);
+      r=(ok&&data.length)?{avg:data.reduce((s,x)=>s+(x.flavor+x.worth_every_bite+x.signature_style)/3,0)/data.length,count:data.length}:{avg:0,count:0};
+    }catch(e){r={avg:0,count:0};}
+    dishRatingCache[dbId]=r;
+  }
+  const fill=document.getElementById('zstars-'+id),cap=document.getElementById('zcap-'+id);
+  if(fill)fill.style.width=(r.avg/5*100)+'%';
+  if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:"Fork's Rating · No ratings yet";
+}
+function refreshZoneStars(){if(CUR.startsWith('dish:')){const id=CUR.slice(5);zoneReviewsLoaded[id]=0;loadZoneRating(id);zoneReviewsLoaded[id]=1;loadReviews(id,RESTAURANT_ID,'zrev-'+id,'zrevl-'+id);}}
+function openRatingFor(id){currentDishId=id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
+function shareZoneDish(id){
+  const url=location.origin+location.pathname+'#/dish/'+id;
+  const d=DISHES.find(x=>x.id===id);
+  if(navigator.share){navigator.share({title:(d?d.name:'Dish')+" — The Hungry Fork",text:'Check out '+(d?d.name:'this dish')+' at The Hungry Fork!',url}).catch(()=>{});}
+  else{navigator.clipboard.writeText(url).then(()=>showToast('Link copied!')).catch(()=>showToast('Could not copy link.'));}
+}
+
+// gestures
+function initGestures(){
+  const vp=document.getElementById('viewport');
+  const ptrs=new Map(); let moved=false, lastMid=null, lastDist=0;
+  vp.addEventListener('pointerdown',e=>{vp.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=false;if(ptrs.size===2){const a=[...ptrs.values()];lastDist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);lastMid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};}if(tw){cancelAnimationFrame(tw);tw=null;}});
+  vp.addEventListener('pointermove',e=>{
+    if(!ptrs.has(e.pointerId))return;
+    const p=ptrs.get(e.pointerId), dx=e.clientX-p.x, dy=e.clientY-p.y;
+    if(Math.abs(dx)+Math.abs(dy)>6)moved=true;
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===1){
+      const rad=-CAM.r*Math.PI/180;
+      CAM.x-=(dx*Math.cos(rad)-dy*Math.sin(rad))/CAM.s;
+      CAM.y-=(dx*Math.sin(rad)+dy*Math.cos(rad))/CAM.s;
+      applyCam();
+    }else if(ptrs.size===2){
+      const a=[...ptrs.values()];
+      const dist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+      const mid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
+      if(lastDist>0){const f=dist/lastDist;CAM.s=Math.max(.02,Math.min(9,CAM.s*f));}
+      if(lastMid){const rad=-CAM.r*Math.PI/180,mdx=mid.x-lastMid.x,mdy=mid.y-lastMid.y;CAM.x-=(mdx*Math.cos(rad)-mdy*Math.sin(rad))/CAM.s;CAM.y-=(mdx*Math.sin(rad)+mdy*Math.cos(rad))/CAM.s;}
+      lastDist=dist; lastMid=mid; applyCam();
+    }
+  });
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2){lastDist=0;lastMid=null;}};
+  vp.addEventListener('pointerup',up); vp.addEventListener('pointercancel',up);
+  vp.addEventListener('wheel',e=>{
+    e.preventDefault();
+    if(e.ctrlKey||e.metaKey){const f=Math.exp(-e.deltaY*0.002);CAM.s=Math.max(.02,Math.min(9,CAM.s*f));}
+    else{const rad=-CAM.r*Math.PI/180;
+      const wx=(e.deltaX*Math.cos(rad)-e.deltaY*Math.sin(rad))/CAM.s, wy=(e.deltaX*Math.sin(rad)+e.deltaY*Math.cos(rad))/CAM.s;
+      CAM.x+=wx*.9; CAM.y+=wy*.9;}
+    applyCam();
+  },{passive:false});
+  // taps navigate (suppressed after drags)
+  vp.addEventListener('click',e=>{
+    if(moved)return;
+    const go=e.target.closest('[data-go]');
+    if(go){zuiGo(go.dataset.go);return;}
+    const zone=e.target.closest('.zone');
+    if(zone&&zone.dataset.node&&zone.dataset.node!==CUR)zuiGo(zone.dataset.node);
+  });
+  window.addEventListener('keydown',e=>{
+    if(e.target.matches('input,textarea,select'))return;
+    const pan=60/CAM.s;
+    if(e.key==='Escape'){if(CUR!=='home')zuiGo(nodeParent(CUR));}
+    else if(e.key==='ArrowLeft'){CAM.x-=pan;applyCam();}
+    else if(e.key==='ArrowRight'){CAM.x+=pan;applyCam();}
+    else if(e.key==='ArrowUp'){CAM.y-=pan;applyCam();}
+    else if(e.key==='ArrowDown'){CAM.y+=pan;applyCam();}
+    else if(e.key==='+'||e.key==='='){CAM.s=Math.min(9,CAM.s*1.15);applyCam();}
+    else if(e.key==='-'){CAM.s=Math.max(.02,CAM.s/1.15);applyCam();}
+  });
+  window.addEventListener('resize',()=>flyTo(CUR,true));
+  document.getElementById('zui-back').addEventListener('click',()=>zuiGo(nodeParent(CUR)));
+  window.addEventListener('hashchange',()=>focusNode(parseHash()));
+}
+
+// init
+try{
+  buildZones();
+  initGestures();
+  let start=parseHash();
+  if(start==='home'){try{const s=sessionStorage.getItem('hf_node');if(s&&NODES[s])start=s;}catch(e){}}
+  focusNode(start,true);
+}catch(err){
+  console.error('ZUI failed, falling back to linear layout',err);
+  document.documentElement.classList.add('zui-fallback');
+  document.body.classList.add('zui-fallback');
+}
 loadSession();
 loadOverallRating();
-warpInit();
-(function(){
-  const params=new URLSearchParams(window.location.search);
-  if(params.get('dish'))window.location.replace('menu.html'+window.location.search);
-})();
+
 </script>
 </body>
 </html>
