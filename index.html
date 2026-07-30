@@ -368,7 +368,7 @@
   /* ── PAGE TRANSITION ── */
   #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); transition:opacity .5s ease .1s; }
   body.warping #page-warp { opacity:1; }
-  body.warping .video-hero-content { transform:scale(1.3); transition:transform 1s cubic-bezier(.5,.08,.16,1); }
+  body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
   .video-hero-content { transition:transform .5s ease; }
 </style>
 </head>
@@ -1357,24 +1357,23 @@ function openWorld(name,btn){
   }
   w.style.transition='none';
   w.style.transformOrigin=worldOrigin;
-  w.style.transform='scale(.03)';
-  w.style.opacity='1';
-  w.style.borderRadius='50%';
+  w.style.transform='scale(.045)';
+  w.style.opacity='0';
   w.classList.add('open');
   requestAnimationFrame(()=>{requestAnimationFrame(()=>{
-    w.style.transition='transform 1s cubic-bezier(.5,.08,.16,1), border-radius 1s cubic-bezier(.5,.08,.16,1)';
+    w.style.transition='transform .78s cubic-bezier(.32,.08,.24,1), opacity .4s ease .16s';
     w.style.transform='scale(1)';
-    w.style.borderRadius='0%';
+    w.style.opacity='1';
   });});
 }
 function closeWorld(){
   const w=document.getElementById('world');
   w.style.transformOrigin=worldOrigin;
-  w.style.transition='transform .8s cubic-bezier(.55,0,.55,.5), border-radius .8s cubic-bezier(.55,0,.55,.5)';
-  w.style.transform='scale(.03)';
-  w.style.borderRadius='50%';
+  w.style.transition='transform .55s cubic-bezier(.6,0,.72,.35), opacity .3s ease .2s';
+  w.style.transform='scale(.045)';
+  w.style.opacity='0';
   railGlowReset();
-  setTimeout(()=>{w.classList.remove('open');w.style.transition='none';},800);
+  setTimeout(()=>{w.classList.remove('open');w.style.transition='none';},560);
 }
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
