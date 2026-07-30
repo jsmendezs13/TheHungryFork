@@ -262,10 +262,8 @@
   .vh-btn img { width:76px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); pointer-events:none; }
   .vh-btn span { font-family:var(--sans); font-size:.62rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; pointer-events:none; }
   .world-overlay { display:none; position:fixed; inset:0; z-index:960; background:radial-gradient(140% 110% at 50% 28%, #6E0906 0%, #3D0503 45%, #1C0908 100%); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2.2rem; }
-  .world-overlay.open { display:flex; animation:worldIn .55s cubic-bezier(.2,.75,.25,1); }
-  .world-overlay.closing { animation:worldOut .4s ease forwards; }
-  @keyframes worldIn { from{opacity:0; transform:scale(.22);} to{opacity:1; transform:scale(1);} }
-  @keyframes worldOut { to{opacity:0; transform:scale(.22);} }
+  .world-overlay.open { display:flex; }
+  .world-overlay { will-change:transform, opacity; }
   .world-back { position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); left:14px; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .world-icon { width:110px; height:auto; filter:drop-shadow(0 10px 28px rgba(0,0,0,.6)); margin-bottom:1.2rem; }
   .world-title { font-family:var(--serif); font-size:2.4rem; font-weight:600; color:var(--white); margin-bottom:.6rem; }
@@ -1341,17 +1339,41 @@ window.addEventListener('pageshow',()=>{
 });
 
 // ── COMING SOON ──
-function openWorld(name,btn){
-  flyInto(btn,()=>{
-    document.getElementById('world-title').textContent=name;
-    document.getElementById('world').classList.add('open');
-    document.body.classList.remove('warping');
+function railGlowReset(){
+  document.body.classList.remove('warping');
+  document.querySelectorAll('.vh-btn img').forEach(im=>{
+    im.style.transition='none';im.style.filter='';
+    setTimeout(()=>{im.style.transition='';},60);
   });
+}
+let worldOrigin='50% 50%';
+function openWorld(name,btn){
+  flyInto(btn,railGlowReset,750);
+  const w=document.getElementById('world');
+  document.getElementById('world-title').textContent=name;
+  if(btn){
+    const r=btn.getBoundingClientRect();
+    worldOrigin=(r.left+r.width/2)+'px '+(r.top+r.height*0.42)+'px';
+  }
+  w.style.transition='none';
+  w.style.transformOrigin=worldOrigin;
+  w.style.transform='scale(.045)';
+  w.style.opacity='0';
+  w.classList.add('open');
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+    w.style.transition='transform .78s cubic-bezier(.32,.08,.24,1), opacity .4s ease .16s';
+    w.style.transform='scale(1)';
+    w.style.opacity='1';
+  });});
 }
 function closeWorld(){
   const w=document.getElementById('world');
-  w.classList.add('closing');
-  setTimeout(()=>{w.classList.remove('open','closing');},420);
+  w.style.transformOrigin=worldOrigin;
+  w.style.transition='transform .55s cubic-bezier(.6,0,.72,.35), opacity .3s ease .2s';
+  w.style.transform='scale(.045)';
+  w.style.opacity='0';
+  railGlowReset();
+  setTimeout(()=>{w.classList.remove('open');w.style.transition='none';},560);
 }
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
