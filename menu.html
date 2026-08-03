@@ -1221,7 +1221,7 @@ function renderCave(animClass){
   card.innerHTML=`
     <section class="cave-sec cave-sec-media">
       <div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
-      <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Pin this dish" title="Pin this dish">${PIN_SVG}</button>
+      <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
       <div class="cave-photo-row">
         ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
         <div class="cave-media">${media}</div>
@@ -1259,8 +1259,8 @@ function loadZoneStars(d){
 function cavePin(e,id){
   e.stopPropagation();
   let p=getPins();
-  if(p.includes(id)){p=p.filter(x=>x!==id);showToast('Removed from your pinned dishes');}
-  else{p.push(id);showToast('Pinned! It will show first in My Tastings');}
+  if(p.includes(id)){p=p.filter(x=>x!==id);showToast('Removed from your favorites');}
+  else{p.push(id);showToast('Saved! It will show first in My Tastings');}
   localStorage.setItem('hf_pins',JSON.stringify(p));
   const btn=e.currentTarget;
   if(btn)btn.classList.toggle('pinned',p.includes(id));
@@ -1657,7 +1657,7 @@ function openMyTastings(){
   loadMyTastings();
 }
 function closeMyTastings(){document.getElementById('tastings-modal').classList.remove('open');}
-const PIN_SVG='<svg viewBox="0 0 24 24" class="pin-svg"><path fill="currentColor" d="M12 2C8.7 2 6 4.7 6 8c0 4.4 6 12 6 12s6-7.6 6-12c0-3.3-2.7-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>';
+const PIN_SVG='<svg viewBox="0 0 24 24" class="pin-svg"><path fill="currentColor" d="M12 21s-7.2-4.6-9.3-9A5.4 5.4 0 0 1 12 6.1 5.4 5.4 0 0 1 21.3 12c-2.1 4.4-9.3 9-9.3 9z"/></svg>';
 const TASTING_STAR='<svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
 function getPins(){try{return JSON.parse(localStorage.getItem('hf_pins')||'[]');}catch(e){return[];}}
 function togglePin(e,id){
@@ -1692,7 +1692,7 @@ async function loadMyTastings(){
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
-      const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Pin this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
+      const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
       return`<div class="review-item tasting-item"${clickAttr}>
         ${pinBtn}
         <div class="tasting-main">
