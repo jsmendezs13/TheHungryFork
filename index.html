@@ -44,7 +44,7 @@
   .video-hero-eyebrow { font-family: var(--sans); font-weight: 400; font-size: .72rem; letter-spacing: .34em; text-transform: uppercase; opacity: .85; margin-bottom: .9rem; }
   .video-hero-logo { width: 68px; height: auto; margin-bottom: 1rem; border-radius: 50%; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
   .video-hero-title { font-family: var(--serif); font-size: clamp(2.8rem, 9vw, 4.6rem); font-weight: 500; letter-spacing: .01em; line-height: 1.05; text-shadow: 0 2px 20px rgba(0,0,0,.45); }
-  .video-hero-tagline { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem; letter-spacing: .06em; opacity: .9; margin-top: .5rem; margin-bottom: 2rem; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .video-hero-tagline { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem; letter-spacing: .06em; opacity: .9; margin-top: .5rem; margin-bottom: .5rem; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
   .video-hero-cta { background: transparent; color: var(--white); border: 1px solid rgba(252,249,244,.85); border-radius: 999px; padding: .95rem 2.8rem; font-size: .78rem; font-weight: 500; font-family: var(--sans); letter-spacing: .22em; text-transform: uppercase; cursor: pointer; transition: all .25s; }
   .video-hero-cta:hover { background: var(--white); color: var(--ink); }
   .video-hero-scroll-hint { position: absolute; bottom: 1.4rem; left: 50%; transform: translateX(-50%); color: rgba(252,249,244,.75); font-size: 1.2rem; animation: bounce 2s infinite; }
@@ -289,14 +289,14 @@
   .footer-link:hover { opacity:1; }
 
   /* ── LIVE FORK'S RATING (glossy red stars) ── */
-  .vh-rating-live { display:flex; align-items:center; gap:10px; margin-top:1.2rem; }
-  .vh-laurel { height:74px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
+  .vh-rating-live { display:flex; align-items:center; gap:8px; margin-top:.35rem; cursor:pointer; }
+  .vh-laurel { height:52px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
   .vh-laurel-r { transform:scaleX(-1); }
-  .vh-stars { position:relative; font-size:2.4rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
+  .vh-stars { position:relative; font-size:1.55rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
   .vh-stars-base { color:#42100c; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 1px #661410; -webkit-text-stroke:1px rgba(120,20,14,.6); }
   .vh-stars-fill { position:absolute; top:0; left:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#ff7a6b 0%,#ef2318 42%,#c01108 60%,#7e0a05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.55); filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)); transition:width .8s ease; }
   #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
-  @media (max-width:600px){ .vh-stars{font-size:2rem;} .vh-laurel{height:60px;} }
+  @media (max-width:600px){ .vh-stars{font-size:1.35rem;} .vh-laurel{height:44px;} }
 
   /* ── 3D WARP ROOM ── */
   #warp-room { position:relative; overflow:hidden; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:2rem 0 1.6rem; }
@@ -375,9 +375,11 @@
   /* ── VIDEO OVERLAY ── */
   .vid-overlay { display:none; position:fixed; inset:0; z-index:890; background:rgba(10,6,4,.94); align-items:center; justify-content:center; flex-direction:column; padding:1rem; }
   .vid-overlay.open { display:flex; }
-  #vid-player { max-width:100%; max-height:72vh; border-radius:10px; box-shadow:0 24px 70px rgba(0,0,0,.7); background:#000; }
+  #vid-player { max-width:100%; max-height:42vh; pointer-events:none; border-radius:10px; box-shadow:0 24px 70px rgba(0,0,0,.7); background:#000; }
   .vid-close { position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); right:14px; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.45); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .vid-caption { margin-top:1rem; background:rgba(252,249,244,.06); border:1px solid rgba(252,249,244,.28); border-radius:14px; padding:.8rem 1.6rem; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
+  .vid-title { font-family:var(--sans); font-weight:700; font-size:.85rem; letter-spacing:.34em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)); margin-bottom:.85rem; }
+  .vid-dish-photo { max-width:76%; max-height:24vh; object-fit:contain; margin-top:.9rem; border-radius:10px; box-shadow:0 14px 44px rgba(0,0,0,.65); }
+  .vid-caption { margin-top:.9rem; background:rgba(252,249,244,.06); border:1px solid rgba(252,249,244,.28); border-radius:14px; padding:.8rem 1.6rem; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
   .vid-caption-label { display:block; font-family:var(--sans); font-size:.6rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:#FF6B5E; margin-bottom:2px; }
   .vid-caption-name { display:block; font-family:var(--serif); font-size:1.3rem; font-weight:600; color:var(--white); }
 </style>
@@ -399,7 +401,7 @@
       <div class="video-hero-eyebrow">Steakhouse &middot; Stone Street, New York</div>
       <h1 class="video-hero-title">The Hungry Fork</h1>
       <p class="video-hero-tagline">Delicious Cousin</p>
-      <div class="vh-rating-live">
+      <div class="vh-rating-live" onclick="openForkInfo()" title="What is Fork's Rating?">
         <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'">
         <div class="vh-stars">
           <div class="vh-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
@@ -407,7 +409,7 @@
         </div>
         <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'">
       </div>
-      <div class="vh-rating-caption">Fork's Rating<span id="vh-rating-num"></span></div>
+      <div class="vh-rating-caption" onclick="openForkInfo()" style="cursor:pointer;">Fork's Rating<span id="vh-rating-num"></span></div>
     </div>
     <div class="vh-btn-rail" id="vh-btn-rail">
       <div class="vh-btn" data-idx="0" data-name="About Us"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
@@ -617,11 +619,23 @@
 <!-- VIDEO PLAYER OVERLAY -->
 <div id="video-modal" class="vid-overlay" onclick="if(event.target===this)closeVideoOverlay()">
   <button class="vid-close" onclick="closeVideoOverlay()" aria-label="Close">&#10005;</button>
-  <video id="vid-player" src="chef-video.mp4" controls playsinline loop></video>
+  <div class="vid-title">Chef's Pick</div>
+  <video id="vid-player" src="chef-video.mp4" muted playsinline loop></video>
+  <img src="1_T_Bone_Fork_Steak_I.jpeg" class="vid-dish-photo" alt="T-Bone Fork Steak" onerror="this.style.display='none'">
   <button class="vid-caption" onclick="goChefsPick()">
-    <span class="vid-caption-label">Chef's Pick</span>
     <span class="vid-caption-name">T-Bone Fork Steak &rarr;</span>
   </button>
+</div>
+
+<!-- FORK'S RATING INFO -->
+<div class="cs-overlay" id="fork-info" onclick="if(event.target===this)closeForkInfo()">
+  <div class="cs-box">
+    <img src="laurel-left.png" style="height:46px;margin-bottom:.6rem;" alt="" onerror="this.style.display='none'">
+    <div class="cs-title" style="font-size:1.55rem;">What is Fork's Rating?</div>
+    <p class="cs-sub" style="text-align:left;">Fork's Rating is our independent taste score for restaurants and dishes across the city &mdash; powered entirely by real reviews from verified tasters. No critics, no ads. Just honest forks.<br><br>Log in, rate the dishes you try, and every review brings you closer to <strong>Seb's Lucky Bite</strong> &mdash; a free meal and drink for one lucky taster.</p>
+    <button class="cs-close" onclick="closeForkInfo();openTasterModal();">Log In &amp; Start Rating</button>
+    <div style="margin-top:.7rem;"><a onclick="closeForkInfo()" style="font-family:var(--sans);font-size:.78rem;color:var(--muted);text-decoration:underline;cursor:pointer;">Maybe later</a></div>
+  </div>
 </div>
 
 <div id="page-warp"></div>
@@ -1331,12 +1345,16 @@ function menuEnter(){
   setTimeout(()=>{window.location.href='menu.html';},430);
 }
 
+// ── FORK'S RATING INFO ──
+function openForkInfo(){document.getElementById('fork-info').classList.add('open');}
+function closeForkInfo(){document.getElementById('fork-info').classList.remove('open');}
+
 // ── VIDEO OVERLAY ──
 function openVideoOverlay(){
   const m=document.getElementById('video-modal');
   m.classList.add('open');
   const v=document.getElementById('vid-player');
-  try{v.currentTime=0;v.muted=false;v.play().catch(()=>{});}catch(e){}
+  try{v.currentTime=0;v.muted=true;v.play().catch(()=>{});}catch(e){}
 }
 function closeVideoOverlay(){
   document.getElementById('video-modal').classList.remove('open');
@@ -1348,7 +1366,9 @@ function goChefsPick(){window.location.href='menu.html?dish=tbone-fork-steak';}
   const hero=document.querySelector('.video-hero');
   if(!hero)return;
   hero.addEventListener('click',e=>{
-    if(e.target.closest('.vh-btn,.vh-btn-rail,.vh-flag,button,a,input,.vh-rating-live'))return;
+    if(e.target.closest('.vh-btn,.vh-btn-rail,.vh-flag,button,a,input,.vh-rating-live,.vh-rating-caption'))return;
+    const r=hero.getBoundingClientRect();
+    if((e.clientY-r.top)>r.height*0.55)return;
     openVideoOverlay();
   });
 })();
