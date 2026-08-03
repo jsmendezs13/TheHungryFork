@@ -473,7 +473,7 @@
         <div class="t-choice-header">
           <span class="t-choice-icon">🍽️</span>
           <div class="t-choice-title">Welcome, Taster!</div>
-          <div class="t-choice-sub">Log in or create your free account to rate dishes and earn Seb's Lucky Bite!</div>
+          <div class="t-choice-sub">Log in or create your free account to rate dishes and earn Fork's Lucky Bite!</div>
         </div>
         <div class="t-choice" style="margin-top:1.25rem;">
           <button class="t-btn" onclick="goTStep(1)">Log In</button>
@@ -687,9 +687,9 @@
 <div class="lucky-overlay" id="lucky-overlay">
   <div class="lucky-box">
     <span class="lucky-emoji">🎉</span>
-    <div class="lucky-title">You Won Seb's Lucky Bite!</div>
+    <div class="lucky-title">You Won Fork's Lucky Bite!</div>
     <div class="lucky-number" id="lucky-number">#1000</div>
-    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free meal and drink</strong>! Tap below to confirm you received it.</div>
+    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free dish</strong>! Tap below to confirm you received it.</div>
     <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
   </div>
 </div>
@@ -1265,20 +1265,27 @@ async function submitRating(){
   const err=document.getElementById('r-err');
   err.style.display='none';
   btn.disabled=true;btn.textContent='Posting…';
+  const dbDish=DISH_ID_MAP[currentDishId]||1;
+  let updateReviewId=null;
   try{
-    const dbDish=DISH_ID_MAP[currentDishId]||1;
-    const{ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id`);
+    const{ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at`);
     if(dupOk&&dupData.length){
-      err.textContent='You have already rated this dish — thank you! Each taster can rate a dish once.';
-      err.style.display='block';
-      btn.disabled=false;btn.textContent='Post Review ⭐';
-      return;
+      const prev=dupData[0];
+      const ageDays=(Date.now()-new Date(prev.created_at).getTime())/86400000;
+      if(ageDays<30){
+        const wait=Math.ceil(30-ageDays);
+        err.textContent='You already rated this dish. You can update your rating in '+wait+' day'+(wait===1?'':'s')+' — one score per dish, refreshed monthly.';
+        err.style.display='block';
+        btn.disabled=false;btn.textContent='Post Review ⭐';
+        return;
+      }
+      updateReviewId=prev.id;
     }
   }catch(e){}
   const payload={
     taster_id:currentTaster.id,
     restaurant_id:RESTAURANT_ID,
-    dish_id:DISH_ID_MAP[currentDishId]||1,
+    dish_id:dbDish,
     flavor:parseInt(document.getElementById('sl-flavor').value),
     worth_every_bite:parseInt(document.getElementById('sl-worth').value),
     signature_style:parseInt(document.getElementById('sl-sig').value),
@@ -1289,28 +1296,42 @@ async function submitRating(){
     photo_url:null,
   };
   try{
-    const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
-    const globalNum=(Array.isArray(countData)?countData.length:0)+1;
-    payload.global_rating_number=globalNum;
-    const{ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload);
+    let ok,data,status;
+    if(updateReviewId){
+      payload.created_at=new Date().toISOString();
+      ({ok,data,status}=await sbFetch(`/rest/v1/reviews?id=eq.${updateReviewId}`,'PATCH',payload));
+      if(ok){
+        closeRatingModal();
+        showToast('Your rating was updated! Thank you ⭐');
+      }
+    }else{
+      const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
+      const globalNum=(Array.isArray(countData)?countData.length:0)+1;
+      payload.global_rating_number=globalNum;
+      ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
+      if(ok){
+        closeRatingModal();
+        if(globalNum%1000===0){
+          showToast('Review #'+globalNum+' — LUCKY BITE! 🎉');
+          showLuckyBite(globalNum);
+        }else{
+          showToast('Review #'+globalNum+' posted! ⭐ '+(1000-globalNum%1000)+' to the next Lucky Bite');
+        }
+      }
+    }
     if(ok){
-      closeRatingModal();
-      showToast('Review posted! Thank you ⭐');
       loadOverallRating();
       caveRatings={};
       if(document.getElementById('cave').classList.contains('open'))renderCave();
-      if(globalNum%1000===0)showLuckyBite(globalNum);
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
-      if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You have already rated this dish — thank you! Each taster can rate a dish once.';}
+      if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
       else{err.textContent='Error ('+status+'): '+msg;}
       err.style.display='block';
-      console.error('Review submit error:',data);
     }
   }catch(e){
     err.textContent='Network error: '+e.message;
     err.style.display='block';
-    console.error('Review submit exception:',e);
   }
   btn.disabled=false;btn.textContent='Post Review ⭐';
 }
@@ -1332,7 +1353,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
     list.innerHTML=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const name=r.tasters?.first_name||'Anonymous';
-      const date=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       let replyHtml='';
       if(r.reply_text){
         replyHtml=`<div class="review-reply"><strong>Restaurant reply:</strong> ${r.reply_text}</div>`;
@@ -1391,7 +1412,7 @@ async function loadMyTastings(){
       const dishId=dishEntry?dishEntry[0]:null;
       const dishName=dishInfo?dishInfo.name:('Dish #'+r.dish_id);
       const restName='The Hungry Fork';
-      const date=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       return`<div class="review-item"${clickAttr}>
         <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">⭐ ${score}</span></div>
@@ -1415,7 +1436,7 @@ function showLuckyBite(num){
 }
 async function claimLuckyBite(){
   document.getElementById('lucky-overlay').classList.remove('open');
-  showToast('🎉 Lucky Bite claimed! Enjoy your free meal!');
+  showToast('🎉 Lucky Bite claimed! Enjoy your free dish!');
 }
 
 // ── MAPS ──
