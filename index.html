@@ -252,7 +252,9 @@
   }
 
   /* ── HERO ELEMENTS (grade, flag, rating, menu button) ── */
-  .hero-grade { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 16px); left:16px; width:72px; height:auto; z-index:6; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .hero-grade { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 16px); left:16px; width:76px; z-index:6; text-align:center; }
+  .hero-grade img { width:72px; height:auto; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .hero-grade-label { font-family:var(--sans); font-size:.44rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--white); text-shadow:0 1px 5px rgba(0,0,0,.75); line-height:1.35; margin-top:2px; }
   .vh-center { margin-top:auto; margin-bottom:1.4rem; display:flex; flex-direction:column; align-items:center; }
   .vh-flag { height:26px; width:auto; display:block; margin:0 auto .55rem; cursor:pointer; filter:drop-shadow(0 1px 4px rgba(0,0,0,.55)); }
   .vh-rating { width:min(300px, 72vw); height:auto; margin-top:1.2rem; filter:drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
@@ -261,13 +263,13 @@
   .vh-btn { position:absolute; left:50%; top:6px; transform-style:preserve-3d; display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; -webkit-tap-highlight-color:transparent; will-change:transform,opacity; }
   .vh-btn img { width:76px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); pointer-events:none; }
   .vh-btn span { font-family:var(--sans); font-size:.62rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; pointer-events:none; }
-  .world-overlay { display:none; position:fixed; inset:0; z-index:960; background:radial-gradient(140% 110% at 50% 28%, #6E0906 0%, #3D0503 45%, #1C0908 100%); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2.2rem; }
-  .world-overlay.open { display:flex; }
-  .world-overlay { will-change:transform, opacity; }
-  .world-back { position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); left:14px; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .world-icon { width:110px; height:auto; filter:drop-shadow(0 10px 28px rgba(0,0,0,.6)); margin-bottom:1.2rem; }
-  .world-title { font-family:var(--serif); font-size:2.4rem; font-weight:600; color:var(--white); margin-bottom:.6rem; }
-  .world-sub { font-family:var(--sans); font-weight:300; color:rgba(252,249,244,.75); font-size:.95rem; line-height:1.8; max-width:300px; }
+  .cs-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.72); z-index:850; align-items:center; justify-content:center; padding:1.4rem; }
+  .cs-overlay.open { display:flex; }
+  .cs-box { background:var(--white); border-radius:20px; width:100%; max-width:340px; padding:2.4rem 1.8rem 1.8rem; text-align:center; animation:slideUp .25s ease; box-shadow:var(--shadow-lg); }
+  .cs-icon { width:72px; height:auto; margin-bottom:1rem; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); }
+  .cs-title { font-family:var(--serif); font-size:1.7rem; font-weight:600; color:var(--text); margin-bottom:.4rem; }
+  .cs-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); line-height:1.7; margin-bottom:1.4rem; }
+  .cs-close { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.8rem 2.4rem; font-size:.76rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
   .video-hero-content { padding:1.8rem 1.4rem 1.4rem; }
 
   /* ── MENU ACCORDION (C&W style) ── */
@@ -366,7 +368,7 @@
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 
   /* ── PAGE TRANSITION ── */
-  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); transition:opacity .5s ease .1s; }
+  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 100% at 50% 40%, rgba(21,13,9,.2) 0%, #150D09 78%); transition:opacity .42s ease; }
   body.warping #page-warp { opacity:1; }
   body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
   .video-hero-content { transition:transform .5s ease; }
@@ -379,7 +381,10 @@
 <div class="video-hero">
   <video class="video-hero-bg" src="chef-video.mp4" autoplay muted loop playsinline></video>
   <div class="video-hero-overlay"></div>
-  <img src="grade-a.png" class="hero-grade" alt="Sanitary Inspection Grade A">
+  <div class="hero-grade">
+    <img src="grade-a.png" alt="Sanitary Inspection Grade A">
+    <div class="hero-grade-label">Sanitary Inspection Grade</div>
+  </div>
   <div class="video-hero-content">
     <div class="vh-center">
       <img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)">
@@ -591,12 +596,14 @@
   </div>
 </div>
 
-<!-- SECTION WORLD (Prezi-style) -->
-<div id="world" class="world-overlay">
-  <button class="world-back" onclick="closeWorld()" aria-label="Back">&#8249;</button>
-  <img src="menu-button-blank.png" class="world-icon" alt="">
-  <div class="world-title" id="world-title"></div>
-  <p class="world-sub">Coming soon &mdash; we are cooking something special for you.</p>
+<!-- COMING SOON -->
+<div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
+  <div class="cs-box">
+    <img src="menu-button-blank.png" class="cs-icon" alt="">
+    <div class="cs-title" id="cs-title"></div>
+    <p class="cs-sub">Coming soon &mdash; we are cooking something special for you.</p>
+    <button class="cs-close" onclick="closeComingSoon()">Close</button>
+  </div>
 </div>
 
 <div id="page-warp"></div>
@@ -1301,80 +1308,17 @@ async function loadOverallRating(){
 }
 
 // ── ENTER MENU PAGE ──
-function flyInto(btn,after,ms){
-  document.body.classList.add('warping');
-  if(btn){
-    const img=btn.querySelector('img');
-    if(img){
-      img.style.transition='filter .25s ease';
-      img.style.filter='brightness(2) saturate(1.5) drop-shadow(0 0 26px rgba(255,45,28,.95))';
-      const r=img.getBoundingClientRect();
-      const c=img.cloneNode();
-      c.className='fly-clone';
-      c.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;z-index:955;pointer-events:none;margin:0;transition:transform .6s cubic-bezier(.5,0,.8,.35),opacity .3s ease .35s;filter:brightness(1.6) saturate(1.4);`;
-      document.body.appendChild(c);
-      const cx=window.innerWidth/2-(r.left+r.width/2);
-      const cy=window.innerHeight/2-(r.top+r.height/2);
-      const sc=(Math.max(window.innerWidth,window.innerHeight)*2.4)/r.width;
-      requestAnimationFrame(()=>{requestAnimationFrame(()=>{
-        c.style.transform=`translate(${cx}px,${cy}px) scale(${sc})`;
-        c.style.opacity='0';
-      });});
-      setTimeout(()=>{c.remove();},950);
-    }
-  }
-  setTimeout(after,ms||620);
-}
 function menuEnter(){
-  const btn=document.querySelector('.vh-btn[data-menu]');
-  flyInto(btn,()=>{window.location.href='menu.html';});
+  document.body.classList.add('warping');
+  setTimeout(()=>{window.location.href='menu.html';},430);
 }
-window.addEventListener('pageshow',()=>{
-  document.body.classList.remove('warping');
-  document.querySelectorAll('.fly-clone').forEach(c=>c.remove());
-  document.querySelectorAll('.vh-btn img').forEach(im=>{
-    im.style.transition='none';im.style.filter='';
-    setTimeout(()=>{im.style.transition='';},60);
-  });
-});
 
 // ── COMING SOON ──
-function railGlowReset(){
-  document.body.classList.remove('warping');
-  document.querySelectorAll('.vh-btn img').forEach(im=>{
-    im.style.transition='none';im.style.filter='';
-    setTimeout(()=>{im.style.transition='';},60);
-  });
+function openComingSoon(name){
+  document.getElementById('cs-title').textContent=name;
+  document.getElementById('cs-overlay').classList.add('open');
 }
-let worldOrigin='50% 50%';
-function openWorld(name,btn){
-  flyInto(btn,railGlowReset,750);
-  const w=document.getElementById('world');
-  document.getElementById('world-title').textContent=name;
-  if(btn){
-    const r=btn.getBoundingClientRect();
-    worldOrigin=(r.left+r.width/2)+'px '+(r.top+r.height*0.42)+'px';
-  }
-  w.style.transition='none';
-  w.style.transformOrigin=worldOrigin;
-  w.style.transform='scale(.045)';
-  w.style.opacity='0';
-  w.classList.add('open');
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
-    w.style.transition='transform .78s cubic-bezier(.32,.08,.24,1), opacity .4s ease .16s';
-    w.style.transform='scale(1)';
-    w.style.opacity='1';
-  });});
-}
-function closeWorld(){
-  const w=document.getElementById('world');
-  w.style.transformOrigin=worldOrigin;
-  w.style.transition='transform .55s cubic-bezier(.6,0,.72,.35), opacity .3s ease .2s';
-  w.style.transform='scale(.045)';
-  w.style.opacity='0';
-  railGlowReset();
-  setTimeout(()=>{w.classList.remove('open');w.style.transition='none';},560);
-}
+function closeComingSoon(){document.getElementById('cs-overlay').classList.remove('open');}
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
 function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
@@ -1410,7 +1354,7 @@ function railInit(){
       const i=parseInt(b.dataset.idx);
       if(Math.abs(i-railPos)>0.3){railTo(i);return;}
       if(b.dataset.menu)menuEnter();
-      else openWorld(b.dataset.name,b);
+      else openComingSoon(b.dataset.name);
     });
   });
   let sx=0,sy=0,p0=0,dragging=false,st=0,moved=false;
