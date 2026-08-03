@@ -372,6 +372,14 @@
   body.warping #page-warp { opacity:1; }
   body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
   .video-hero-content { transition:transform .5s ease; }
+  /* ── VIDEO OVERLAY ── */
+  .vid-overlay { display:none; position:fixed; inset:0; z-index:890; background:rgba(10,6,4,.94); align-items:center; justify-content:center; flex-direction:column; padding:1rem; }
+  .vid-overlay.open { display:flex; }
+  #vid-player { max-width:100%; max-height:72vh; border-radius:10px; box-shadow:0 24px 70px rgba(0,0,0,.7); background:#000; }
+  .vid-close { position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); right:14px; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.45); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .vid-caption { margin-top:1rem; background:rgba(252,249,244,.06); border:1px solid rgba(252,249,244,.28); border-radius:14px; padding:.8rem 1.6rem; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
+  .vid-caption-label { display:block; font-family:var(--sans); font-size:.6rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:#FF6B5E; margin-bottom:2px; }
+  .vid-caption-name { display:block; font-family:var(--serif); font-size:1.3rem; font-weight:600; color:var(--white); }
 </style>
 </head>
 <body>
@@ -604,6 +612,16 @@
     <p class="cs-sub">Coming soon &mdash; we are cooking something special for you.</p>
     <button class="cs-close" onclick="closeComingSoon()">Close</button>
   </div>
+</div>
+
+<!-- VIDEO PLAYER OVERLAY -->
+<div id="video-modal" class="vid-overlay" onclick="if(event.target===this)closeVideoOverlay()">
+  <button class="vid-close" onclick="closeVideoOverlay()" aria-label="Close">&#10005;</button>
+  <video id="vid-player" src="chef-video.mp4" controls playsinline loop></video>
+  <button class="vid-caption" onclick="goChefsPick()">
+    <span class="vid-caption-label">Chef's Pick</span>
+    <span class="vid-caption-name">T-Bone Fork Steak &rarr;</span>
+  </button>
 </div>
 
 <div id="page-warp"></div>
@@ -1313,6 +1331,28 @@ function menuEnter(){
   setTimeout(()=>{window.location.href='menu.html';},430);
 }
 
+// ── VIDEO OVERLAY ──
+function openVideoOverlay(){
+  const m=document.getElementById('video-modal');
+  m.classList.add('open');
+  const v=document.getElementById('vid-player');
+  try{v.currentTime=0;v.muted=false;v.play().catch(()=>{});}catch(e){}
+}
+function closeVideoOverlay(){
+  document.getElementById('video-modal').classList.remove('open');
+  const v=document.getElementById('vid-player');
+  try{v.pause();}catch(e){}
+}
+function goChefsPick(){window.location.href='menu.html?dish=tbone-fork-steak';}
+(function(){
+  const hero=document.querySelector('.video-hero');
+  if(!hero)return;
+  hero.addEventListener('click',e=>{
+    if(e.target.closest('.vh-btn,.vh-btn-rail,.vh-flag,button,a,input,.vh-rating-live'))return;
+    openVideoOverlay();
+  });
+})();
+
 // ── COMING SOON ──
 function openComingSoon(name){
   document.getElementById('cs-title').textContent=name;
@@ -1322,10 +1362,12 @@ function closeComingSoon(){document.getElementById('cs-overlay').classList.remov
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
 function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
+function railWrap(d){const n=7;return((d%n)+n*1.5)%n-n/2;}
+function railNorm(i){const n=7;return((Math.round(i)%n)+n)%n;}
 function railRender(){
   const sp=railSpacing();
   document.querySelectorAll('.vh-btn').forEach(b=>{
-    const d=b.dataset.idx-railPos, ad=Math.abs(d);
+    const d=railWrap(b.dataset.idx-railPos), ad=Math.abs(d);
     const sc=ad<1?1+(1-ad)*0.5:1;
     b.style.transform=`translateX(-50%) translateX(${d*sp}px) translateZ(${-ad*85}px) rotateY(${-d*16}deg) scale(${sc})`;
     b.style.opacity=ad>3?'0':String(1-ad*0.16);
@@ -1333,12 +1375,12 @@ function railRender(){
   });
 }
 function railTo(i){
-  i=Math.max(0,Math.min(6,i));
-  railIdx=i;
+  const target=railPos+railWrap(i-railPos);
+  railIdx=railNorm(i);
   if(railRAF)cancelAnimationFrame(railRAF);
   const step=()=>{
-    const diff=railIdx-railPos;
-    if(Math.abs(diff)<0.004){railPos=railIdx;railRender();railRAF=null;return;}
+    const diff=target-railPos;
+    if(Math.abs(diff)<0.004){railPos=target;railRender();railRAF=null;return;}
     railPos+=diff*0.18;
     railRender();
     railRAF=requestAnimationFrame(step);
@@ -1352,14 +1394,14 @@ function railInit(){
   document.querySelectorAll('.vh-btn').forEach(b=>{
     b.addEventListener('click',()=>{
       const i=parseInt(b.dataset.idx);
-      if(Math.abs(i-railPos)>0.3){railTo(i);return;}
+      if(Math.abs(railWrap(i-railPos))>0.3){railTo(i);return;}
       if(b.dataset.menu)menuEnter();
       else openComingSoon(b.dataset.name);
     });
   });
   let sx=0,sy=0,p0=0,dragging=false,st=0,moved=false;
   const down=(x,y)=>{dragging=true;moved=false;sx=x;sy=y;p0=railPos;st=Date.now();if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}};
-  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;railPos=Math.max(-0.3,Math.min(6.3,p0+(sx-x)/railSpacing()));railRender();};
+  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;railPos=p0+(sx-x)/railSpacing();railRender();};
   const up=x=>{
     if(!dragging)return;dragging=false;
     const dx=sx-x,dt=Date.now()-st;
