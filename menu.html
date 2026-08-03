@@ -333,7 +333,9 @@
   .cave-cat { text-align:center; font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.75); padding:.7rem 0 .95rem; }
   .cave-card-zone { position:relative; flex:1; display:flex; align-items:stretch; min-height:0; }
   .cave-card { position:relative; flex:1; background:var(--white); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.55); padding:2.7rem 1.3rem 1.4rem; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; min-height:0; }
-  .cave-grade { position:absolute; top:12px; left:12px; width:46px; height:auto; z-index:5; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
+  .cave-grade { position:absolute; top:12px; left:12px; width:56px; z-index:5; text-align:center; }
+  .cave-grade img { width:46px; height:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
+  .cave-grade-label { font-family:var(--sans); font-size:.4rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); line-height:1.35; margin-top:1px; }
   .cave-photo { max-width:100%; max-height:48vh; object-fit:contain; flex:0 1 auto; min-height:0; }
   .cave-photo-fallback { font-size:5rem; display:flex; align-items:center; justify-content:center; padding:2.5rem 0; }
   .cave-stars-wrap { text-align:center; margin-top:.75rem; }
@@ -1021,7 +1023,7 @@ function renderCave(animClass){
   const hdots=document.getElementById('cave-hdots');
   if(!card)return;
   if(!caveDishes.length){
-    card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A"><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
+    card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
     return;
@@ -1044,7 +1046,7 @@ function renderCave(animClass){
       ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.7rem;"><strong>Choice of the following:</strong></p>${d.choices.map(c=>`<p class="cave-meta-line">${c}</p>`).join('')}`:''}
     </div>`;
   }
-  card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A">`+inner;
+  card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>`+inner;
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
   if(caveViewIdx===0){
