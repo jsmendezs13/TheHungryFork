@@ -332,11 +332,11 @@
   .cave-back { position:absolute; top:calc(env(safe-area-inset-top,0px) + 10px); left:12px; z-index:20; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:38px; height:38px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .cave-cat { text-align:center; font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.75); padding:.7rem 0 .95rem; }
   .cave-card-zone { position:relative; flex:1; display:flex; align-items:stretch; min-height:0; }
-  .cave-card { position:relative; flex:1; background:var(--white); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.55); padding:2.7rem 1.3rem 1.4rem; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; min-height:0; }
+  .cave-card { position:relative; flex:1; background:var(--white); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.55); padding:2.7rem 1.3rem 1.4rem; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; min-height:0; }
   .cave-grade { position:absolute; top:12px; left:12px; width:56px; z-index:5; text-align:center; }
   .cave-grade img { width:46px; height:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
   .cave-grade-label { font-family:var(--sans); font-size:.4rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); line-height:1.35; margin-top:-7px; }
-  .cave-photo { max-width:100%; max-height:48vh; object-fit:contain; flex:0 1 auto; min-height:0; }
+  .cave-photo { max-width:72%; max-height:30vh; object-fit:contain; flex:0 1 auto; min-height:0; }
   .cave-photo-fallback { font-size:5rem; display:flex; align-items:center; justify-content:center; padding:2.5rem 0; }
   .cave-stars-wrap { text-align:center; margin-top:.75rem; }
   .cave-stars { position:relative; display:inline-block; font-size:1.7rem; letter-spacing:.1em; line-height:1; }
@@ -357,7 +357,7 @@
   .cave-hint { text-align:center; font-family:var(--sans); font-size:.62rem; letter-spacing:.22em; text-transform:uppercase; color:rgba(252,249,244,.5); padding-bottom:.7rem; }
   .cave-actions { display:flex; gap:.7rem; justify-content:center; }
   .cave-rate-btn { flex:1; max-width:260px; background:var(--red); color:#fff; border:none; border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
-  .cave-share-btn { background:transparent; border:1px solid rgba(252,249,244,.5); color:var(--white); border-radius:999px; padding:.85rem 1.2rem; font-size:.78rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
+  .cave-share-btn { background:transparent; border:1px solid #C01108; color:#FF6B5E; border-radius:999px; padding:.85rem 1.2rem; font-size:.78rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
   .cave-card.anim-l { animation:cardL .32s ease; }
   .cave-card.anim-r { animation:cardR .32s ease; }
   .cave-card.anim-u { animation:cardU .32s ease; }
@@ -388,6 +388,42 @@
   .cave-stars .fork-stars { width:130px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
   .star-glyph { width:25px; height:25px; display:block; }
   .star-inline { width:12px; height:12px; display:inline-block; vertical-align:-1px; }
+  .tasting-item { display:flex; align-items:flex-start; gap:.55rem; }
+  .tasting-main { flex:1; min-width:0; }
+  .pin-btn { background:none; border:none; padding:2px; cursor:pointer; color:#C9BCA9; flex-shrink:0; margin-top:2px; }
+  .pin-btn .pin-svg { width:17px; height:17px; display:block; }
+  .pin-btn.pinned { color:#C01108; }
+  .tasting-thumb { width:44px; height:34px; object-fit:cover; border-radius:6px; margin:0 .5rem; flex-shrink:0; }
+  .tasting-thumb-emoji { display:flex; align-items:center; justify-content:center; font-size:1.1rem; background:var(--off-white); }
+  .brand-red-text { background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:600; font-style:normal; }
+  .cave-nav-hint { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#C01108; margin:.25rem 0; -webkit-tap-highlight-color:transparent; }
+  .cave-nav-hint .hint-label { font-family:var(--serif); font-size:1rem; border:2px solid #C01108; border-radius:5px; padding:.12rem .8rem; }
+  .hint-tri { color:#C01108; font-size:.72rem; line-height:1; }
+  .cave-photo-row { display:flex; align-items:center; gap:.3rem; width:100%; justify-content:center; }
+  .cave-side { display:flex; align-items:center; gap:4px; cursor:pointer; min-width:44px; justify-content:center; -webkit-tap-highlight-color:transparent; }
+  .side-emoji { font-size:1.45rem; }
+  .cave-recs { display:flex; gap:1rem; width:100%; justify-content:space-around; margin-top:1rem; padding-top:.9rem; border-top:1px solid var(--border); }
+  .cave-rec { display:flex; flex-direction:column; align-items:center; gap:.35rem; flex:1; }
+  .rec-title { font-family:var(--serif); color:#C01108; font-size:1rem; text-align:center; line-height:1.25; }
+  .cave-rec img { max-height:105px; max-width:88%; object-fit:contain; }
+  .rec-emoji { font-size:2.8rem; }
+  .rec-name { font-family:var(--sans); font-size:.72rem; color:var(--muted); }
+  .rv-summary { display:flex; gap:1.1rem; align-items:center; margin-bottom:1rem; }
+  .rv-avg { font-family:var(--serif); font-size:2.6rem; font-weight:600; color:var(--text); line-height:1; }
+  .rv-count { font-family:var(--sans); font-size:.76rem; color:var(--muted); margin-top:2px; }
+  .rv-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .rv-bar-row { display:flex; align-items:center; gap:8px; font-family:var(--sans); font-size:.7rem; color:var(--muted); }
+  .rv-bar { flex:1; height:8px; background:var(--off-white); border-radius:4px; overflow:hidden; }
+  .rv-bar-fill { height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
+  .rv-your-box { background:var(--off-white); border:1px solid var(--border); border-radius:12px; padding:.8rem 1rem; margin-bottom:1rem; text-align:center; }
+  .rv-your-label { font-family:var(--sans); font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:.4rem; }
+  .rv-your-stars { display:flex; gap:5px; justify-content:center; }
+  .rv-star { color:#E7DCCB; }
+  .rv-star.on { color:#C01108; }
+  .rv-star .star-glyph { width:16px; height:16px; }
+  .rv-filters { display:flex; gap:.5rem; margin-bottom:.9rem; }
+  .rv-chip { background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.45rem 1rem; font-family:var(--sans); font-size:.76rem; color:var(--muted); cursor:pointer; }
+  .rv-chip.active { background:var(--red); border-color:var(--red); color:#fff; }
 </style>
 </head>
 <body>
@@ -688,6 +724,29 @@
   </div>
 </div>
 
+<!-- REVIEWS PANEL -->
+<div class="r-overlay" id="reviews-modal" onclick="if(event.target===this)closeReviewsPanel()">
+  <div class="r-box">
+    <div class="r-hero" style="height:64px;">
+      <button class="r-close" onclick="closeReviewsPanel()">&#10005;</button>
+      <span id="rv-title" style="font-family:var(--serif);font-weight:600;color:var(--text);font-size:1.2rem;">Reviews</span>
+    </div>
+    <div class="r-body">
+      <div class="rv-summary">
+        <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-count" id="rv-count"></div></div>
+        <div class="rv-bars" id="rv-bars"></div>
+      </div>
+      <div id="rv-your"></div>
+      <div class="rv-filters">
+        <button class="rv-chip active" onclick="rvSetSort('new',this)">Newest</button>
+        <button class="rv-chip" onclick="rvSetSort('high',this)">Highest</button>
+        <button class="rv-chip" onclick="rvSetSort('low',this)">Lowest</button>
+      </div>
+      <div class="reviews-list" id="rv-list" style="max-height:280px;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MY TASTINGS MODAL -->
 <div class="t-overlay" id="tastings-modal">
   <div class="t-box">
@@ -766,14 +825,14 @@ const DISHES=[
   {id:'tbone-fork-steak',name:'T-Bone Fork Steak',desc:'Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables',price:38,emoji:'🥩',category:'chefs-pick',
    img:'1_T_Bone_Fork_Steak_I.jpeg',imgOpen:'1_T_Bone_Fork_Steak_II.png',
    about:'Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.',
-   allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan'},
+   allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan',wine:'Dubonnet Rouge',cocktail:'Old Fashioned'},
   {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters',
    img:'korean-bbq-wing-plate.jpg',imgOpen:'korean-bbq-wing-open.jpg'},
   {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree',
    img:'steak-frites-plate.jpg',imgOpen:'steak-frites-open.jpg',
    about:'The strip steak is also known as a Sirloin steak, ours is served with the bone, a great steak! Roquefort butter is served on the side. Choice of mashed potato or french fries.',
    allergens:'Dairy, Allium, Citrus, Alcohol',mods:'No Butter',
-   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"]},
+   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"],wine:'Dubonnet Rouge',cocktail:'Old Fashioned'},
   {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree',
    img:'lobster-ravioli-plate.jpg',imgOpen:'lobster-ravioli-open.jpg'},
   {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree',
@@ -1103,6 +1162,12 @@ function exitCave(){
   document.getElementById('cave').classList.remove('open');
   document.body.style.overflow='';
 }
+function recImgErr(img,emoji){
+  const dv=document.createElement('div');
+  dv.className='rec-emoji';
+  dv.textContent=emoji;
+  img.replaceWith(dv);
+}
 function caveImgErr(img,emoji){
   const div=document.createElement('div');
   div.className='cave-photo-fallback';
@@ -1134,9 +1199,20 @@ function renderCave(animClass){
   currentDishId=d.id;
   let inner='';
   if(caveViewIdx===0){
-    inner=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-stars-wrap" onclick="caveRate()" style="cursor:pointer;" title="Tap to rate"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
-      <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>`;
+    const prevD=caveDishes[caveDishIdx-1], nextD=caveDishes[caveDishIdx+1];
+    inner=`<div class="cave-nav-hint" onclick="caveSetView(1)"><span class="hint-label">Another Photo</span><span class="hint-tri">&#9650;</span></div>
+      <div class="cave-photo-row">
+        ${prevD?`<div class="cave-side" onclick="caveDish(-1)"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></div>`:`<div class="cave-side"></div>`}
+        <img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
+        ${nextD?`<div class="cave-side" onclick="caveDish(1)"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></div>`:`<div class="cave-side"></div>`}
+      </div>
+      <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>
+      <div class="cave-nav-hint" onclick="caveSetView(2)"><span class="hint-tri">&#9660;</span><span class="hint-label">Description</span></div>
+      <div class="cave-recs">
+        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${d.id}-wine.jpg" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
+        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.jpg" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
+      </div>`;
   }else if(caveViewIdx===1){
     inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
       <div class="cave-dish-name">${d.name}</div><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
@@ -1185,7 +1261,7 @@ function caveInitTouch(){
   zone.addEventListener('touchmove',e=>{
     if(!tracking)return;
     const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
-    if(adx>ady||caveViewIdx!==2)e.preventDefault();
+    if(adx>ady)e.preventDefault();
   },{passive:false});
   zone.addEventListener('touchend',e=>{
     if(!tracking)return;tracking=false;
@@ -1206,12 +1282,10 @@ function caveInitTouch(){
 function caveGesture(dx,dy){
   if(Math.abs(dx)<36&&Math.abs(dy)<36)return;
   if(Math.abs(dx)>Math.abs(dy)){caveDish(dx>0?1:-1);return;}
-  if(caveViewIdx===2){
-    const tv=document.querySelector('.cave-text-view');
-    if(dy<0&&tv&&tv.scrollTop<=0)caveView(-1);
-    return;
-  }
-  caveView(dy>0?1:-1);
+  const card=document.getElementById('cave-card');
+  if(!card)return;
+  if(dy>0){if(card.scrollHeight-card.scrollTop-card.clientHeight<8)caveView(1);}
+  else{if(card.scrollTop<=0)caveView(-1);}
 }
 function scrollToMenu(){
   const room=document.getElementById('warp-room');
@@ -1487,6 +1561,66 @@ async function postReply(reviewId,dishId,restaurantId,listId,labelId){
   }catch(e){showToast('Network error.');}
 }
 
+// ── REVIEWS PANEL ──
+let rvData=[],rvSort='new';
+function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
+function rvStarsInline(n){let out='';for(let i=1;i<=5;i++){out+=`<span class="rv-star${i<=n?' on':''}">${STAR_GLYPH}</span>`;}return out;}
+async function openReviewsPanel(){
+  if(!caveDishes.length)return;
+  const d=caveDishes[caveDishIdx];
+  currentDishId=d.id;
+  document.getElementById('rv-title').textContent=d.name;
+  document.getElementById('reviews-modal').classList.add('open');
+  document.getElementById('rv-list').innerHTML='<div class="no-reviews">Loading…</div>';
+  const dbId=DISH_ID_MAP[d.id]||1;
+  try{
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);
+    rvData=ok?data:[];
+  }catch(e){rvData=[];}
+  rvRender();
+}
+function closeReviewsPanel(){document.getElementById('reviews-modal').classList.remove('open');}
+function rvSetSort(s,btn){rvSort=s;document.querySelectorAll('.rv-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rvRenderList();}
+function rvRender(){
+  const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
+  if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
+  else{
+    const avg=rvData.reduce((s,r)=>s+rvScore(r),0)/rvData.length;
+    avgEl.textContent=avg.toFixed(1);
+    cntEl.textContent='('+rvData.length+')';
+    const dist=[0,0,0,0,0];
+    rvData.forEach(r=>{const b=Math.min(5,Math.max(1,Math.round(rvScore(r))));dist[b-1]++;});
+    bars.innerHTML=[5,4,3,2,1].map(i=>`<div class="rv-bar-row"><span>${i}</span><div class="rv-bar"><div class="rv-bar-fill" style="width:${dist[i-1]/rvData.length*100}%"></div></div></div>`).join('');
+  }
+  const yr=document.getElementById('rv-your');
+  const mine=currentTaster?rvData.find(r=>r.taster_id===currentTaster.id):null;
+  if(mine){
+    const md=new Date(mine.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+    yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
+  }else{
+    yr.innerHTML=`<div class="rv-your-box" onclick="closeReviewsPanel();caveRate();" style="cursor:pointer;"><div class="rv-your-label">${currentTaster?'Tap to rate this dish':'Log in and rate this dish'}</div><div class="rv-your-stars">${rvStarsInline(0)}</div></div>`;
+  }
+  rvRenderList();
+}
+function rvRenderList(){
+  const list=document.getElementById('rv-list');
+  let arr=[...rvData];
+  if(rvSort==='high')arr.sort((a,b)=>rvScore(b)-rvScore(a));
+  else if(rvSort==='low')arr.sort((a,b)=>rvScore(a)-rvScore(b));
+  else arr.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(!arr.length){list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';return;}
+  list.innerHTML=arr.map(r=>{
+    const name=r.tasters?.first_name||'Anonymous';
+    const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+    return`<div class="review-item">
+      <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
+      ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
+      <div class="review-date">${date}</div>
+      ${r.reply_text?`<div class="review-reply"><strong>Restaurant reply:</strong> ${r.reply_text}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 // ── MY TASTINGS ──
 function openMyTastings(){
   if(!currentTaster){openTasterModal();return;}
@@ -1494,6 +1628,18 @@ function openMyTastings(){
   loadMyTastings();
 }
 function closeMyTastings(){document.getElementById('tastings-modal').classList.remove('open');}
+const PIN_SVG='<svg viewBox="0 0 24 24" class="pin-svg"><path fill="currentColor" d="M12 2C8.7 2 6 4.7 6 8c0 4.4 6 12 6 12s6-7.6 6-12c0-3.3-2.7-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>';
+const TASTING_STAR='<svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
+function getPins(){try{return JSON.parse(localStorage.getItem('hf_pins')||'[]');}catch(e){return[];}}
+function togglePin(e,id){
+  e.stopPropagation();
+  let p=getPins();
+  if(p.includes(id))p=p.filter(x=>x!==id);else p.push(id);
+  localStorage.setItem('hf_pins',JSON.stringify(p));
+  loadMyTastings();
+}
+function tastingThumbErr(img,emoji){const d=document.createElement('div');d.className='tasting-thumb tasting-thumb-emoji';d.textContent=emoji;img.replaceWith(d);}
+
 async function loadMyTastings(){
   const list=document.getElementById('tastings-list');
   list.innerHTML='<div class="no-reviews">Loading…</div>';
@@ -1503,19 +1649,28 @@ async function loadMyTastings(){
       list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
       return;
     }
-    list.innerHTML=data.map(r=>{
+    const pins=getPins();
+    const rows=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);
       const dishInfo=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
       const dishId=dishEntry?dishEntry[0]:null;
+      return{r,score,dishInfo,dishId,pinned:!!(dishId&&pins.includes(dishId))};
+    });
+    rows.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+    list.innerHTML=rows.map(({r,score,dishInfo,dishId,pinned})=>{
       const dishName=dishInfo?dishInfo.name:('Dish #'+r.dish_id);
-      const restName='The Hungry Fork';
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
-      return`<div class="review-item"${clickAttr}>
-        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
-        <div class="review-text">${restName}</div>
-        <div class="review-date">${date}</div>
+      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
+      const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Pin this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
+      return`<div class="review-item tasting-item"${clickAttr}>
+        ${pinBtn}
+        <div class="tasting-main">
+          <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
+          <div class="review-text brand-red-text">The Hungry Fork</div>
+          <div class="review-date">${date}</div>
+        </div>
       </div>`;
     }).join('');
   }catch(e){
