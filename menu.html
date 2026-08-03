@@ -424,6 +424,20 @@
   .rv-filters { display:flex; gap:.5rem; margin-bottom:.9rem; }
   .rv-chip { background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.45rem 1rem; font-family:var(--sans); font-size:.76rem; color:var(--muted); cursor:pointer; }
   .rv-chip.active { background:var(--red); border-color:var(--red); color:#fff; }
+  .cave-sec { width:100%; padding:1rem .9rem; }
+  .cave-sec-media { position:relative; padding-top:2.6rem; border-bottom:1px solid var(--border); }
+  .cave-sec-info { display:flex; flex-direction:column; align-items:center; gap:.35rem; border-bottom:1px solid var(--border); }
+  .cave-sec-info .cave-share-btn { margin-top:.7rem; }
+  .cave-sec-recs { padding-bottom:1.2rem; }
+  .cave-sec-recs .cave-recs { margin-top:0; padding-top:0; border-top:none; }
+  .cave-media { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; }
+  .cave-pin { position:absolute; top:12px; right:12px; z-index:6; background:none; border:none; padding:4px; cursor:pointer; color:#D6C9B6; }
+  .cave-pin .pin-svg { width:24px; height:24px; display:block; }
+  .cave-pin.pinned { color:#C01108; }
+  .cave-side { background:none; border:none; padding:2px; display:flex; align-items:center; gap:3px; cursor:pointer; min-width:40px; justify-content:center; -webkit-tap-highlight-color:transparent; }
+  .cave-vdots-h { display:flex; gap:8px; justify-content:center; margin-top:.7rem; }
+  .cave-vdots-h .cave-vdot { background:#DDD1C0; }
+  .cave-vdots-h .cave-vdot.active { background:#C01108; }
 </style>
 </head>
 <body>
@@ -457,18 +471,8 @@
     <div class="cave-cat" id="cave-cat"></div>
     <div class="cave-card-zone" id="cave-card-zone">
       <div class="cave-card" id="cave-card"></div>
-      <div class="cave-vdots">
-        <span class="cave-vdot active" onclick="caveSetView(0)"></span>
-        <span class="cave-vdot" onclick="caveSetView(1)"></span>
-        <span class="cave-vdot" onclick="caveSetView(2)"></span>
-      </div>
     </div>
     <div class="cave-hdots" id="cave-hdots"></div>
-    <div class="cave-hint">Swipe &#10231; plates &nbsp;&middot;&nbsp; &#8597; views</div>
-    <div class="cave-actions">
-      <button class="cave-rate-btn" onclick="caveRate()">Rate &amp; Review</button>
-      <button class="cave-share-btn" onclick="caveShare()">Share</button>
-    </div>
   </div>
 </div>
 <!-- END 3D WARP MENU -->
@@ -1197,53 +1201,76 @@ function renderCave(animClass){
   }
   const d=caveDishes[caveDishIdx];
   currentDishId=d.id;
-  let inner='';
+  const prevD=caveDishes[(caveDishIdx-1+caveDishes.length)%caveDishes.length];
+  const nextD=caveDishes[(caveDishIdx+1)%caveDishes.length];
+  const multi=caveDishes.length>1;
+  let media;
   if(caveViewIdx===0){
-    const prevD=caveDishes[caveDishIdx-1], nextD=caveDishes[caveDishIdx+1];
-    inner=`<div class="cave-nav-hint" onclick="caveSetView(1)"><span class="hint-label">Another Photo</span><span class="hint-tri">&#9650;</span></div>
-      <div class="cave-photo-row">
-        ${prevD?`<div class="cave-side" onclick="caveDish(-1)"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></div>`:`<div class="cave-side"></div>`}
-        <img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
-        ${nextD?`<div class="cave-side" onclick="caveDish(1)"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></div>`:`<div class="cave-side"></div>`}
-      </div>
-      <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
-      <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>
-      <div class="cave-nav-hint" onclick="caveSetView(2)"><span class="hint-tri">&#9660;</span><span class="hint-label">Description</span></div>
-      <div class="cave-recs">
-        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${d.id}-wine.jpg" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
-        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.jpg" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
-      </div>`;
+    media=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
   }else if(caveViewIdx===1){
-    inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-dish-name">${d.name}</div><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
+    media=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')"><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
   }else{
-    inner=`<div class="cave-text-view"><div class="cave-dish-name" style="text-align:left;">${d.name}</div>
+    media=`<div class="cave-text-view">
       <p class="cave-about">${d.about||d.desc}</p>
       ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
       ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
-      ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.7rem;"><strong>Choice of the following:</strong></p>${d.choices.map(c=>`<p class="cave-meta-line">${c}</p>`).join('')}`:''}
+      ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.5rem;"><strong>Choice of the following:</strong></p>`+d.choices.map(x=>`<p class="cave-meta-line">${x}</p>`).join(''):''}
     </div>`;
   }
-  card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>`+inner;
+  const pinned=getPins().includes(d.id);
+  card.innerHTML=`
+    <section class="cave-sec cave-sec-media">
+      <div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
+      <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Pin this dish" title="Pin this dish">${PIN_SVG}</button>
+      <div class="cave-photo-row">
+        ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
+        <div class="cave-media">${media}</div>
+        ${multi?`<button class="cave-side" onclick="caveDish(1)" aria-label="Next dish"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></button>`:'<span class="cave-side"></span>'}
+      </div>
+      <div class="cave-vdots-h">
+        <span class="cave-vdot${caveViewIdx===0?' active':''}" onclick="caveSetView(0)" title="Plate"></span>
+        <span class="cave-vdot${caveViewIdx===1?' active':''}" onclick="caveSetView(1)" title="Ingredients"></span>
+        <span class="cave-vdot${caveViewIdx===2?' active':''}" onclick="caveSetView(2)" title="Description"></span>
+      </div>
+    </section>
+    <section class="cave-sec cave-sec-info">
+      <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-dish-name">${d.name}</div>
+      <div class="cave-dish-price">$${d.price}</div>
+      <button class="cave-share-btn" onclick="caveShare()">Share</button>
+    </section>
+    <section class="cave-sec cave-sec-recs">
+      <div class="cave-recs">
+        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${d.id}-wine.jpg" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
+        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.jpg" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
+      </div>
+    </section>`;
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
-  if(caveViewIdx===0){
-    const dbId=DISH_ID_MAP[d.id]||1;
-    caveDishRating(dbId).then(r=>{
-      const fill=document.getElementById('cave-stars-fill');
-      const cap=document.getElementById('cave-stars-caption');
-      if(!fill)return;
-      fill.style.width=(r.avg/5*100)+'%';
-      if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:'Fork\u2019s Rating · No ratings yet';
-    });
-  }
+  loadZoneStars(d);
 }
-function updateCaveDots(){document.querySelectorAll('.cave-vdot').forEach((v,i)=>v.classList.toggle('active',i===caveViewIdx));}
+function loadZoneStars(d){
+  const dbId=DISH_ID_MAP[d.id]||1;
+  caveDishRating(dbId).then(r=>{
+    const cap=document.getElementById('cave-stars-caption');
+    if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:"Fork's Rating · No ratings yet";
+  });
+}
+function cavePin(e,id){
+  e.stopPropagation();
+  let p=getPins();
+  if(p.includes(id)){p=p.filter(x=>x!==id);showToast('Removed from your pinned dishes');}
+  else{p.push(id);showToast('Pinned! It will show first in My Tastings');}
+  localStorage.setItem('hf_pins',JSON.stringify(p));
+  const btn=e.currentTarget;
+  if(btn)btn.classList.toggle('pinned',p.includes(id));
+}
+function updateCaveDots(){}
 function playCardAnim(card,cls){if(!cls)return;card.classList.remove('anim-l','anim-r','anim-u','anim-d');void card.offsetWidth;card.classList.add(cls);}
-function caveDish(dir){if(!caveDishes.length)return;const n=caveDishIdx+dir;if(n<0||n>=caveDishes.length)return;caveDishIdx=n;caveViewIdx=0;renderCave(dir>0?'anim-l':'anim-r');}
-function caveView(dir){if(!caveDishes.length)return;const n=caveViewIdx+dir;if(n<0||n>2)return;caveViewIdx=n;renderCave(dir>0?'anim-u':'anim-d');}
+function caveDish(dir){if(!caveDishes.length)return;caveDishIdx=(caveDishIdx+dir+caveDishes.length)%caveDishes.length;renderCave(dir>0?'anim-l':'anim-r');}
+function caveView(dir){if(!caveDishes.length)return;caveViewIdx=(caveViewIdx+dir+3)%3;renderCave(dir>0?'anim-u':'anim-d');}
 function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
-function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;caveViewIdx=0;renderCave(dir);}
+function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;renderCave(dir);}
 function caveOpenDish(id){
   const d=DISHES.find(x=>x.id===id);
   if(!d)return;
@@ -1282,10 +1309,7 @@ function caveInitTouch(){
 function caveGesture(dx,dy){
   if(Math.abs(dx)<36&&Math.abs(dy)<36)return;
   if(Math.abs(dx)>Math.abs(dy)){caveDish(dx>0?1:-1);return;}
-  const card=document.getElementById('cave-card');
-  if(!card)return;
-  if(dy>0){if(card.scrollHeight-card.scrollTop-card.clientHeight<8)caveView(1);}
-  else{if(card.scrollTop<=0)caveView(-1);}
+  caveView(dy>0?1:-1);
 }
 function scrollToMenu(){
   const room=document.getElementById('warp-room');
@@ -1512,7 +1536,8 @@ async function submitRating(){
 async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-list',labelId='reviews-label'){
   const dbDishId=DISH_ID_MAP[dishId]||1;
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
+    let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
+    if(!ok||!Array.isArray(data)){({ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*&order=created_at.desc`));}
     const list=document.getElementById(listId);
     const label=document.getElementById(labelId);
     if(!ok||!data.length){
@@ -1574,8 +1599,11 @@ async function openReviewsPanel(){
   document.getElementById('rv-list').innerHTML='<div class="no-reviews">Loading…</div>';
   const dbId=DISH_ID_MAP[d.id]||1;
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);
-    rvData=ok?data:[];
+    let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);
+    if(!ok||!Array.isArray(data)){
+      ({ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*&order=created_at.desc`));
+    }
+    rvData=(ok&&Array.isArray(data))?data:[];
   }catch(e){rvData=[];}
   rvRender();
 }
