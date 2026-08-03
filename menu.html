@@ -1487,6 +1487,7 @@ async function submitRating(){
     signature_style:parseInt(document.getElementById('sl-sig').value),
     hospitality:parseInt(document.getElementById('sl-hosp').value),
     atmosphere_vibe:parseInt(document.getElementById('sl-atm').value),
+    reviewer_name:currentTaster.first_name||null,
     dish_comment:document.getElementById('r-dish-comment').value.trim()||null,
     restaurant_comment:document.getElementById('r-rest-comment').value.trim()||null,
     photo_url:null,
@@ -1549,7 +1550,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
     const canReply=currentTaster&&currentTaster.is_restaurant_admin&&currentTaster.restaurant_id===restaurantId;
     list.innerHTML=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const name=r.tasters?.first_name||'Anonymous';
+      const name=r.reviewer_name||r.tasters?.first_name||(currentTaster&&r.taster_id===currentTaster.id?currentTaster.first_name:'Anonymous');
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       let replyHtml='';
       if(r.reply_text){
@@ -1638,7 +1639,7 @@ function rvRenderList(){
   else arr.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   if(!arr.length){list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';return;}
   list.innerHTML=arr.map(r=>{
-    const name=r.tasters?.first_name||'Anonymous';
+    const name=r.reviewer_name||r.tasters?.first_name||(currentTaster&&r.taster_id===currentTaster.id?currentTaster.first_name:'Anonymous');
     const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
     return`<div class="review-item">
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
