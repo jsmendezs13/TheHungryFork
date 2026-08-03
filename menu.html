@@ -384,6 +384,10 @@
   .r-stars-input span.on:nth-child(4) { color:#E5261A; }
   .r-stars-input span.on:nth-child(5) { color:#FF5A4C; }
   .r-stars-input span:active { transform:scale(1.25); }
+  .fork-stars { width:min(158px,42vw); height:auto; display:block; margin:0 auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+  .cave-stars .fork-stars { width:130px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
+  .star-glyph { width:25px; height:25px; display:block; }
+  .star-inline { width:12px; height:12px; display:inline-block; vertical-align:-1px; }
 </style>
 </head>
 <body>
@@ -454,7 +458,7 @@
     <div class="modal-body">
       <div class="modal-dish-name" id="modal-name"></div>
       <div class="modal-dish-desc" id="modal-desc"></div>
-      <button class="rate-dish-btn" onclick="startRating()">★ Rate this dish</button>
+      <button class="rate-dish-btn" onclick="startRating()">Rate this dish</button>
       <button class="rate-dish-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:0.6rem;" onclick="shareDish()">🔗 Share this dish</button>
       <hr class="reviews-divider">
       <div class="modal-section-label" id="reviews-label">Reviews</div>
@@ -622,7 +626,7 @@
           <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
           <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:700; color:var(--red); margin-bottom:0.5rem;" id="t-welcome-msg">Welcome!</div>
           <div style="font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">You're now logged in. Let's rate some dishes!</div>
-          <button class="t-btn" onclick="closeTasterModal();openRatingModal();">Rate This Dish ★</button>
+          <button class="t-btn" onclick="closeTasterModal();openRatingModal();">Rate This Dish</button>
         </div>
       </div>
 
@@ -675,7 +679,7 @@
       <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Inter',sans-serif;margin-bottom:0.5rem;display:none;"></div>
 
       <div class="t-err" id="r-err" style="display:none;"></div>
-      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review ★</button>
+      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review</button>
 
       <hr class="r-divider">
       <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
@@ -1071,6 +1075,9 @@ function updateWarpCatName(){
   if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
 }
 
+const FORK_STARS='<svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E150D"/><stop offset="1" stop-color="#3E0B06"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A31108"/><stop offset="1" stop-color="#5E0A04"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C41508"/><stop offset="1" stop-color="#750A04"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E02414"/><stop offset="1" stop-color="#8E0B05"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg>';
+const STAR_GLYPH='<svg class="star-glyph" viewBox="0 0 100 100"><path fill="currentColor" stroke="rgba(0,0,0,.25)" stroke-width="3" stroke-linejoin="round" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
+
 // ── CAVE INTERIOR (enter a category) ──
 let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
 function caveListFor(key){
@@ -1128,7 +1135,7 @@ function renderCave(animClass){
   let inner='';
   if(caveViewIdx===0){
     inner=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-stars-wrap" onclick="caveRate()" style="cursor:pointer;" title="Tap to rate"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="cave-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-stars-wrap" onclick="caveRate()" style="cursor:pointer;" title="Tap to rate"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>`;
   }else if(caveViewIdx===1){
     inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
@@ -1335,7 +1342,7 @@ function initStarRows(){
     row.innerHTML='';
     for(let i=1;i<=5;i++){
       const s=document.createElement('span');
-      s.textContent='\u2605';
+      s.innerHTML=STAR_GLYPH;
       s.setAttribute('role','button');
       s.addEventListener('click',()=>{
         document.getElementById(row.dataset.target).value=i;
@@ -1367,7 +1374,7 @@ async function submitRating(){
         const wait=Math.ceil(30-ageDays);
         err.textContent='You already rated this dish. You can update your rating in '+wait+' day'+(wait===1?'':'s')+' — one score per dish, refreshed monthly.';
         err.style.display='block';
-        btn.disabled=false;btn.textContent='Post Review ★';
+        btn.disabled=false;btn.textContent='Post Review';
         return;
       }
       updateReviewId=prev.id;
@@ -1393,7 +1400,7 @@ async function submitRating(){
       ({ok,data,status}=await sbFetch(`/rest/v1/reviews?id=eq.${updateReviewId}`,'PATCH',payload));
       if(ok){
         closeRatingModal();
-        showToast('Your rating was updated! Thank you ★');
+        showToast('Your rating was updated! Thank you');
       }
     }else{
       const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
@@ -1406,7 +1413,7 @@ async function submitRating(){
           showToast('Review #'+globalNum+' — LUCKY BITE! 🎉');
           showLuckyBite(globalNum);
         }else{
-          showToast('Review #'+globalNum+' posted! ★ '+(1000-globalNum%1000)+' to the next Lucky Bite');
+          showToast('Review #'+globalNum+' posted! '+(1000-globalNum%1000)+' to the next Lucky Bite');
         }
       }
     }
@@ -1424,7 +1431,7 @@ async function submitRating(){
     err.textContent='Network error: '+e.message;
     err.style.display='block';
   }
-  btn.disabled=false;btn.textContent='Post Review ★';
+  btn.disabled=false;btn.textContent='Post Review';
 }
 
 // ── LOAD REVIEWS ──
@@ -1455,7 +1462,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
         </div>`;
       }
       return`<div class="review-item">
-        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">★ ${score}</span></div>
+        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
         <div class="review-date">${date}</div>
         ${replyHtml}
@@ -1506,7 +1513,7 @@ async function loadMyTastings(){
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       return`<div class="review-item"${clickAttr}>
-        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">★ ${score}</span></div>
+        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         <div class="review-text">${restName}</div>
         <div class="review-date">${date}</div>
       </div>`;
