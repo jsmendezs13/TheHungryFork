@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#2B211A">
-<title>The Hungry Fork — Menu</title>
+<title>The Hungry Fork — Menu &amp; Ratings</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -44,7 +44,7 @@
   .video-hero-eyebrow { font-family: var(--sans); font-weight: 400; font-size: .72rem; letter-spacing: .34em; text-transform: uppercase; opacity: .85; margin-bottom: .9rem; }
   .video-hero-logo { width: 68px; height: auto; margin-bottom: 1rem; border-radius: 50%; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
   .video-hero-title { font-family: var(--serif); font-size: clamp(2.8rem, 9vw, 4.6rem); font-weight: 500; letter-spacing: .01em; line-height: 1.05; text-shadow: 0 2px 20px rgba(0,0,0,.45); }
-  .video-hero-tagline { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem; letter-spacing: .06em; opacity: .9; margin-top: .5rem; margin-bottom: 2rem; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .video-hero-tagline { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem; letter-spacing: .06em; opacity: .9; margin-top: .5rem; margin-bottom: .5rem; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
   .video-hero-cta { background: transparent; color: var(--white); border: 1px solid rgba(252,249,244,.85); border-radius: 999px; padding: .95rem 2.8rem; font-size: .78rem; font-weight: 500; font-family: var(--sans); letter-spacing: .22em; text-transform: uppercase; cursor: pointer; transition: all .25s; }
   .video-hero-cta:hover { background: var(--white); color: var(--ink); }
   .video-hero-scroll-hint { position: absolute; bottom: 1.4rem; left: 50%; transform: translateX(-50%); color: rgba(252,249,244,.75); font-size: 1.2rem; animation: bounce 2s infinite; }
@@ -252,7 +252,9 @@
   }
 
   /* ── HERO ELEMENTS (grade, flag, rating, menu button) ── */
-  .hero-grade { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 16px); left:16px; width:72px; height:auto; z-index:6; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .hero-grade { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 16px); left:16px; width:76px; z-index:6; text-align:center; }
+  .hero-grade img { width:72px; height:auto; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .hero-grade-label { font-family:var(--sans); font-size:.44rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--white); text-shadow:0 1px 5px rgba(0,0,0,.75); line-height:1.35; margin-top:-7px; }
   .vh-center { margin-top:auto; margin-bottom:1.4rem; display:flex; flex-direction:column; align-items:center; }
   .vh-flag { height:26px; width:auto; display:block; margin:0 auto .55rem; cursor:pointer; filter:drop-shadow(0 1px 4px rgba(0,0,0,.55)); }
   .vh-rating { width:min(300px, 72vw); height:auto; margin-top:1.2rem; filter:drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
@@ -287,14 +289,14 @@
   .footer-link:hover { opacity:1; }
 
   /* ── LIVE FORK'S RATING (glossy red stars) ── */
-  .vh-rating-live { display:flex; align-items:center; gap:10px; margin-top:1.2rem; }
-  .vh-laurel { height:74px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
+  .vh-rating-live { display:flex; align-items:center; gap:8px; margin-top:.35rem; cursor:pointer; }
+  .vh-laurel { height:52px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
   .vh-laurel-r { transform:scaleX(-1); }
-  .vh-stars { position:relative; font-size:2.4rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
+  .vh-stars { position:relative; font-size:1.55rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
   .vh-stars-base { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(70,12,9,.3); filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
   .vh-stars-fill { display:none; }
   #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
-  @media (max-width:600px){ .vh-stars{font-size:2rem;} .vh-laurel{height:60px;} }
+  @media (max-width:600px){ .vh-stars{font-size:1.35rem;} .vh-laurel{height:44px;} }
 
   /* ── 3D WARP ROOM ── */
   #warp-room { position:relative; overflow:hidden; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:2rem 0 1.6rem; }
@@ -333,9 +335,7 @@
   .cave-cat { text-align:center; font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.75); padding:.7rem 0 .95rem; }
   .cave-card-zone { position:relative; flex:1; display:flex; align-items:stretch; min-height:0; }
   .cave-card { position:relative; flex:1; background:var(--white); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.55); padding:2.7rem 1.3rem 1.4rem; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; min-height:0; }
-  .cave-grade { position:absolute; top:12px; left:12px; width:56px; z-index:5; text-align:center; }
-  .cave-grade img { width:46px; height:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
-  .cave-grade-label { font-family:var(--sans); font-size:.4rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); line-height:1.35; margin-top:-7px; }
+  .cave-grade { position:absolute; top:12px; left:12px; width:46px; height:auto; z-index:5; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
   .cave-photo { max-width:100%; max-height:48vh; object-fit:contain; flex:0 1 auto; min-height:0; }
   .cave-photo-fallback { font-size:5rem; display:flex; align-items:center; justify-content:center; padding:2.5rem 0; }
   .cave-stars-wrap { text-align:center; margin-top:.75rem; }
@@ -367,74 +367,68 @@
   @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 
-  /* ── MENU PAGE ── */
-  body { background:#150D09; }
-  #warp-room { animation:pageIn .55s ease; }
-  @keyframes pageIn { from{opacity:0; transform:scale(1.1);} to{opacity:1; transform:scale(1);} }
-  .menu-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px; background:rgba(21,13,9,.92); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-bottom:1px solid rgba(252,249,244,.08); }
-  .menu-home { color:rgba(252,249,244,.8); text-decoration:none; font-family:var(--sans); font-size:.8rem; letter-spacing:.06em; }
-  .menu-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
-  #arrive-flash { position:fixed; inset:0; z-index:960; pointer-events:none; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); animation:arriveOut .65s ease .1s forwards; }
-  @keyframes arriveOut { from{opacity:1;} to{opacity:0; visibility:hidden;} }
-  .r-stars-input { display:flex; gap:9px; font-size:1.75rem; line-height:1; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
-  .r-stars-input span { color:#E7DCCB; transition:transform .12s, color .12s; }
-  .r-stars-input span.on:nth-child(1) { color:#6E1410; }
-  .r-stars-input span.on:nth-child(2) { color:#98150D; }
-  .r-stars-input span.on:nth-child(3) { color:#C01108; }
-  .r-stars-input span.on:nth-child(4) { color:#E5261A; }
-  .r-stars-input span.on:nth-child(5) { color:#FF5A4C; }
-  .r-stars-input span:active { transform:scale(1.25); }
-  .fork-stars { width:min(215px,58vw); height:auto; display:block; margin:0 auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
-  .cave-stars .fork-stars { width:172px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
-  .star-glyph { width:30px; height:30px; display:block; }
+  /* ── PAGE TRANSITION ── */
+  #page-warp { position:fixed; inset:0; z-index:950; pointer-events:none; opacity:0; background:radial-gradient(140% 100% at 50% 40%, rgba(21,13,9,.2) 0%, #150D09 78%); transition:opacity .42s ease; }
+  body.warping #page-warp { opacity:1; }
+  body.warping .video-hero-content { transform:scale(1.14); transition:transform .5s ease; }
+  .video-hero-content { transition:transform .5s ease; }
+  /* ── VIDEO OVERLAY ── */
+  .vid-overlay { display:none; position:fixed; inset:0; z-index:890; background:rgba(10,6,4,.94); align-items:center; justify-content:center; flex-direction:column; padding:1rem; overflow-y:auto; }
+  .vid-overlay.open { display:flex; }
+  #vid-player { max-width:100%; max-height:32vh; pointer-events:none; border-radius:10px; box-shadow:0 24px 70px rgba(0,0,0,.7); background:#000; }
+  .vid-close { position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); right:14px; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.45); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .vid-title { font-family:var(--sans); font-weight:700; font-size:.85rem; letter-spacing:.34em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)); margin-bottom:.85rem; }
+  .vid-dish-photo { max-width:94%; max-height:19vh; object-fit:contain; border-radius:6px; }
+  .vid-dish-card { position:relative; background:var(--white); border-radius:14px; padding:2.1rem .9rem .95rem; margin-top:.9rem; width:min(320px,84vw); cursor:pointer; box-shadow:0 18px 55px rgba(0,0,0,.65); display:flex; flex-direction:column; align-items:center; }
+  .vid-grade { position:absolute; top:10px; left:10px; text-align:center; width:52px; }
+  .vid-grade img { width:38px; height:auto; }
+  .vid-grade div { font-family:var(--sans); font-size:.36rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); line-height:1.35; margin-top:-4px; }
+  .vid-caption { margin-top:.9rem; background:rgba(252,249,244,.06); border:1px solid rgba(252,249,244,.28); border-radius:14px; padding:.8rem 1.6rem; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
+  .vid-caption-label { display:block; font-family:var(--sans); font-size:.6rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:#FF6B5E; margin-bottom:2px; }
+  .vid-caption-name { display:block; font-family:var(--serif); font-size:1.3rem; font-weight:600; color:var(--white); }
+  .fork-stars { width:min(158px,42vw); height:auto; display:block; margin:0 auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+  .cave-stars .fork-stars { width:130px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
+  .star-glyph { width:25px; height:25px; display:block; }
+  .star-inline { width:12px; height:12px; display:inline-block; vertical-align:-1px; }
 </style>
 </head>
 <body>
 
 
-<!-- TOP BAR -->
-<div class="menu-topbar">
-  <a href="index.html" class="menu-home">&#8249; Home</a>
-  <div class="menu-topbar-title">The Menu</div>
-  <span style="width:58px;"></span>
+<!-- VIDEO HERO -->
+<div class="video-hero">
+  <video class="video-hero-bg" src="chef-video.mp4" autoplay muted loop playsinline></video>
+  <div class="video-hero-overlay"></div>
+  <div class="hero-grade">
+    <img src="grade-a.png" alt="Sanitary Inspection Grade A">
+    <div class="hero-grade-label">Sanitary Inspection Grade</div>
+  </div>
+  <div class="video-hero-content">
+    <div class="vh-center">
+      <img src="flag-location.png" class="vh-flag" alt="Open map" onclick="showMapsChooser(event)">
+      <div class="video-hero-eyebrow" onclick="showMapsChooser(event)" style="cursor:pointer;">Steakhouse &middot; Stone Street, New York</div>
+      <h1 class="video-hero-title">The Hungry Fork</h1>
+      <p class="video-hero-tagline">Delicious Cousin</p>
+      <div class="vh-rating-live" onclick="openForkInfo()" title="What is Fork's Rating?">
+        <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'">
+        <div class="vh-stars"><svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E150D"/><stop offset="1" stop-color="#3E0B06"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A31108"/><stop offset="1" stop-color="#5E0A04"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C41508"/><stop offset="1" stop-color="#750A04"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E02414"/><stop offset="1" stop-color="#8E0B05"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg><div id="vh-stars-fill" style="display:none;"></div></div>
+        <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'">
+      </div>
+      <div class="vh-rating-caption" onclick="openForkInfo()" style="cursor:pointer;">Fork's Rating<span id="vh-rating-num"></span></div>
+    </div>
+    <div class="vh-btn-rail" id="vh-btn-rail">
+      <div class="vh-btn" data-idx="0" data-name="About Us"><img src="menu-button-blank.png" alt=""><span>About Us</span></div>
+      <div class="vh-btn" data-idx="1" data-name="Promotions"><img src="menu-button-blank.png" alt=""><span>Promotions</span></div>
+      <div class="vh-btn" data-idx="2" data-name="Career"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
+      <div class="vh-btn" data-idx="3" data-name="Menu" data-menu="1"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
+      <div class="vh-btn" data-idx="4" data-name="Events"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
+      <div class="vh-btn" data-idx="5" data-name="Reservations"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
+      <div class="vh-btn" data-idx="6" data-name="Help"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
+    </div>
+  </div>
 </div>
 
-<!-- 3D WARP MENU -->
-<div id="warp-room">
-  <div class="warp-bg" id="warp-bg-far"></div>
-  <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
-  <div class="warp-hint">Swipe to explore &middot; Tap a cave to enter</div>
-  <div class="warp-viewport" id="warp-viewport">
-    <div id="warp-stage"></div>
-    <button class="warp-arrow warp-arrow-l" onclick="warpGo(-1)" aria-label="Previous">&#8249;</button>
-    <button class="warp-arrow warp-arrow-r" onclick="warpGo(1)" aria-label="Next">&#8250;</button>
-  </div>
-  <div class="warp-dots" id="warp-dots"></div>
-  <div class="warp-cat-name" id="warp-cat-name"></div>
-  <div class="warp-tap-hint">Tap the cave to enter</div>
-</div>
-<!-- CAVE INTERIOR -->
-<div id="cave" class="cave-overlay">
-  <div class="cave-inner">
-    <button class="cave-back" onclick="exitCave()" aria-label="Back">&#8249;</button>
-    <div class="cave-cat" id="cave-cat"></div>
-    <div class="cave-card-zone" id="cave-card-zone">
-      <div class="cave-card" id="cave-card"></div>
-      <div class="cave-vdots">
-        <span class="cave-vdot active" onclick="caveSetView(0)"></span>
-        <span class="cave-vdot" onclick="caveSetView(1)"></span>
-        <span class="cave-vdot" onclick="caveSetView(2)"></span>
-      </div>
-    </div>
-    <div class="cave-hdots" id="cave-hdots"></div>
-    <div class="cave-hint">Swipe &#10231; plates &nbsp;&middot;&nbsp; &#8597; views</div>
-    <div class="cave-actions">
-      <button class="cave-rate-btn" onclick="caveRate()">Rate &amp; Review</button>
-      <button class="cave-share-btn" onclick="caveShare()">Share</button>
-    </div>
-  </div>
-</div>
-<!-- END 3D WARP MENU -->
+
 
 <!-- FOOTER -->
 <footer>
@@ -446,25 +440,6 @@
     <button class="footer-link" id="nav-taster-btn" onclick="openTasterModal()">Log In</button>
   </p>
 </footer>
-
-<!-- DISH VIEW MODAL -->
-<div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
-  <div class="modal">
-    <div class="modal-hero">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-      <span id="modal-dish-emoji">🍽️</span>
-    </div>
-    <div class="modal-body">
-      <div class="modal-dish-name" id="modal-name"></div>
-      <div class="modal-dish-desc" id="modal-desc"></div>
-      <button class="rate-dish-btn" onclick="startRating()">★ Rate this dish</button>
-      <button class="rate-dish-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:0.6rem;" onclick="shareDish()">🔗 Share this dish</button>
-      <hr class="reviews-divider">
-      <div class="modal-section-label" id="reviews-label">Reviews</div>
-      <div class="reviews-list" id="reviews-list"></div>
-    </div>
-  </div>
-</div>
 
 <!-- TASTER AUTH MODAL -->
 <div class="t-overlay" id="taster-modal">
@@ -625,64 +600,10 @@
           <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
           <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:700; color:var(--red); margin-bottom:0.5rem;" id="t-welcome-msg">Welcome!</div>
           <div style="font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">You're now logged in. Let's rate some dishes!</div>
-          <button class="t-btn" onclick="closeTasterModal();openRatingModal();">Rate This Dish ★</button>
+          <button class="t-btn" onclick="closeTasterModal();menuEnter();">Explore the Menu 🍴</button>
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
-
-<!-- RATING MODAL -->
-<div class="r-overlay" id="rating-modal">
-  <div class="r-box">
-    <div class="r-hero">
-      <button class="r-close" onclick="closeRatingModal()">✕</button>
-      <span id="r-dish-emoji">🍽️</span>
-    </div>
-    <div class="r-body">
-      <div class="r-dish-name" id="r-dish-name"></div>
-      <div class="r-dish-desc" id="r-dish-desc"></div>
-
-      <div class="r-section">🍽️ Dish Rating</div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
-        <input type="hidden" id="sl-flavor" value="3"><div class="r-stars-input" data-target="sl-flavor" data-label="lbl-flavor"></div>
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
-        <input type="hidden" id="sl-worth" value="3"><div class="r-stars-input" data-target="sl-worth" data-label="lbl-worth"></div>
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
-        <input type="hidden" id="sl-sig" value="3"><div class="r-stars-input" data-target="sl-sig" data-label="lbl-sig"></div>
-      </div>
-
-      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
-        <input type="hidden" id="sl-hosp" value="3"><div class="r-stars-input" data-target="sl-hosp" data-label="lbl-hosp"></div>
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
-        <input type="hidden" id="sl-atm" value="3"><div class="r-stars-input" data-target="sl-atm" data-label="lbl-atm"></div>
-      </div>
-
-      <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <textarea class="r-textarea" id="r-dish-comment" placeholder="What did you think of this dish?"></textarea>
-      <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
-
-      <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <label class="r-file-label" for="r-photo-input">📷 Tap to take a photo of your dish</label>
-      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
-      <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Inter',sans-serif;margin-bottom:0.5rem;display:none;"></div>
-
-      <div class="t-err" id="r-err" style="display:none;"></div>
-      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review ★</button>
-
-      <hr class="r-divider">
-      <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
-      <div class="r-reviews-list" id="r-reviews-list"></div>
     </div>
   </div>
 </div>
@@ -721,17 +642,6 @@
   </div>
 </div>
 
-<!-- LUCKY BITE WIN SCREEN -->
-<div class="lucky-overlay" id="lucky-overlay">
-  <div class="lucky-box">
-    <span class="lucky-emoji">🎉</span>
-    <div class="lucky-title">You Won Fork's Lucky Bite!</div>
-    <div class="lucky-number" id="lucky-number">#1000</div>
-    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free dish</strong>! Tap below to confirm you received it.</div>
-    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
-  </div>
-</div>
-
 <!-- COMING SOON -->
 <div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
   <div class="cs-box">
@@ -742,7 +652,32 @@
   </div>
 </div>
 
-<div id="arrive-flash"></div>
+<!-- VIDEO PLAYER OVERLAY -->
+<div id="video-modal" class="vid-overlay" onclick="if(event.target===this)closeVideoOverlay()">
+  <button class="vid-close" onclick="closeVideoOverlay()" aria-label="Close">&#10005;</button>
+  <div class="vid-title">Chef's Pick</div>
+  <video id="vid-player" src="chef-video.mp4" muted playsinline loop></video>
+  <div class="vid-dish-card" onclick="goChefsPick()" role="button" tabindex="0">
+    <div class="vid-grade"><img src="grade-a.png" alt="Sanitary grade A"><div>Sanitary<br>Inspection<br>Grade</div></div>
+    <img src="1_T_Bone_Fork_Steak_I.jpeg" class="vid-dish-photo" alt="T-Bone Fork Steak" onerror="this.style.display='none'">
+    <div class="cave-stars-wrap"><div class="cave-stars"><svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E150D"/><stop offset="1" stop-color="#3E0B06"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A31108"/><stop offset="1" stop-color="#5E0A04"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C41508"/><stop offset="1" stop-color="#750A04"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E02414"/><stop offset="1" stop-color="#8E0B05"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg><div id="vid-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="vid-stars-cap">Fork's Rating</div></div>
+    <div class="cave-dish-name">T-Bone Fork Steak</div>
+    <div class="cave-dish-price">$38</div>
+  </div>
+</div>
+
+<!-- FORK'S RATING INFO -->
+<div class="cs-overlay" id="fork-info" onclick="if(event.target===this)closeForkInfo()">
+  <div class="cs-box">
+    <img src="laurel-left.png" style="height:46px;margin-bottom:.6rem;" alt="" onerror="this.style.display='none'">
+    <div class="cs-title" style="font-size:1.55rem;">What is Fork's Rating?</div>
+    <p class="cs-sub" style="text-align:center;">Fork's Rating is our independent taste score for restaurants and dishes across the city &mdash; powered entirely by real reviews from verified tasters. No critics, no ads. Just honest forks.<br><br>Log in, rate the dishes you try, and every review brings you closer to <strong>Fork's Lucky Bite</strong> &mdash; a free dish for one lucky taster.</p>
+    <button class="cs-close" onclick="closeForkInfo();openTasterModal();">Log In &amp; Start Rating</button>
+    <div style="margin-top:.7rem;"><a onclick="closeForkInfo()" style="font-family:var(--sans);font-size:.78rem;color:var(--muted);text-decoration:underline;cursor:pointer;">Maybe later</a></div>
+  </div>
+</div>
+
+<div id="page-warp"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1023,8 +958,6 @@ async function doSignup(){
 // ── 3D WARP ROOM ──
 let warpPos=0, warpIdx=0, warpRAF=null;
 function warpSpacing(){return Math.min(window.innerWidth*0.62,380);}
-function warpWrap(d){const n=CATEGORY_ORDER.length;return((d%n)+n*1.5)%n-n/2;}
-function warpNorm(i){const n=CATEGORY_ORDER.length;return((Math.round(i)%n)+n)%n;}
 function warpBuild(){
   const stage=document.getElementById('warp-stage');
   if(!stage)return;
@@ -1034,7 +967,7 @@ function warpBuild(){
     const p=document.createElement('div');
     p.className='warp-portal';p.dataset.idx=i;
     p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
-    p.addEventListener('click',()=>{if(Math.abs(warpWrap(i-warpPos))>0.3)warpTo(i);else enterCave();});
+    p.addEventListener('click',()=>{if(Math.abs(i-warpPos)>0.3)warpTo(i);else enterCave();});
     stage.appendChild(p);
   });
   document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
@@ -1042,40 +975,37 @@ function warpBuild(){
 function warpRender(){
   const sp=warpSpacing();
   document.querySelectorAll('.warp-portal').forEach(p=>{
-    const d=warpWrap(p.dataset.idx-warpPos), ad=Math.abs(d);
+    const d=p.dataset.idx-warpPos, ad=Math.abs(d);
     p.style.transform=`translate(-50%,-50%) translateX(${d*sp}px) translateZ(${-ad*240}px) rotateY(${-d*22}deg)`;
     p.style.opacity=ad>2.6?'0':String(1-ad*0.22);
     p.style.filter=`brightness(${Math.max(1-ad*0.3,0.4)})`;
     p.style.zIndex=String(100-Math.round(ad*10));
   });
   const far=document.getElementById('warp-bg-far'),near=document.getElementById('warp-bg-near');
-  if(far)far.style.transform=`translateX(${-Math.sin(warpPos/CATEGORY_ORDER.length*2*Math.PI)*sp*0.5}px)`;
-  if(near)near.style.transform=`translateX(${-Math.sin(warpPos/CATEGORY_ORDER.length*2*Math.PI+1.3)*sp*0.9}px)`;
+  if(far)far.style.transform=`translateX(${-warpPos*sp*0.15}px)`;
+  if(near)near.style.transform=`translateX(${-warpPos*sp*0.35}px)`;
   document.querySelectorAll('.warp-dot').forEach(dt=>dt.classList.toggle('active',parseInt(dt.dataset.i)===warpIdx));
 }
 function warpTo(i){
-  const target=warpPos+warpWrap(i-warpPos);
-  warpIdx=warpNorm(i);
-  activeFilter=CATEGORY_ORDER[warpIdx];
+  i=Math.max(0,Math.min(CATEGORY_ORDER.length-1,i));
+  warpIdx=i;
+  activeFilter=CATEGORY_ORDER[i];
   updateWarpCatName();
   if(warpRAF)cancelAnimationFrame(warpRAF);
   const step=()=>{
-    const diff=target-warpPos;
-    if(Math.abs(diff)<0.004){warpPos=target;warpRender();warpRAF=null;return;}
+    const diff=warpIdx-warpPos;
+    if(Math.abs(diff)<0.004){warpPos=warpIdx;warpRender();warpRAF=null;return;}
     warpPos+=diff*0.16;
     warpRender();
     warpRAF=requestAnimationFrame(step);
   };
   warpRAF=requestAnimationFrame(step);
 }
-function warpGo(dir){warpTo(Math.round(warpPos)+dir);}
+function warpGo(dir){warpTo(warpIdx+dir);}
 function updateWarpCatName(){
   const el=document.getElementById('warp-cat-name');
   if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
 }
-
-const FORK_STARS='<svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8C1B12"/><stop offset="1" stop-color="#4A0D08"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C01108"/><stop offset="1" stop-color="#6E0B05"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E83A2A"/><stop offset="1" stop-color="#8E0B05"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A6B"/><stop offset="1" stop-color="#C01108"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg>';
-const STAR_GLYPH='<svg class="star-glyph" viewBox="0 0 100 100"><path fill="currentColor" stroke="rgba(0,0,0,.25)" stroke-width="3" stroke-linejoin="round" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
 
 // ── CAVE INTERIOR (enter a category) ──
 let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
@@ -1083,11 +1013,10 @@ function caveListFor(key){
   if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
   return DISHES.filter(d=>d.category===key);
 }
-function enterCave(startId){
+function enterCave(){
   const key=CATEGORY_ORDER[warpIdx];
   caveDishes=caveListFor(key);
-  caveDishIdx=Math.max(0,caveDishes.findIndex(d=>d.id===startId));
-  caveViewIdx=0;
+  caveDishIdx=0;caveViewIdx=0;
   document.getElementById('cave-cat').textContent=WARP_META[key].label;
   const stage=document.getElementById('warp-stage');
   stage.classList.add('warp-zoom');
@@ -1124,7 +1053,7 @@ function renderCave(animClass){
   const hdots=document.getElementById('cave-hdots');
   if(!card)return;
   if(!caveDishes.length){
-    card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
+    card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A"><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
     return;
@@ -1134,7 +1063,7 @@ function renderCave(animClass){
   let inner='';
   if(caveViewIdx===0){
     inner=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-stars-wrap" onclick="caveRate()" style="cursor:pointer;" title="Tap to rate"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-stars-wrap"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="cave-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>`;
   }else if(caveViewIdx===1){
     inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
@@ -1147,7 +1076,7 @@ function renderCave(animClass){
       ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.7rem;"><strong>Choice of the following:</strong></p>${d.choices.map(c=>`<p class="cave-meta-line">${c}</p>`).join('')}`:''}
     </div>`;
   }
-  card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>`+inner;
+  card.innerHTML=`<img src="grade-a.png" class="cave-grade" alt="Sanitary grade A">`+inner;
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
   if(caveViewIdx===0){
@@ -1167,13 +1096,6 @@ function caveDish(dir){if(!caveDishes.length)return;const n=caveDishIdx+dir;if(n
 function caveView(dir){if(!caveDishes.length)return;const n=caveViewIdx+dir;if(n<0||n>2)return;caveViewIdx=n;renderCave(dir>0?'anim-u':'anim-d');}
 function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
 function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;caveViewIdx=0;renderCave(dir);}
-function caveOpenDish(id){
-  const d=DISHES.find(x=>x.id===id);
-  if(!d)return;
-  const ci=CATEGORY_ORDER.indexOf(d.category);
-  if(ci>=0){warpIdx=ci;warpPos=ci;updateWarpCatName();warpRender();}
-  enterCave(id);
-}
 function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
 function caveShare(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;shareDish();}
 function caveInitTouch(){
@@ -1224,7 +1146,7 @@ function warpInit(){
   if(!vp)return;
   let sx=0,sy=0,p0=0,dragging=false,st=0;
   const down=(x,y)=>{dragging=true;sx=x;sy=y;p0=warpPos;st=Date.now();if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}};
-  const move=x=>{if(!dragging)return;warpPos=p0+(sx-x)/warpSpacing();warpRender();};
+  const move=x=>{if(!dragging)return;warpPos=Math.max(-0.35,Math.min(CATEGORY_ORDER.length-0.65,p0+(sx-x)/warpSpacing()));warpRender();};
   const up=x=>{
     if(!dragging)return;dragging=false;
     const dx=sx-x, dt=Date.now()-st;
@@ -1313,7 +1235,6 @@ function openRatingModal(){
   document.getElementById('r-dish-desc').textContent='$'+d.price+' · '+d.desc;
   ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
   ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
-  document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
   document.getElementById('r-dish-comment').value='';
   document.getElementById('r-rest-comment').value='';
   document.getElementById('r-photo-name').style.display='none';
@@ -1331,30 +1252,6 @@ function handlePhotoSelect(input){
   }
 }
 
-// ── STAR INPUTS ──
-function paintStarRow(row){
-  const v=parseInt(document.getElementById(row.dataset.target).value)||0;
-  [...row.children].forEach((s,i)=>s.classList.toggle('on',i<v));
-}
-function initStarRows(){
-  document.querySelectorAll('.r-stars-input').forEach(row=>{
-    row.innerHTML='';
-    for(let i=1;i<=5;i++){
-      const s=document.createElement('span');
-      s.innerHTML=STAR_GLYPH;
-      s.setAttribute('role','button');
-      s.addEventListener('click',()=>{
-        document.getElementById(row.dataset.target).value=i;
-        document.getElementById(row.dataset.label).textContent=i;
-        paintStarRow(row);
-      });
-      row.appendChild(s);
-    }
-    paintStarRow(row);
-  });
-}
-initStarRows();
-
 // ── SUBMIT RATING ──
 async function submitRating(){
   if(!currentTaster||!currentDishId)return;
@@ -1362,27 +1259,10 @@ async function submitRating(){
   const err=document.getElementById('r-err');
   err.style.display='none';
   btn.disabled=true;btn.textContent='Posting…';
-  const dbDish=DISH_ID_MAP[currentDishId]||1;
-  let updateReviewId=null;
-  try{
-    const{ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at`);
-    if(dupOk&&dupData.length){
-      const prev=dupData[0];
-      const ageDays=(Date.now()-new Date(prev.created_at).getTime())/86400000;
-      if(ageDays<30){
-        const wait=Math.ceil(30-ageDays);
-        err.textContent='You already rated this dish. You can update your rating in '+wait+' day'+(wait===1?'':'s')+' — one score per dish, refreshed monthly.';
-        err.style.display='block';
-        btn.disabled=false;btn.textContent='Post Review ★';
-        return;
-      }
-      updateReviewId=prev.id;
-    }
-  }catch(e){}
   const payload={
     taster_id:currentTaster.id,
     restaurant_id:RESTAURANT_ID,
-    dish_id:dbDish,
+    dish_id:DISH_ID_MAP[currentDishId]||1,
     flavor:parseInt(document.getElementById('sl-flavor').value),
     worth_every_bite:parseInt(document.getElementById('sl-worth').value),
     signature_style:parseInt(document.getElementById('sl-sig').value),
@@ -1393,44 +1273,29 @@ async function submitRating(){
     photo_url:null,
   };
   try{
-    let ok,data,status;
-    if(updateReviewId){
-      payload.created_at=new Date().toISOString();
-      ({ok,data,status}=await sbFetch(`/rest/v1/reviews?id=eq.${updateReviewId}`,'PATCH',payload));
-      if(ok){
-        closeRatingModal();
-        showToast('Your rating was updated! Thank you ★');
-      }
-    }else{
-      const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
-      const globalNum=(Array.isArray(countData)?countData.length:0)+1;
-      payload.global_rating_number=globalNum;
-      ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
-      if(ok){
-        closeRatingModal();
-        if(globalNum%1000===0){
-          showToast('Review #'+globalNum+' — LUCKY BITE! 🎉');
-          showLuckyBite(globalNum);
-        }else{
-          showToast('Review #'+globalNum+' posted! ★ '+(1000-globalNum%1000)+' to the next Lucky Bite');
-        }
-      }
-    }
+    const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
+    const globalNum=(Array.isArray(countData)?countData.length:0)+1;
+    payload.global_rating_number=globalNum;
+    const{ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload);
     if(ok){
+      closeRatingModal();
+      showToast('Review posted! Thank you');
       loadOverallRating();
       caveRatings={};
       if(document.getElementById('cave').classList.contains('open'))renderCave();
+      if(globalNum%1000===0)showLuckyBite(globalNum);
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
-      if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
-      else{err.textContent='Error ('+status+'): '+msg;}
+      err.textContent='Error ('+status+'): '+msg;
       err.style.display='block';
+      console.error('Review submit error:',data);
     }
   }catch(e){
     err.textContent='Network error: '+e.message;
     err.style.display='block';
+    console.error('Review submit exception:',e);
   }
-  btn.disabled=false;btn.textContent='Post Review ★';
+  btn.disabled=false;btn.textContent='Post Review';
 }
 
 // ── LOAD REVIEWS ──
@@ -1461,7 +1326,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
         </div>`;
       }
       return`<div class="review-item">
-        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">★ ${score}</span></div>
+        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
         <div class="review-date">${date}</div>
         ${replyHtml}
@@ -1512,7 +1377,7 @@ async function loadMyTastings(){
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       return`<div class="review-item"${clickAttr}>
-        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">★ ${score}</span></div>
+        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         <div class="review-text">${restName}</div>
         <div class="review-date">${date}</div>
       </div>`;
@@ -1522,8 +1387,7 @@ async function loadMyTastings(){
   }
 }
 function viewTastingDish(dishId){
-  closeMyTastings();
-  caveOpenDish(dishId);
+  window.location.href='menu.html?dish='+encodeURIComponent(dishId);
 }
 
 // ── LUCKY BITE ──
@@ -1533,7 +1397,7 @@ function showLuckyBite(num){
 }
 async function claimLuckyBite(){
   document.getElementById('lucky-overlay').classList.remove('open');
-  showToast('🎉 Lucky Bite claimed! Enjoy your free dish!');
+  showToast('🎉 Lucky Bite claimed! Enjoy your free meal!');
 }
 
 // ── MAPS ──
@@ -1570,6 +1434,58 @@ async function loadOverallRating(){
   }catch(e){}
 }
 
+// ── ENTER MENU PAGE ──
+function menuEnter(){
+  document.body.classList.add('warping');
+  setTimeout(()=>{window.location.href='menu.html';},430);
+}
+
+// ── FORK'S RATING INFO ──
+function openForkInfo(){document.getElementById('fork-info').classList.add('open');}
+function closeForkInfo(){document.getElementById('fork-info').classList.remove('open');}
+
+// ── VIDEO OVERLAY ──
+function openVideoOverlay(){
+  const m=document.getElementById('video-modal');
+  m.classList.add('open');
+  const v=document.getElementById('vid-player');
+  try{v.currentTime=0;v.muted=true;v.play().catch(()=>{});}catch(e){}
+  loadVidRating();
+}
+function loadVidRating(){
+  (async()=>{
+    try{
+      const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${DISH_ID_MAP['tbone-fork-steak']||2}&select=flavor,worth_every_bite,signature_style`);
+      const fill=document.getElementById('vid-stars-fill'),cap=document.getElementById('vid-stars-cap');
+      if(!fill)return;
+      if(ok&&data.length){
+        const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
+        fill.style.width=(avg/5*100)+'%';
+        if(cap)cap.textContent=`Fork's Rating · ${avg.toFixed(1)} (${data.length} rating${data.length===1?'':'s'})`;
+      }else{
+        fill.style.width='0%';
+        if(cap)cap.textContent="Fork's Rating · No ratings yet";
+      }
+    }catch(e){}
+  })();
+}
+function closeVideoOverlay(){
+  document.getElementById('video-modal').classList.remove('open');
+  const v=document.getElementById('vid-player');
+  try{v.pause();}catch(e){}
+}
+function goChefsPick(){window.location.href='menu.html?dish=tbone-fork-steak';}
+(function(){
+  const hero=document.querySelector('.video-hero');
+  if(!hero)return;
+  hero.addEventListener('click',e=>{
+    if(e.target.closest('.vh-btn,.vh-btn-rail,.vh-flag,button,a,input,.vh-rating-live,.vh-rating-caption,.video-hero-eyebrow'))return;
+    const r=hero.getBoundingClientRect();
+    if((e.clientY-r.top)>r.height*0.55)return;
+    openVideoOverlay();
+  });
+})();
+
 // ── COMING SOON ──
 function openComingSoon(name){
   document.getElementById('cs-title').textContent=name;
@@ -1579,10 +1495,12 @@ function closeComingSoon(){document.getElementById('cs-overlay').classList.remov
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
 function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
+function railWrap(d){const n=7;return((d%n)+n*1.5)%n-n/2;}
+function railNorm(i){const n=7;return((Math.round(i)%n)+n)%n;}
 function railRender(){
   const sp=railSpacing();
   document.querySelectorAll('.vh-btn').forEach(b=>{
-    const d=b.dataset.idx-railPos, ad=Math.abs(d);
+    const d=railWrap(b.dataset.idx-railPos), ad=Math.abs(d);
     const sc=ad<1?1+(1-ad)*0.5:1;
     b.style.transform=`translateX(-50%) translateX(${d*sp}px) translateZ(${-ad*85}px) rotateY(${-d*16}deg) scale(${sc})`;
     b.style.opacity=ad>3?'0':String(1-ad*0.16);
@@ -1590,12 +1508,12 @@ function railRender(){
   });
 }
 function railTo(i){
-  i=Math.max(0,Math.min(6,i));
-  railIdx=i;
+  const target=railPos+railWrap(i-railPos);
+  railIdx=railNorm(i);
   if(railRAF)cancelAnimationFrame(railRAF);
   const step=()=>{
-    const diff=railIdx-railPos;
-    if(Math.abs(diff)<0.004){railPos=railIdx;railRender();railRAF=null;return;}
+    const diff=target-railPos;
+    if(Math.abs(diff)<0.004){railPos=target;railRender();railRAF=null;return;}
     railPos+=diff*0.18;
     railRender();
     railRAF=requestAnimationFrame(step);
@@ -1609,14 +1527,14 @@ function railInit(){
   document.querySelectorAll('.vh-btn').forEach(b=>{
     b.addEventListener('click',()=>{
       const i=parseInt(b.dataset.idx);
-      if(Math.abs(i-railPos)>0.3){railTo(i);return;}
-      if(b.dataset.menu)scrollToMenu();
+      if(Math.abs(railWrap(i-railPos))>0.3){railTo(i);return;}
+      if(b.dataset.menu)menuEnter();
       else openComingSoon(b.dataset.name);
     });
   });
   let sx=0,sy=0,p0=0,dragging=false,st=0,moved=false;
   const down=(x,y)=>{dragging=true;moved=false;sx=x;sy=y;p0=railPos;st=Date.now();if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}};
-  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;railPos=Math.max(-0.3,Math.min(6.3,p0+(sx-x)/railSpacing()));railRender();};
+  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;railPos=p0+(sx-x)/railSpacing();railRender();};
   const up=x=>{
     if(!dragging)return;dragging=false;
     const dx=sx-x,dt=Date.now()-st;
@@ -1645,10 +1563,7 @@ loadOverallRating();
 warpInit();
 (function(){
   const params=new URLSearchParams(window.location.search);
-  const dishId=params.get('dish');
-  const cat=params.get('cat');
-  if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);return;}
-  if(cat&&CATEGORY_ORDER.includes(cat)){warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();}
+  if(params.get('dish'))window.location.replace('menu.html'+window.location.search);
 })();
 </script>
 </body>
