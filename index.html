@@ -221,7 +221,7 @@
   .review-item { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; border-left:2px solid var(--red); }
   .review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
   .reviewer-name { font-size:.85rem; font-weight:600; color:var(--text); font-family:var(--sans); }
-  .review-stars { color:var(--star-on); font-size:.85rem; }
+  .review-stars { color:var(--red); font-size:.85rem; }
   .review-text { font-size:.82rem; font-weight:300; color:var(--muted); line-height:1.6; font-family:var(--sans); }
   .review-date { font-size:.7rem; color:#B7A99A; margin-top:3px; font-family:var(--sans); }
   .no-reviews { font-size:.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:var(--sans); }
@@ -294,7 +294,7 @@
   .vh-laurel-r { transform:scaleX(-1); }
   .vh-stars { position:relative; font-size:1.55rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
   .vh-stars-base { color:#42100c; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 1px #661410; -webkit-text-stroke:1px rgba(120,20,14,.6); }
-  .vh-stars-fill { position:absolute; top:0; left:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#ff7a6b 0%,#ef2318 42%,#c01108 60%,#7e0a05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.55); filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)); transition:width .8s ease; }
+  .vh-stars-fill { position:absolute; top:0; right:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#ff7a6b 0%,#ef2318 42%,#c01108 60%,#7e0a05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.55); filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)); transition:width .8s ease; }
   #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
   @media (max-width:600px){ .vh-stars{font-size:1.35rem;} .vh-laurel{height:44px;} }
 
@@ -341,7 +341,7 @@
   .cave-stars-wrap { text-align:center; margin-top:.75rem; }
   .cave-stars { position:relative; display:inline-block; font-size:1.7rem; letter-spacing:.1em; line-height:1; }
   .cave-stars-base { color:#42100C; -webkit-text-stroke:1px rgba(120,20,14,.5); }
-  .cave-stars-fill { position:absolute; top:0; left:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#FF7A6B 0%,#EF2318 42%,#C01108 60%,#7E0A05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.5); transition:width .6s ease; }
+  .cave-stars-fill { position:absolute; top:0; right:0; height:100%; width:0%; overflow:hidden; white-space:nowrap; background:linear-gradient(180deg,#FF7A6B 0%,#EF2318 42%,#C01108 60%,#7E0A05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(255,120,105,.5); transition:width .6s ease; }
   .cave-stars-caption { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-top:.35rem; }
   .cave-dish-name { font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); text-align:center; margin-top:.5rem; line-height:1.15; }
   .cave-dish-price { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--red); margin-top:.15rem; }
@@ -470,7 +470,38 @@
         <input class="t-input" id="login-pin" type="password" placeholder="6-digit PIN" maxlength="6" inputmode="numeric">
         <div class="t-err" id="login-err">Invalid phone or PIN. Please try again.</div>
         <button class="t-btn" onclick="doLogin()">Log In</button>
+        <div class="t-resend"><a onclick="goTStep(20)">Forgot your PIN?</a></div>
         <button class="t-btn-ghost" onclick="goTStep(0)">← Back</button>
+      </div>
+
+      <!-- STEP 20: RESET - phone -->
+      <div class="t-step" id="t-step-20">
+        <div class="t-label">Reset your PIN</div>
+        <div class="t-sub">Enter your phone number and we'll send you a verification code.</div>
+        <input class="t-input" id="reset-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
+        <div class="t-err" id="reset-phone-err"></div>
+        <button class="t-btn" onclick="sendResetOtp()">Send Code</button>
+        <button class="t-btn-ghost" onclick="goTStep(1)">← Back</button>
+      </div>
+
+      <!-- STEP 21: RESET - code -->
+      <div class="t-step" id="t-step-21">
+        <div class="t-label">Enter your code</div>
+        <div class="t-sub" id="reset-sent-to">We sent a 4-digit code to your number.</div>
+        <input class="t-input t-input-code" id="reset-otp" type="number" placeholder="0000" maxlength="4" autocomplete="one-time-code">
+        <div class="t-err" id="reset-otp-err"></div>
+        <button class="t-btn" onclick="verifyResetOtp()">Verify</button>
+        <div class="t-resend">Didn't get it? <a onclick="goTStep(20)">Resend code</a></div>
+      </div>
+
+      <!-- STEP 22: RESET - new PIN -->
+      <div class="t-step" id="t-step-22">
+        <div class="t-label">Create a new PIN</div>
+        <div class="t-sub">Choose a new 6-digit PIN. Keep it safe!</div>
+        <input class="t-input" id="reset-pin" type="password" placeholder="New 6-digit PIN" maxlength="6" inputmode="numeric">
+        <input class="t-input" id="reset-pin2" type="password" placeholder="Confirm new PIN" maxlength="6" inputmode="numeric">
+        <div class="t-err" id="reset-pin-err"></div>
+        <button class="t-btn" onclick="doResetPin()">Save New PIN</button>
       </div>
 
       <!-- STEP 10: SIGNUP - phone + OTP -->
@@ -785,6 +816,62 @@ async function doLogin(){
     }
   }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
   btn.disabled=false;btn.textContent='Log In';
+}
+
+// ── FORGOT PIN ──
+let pendingResetTicket=null;
+async function sendResetOtp(){
+  const phone=document.getElementById('reset-phone').value.trim();
+  const err=document.getElementById('reset-phone-err');
+  err.style.display='none';
+  if(!phone){err.textContent='Please enter your phone number.';err.style.display='block';return;}
+  const btn=document.querySelector('#t-step-20 .t-btn');
+  btn.disabled=true;btn.textContent='Sending…';
+  try{
+    const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,purpose:'reset'})});
+    const d=await res.json();
+    if(d.success){document.getElementById('reset-sent-to').textContent='We sent a 4-digit code to '+phone+'.';goTStep(21);}
+    else{err.textContent=d.error||'Could not send code.';err.style.display='block';}
+  }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Send Code';
+}
+async function verifyResetOtp(){
+  const phone=document.getElementById('reset-phone').value.trim();
+  const code=document.getElementById('reset-otp').value.trim();
+  const err=document.getElementById('reset-otp-err');
+  err.style.display='none';
+  if(code.length!==4){err.textContent='Enter the 4-digit code.';err.style.display='block';return;}
+  const btn=document.querySelector('#t-step-21 .t-btn');
+  btn.disabled=true;btn.textContent='Verifying…';
+  try{
+    const res=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});
+    const d=await res.json();
+    if(d.success){pendingResetTicket=d.verificationTicket;goTStep(22);}
+    else{err.textContent=d.error||'Invalid code.';err.style.display='block';}
+  }catch(e){err.textContent='Network error.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Verify';
+}
+async function doResetPin(){
+  const pin=document.getElementById('reset-pin').value.trim();
+  const pin2=document.getElementById('reset-pin2').value.trim();
+  const err=document.getElementById('reset-pin-err');
+  err.style.display='none';
+  if(pin.length!==6||pin!==pin2){err.textContent='PINs must be 6 digits and match.';err.style.display='block';return;}
+  if(!pendingResetTicket){err.textContent='Verification expired. Please verify your phone again.';err.style.display='block';return;}
+  const phone=formatPhone(document.getElementById('reset-phone').value.trim());
+  const btn=document.querySelector('#t-step-22 .t-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const res=await fetch('/api/reset-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({verificationTicket:pendingResetTicket,phone_number:phone,pin})});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      pendingResetTicket=null;
+      saveSession(d.taster,d.session);
+      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+'!';
+      goTStep(99);
+    }else{err.textContent=d.error||'Could not reset PIN.';err.style.display='block';}
+  }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Save New PIN';
 }
 
 // ── SIGNUP OTP ──
@@ -1191,7 +1278,7 @@ async function submitRating(){
     const{ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload);
     if(ok){
       closeRatingModal();
-      showToast('Review posted! Thank you ⭐');
+      showToast('Review posted! Thank you ★');
       loadOverallRating();
       caveRatings={};
       if(document.getElementById('cave').classList.contains('open'))renderCave();
@@ -1207,7 +1294,7 @@ async function submitRating(){
     err.style.display='block';
     console.error('Review submit exception:',e);
   }
-  btn.disabled=false;btn.textContent='Post Review ⭐';
+  btn.disabled=false;btn.textContent='Post Review ★';
 }
 
 // ── LOAD REVIEWS ──
@@ -1238,7 +1325,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
         </div>`;
       }
       return`<div class="review-item">
-        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">⭐ ${score}</span></div>
+        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">★ ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
         <div class="review-date">${date}</div>
         ${replyHtml}
@@ -1289,7 +1376,7 @@ async function loadMyTastings(){
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       return`<div class="review-item"${clickAttr}>
-        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">⭐ ${score}</span></div>
+        <div class="review-header"><span class="reviewer-name">${dishName}</span><span class="review-stars">★ ${score}</span></div>
         <div class="review-text">${restName}</div>
         <div class="review-date">${date}</div>
       </div>`;
