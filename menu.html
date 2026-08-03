@@ -1033,7 +1033,7 @@ function renderCave(animClass){
   let inner='';
   if(caveViewIdx===0){
     inner=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">
-      <div class="cave-stars-wrap"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="cave-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-stars-wrap" onclick="caveRate()" style="cursor:pointer;" title="Tap to rate"><div class="cave-stars"><div class="cave-stars-base">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="cave-stars-fill" id="cave-stars-fill">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       <div class="cave-dish-name">${d.name}</div><div class="cave-dish-price">$${d.price}</div>`;
   }else if(caveViewIdx===1){
     inner=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">
