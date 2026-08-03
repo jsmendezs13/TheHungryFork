@@ -376,6 +376,10 @@
   .menu-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
   #arrive-flash { position:fixed; inset:0; z-index:960; pointer-events:none; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); animation:arriveOut .65s ease .1s forwards; }
   @keyframes arriveOut { from{opacity:1;} to{opacity:0; visibility:hidden;} }
+  .r-stars-input { display:flex; gap:9px; font-size:1.75rem; line-height:1; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+  .r-stars-input span { color:#E4D9CB; transition:color .12s, transform .12s; }
+  .r-stars-input span.on { color:var(--red); text-shadow:0 1px 6px rgba(176,16,21,.35); }
+  .r-stars-input span:active { transform:scale(1.25); }
 </style>
 </head>
 <body>
@@ -605,25 +609,25 @@
       <div class="r-section">🍽️ Dish Rating</div>
       <div class="r-slider-row">
         <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
-        <input type="range" class="r-slider" id="sl-flavor" min="1" max="5" value="3" oninput="document.getElementById('lbl-flavor').textContent=this.value">
+        <input type="hidden" id="sl-flavor" value="3"><div class="r-stars-input" data-target="sl-flavor" data-label="lbl-flavor"></div>
       </div>
       <div class="r-slider-row">
         <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
-        <input type="range" class="r-slider" id="sl-worth" min="1" max="5" value="3" oninput="document.getElementById('lbl-worth').textContent=this.value">
+        <input type="hidden" id="sl-worth" value="3"><div class="r-stars-input" data-target="sl-worth" data-label="lbl-worth"></div>
       </div>
       <div class="r-slider-row">
         <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
-        <input type="range" class="r-slider" id="sl-sig" min="1" max="5" value="3" oninput="document.getElementById('lbl-sig').textContent=this.value">
+        <input type="hidden" id="sl-sig" value="3"><div class="r-stars-input" data-target="sl-sig" data-label="lbl-sig"></div>
       </div>
 
       <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
       <div class="r-slider-row">
         <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
-        <input type="range" class="r-slider" id="sl-hosp" min="1" max="5" value="3" oninput="document.getElementById('lbl-hosp').textContent=this.value">
+        <input type="hidden" id="sl-hosp" value="3"><div class="r-stars-input" data-target="sl-hosp" data-label="lbl-hosp"></div>
       </div>
       <div class="r-slider-row">
         <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
-        <input type="range" class="r-slider" id="sl-atm" min="1" max="5" value="3" oninput="document.getElementById('lbl-atm').textContent=this.value">
+        <input type="hidden" id="sl-atm" value="3"><div class="r-stars-input" data-target="sl-atm" data-label="lbl-atm"></div>
       </div>
 
       <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
@@ -1212,6 +1216,7 @@ function openRatingModal(){
   document.getElementById('r-dish-desc').textContent='$'+d.price+' · '+d.desc;
   ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
   ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
+  document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
   document.getElementById('r-dish-comment').value='';
   document.getElementById('r-rest-comment').value='';
   document.getElementById('r-photo-name').style.display='none';
@@ -1229,6 +1234,30 @@ function handlePhotoSelect(input){
   }
 }
 
+// ── STAR INPUTS ──
+function paintStarRow(row){
+  const v=parseInt(document.getElementById(row.dataset.target).value)||0;
+  [...row.children].forEach((s,i)=>s.classList.toggle('on',i<v));
+}
+function initStarRows(){
+  document.querySelectorAll('.r-stars-input').forEach(row=>{
+    row.innerHTML='';
+    for(let i=1;i<=5;i++){
+      const s=document.createElement('span');
+      s.textContent='\u2605';
+      s.setAttribute('role','button');
+      s.addEventListener('click',()=>{
+        document.getElementById(row.dataset.target).value=i;
+        document.getElementById(row.dataset.label).textContent=i;
+        paintStarRow(row);
+      });
+      row.appendChild(s);
+    }
+    paintStarRow(row);
+  });
+}
+initStarRows();
+
 // ── SUBMIT RATING ──
 async function submitRating(){
   if(!currentTaster||!currentDishId)return;
@@ -1236,6 +1265,16 @@ async function submitRating(){
   const err=document.getElementById('r-err');
   err.style.display='none';
   btn.disabled=true;btn.textContent='Posting…';
+  try{
+    const dbDish=DISH_ID_MAP[currentDishId]||1;
+    const{ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id`);
+    if(dupOk&&dupData.length){
+      err.textContent='You have already rated this dish — thank you! Each taster can rate a dish once.';
+      err.style.display='block';
+      btn.disabled=false;btn.textContent='Post Review ⭐';
+      return;
+    }
+  }catch(e){}
   const payload={
     taster_id:currentTaster.id,
     restaurant_id:RESTAURANT_ID,
@@ -1263,7 +1302,8 @@ async function submitRating(){
       if(globalNum%1000===0)showLuckyBite(globalNum);
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
-      err.textContent='Error ('+status+'): '+msg;
+      if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You have already rated this dish — thank you! Each taster can rate a dish once.';}
+      else{err.textContent='Error ('+status+'): '+msg;}
       err.style.display='block';
       console.error('Review submit error:',data);
     }
