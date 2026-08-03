@@ -358,12 +358,12 @@
   .cave-actions { display:flex; gap:.7rem; justify-content:center; }
   .cave-rate-btn { flex:1; max-width:260px; background:var(--red); color:#fff; border:none; border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
   .cave-share-btn { background:transparent; border:1px solid #C01108; color:#FF6B5E; border-radius:999px; padding:.85rem 1.2rem; font-size:.78rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
-  .cave-card.anim-l { animation:cardL .32s ease; }
-  .cave-card.anim-r { animation:cardR .32s ease; }
-  .cave-card.anim-u { animation:cardU .32s ease; }
-  .cave-card.anim-d { animation:cardD .32s ease; }
-  @keyframes cardL { from{opacity:0; transform:translateX(46px);} to{opacity:1; transform:translateX(0);} }
-  @keyframes cardR { from{opacity:0; transform:translateX(-46px);} to{opacity:1; transform:translateX(0);} }
+  .anim-l { animation:cardL .34s cubic-bezier(.25,.8,.3,1); }
+  .anim-r { animation:cardR .34s cubic-bezier(.25,.8,.3,1); }
+  .anim-u { animation:cardU .3s ease; }
+  .anim-d { animation:cardD .3s ease; }
+  @keyframes cardL { from{opacity:.25; transform:translateX(78%);} to{opacity:1; transform:translateX(0);} }
+  @keyframes cardR { from{opacity:.25; transform:translateX(-78%);} to{opacity:1; transform:translateX(0);} }
   @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
   @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
 
@@ -438,6 +438,30 @@
   .cave-vdots-h { display:flex; gap:8px; justify-content:center; margin-top:.7rem; }
   .cave-vdots-h .cave-vdot { background:#DDD1C0; }
   .cave-vdots-h .cave-vdot.active { background:#C01108; }
+  /* ── transparent dish stage (for PNG dishes) ── */
+  .cave-card { background:transparent !important; box-shadow:none !important; padding:.6rem .5rem 1rem !important; overflow-x:hidden; }
+  .cave-sec { padding:.6rem .7rem; }
+  .cave-sec-media { min-height:52vh; display:flex; flex-direction:column; justify-content:center; padding-top:2.9rem; border-bottom:1px solid rgba(252,249,244,.14); }
+  .cave-sec-info { gap:.15rem; padding:.85rem .7rem .95rem; border-bottom:1px solid rgba(252,249,244,.14); }
+  .cave-sec-recs { padding-top:.85rem; }
+  .cave-photo { max-width:88%; max-height:38vh; }
+  .cave-dish-name { color:var(--white); font-size:1.35rem; }
+  .cave-dish-price { font-size:1.05rem; color:#FF6B5E; }
+  .cave-stars-caption { color:rgba(252,249,244,.72); }
+  .cave-stars .fork-stars { width:118px; }
+  .cave-view-caption { color:rgba(252,249,244,.68); }
+  .cave-grade-label { color:rgba(252,249,244,.75) !important; }
+  .cave-text-view { color:rgba(252,249,244,.9); max-height:38vh; }
+  .cave-about { color:rgba(252,249,244,.92); }
+  .cave-meta-line { color:rgba(252,249,244,.7); }
+  .cave-meta-line strong { color:var(--white); }
+  .rec-title { color:#FF6B5E; font-size:.92rem; }
+  .rec-name { color:rgba(252,249,244,.7); }
+  .cave-rec img { max-height:88px; }
+  .cave-share-btn { margin-top:.55rem !important; padding:.62rem 1.5rem; font-size:.72rem; }
+  .cave-vdots-h { margin-top:.5rem; }
+  .cave-vdots-h .cave-vdot { background:rgba(252,249,244,.32); }
+  .cave-photo-fallback { padding:1.2rem 0; }
 </style>
 </head>
 <body>
@@ -1266,7 +1290,18 @@ function cavePin(e,id){
   if(btn)btn.classList.toggle('pinned',p.includes(id));
 }
 function updateCaveDots(){}
-function playCardAnim(card,cls){if(!cls)return;card.classList.remove('anim-l','anim-r','anim-u','anim-d');void card.offsetWidth;card.classList.add(cls);}
+function playCardAnim(card,cls){
+  if(!cls)return;
+  const media=card.querySelector('.cave-sec-media');
+  const info=card.querySelector('.cave-sec-info');
+  const targets=(cls==='anim-u'||cls==='anim-d')?[media]:[media,info];
+  targets.forEach(el=>{
+    if(!el)return;
+    el.classList.remove('anim-l','anim-r','anim-u','anim-d');
+    void el.offsetWidth;
+    el.classList.add(cls);
+  });
+}
 function caveDish(dir){if(!caveDishes.length)return;caveDishIdx=(caveDishIdx+dir+caveDishes.length)%caveDishes.length;renderCave(dir>0?'anim-l':'anim-r');}
 function caveView(dir){if(!caveDishes.length)return;caveViewIdx=(caveViewIdx+dir+3)%3;renderCave(dir>0?'anim-u':'anim-d');}
 function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
