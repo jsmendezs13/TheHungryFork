@@ -486,6 +486,19 @@
   .ing-list { max-height:58vh; max-width:40%; flex:1 1 auto; }
   .ing-list li { font-size:.64rem; }
   @media (max-width:380px){ .ing-list li { font-size:.58rem; } }
+  /* ── FIXED photo stage: layout never shifts between views/dishes ── */
+  .cave-sec-media { height:62vh; min-height:62vh; display:flex; flex-direction:column; justify-content:flex-start; padding-top:2.2rem; padding-bottom:.2rem; box-sizing:border-box; }
+  .cave-photo-row { flex:1; min-height:0; width:100%; display:flex; align-items:center; justify-content:center; }
+  .cave-side { flex:0 0 42px; min-width:42px; }
+  .cave-media { flex:1; min-width:0; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .cave-photo { width:100% !important; height:100% !important; max-width:none !important; max-height:none !important; object-fit:contain; object-position:center center; }
+  .exploded-row { height:100%; width:100%; align-items:center; justify-content:center; }
+  .exploded-row .cave-photo-open { width:58% !important; height:100% !important; max-height:none !important; object-fit:contain; }
+  .ing-list { height:88%; max-height:none; max-width:40%; }
+  .cave-text-view { height:100%; max-height:none; overflow-y:auto; }
+  .cave-view-caption { flex:0 0 auto; margin-top:.2rem; }
+  .cave-vdots-h { flex:0 0 auto; margin-top:.35rem; }
+  .cave-photo-fallback { padding:0; }
 </style>
 </head>
 <body>
