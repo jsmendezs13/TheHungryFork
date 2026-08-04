@@ -517,6 +517,16 @@
   .cave-rec img { max-height:150px !important; max-width:96%; }
   .rec-title { font-size:.98rem; }
   .rec-name { font-size:.78rem; }
+  /* ── exploded view: match the mockup (big photo + readable list) ── */
+  .exploded-row { gap:.15rem; align-items:center; }
+  .exploded-row .cave-photo-open { max-width:66% !important; height:100% !important; width:auto !important; transform:scale(1.22); transform-origin:center center; }
+  .ing-list { max-width:34%; height:auto; align-self:center; justify-content:center; gap:.42rem; padding:0; }
+  .ing-list li { font-size:.74rem; white-space:normal; line-height:1.12; letter-spacing:.04em; padding-left:15px; }
+  .ing-list li::before { width:9px; height:1.5px; top:.5em; }
+  .ing-list li::after { left:8px; top:calc(.5em - 2px); width:5px; height:5px; }
+  @media (max-width:380px){ .ing-list li { font-size:.66rem; } }
+  /* plate view fills the stage */
+  .cave-media > .cave-photo { transform:scale(1.06); }
 </style>
 </head>
 <body>
