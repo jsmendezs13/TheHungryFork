@@ -499,6 +499,12 @@
   .cave-view-caption { flex:0 0 auto; margin-top:.2rem; }
   .cave-vdots-h { flex:0 0 auto; margin-top:.35rem; }
   .cave-photo-fallback { padding:0; }
+  /* ── exploded view: photo drives the height, list follows it ── */
+  .exploded-row { align-items:stretch; }
+  .exploded-row .cave-photo-open { width:auto !important; max-width:64% !important; height:100% !important; align-self:center; }
+  .ing-list { height:100%; max-height:100%; width:auto; max-width:36%; align-self:center; justify-content:space-between; padding:4% 0; }
+  .ing-list li { font-size:.66rem; }
+  @media (max-width:380px){ .ing-list li { font-size:.6rem; } }
 </style>
 </head>
 <body>
