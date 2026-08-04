@@ -477,6 +477,15 @@
   .ing-list { max-height:54vh; max-width:40%; }
   .cave-text-view { max-height:46vh; }
   .cave-view-caption { margin-top:.35rem; }
+  /* ── force photos to fill the stage ── */
+  .cave-sec-media { min-height:0; padding-top:2.2rem; padding-bottom:.4rem; }
+  .cave-media { width:100%; }
+  .cave-photo { width:100% !important; max-width:none !important; height:auto !important; max-height:52vh !important; object-fit:contain; }
+  .exploded-row { width:100%; gap:.2rem; }
+  .exploded-row .cave-photo-open { width:60% !important; max-width:none !important; max-height:58vh !important; }
+  .ing-list { max-height:58vh; max-width:40%; flex:1 1 auto; }
+  .ing-list li { font-size:.64rem; }
+  @media (max-width:380px){ .ing-list li { font-size:.58rem; } }
 </style>
 </head>
 <body>
