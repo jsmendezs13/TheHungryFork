@@ -667,7 +667,7 @@
   <video id="vid-player" src="chef-video.mp4" muted playsinline loop></video>
   <div class="vid-dish-card" onclick="goChefsPick()" role="button" tabindex="0">
     <div class="vid-grade"><img src="grade-a.png" alt="Sanitary grade A"><div>Sanitary<br>Inspection<br>Grade</div></div>
-    <img src="1_T_Bone_Fork_Steak_I.jpeg" class="vid-dish-photo" alt="T-Bone Fork Steak" onerror="this.style.display='none'">
+    <img src="1_T_Bone_Fork_Steak_I.png" class="vid-dish-photo" alt="T-Bone Fork Steak" onerror="this.style.display='none'">
     <div class="cave-stars-wrap"><div class="cave-stars"><svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E150D"/><stop offset="1" stop-color="#3E0B06"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A31108"/><stop offset="1" stop-color="#5E0A04"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C41508"/><stop offset="1" stop-color="#750A04"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E02414"/><stop offset="1" stop-color="#8E0B05"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg><div id="vid-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="vid-stars-cap">Fork's Rating</div></div>
     <div class="cave-dish-name">T-Bone Fork Steak</div>
     <div class="cave-dish-price">$38</div>
@@ -706,7 +706,7 @@ async function sbFetch(path, method='GET', body=null){
 // ── DISHES (local for now — will come from Supabase later) ──
 const DISHES=[
   {id:'tbone-fork-steak',name:'T-Bone Fork Steak',desc:'Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables',price:38,emoji:'🥩',category:'chefs-pick',
-   img:'1_T_Bone_Fork_Steak_I.jpeg',imgOpen:'1_T_Bone_Fork_Steak_II.png',
+   img:'1_T_Bone_Fork_Steak_I.png',imgOpen:'1_T_Bone_Fork_Steak_II.png',
    about:'Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.',
    allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan'},
   {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters',
