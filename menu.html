@@ -505,6 +505,18 @@
   .ing-list { height:100%; max-height:100%; width:auto; max-width:36%; align-self:center; justify-content:space-between; padding:4% 0; }
   .ing-list li { font-size:.66rem; }
   @media (max-width:380px){ .ing-list li { font-size:.6rem; } }
+  /* ── let the exploded photo win the space; keep names on one line ── */
+  .exploded-row { gap:0; }
+  .exploded-row .cave-photo-open { max-width:74% !important; }
+  .ing-list { max-width:26%; padding:2% 0; }
+  .ing-list li { font-size:.56rem; white-space:nowrap; letter-spacing:.06em; padding-left:11px; }
+  .ing-list li::before { width:6px; }
+  .ing-list li::after { left:5px; width:3.5px; height:3.5px; }
+  @media (max-width:380px){ .ing-list li { font-size:.5rem; } }
+  /* ── bigger drink photos ── */
+  .cave-rec img { max-height:150px !important; max-width:96%; }
+  .rec-title { font-size:.98rem; }
+  .rec-name { font-size:.78rem; }
 </style>
 </head>
 <body>
