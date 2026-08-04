@@ -462,6 +462,13 @@
   .cave-vdots-h { margin-top:.5rem; }
   .cave-vdots-h .cave-vdot { background:rgba(252,249,244,.32); }
   .cave-photo-fallback { padding:1.2rem 0; }
+  .exploded-row { display:flex; align-items:center; justify-content:center; gap:.5rem; width:100%; }
+  .exploded-row .cave-photo-open { max-width:60%; max-height:38vh; flex:0 1 auto; }
+  .ing-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; justify-content:space-around; align-self:stretch; max-height:38vh; text-align:left; flex:0 0 auto; max-width:38%; }
+  .ing-list li { position:relative; font-family:var(--sans); font-weight:500; font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(252,249,244,.85); padding-left:14px; line-height:1.35; }
+  .ing-list li::before { content:''; position:absolute; left:0; top:.42em; width:8px; height:1px; background:#C01108; }
+  .ing-list li::after { content:''; position:absolute; left:7px; top:calc(.42em - 1.5px); width:4px; height:4px; border-radius:50%; background:#C01108; }
+  @media (max-width:380px){ .ing-list li { font-size:.54rem; } }
 </style>
 </head>
 <body>
@@ -851,16 +858,16 @@ async function sbFetch(path, method='GET', body=null){
 // ── DISHES (local for now — will come from Supabase later) ──
 const DISHES=[
   {id:'tbone-fork-steak',name:'T-Bone Fork Steak',desc:'Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables',price:38,emoji:'🥩',category:'chefs-pick',
-   img:'1_T_Bone_Fork_Steak_I.jpeg',imgOpen:'1_T_Bone_Fork_Steak_II.png',
+   img:'1_T_Bone_Fork_Steak_I.png',imgOpen:'1_T_Bone_Fork_Steak_II.png',
    about:'Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.',
-   allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan',wine:'Dubonnet Rouge',cocktail:'Old Fashioned'},
+   allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan',wine:'Dubonnet Rouge',cocktail:'Old Fashioned',ingredients:['Asparagus','Onion','Carrot','Bell Pepper','Cassava Fries','BBQ Sauce','T-Bone Steak']},
   {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters',
    img:'korean-bbq-wing-plate.jpg',imgOpen:'korean-bbq-wing-open.jpg'},
   {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree',
    img:'steak-frites-plate.jpg',imgOpen:'steak-frites-open.jpg',
    about:'The strip steak is also known as a Sirloin steak, ours is served with the bone, a great steak! Roquefort butter is served on the side. Choice of mashed potato or french fries.',
    allergens:'Dairy, Allium, Citrus, Alcohol',mods:'No Butter',
-   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"],wine:'Dubonnet Rouge',cocktail:'Old Fashioned'},
+   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"],wine:'Dubonnet Rouge',cocktail:'Old Fashioned',ingredients:['Heavy Cream','Blue Cheese','Shallot','Roquefort Butter','French Fries','Bone-In Strip Steak']},
   {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree',
    img:'lobster-ravioli-plate.jpg',imgOpen:'lobster-ravioli-open.jpg'},
   {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree',
@@ -1232,7 +1239,8 @@ function renderCave(animClass){
   if(caveViewIdx===0){
     media=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
   }else if(caveViewIdx===1){
-    media=`<img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')"><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
+    const ing=(d.ingredients&&d.ingredients.length)?`<ul class="ing-list">`+d.ingredients.map(x=>`<li>${x}</li>`).join('')+`</ul>`:'';
+    media=`<div class="exploded-row"><img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
   }else{
     media=`<div class="cave-text-view">
       <p class="cave-about">${d.about||d.desc}</p>
