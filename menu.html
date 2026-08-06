@@ -555,6 +555,13 @@
   .cave-sec-media { padding-bottom:.5rem; }
   .cave-view-caption { margin-top:.45rem; }
   .cave-sec-info { padding-top:1.15rem; }
+  /* ── stage height in real pixels (never overflows the text) ── */
+  .cave-photo-row { height:calc(100vw * 16 / 21) !important; max-height:calc(100vw * 16 / 21) !important; aspect-ratio:auto !important; overflow:hidden !important; }
+  .cave-media, .exploded-row { height:100% !important; max-height:100% !important; overflow:hidden; }
+  .cave-media > .cave-photo { aspect-ratio:auto !important; width:100% !important; height:100% !important; object-fit:contain; }
+  .cave-sec-media { overflow:hidden; }
+  /* ── no dots ── */
+  .cave-vdots-h, .cave-hdots, .cave-vdots { display:none !important; }
 </style>
 </head>
 <body>
@@ -1306,7 +1313,7 @@ async function caveDishRating(dbId){
   }catch(e){caveRatings[dbId]={avg:0,count:0};}
   return caveRatings[dbId];
 }
-function renderCave(animClass){
+function renderCave(animClass,mediaOnly){
   const card=document.getElementById('cave-card');
   const hdots=document.getElementById('cave-hdots');
   if(!card)return;
@@ -1334,6 +1341,14 @@ function renderCave(animClass){
       ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
       ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.5rem;"><strong>Choice of the following:</strong></p>`+d.choices.map(x=>`<p class="cave-meta-line">${x}</p>`).join(''):''}
     </div>`;
+  }
+  if(mediaOnly){
+    const mediaEl=card.querySelector('.cave-media');
+    if(mediaEl){
+      mediaEl.innerHTML=media;
+      playCardAnim(card,animClass);
+      return;
+    }
   }
   const pinned=getPins().includes(d.id);
   card.innerHTML=`
@@ -1397,8 +1412,8 @@ function playCardAnim(card,cls){
   });
 }
 function caveDish(dir){if(!caveDishes.length)return;caveDishIdx=(caveDishIdx+dir+caveDishes.length)%caveDishes.length;renderCave(dir>0?'anim-l':'anim-r');}
-function caveView(dir){if(!caveDishes.length)return;caveViewIdx=(caveViewIdx+dir+3)%3;renderCave(dir>0?'anim-u':'anim-d');}
-function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
+function caveView(dir){if(!caveDishes.length)return;caveViewIdx=(caveViewIdx+dir+3)%3;renderCave(dir>0?'anim-u':'anim-d',true);}
+function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir,true);}
 function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;renderCave(dir);}
 function caveOpenDish(id){
   const d=DISHES.find(x=>x.id===id);
