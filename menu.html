@@ -527,6 +527,25 @@
   @media (max-width:380px){ .ing-list li { font-size:.66rem; } }
   /* plate view fills the stage */
   .cave-media > .cave-photo { transform:scale(1.06); }
+  /* ═══ EXACT PROPORTIONS (full-bleed, 9:19 phones) ═══
+     stage = 100vw wide x (16/21)vw tall  →  exploded photo box = 2/3 w, 7:8 ratio
+     plate photo = 1.7:1, centered inside the same stage                        */
+  .cave-card { padding-left:0 !important; padding-right:0 !important; overflow-x:hidden; }
+  .cave-sec-media { width:100%; margin:0; padding-left:0; padding-right:0; height:auto !important; min-height:0 !important; }
+  .cave-photo-row { position:relative; width:100%; aspect-ratio:21/16; flex:0 0 auto !important; height:auto; }
+  .cave-side { position:absolute; top:50%; transform:translateY(-50%); z-index:6; flex:none; min-width:0; padding:0 4px; }
+  .cave-photo-row > .cave-side:first-child { left:0; }
+  .cave-photo-row > .cave-side:last-child { right:0; }
+  .cave-media { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .cave-media > .cave-photo { width:100% !important; height:100% !important; aspect-ratio:1.7; object-fit:contain; transform:none !important; }
+  .exploded-row { width:100%; height:100%; gap:0; align-items:stretch; }
+  .exploded-row .cave-photo-open { width:66.666% !important; max-width:66.666% !important; height:100% !important; object-fit:contain; transform:none !important; align-self:stretch; }
+  .ing-list { width:33.333%; max-width:33.333%; height:100%; align-self:stretch; justify-content:space-between; padding:3% 0 3% 2px; gap:0; }
+  .ing-list li { font-size:.7rem; line-height:1.1; }
+  @media (max-width:380px){ .ing-list li { font-size:.62rem; } }
+  .cave-sec-info, .cave-sec-recs { padding-left:1rem; padding-right:1rem; }
+  .cave-grade, .cave-pin { z-index:8; }
+  .cave-grade { left:10px; } .cave-pin { right:10px; }
 </style>
 </head>
 <body>
