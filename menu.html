@@ -562,6 +562,20 @@
   .cave-sec-media { overflow:hidden; }
   /* ── no dots ── */
   .cave-vdots-h, .cave-hdots, .cave-vdots { display:none !important; }
+  /* ═══ foto fija arriba + sección inferior con su propio scroll ═══ */
+  #cave .cave-card { display:flex !important; flex-direction:column !important; overflow:hidden !important; padding-bottom:0 !important; }
+  #cave .cave-sec-media { flex:0 0 auto !important; overflow:visible !important; padding-bottom:1rem !important; border-bottom:none !important; }
+  #cave .cave-photo-row { height:42vh !important; max-height:42vh !important; min-height:42vh !important; overflow:visible !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+  #cave .cave-media { height:100% !important; width:100% !important; display:flex !important; align-items:center !important; justify-content:center !important; overflow:visible !important; }
+  #cave .cave-media > img.cave-photo { width:100% !important; height:auto !important; max-height:100% !important; object-fit:contain !important; transform:none !important; }
+  #cave .exploded-row { height:100% !important; align-items:center !important; }
+  #cave .exploded-row > img.cave-photo-open { width:auto !important; height:auto !important; max-width:66.666% !important; max-height:100% !important; object-fit:contain !important; transform:none !important; }
+  #cave .ing-list { height:auto !important; max-height:100% !important; align-self:center !important; }
+  #cave .cave-scroll { flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; border-top:1px solid rgba(252,249,244,.14); scrollbar-width:thin; scrollbar-color:rgba(252,249,244,.45) transparent; }
+  #cave .cave-scroll::-webkit-scrollbar { width:5px; }
+  #cave .cave-scroll::-webkit-scrollbar-track { background:transparent; }
+  #cave .cave-scroll::-webkit-scrollbar-thumb { background:rgba(252,249,244,.45); border-radius:3px; }
+  #cave .cave-sec-info { border-bottom:1px solid rgba(252,249,244,.14); padding-top:1.4rem !important; }
 </style>
 </head>
 <body>
@@ -1366,6 +1380,7 @@ function renderCave(animClass,mediaOnly){
         <span class="cave-vdot${caveViewIdx===2?' active':''}" onclick="caveSetView(2)" title="Description"></span>
       </div>
     </section>
+    <div class="cave-scroll">
     <section class="cave-sec cave-sec-info">
       <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       <div class="cave-dish-name">${d.name}</div>
@@ -1377,7 +1392,8 @@ function renderCave(animClass,mediaOnly){
         <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${d.id}-wine.png" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
         <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.png" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
       </div>
-    </section>`;
+    </section>
+    </div>`;
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
   loadZoneStars(d);
