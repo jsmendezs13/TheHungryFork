@@ -562,6 +562,29 @@
   .cave-sec-media { overflow:hidden; }
   /* ── no dots ── */
   .cave-vdots-h, .cave-hdots, .cave-vdots { display:none !important; }
+  /* ── no crop on the plate + more room before the information ── */
+  .cave-media > .cave-photo { transform:none !important; }
+  .exploded-row .cave-photo-open { transform:none !important; }
+  .cave-sec-media { padding-bottom:2.6rem; border-bottom:none; }
+  .cave-sec-info { padding-top:2.2rem; border-top:1px solid rgba(252,249,244,.14); }
+  /* ── taller photo stage: nothing is cut, information sits lower ── */
+  .cave-photo-row { height:46vh !important; max-height:46vh !important; }
+  .cave-media { display:flex !important; align-items:center !important; justify-content:center !important; }
+  .cave-media > .cave-photo { width:100% !important; height:auto !important; max-height:100% !important; object-fit:contain !important; }
+  .exploded-row { align-items:center !important; }
+  .exploded-row .cave-photo-open { height:100% !important; width:auto !important; max-width:66.666% !important; max-height:100% !important; object-fit:contain !important; }
+  .ing-list { height:92% !important; }
+  .cave-sec-media { padding-bottom:1.6rem; }
+  .cave-sec-info { padding-top:1.8rem; }
+  /* ═══ FIX FINAL: la foto NUNCA se recorta; la información baja ═══ */
+  #cave .cave-card .cave-sec-media { overflow:visible !important; padding-bottom:2rem !important; }
+  #cave .cave-card .cave-photo-row { height:56vh !important; max-height:56vh !important; min-height:56vh !important; overflow:visible !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+  #cave .cave-card .cave-media { height:100% !important; max-height:100% !important; width:100% !important; display:flex !important; align-items:center !important; justify-content:center !important; overflow:visible !important; }
+  #cave .cave-card .cave-media > img.cave-photo { width:100% !important; height:auto !important; max-width:100% !important; max-height:100% !important; object-fit:contain !important; transform:none !important; }
+  #cave .cave-card .exploded-row { height:100% !important; max-height:100% !important; align-items:center !important; overflow:visible !important; }
+  #cave .cave-card .exploded-row > img.cave-photo-open { width:auto !important; height:auto !important; max-width:66.666% !important; max-height:100% !important; object-fit:contain !important; transform:none !important; }
+  #cave .cave-card .ing-list { height:auto !important; max-height:100% !important; align-self:center !important; justify-content:space-between !important; }
+  #cave .cave-card .cave-sec-info { padding-top:2.4rem !important; }
 </style>
 </head>
 <body>
