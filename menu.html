@@ -519,6 +519,13 @@
     #cave .cave-grade { left:12px !important; } #cave .cave-pin { right:12px !important; }
     #cave .cave-overlay { padding:0; }
   }
+  /* ── pie de página dentro del plato ── */
+  #cave .cave-foot { text-align:center; padding:1.6rem 1rem 2rem; border-top:1px solid rgba(252,249,244,.12); margin-top:.6rem; font-family:var(--sans); font-weight:300; font-size:.8rem; color:rgba(252,249,244,.6); }
+  #cave .cave-foot img { height:46px; margin-bottom:.7rem; }
+  #cave .cave-foot-line { margin-bottom:.25rem; }
+  #cave .cave-foot a { color:rgba(252,249,244,.85); }
+  #cave .cave-foot-links { margin-top:.7rem; display:flex; gap:1.2rem; justify-content:center; }
+  #cave .cave-foot-links .footer-link { color:rgba(252,249,244,.9); }
 </style>
 </head>
 <body>
@@ -1336,6 +1343,7 @@ function renderCave(animClass,mediaOnly){
         <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.png" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
       </div>
     </section>
+    ${caveFootHTML()}
     </div>`;
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
@@ -1348,6 +1356,18 @@ function loadZoneStars(d){
     if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:"Fork's Rating · No ratings yet";
   });
 }
+function caveFootHTML(){
+  const links = currentTaster
+    ? '<button class="footer-link" onclick="openMyTastings()">My Tastings</button><button class="footer-link" onclick="caveLogout()">'+currentTaster.first_name+'</button>'
+    : '<button class="footer-link" onclick="openTasterModal()">Log In</button>';
+  return '<div class="cave-foot">'
+    + '<img src="hungry-fork-logo.png" alt="The Hungry Fork">'
+    + '<div class="cave-foot-line">123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm</div>'
+    + '<div class="cave-foot-line">Powered by <a href="index.html">Seb\'s Analytics LLC</a></div>'
+    + '<div class="cave-foot-links">'+links+'</div>'
+    + '</div>';
+}
+function caveLogout(){ if(confirm('Log out?')){ logout(); renderCave(); } }
 function cavePin(e,id){
   e.stopPropagation();
   let p=getPins();
