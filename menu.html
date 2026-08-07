@@ -526,6 +526,21 @@
   #cave .cave-foot a { color:rgba(252,249,244,.85); }
   #cave .cave-foot-links { margin-top:.7rem; display:flex; gap:1.2rem; justify-content:center; }
   #cave .cave-foot-links .footer-link { color:rgba(252,249,244,.9); }
+  /* ═══ PROPORCIONES EXACTAS (responsivas, sin recortes) ═══
+     plato 1.7:1 a todo el ancho · despiece 7:8 en 2/3, lista en 1/3 */
+  #cave .cave-photo-row { height:auto !important; max-height:none !important; min-height:0 !important; width:100% !important; display:block !important; }
+  #cave .cave-media { width:100% !important; height:auto !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+  /* vista 1 — el plato */
+  #cave .cave-media.view0 { aspect-ratio:1.7 !important; }
+  #cave .cave-media.view0 > img.cave-photo { width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; object-fit:contain !important; }
+  /* vista 2 — el despiece + lista de ingredientes */
+  #cave .cave-media.view1 { aspect-ratio:calc(21/16) !important; }
+  #cave .cave-media.view1 .exploded-row { width:100% !important; height:100% !important; align-items:center !important; gap:0 !important; }
+  #cave .cave-media.view1 img.cave-photo-open { width:66.666% !important; max-width:66.666% !important; height:100% !important; max-height:100% !important; object-fit:contain !important; }
+  #cave .cave-media.view1 .ing-list { width:33.333% !important; max-width:33.333% !important; height:88% !important; align-self:center !important; }
+  /* vista 3 — la descripción */
+  #cave .cave-media.view2 { aspect-ratio:auto !important; min-height:clamp(180px, 34vh, 380px) !important; }
+  #cave .cave-media.view2 .cave-text-view { height:auto !important; max-height:clamp(180px, 34vh, 380px) !important; overflow-y:auto !important; }
 </style>
 </head>
 <body>
@@ -1309,6 +1324,7 @@ function renderCave(animClass,mediaOnly){
   if(mediaOnly){
     const mediaEl=card.querySelector('.cave-media');
     if(mediaEl){
+      mediaEl.className='cave-media view'+caveViewIdx;
       mediaEl.innerHTML=media;
       playCardAnim(card,animClass);
       return;
@@ -1321,7 +1337,7 @@ function renderCave(animClass,mediaOnly){
       <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
       <div class="cave-photo-row">
         ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
-        <div class="cave-media">${media}</div>
+        <div class="cave-media view${caveViewIdx}">${media}</div>
         ${multi?`<button class="cave-side" onclick="caveDish(1)" aria-label="Next dish"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></button>`:'<span class="cave-side"></span>'}
       </div>
       <div class="cave-vdots-h">
