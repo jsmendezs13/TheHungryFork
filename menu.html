@@ -510,6 +510,15 @@
   #cave .cave-sec-info, #cave .cave-sec-recs { width:100% !important; padding-left:.9rem !important; padding-right:.9rem !important; }
   #cave .cave-recs { width:100% !important; }
   #cave .cave-grade { left:10px !important; } #cave .cave-pin { right:10px !important; }
+  /* ═══ ESCRITORIO / LAPTOP: columna centrada (el móvil no se toca) ═══ */
+  @media (min-width:760px){
+    #cave .cave-inner { max-width:540px !important; margin:0 auto !important; }
+    #cave .cave-card { border-radius:0; }
+    #cave .cave-photo-row { height:clamp(240px, 40vh, 430px) !important; }
+    #cave .cave-rec img { max-height:135px !important; }
+    #cave .cave-grade { left:12px !important; } #cave .cave-pin { right:12px !important; }
+    #cave .cave-overlay { padding:0; }
+  }
 </style>
 </head>
 <body>
@@ -1281,7 +1290,7 @@ function renderCave(animClass,mediaOnly){
     media=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
   }else if(caveViewIdx===1){
     const ing=(d.ingredients&&d.ingredients.length)?`<ul class="ing-list">`+d.ingredients.map(x=>`<li>${x}</li>`).join('')+`</ul>`:'';
-    media=`<div class="exploded-row"><img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div><div class="cave-view-caption">Every ingredient, deconstructed</div>`;
+    media=`<div class="exploded-row"><img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div>`;
   }else{
     media=`<div class="cave-text-view">
       <p class="cave-about">${d.about||d.desc}</p>
