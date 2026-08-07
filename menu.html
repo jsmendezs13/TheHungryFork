@@ -576,6 +576,16 @@
   #cave .cave-scroll::-webkit-scrollbar-track { background:transparent; }
   #cave .cave-scroll::-webkit-scrollbar-thumb { background:rgba(252,249,244,.45); border-radius:3px; }
   #cave .cave-sec-info { border-bottom:1px solid rgba(252,249,244,.14); padding-top:1.4rem !important; }
+  /* ── compensar el ancho de la barra para que ambos lados queden iguales ── */
+  @supports (scrollbar-gutter: stable) {
+    #cave .cave-scroll { scrollbar-gutter:stable both-edges; }
+  }
+  @supports not (scrollbar-gutter: stable) {
+    #cave .cave-scroll { padding-left:5px; }
+  }
+  #cave .cave-sec-info, #cave .cave-sec-recs { padding-left:1rem !important; padding-right:1rem !important; }
+  #cave .cave-scroll { border-top:none !important; }
+  #cave .cave-sec-info { border-top:1px solid rgba(252,249,244,.14); }
 </style>
 </head>
 <body>
