@@ -541,6 +541,10 @@
   /* vista 3 — la descripción */
   #cave .cave-media.view2 { aspect-ratio:auto !important; min-height:clamp(180px, 34vh, 380px) !important; }
   #cave .cave-media.view2 .cave-text-view { height:auto !important; max-height:clamp(180px, 34vh, 380px) !important; overflow-y:auto !important; }
+  /* ── la sección de la foto NO se encoge: empuja la información hacia abajo ── */
+  #cave .cave-sec-media { flex:0 0 auto !important; min-height:auto !important; overflow:visible !important; }
+  #cave .cave-photo-row { flex:0 0 auto !important; }
+  #cave .cave-scroll { margin-top:.2rem; }
 </style>
 </head>
 <body>
