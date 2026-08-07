@@ -541,10 +541,6 @@
   /* vista 3 — la descripción */
   #cave .cave-media.view2 { aspect-ratio:auto !important; min-height:clamp(180px, 34vh, 380px) !important; }
   #cave .cave-media.view2 .cave-text-view { height:auto !important; max-height:clamp(180px, 34vh, 380px) !important; overflow-y:auto !important; }
-  /* ── la sección de la foto NO se encoge: empuja la información hacia abajo ── */
-  #cave .cave-sec-media { flex:0 0 auto !important; min-height:auto !important; overflow:visible !important; }
-  #cave .cave-photo-row { flex:0 0 auto !important; }
-  #cave .cave-scroll { margin-top:.2rem; }
 </style>
 </head>
 <body>
@@ -939,15 +935,24 @@ const DISHES=[
    allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan',wine:'Dubonnet Rouge',cocktail:'Old Fashioned',ingredients:['Asparagus','Onion','Carrot','Bell Pepper','Cassava Fries','BBQ Sauce','T-Bone Steak']},
   {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters',
    img:'korean-bbq-wing-plate.png',imgOpen:'korean-bbq-wing-open.png'},
-  {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree',
-   img:'steak-frites-plate.png',imgOpen:'steak-frites-open.png',
-   about:'The strip steak is also known as a Sirloin steak, ours is served with the bone, a great steak! Roquefort butter is served on the side. Choice of mashed potato or french fries.',
-   allergens:'Dairy, Allium, Citrus, Alcohol',mods:'No Butter',
-   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"],wine:'Dubonnet Rouge',cocktail:'Old Fashioned',ingredients:['Heavy Cream','Blue Cheese','Shallot','Roquefort Butter','French Fries','Bone-In Strip Steak']},
-  {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree',
-   img:'lobster-ravioli-plate.png',imgOpen:'lobster-ravioli-open.png'},
-  {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree',
-   img:'atlantic-salmon-plate.png',imgOpen:'atlantic-salmon-open.png'},
+  {id:'sliced-steak',name:'Sliced Steak with Red Wine Reduction',desc:'Mashed Potatoes, Roasted Asparagus, Baby Carrots & Cherry Tomatoes',price:26,emoji:'\ud83e\udd69',category:'entree',
+   img:'sliced-steak-plate.png',imgOpen:'sliced-steak-open.png',
+   about:'Tender sliced steak, seared to a flavorful crust and served medium-rare over a rich red-wine reduction. Accompanied by buttery chive mashed potatoes and roasted asparagus, baby carrots, and cherry tomatoes for a balanced, colorful entr\u00e9e.',
+   allergens:'Contains milk/dairy, celery, sulphites and beef. Also fruits, vegetables, garlic, onion, herbs and spices.',
+   mods:'Red-wine reduction on the side \u00b7 Steak temperature to choice \u00b7 Dairy-free mash on request',
+   ingredients:['Asparagus','Cherry Tomatoes','Baby Carrots','Chives','Mashed Potatoes','Red Wine Reduction','Sliced Steak']},
+  {id:'red-snapper',name:'Whole Grilled Red Snapper',desc:'Lemon-Herb Marinade, House-Cut Fries, Roasted Baby Potatoes & Fennel',price:25,emoji:'\ud83d\udc1f',category:'entree',
+   img:'red-snapper-plate.png',imgOpen:'red-snapper-open.png',
+   about:'A whole red snapper marinated with extra-virgin olive oil, fresh lemon, garlic, parsley, rosemary, kosher salt, and black pepper, then grilled until the skin is crisp and the flesh is tender. Served with golden house-cut French fries, roasted baby potatoes, carrots, fennel, and onion.',
+   allergens:'Contains fish. Also fruits, vegetables, garlic, onion, herbs, spices and canola seed oil.',
+   mods:'Lemon on the side \u00b7 Fries may be replaced with roasted vegetables',
+   ingredients:['Lemon','Fennel','Carrots','White Onion','Baby Potatoes','French Fries','Red Snapper']},
+  {id:'salmon-corn',name:'Pan-Seared Salmon with Creamy Corn Sauce',desc:'Roasted Yukon Potatoes, Peppers, Broccoli, Baby Carrots & Zucchini',price:25,emoji:'\ud83d\udc1f',category:'entree',
+   img:'salmon-corn-plate.png',imgOpen:'salmon-corn-open.png',
+   about:'Two salmon portions are seasoned and pan-seared until golden, then finished with a rich house-made creamy corn sauce. Served with roasted Yukon Gold potatoes, red and green bell peppers, onion, broccoli, baby carrots, and zucchini, the dish balances savory salmon with sweet corn, tender vegetables, and a fresh parsley finish.',
+   allergens:'Contains fish and milk/dairy. Also corn, lemon, vegetables, garlic, onion, herbs and spices.',
+   mods:'Creamy corn sauce on the side, subject to availability',
+   ingredients:['Broccoli','Zucchini','Baby Carrots','Bell Peppers','Yukon Potatoes','Creamy Corn Sauce','Salmon']},
   {id:'burrata-salad',name:'Burrata Mozzarella Salad',desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze',price:20,emoji:'🥗',category:'salads',
    img:'burrata-salad-plate.png',imgOpen:'burrata-salad-open.png'},
   {id:'french-fries',name:'French Fries',desc:'Classic golden fries, crispy outside, fluffy inside',price:8,emoji:'🍟',category:'sides',
@@ -961,7 +966,7 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 
 // ── STATE ──
 let currentDishId=null, activeFilter='chefs-pick', currentTaster=null, currentSession=null, pendingVerificationTicket=null, selectedPhoto=null;
-const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'steak-frites':2,'lobster-ravioli':3,'atlantic-salmon':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7,'tbone-fork-steak':2};
+const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'sliced-steak':2,'red-snapper':3,'salmon-corn':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7,'tbone-fork-steak':2};
 
 // ── SESSION ──
 function saveSession(t,s){localStorage.setItem('hf_taster',JSON.stringify({taster:t,session:s}));currentTaster=t;currentSession=s;updateNavBtn();}
