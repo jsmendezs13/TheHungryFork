@@ -566,6 +566,22 @@
     #cave .cave-inner { max-width:1320px !important; }
     #cave .cave-photo-row { height:min(66vh, 600px) !important; max-height:min(66vh,600px) !important; }
   }
+  /* ── LAPTOP: pie de página abajo del todo + flechas laterales ── */
+  @media (min-width:760px){
+    /* el pie sale de la columna derecha y ocupa todo el ancho, al final */
+    #cave .cave-card { grid-template-areas:'media info' 'foot foot' !important; grid-template-rows:1fr auto !important; align-content:center !important; }
+    #cave .cave-sec-media { grid-area:media; }
+    #cave .cave-scroll { grid-area:info; }
+    #cave .cave-foot { grid-area:foot; grid-column:1 / -1; width:100%; margin-top:1.2rem !important; padding-top:1.2rem !important; border-top:1px solid rgba(252,249,244,.12) !important; }
+    /* flechas para cambiar de plato */
+    #cave .cave-side { display:flex !important; position:absolute !important; top:50% !important; transform:translateY(-50%) !important; z-index:20 !important; width:46px !important; height:46px !important; min-width:0 !important; border-radius:50% !important; background:rgba(252,249,244,.10) !important; border:1px solid rgba(252,249,244,.35) !important; align-items:center !important; justify-content:center !important; cursor:pointer; transition:background .2s; }
+    #cave .cave-side:hover { background:rgba(252,249,244,.24) !important; }
+    #cave .cave-side .side-emoji { display:none !important; }
+    #cave .cave-side .hint-tri { color:rgba(252,249,244,.9) !important; font-size:.95rem !important; }
+    #cave .cave-photo-row { position:relative !important; }
+    #cave .cave-photo-row > .cave-side:first-child { left:-8px !important; }
+    #cave .cave-photo-row > .cave-side:last-child { right:-8px !important; }
+  }
 </style>
 </head>
 <body>
