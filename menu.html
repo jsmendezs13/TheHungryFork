@@ -528,6 +528,44 @@
   #cave .cave-foot-links .footer-link { color:rgba(252,249,244,.9); }
   /* ── quitar las flechas laterales de platos ── */
   #cave .cave-side { display:none !important; }
+  /* ═══════════════════════════════════════════════════════════
+     LAPTOP / DESKTOP (760px o más): diseño horizontal de dos columnas
+     El teléfono no se ve afectado por ninguna de estas reglas.
+     ═══════════════════════════════════════════════════════════ */
+  @media (min-width:760px){
+    #cave .cave-inner { max-width:1180px !important; padding:calc(env(safe-area-inset-top,0px) + 14px) 2rem 1.4rem !important; }
+    #cave .cave-cat { padding-bottom:1rem; font-size:.78rem; }
+    /* la tarjeta se divide en dos columnas: foto | información */
+    #cave .cave-card { display:grid !important; grid-template-columns:1.05fr .95fr !important; gap:2.2rem !important; align-items:center !important; overflow:hidden !important; }
+    #cave .cave-sec-media { padding:0 !important; border:none !important; align-self:center !important; }
+    #cave .cave-photo-row { height:min(62vh, 520px) !important; max-height:min(62vh,520px) !important; }
+    #cave .cave-media > img.cave-photo { max-height:100% !important; }
+    #cave .exploded-row > img.cave-photo-open { max-width:60% !important; }
+    #cave .ing-list { max-width:38% !important; }
+    #cave .ing-list li { font-size:.82rem !important; letter-spacing:.08em; }
+    /* columna derecha: todo visible, con scroll solo si hace falta */
+    #cave .cave-scroll { max-height:78vh !important; padding-right:.4rem !important; border:none !important; }
+    #cave .cave-sec-info { border-top:none !important; border-bottom:1px solid rgba(252,249,244,.14) !important; padding:0 0 1.6rem !important; text-align:center; }
+    #cave .cave-dish-name { font-size:2.1rem !important; }
+    #cave .cave-dish-price { font-size:1.35rem !important; }
+    #cave .cave-stars .fork-stars { width:190px !important; }
+    #cave .cave-share-btn { padding:.8rem 2.4rem !important; font-size:.78rem !important; }
+    #cave .cave-sec-recs { padding:1.6rem 0 0 !important; }
+    #cave .cave-recs { gap:2rem !important; }
+    #cave .cave-rec img { max-height:170px !important; }
+    #cave .rec-title { font-size:1.05rem !important; }
+    #cave .cave-foot { padding:1.4rem 0 .6rem !important; }
+    #cave .cave-foot img { height:40px !important; }
+    /* el corazón y el sello acompañan la foto */
+    #cave .cave-grade { left:0 !important; top:0 !important; }
+    #cave .cave-pin { right:auto !important; left:auto !important; top:0 !important; }
+    #cave .cave-sec-media .cave-pin { position:absolute; right:0 !important; }
+  }
+  /* pantallas muy anchas: un poco más de aire */
+  @media (min-width:1280px){
+    #cave .cave-inner { max-width:1320px !important; }
+    #cave .cave-photo-row { height:min(66vh, 600px) !important; max-height:min(66vh,600px) !important; }
+  }
 </style>
 </head>
 <body>
