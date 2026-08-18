@@ -605,6 +605,14 @@
     #cave .cave-grade-label { font-size:.76rem !important; }
     #cave .cave-pin .pin-svg { width:44px !important; height:44px !important; }
   }
+  /* ── descripción centrada (teléfono y portátil) + corazón más adentro ── */
+  #cave .cave-text-view { text-align:center !important; max-width:min(680px, 88%) !important; margin:0 auto !important; padding:0 !important; }
+  #cave .cave-about, #cave .cave-meta-line { text-align:center !important; }
+  #cave .cave-pin { right:30px !important; }
+  @media (min-width:760px){
+    #cave .cave-pin { right:56px !important; }
+    #cave .cave-text-view { max-width:min(760px, 82%) !important; }
+  }
 </style>
 </head>
 <body>
