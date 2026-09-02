@@ -399,7 +399,7 @@
   .tasting-thumb-emoji { display:flex; align-items:center; justify-content:center; font-size:1.1rem; background:var(--off-white); }
   .brand-red-text { background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:600; font-style:normal; }
 </style>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 
@@ -490,7 +490,7 @@
         <div class="t-sub">Enter your phone number and we'll send you a verification code.</div>
         <input class="t-input" id="reset-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
         <div class="t-err" id="reset-phone-err"></div>
-               <div class="cf-turnstile" data-sitekey="0x4AAAAAAE1NixquFc4Pc3RM" data-callback="onResetTs" data-expired-callback="onResetTsExpired" data-theme="light"></div>
+        <div id="ts-reset" style="margin:0 0 .75rem;"></div>
         <button class="t-btn" onclick="sendResetOtp()">Send Code</button>
         <button class="t-btn-ghost" onclick="goTStep(1)">← Back</button>
       </div>
@@ -521,7 +521,7 @@
         <div class="t-sub">We'll send a 4-digit code to confirm it's really you.</div>
         <input class="t-input" id="signup-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
         <div class="t-err" id="signup-phone-err">Please enter a valid phone number.</div>
-               <div class="cf-turnstile" data-sitekey="0x4AAAAAAE1NixquFc4Pc3RM" data-callback="onSignupTs" data-expired-callback="onSignupTsExpired" data-theme="light"></div>
+        <div id="ts-signup" style="margin:0 0 .75rem;"></div>
         <button class="t-btn" onclick="sendSignupOtp()">Send Code</button>
         <button class="t-btn-ghost" onclick="goTStep(0)">← Back</button>
       </div>
@@ -770,7 +770,7 @@ function updateNavBtn(){
 // ── TASTER MODAL ──
 function openTasterModal(){document.getElementById('taster-modal').classList.add('open');goTStep(currentTaster?99:0);}
 function closeTasterModal(){document.getElementById('taster-modal').classList.remove('open');}
-function goTStep(n){document.querySelectorAll('.t-step').forEach(s=>s.classList.remove('active'));document.getElementById('t-step-'+n)?.classList.add('active');}
+function goTStep(n){document.querySelectorAll('.t-step').forEach(s=>s.classList.remove('active'));document.getElementById('t-step-'+n)?.classList.add('active');if(n===10)tsMount('signup','ts-signup');if(n===20)tsMount('reset','ts-reset');}
 
 // ── POPULATE YEAR DROPDOWN ──
 (function(){
@@ -831,11 +831,33 @@ async function doLogin(){
 }
 
 // ── TURNSTILE ──
-let signupTsToken=null, resetTsToken=null;
-function onSignupTs(t){signupTsToken=t;}
-function onSignupTsExpired(){signupTsToken=null;}
-function onResetTs(t){resetTsToken=t;}
-function onResetTsExpired(){resetTsToken=null;} 
+// The widgets live inside .t-step containers, which are display:none until
+// their step is active. Turnstile cannot run a challenge inside a hidden
+// element, so each widget is rendered explicitly the first time its step is
+// shown, and reset every time it is shown again — a token is single-use and
+// expires after about five minutes, so a second send always needs a fresh one.
+const TURNSTILE_SITEKEY='0x4AAAAAAE1NixquFc4Pc3RM';
+const tsWidgets={};
+const tsTokens={signup:null,reset:null};
+function tsMount(flow,containerId){
+  if(typeof turnstile==='undefined'||!turnstile.render){setTimeout(()=>tsMount(flow,containerId),200);return;}
+  if(tsWidgets[flow]!==undefined){tsRefresh(flow);return;}
+  tsTokens[flow]=null;
+  tsWidgets[flow]=turnstile.render('#'+containerId,{
+    sitekey:TURNSTILE_SITEKEY,
+    theme:'light',
+    callback:function(t){tsTokens[flow]=t;},
+    'expired-callback':function(){tsTokens[flow]=null;},
+    'error-callback':function(){tsTokens[flow]=null;}
+  });
+}
+// Called after every send attempt: the server consumes the token whether the
+// send succeeded or not, so the widget must hand out a new one.
+function tsRefresh(flow){
+  tsTokens[flow]=null;
+  if(tsWidgets[flow]!==undefined&&typeof turnstile!=='undefined'){turnstile.reset(tsWidgets[flow]);}
+}
+
 // ── FORGOT PIN ──
 let pendingResetTicket=null;
 async function sendResetOtp(){
@@ -843,14 +865,16 @@ async function sendResetOtp(){
   const err=document.getElementById('reset-phone-err');
   err.style.display='none';
   if(!phone){err.textContent='Please enter your phone number.';err.style.display='block';return;}
+  if(!tsTokens.reset){err.textContent='Please complete the verification check above.';err.style.display='block';return;}
   const btn=document.querySelector('#t-step-20 .t-btn');
   btn.disabled=true;btn.textContent='Sending…';
   try{
-    const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,purpose:'reset'})});
+    const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,purpose:'reset',turnstileToken:tsTokens.reset})});
     const d=await res.json();
     if(d.success){document.getElementById('reset-sent-to').textContent='We sent a 4-digit code to '+phone+'.';goTStep(21);}
     else{err.textContent=d.error||'Could not send code.';err.style.display='block';}
   }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  tsRefresh('reset');
   btn.disabled=false;btn.textContent='Send Code';
 }
 async function verifyResetOtp(){
@@ -898,10 +922,11 @@ async function sendSignupOtp(){
   const err=document.getElementById('signup-phone-err');
   err.style.display='none';
   if(!phone){err.textContent='Please enter a phone number.';err.style.display='block';return;}
+  if(!tsTokens.signup){err.textContent='Please complete the verification check above.';err.style.display='block';return;}
   const btn=document.querySelector('#t-step-10 .t-btn');
   btn.disabled=true;btn.textContent='Sending…';
   try{
-    const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
+    const res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,turnstileToken:tsTokens.signup})});
     const d=await res.json();
     if(d.success){document.getElementById('signup-sent-to').textContent='We sent a 4-digit code to '+phone+'.';goTStep(11);}
     else if(d.code==='ALREADY_REGISTERED'){
@@ -910,6 +935,7 @@ async function sendSignupOtp(){
     }
     else{err.textContent=d.error||'Could not send code. Check the number.';err.style.display='block';}
   }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
+  tsRefresh('signup');
   btn.disabled=false;btn.textContent='Send Code';
 }
 async function verifySignupOtp(){
