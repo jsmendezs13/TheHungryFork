@@ -399,6 +399,7 @@
   .tasting-thumb-emoji { display:flex; align-items:center; justify-content:center; font-size:1.1rem; background:var(--off-white); }
   .brand-red-text { background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:600; font-style:normal; }
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -489,6 +490,7 @@
         <div class="t-sub">Enter your phone number and we'll send you a verification code.</div>
         <input class="t-input" id="reset-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
         <div class="t-err" id="reset-phone-err"></div>
+               <div class="cf-turnstile" data-sitekey="0x4AAAAAAE1NixquFc4Pc3RM" data-callback="onResetTs" data-expired-callback="onResetTsExpired" data-theme="light"></div>
         <button class="t-btn" onclick="sendResetOtp()">Send Code</button>
         <button class="t-btn-ghost" onclick="goTStep(1)">← Back</button>
       </div>
@@ -519,6 +521,7 @@
         <div class="t-sub">We'll send a 4-digit code to confirm it's really you.</div>
         <input class="t-input" id="signup-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
         <div class="t-err" id="signup-phone-err">Please enter a valid phone number.</div>
+               <div class="cf-turnstile" data-sitekey="0x4AAAAAAE1NixquFc4Pc3RM" data-callback="onSignupTs" data-expired-callback="onSignupTsExpired" data-theme="light"></div>
         <button class="t-btn" onclick="sendSignupOtp()">Send Code</button>
         <button class="t-btn-ghost" onclick="goTStep(0)">← Back</button>
       </div>
@@ -827,6 +830,12 @@ async function doLogin(){
   btn.disabled=false;btn.textContent='Log In';
 }
 
+// ── TURNSTILE ──
+let signupTsToken=null, resetTsToken=null;
+function onSignupTs(t){signupTsToken=t;}
+function onSignupTsExpired(){signupTsToken=null;}
+function onResetTs(t){resetTsToken=t;}
+function onResetTsExpired(){resetTsToken=null;} 
 // ── FORGOT PIN ──
 let pendingResetTicket=null;
 async function sendResetOtp(){
