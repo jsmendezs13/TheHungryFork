@@ -6,16 +6,17 @@ import {
   keyFor,
   normalizeUsPhone,
   clientIp,
+  verifyTurnstile,
 } from './_lib/auth.js';
-
+ 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
-
+ 
 // Per number: a real person needs one code, maybe two if the first is slow.
 const phoneLimiter = makeLimiter({ requests: 3, window: '24 h', prefix: 'sendotp:phone' });
-
+ 
 // Per IP: stops a loop from a single source.
 const ipLimiter = makeLimiter({ requests: 5, window: '1 h', prefix: 'sendotp:ip' });
-
+ 
 // ---------------------------------------------------------------------------
 // Global circuit breakers — separate budgets for signup and reset
 // ---------------------------------------------------------------------------
@@ -29,21 +30,21 @@ const ipLimiter = makeLimiter({ requests: 5, window: '1 h', prefix: 'sendotp:ip'
 const globalSignupLimiter = makeLimiter({
   requests: 50, window: '1 h', prefix: 'sendotp:global:signup',
 });
-
+ 
 // Resets only affect people who already have an account, so the number should
 // always be small. If 15 people reset in one hour, something is wrong.
 const globalResetLimiter = makeLimiter({
   requests: 15, window: '1 h', prefix: 'sendotp:global:reset',
 });
-
+ 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { phone, purpose } = req.body || {};
+ 
+  const { phone, purpose, turnstileToken } = req.body || {};
   if (!phone) return res.status(400).json({ error: 'Phone number is required' });
-
+ 
   const isReset = purpose === 'reset';
-
+ 
   // ---- Gate 1: US only, free ---------------------------------------------
   //
   // The old code ended with:
@@ -58,20 +59,40 @@ export default async function handler(req, res) {
   if (!normalized) {
     return res.status(400).json({ error: 'Please enter a valid US phone number.' });
   }
-
-  // ---- Gate 2: rate limits, ~free ----------------------------------------
+ 
+  // ---- Gate 2: Turnstile, free -------------------------------------------
+  //
+  // Everything below this line costs something — Redis reads, a Supabase
+  // query, then Twilio. This gate is what stops a script that never opened
+  // the page, which is the only thing the rate limits could not do on their
+  // own: the August flood came from an attacker calling this endpoint
+  // directly, and a limit of 50/hour still means 50 messages sent.
+  const turnstile = await verifyTurnstile(turnstileToken, clientIp(req));
+  if (!turnstile.ok) {
+    if (turnstile.reason === 'unconfigured' || turnstile.reason === 'unavailable') {
+      // Our problem, not theirs — 503 so the browser offers a retry rather
+      // than telling the user to fix a check they already passed.
+      return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
+    }
+    return res.status(400).json({
+      error: 'Please complete the verification check and try again.',
+      code: 'TURNSTILE_FAILED',
+    });
+  }
+ 
+  // ---- Gate 3: rate limits, ~free ----------------------------------------
   //
   // failOpen: false everywhere. If Redis is unreachable we refuse to send. An
   // SMS endpoint running with no limits is worse than one that is briefly
   // unavailable — that is exactly how the August bill happened.
   const globalLimiter = isReset ? globalResetLimiter : globalSignupLimiter;
-
+ 
   const [globalOk, phoneOk, ipOk] = await Promise.all([
     allow(globalLimiter, 'all', { failOpen: false }),
     allow(phoneLimiter, keyFor(normalized), { failOpen: false }),
     allow(ipLimiter, keyFor(clientIp(req)), { failOpen: false }),
   ]);
-
+ 
   if (!globalOk) {
     // Worth alerting on: either real growth or an attack in progress.
     console.error('[send-otp] GLOBAL LIMIT TRIPPED', {
@@ -84,12 +105,12 @@ export default async function handler(req, res) {
         : 'Signup is temporarily unavailable. Please try again later.',
     });
   }
-
+ 
   if (!phoneOk || !ipOk) {
     return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
   }
-
-  // ---- Gate 3: account state ---------------------------------------------
+ 
+  // ---- Gate 4: account state ---------------------------------------------
   //
   // The old version wrapped this in a try/catch that fell through to Twilio if
   // the lookup failed, with a comment saying downstream steps would protect
@@ -106,16 +127,16 @@ export default async function handler(req, res) {
         },
       }
     );
-
+ 
     if (!lookupRes.ok) throw new Error(`lookup failed: ${lookupRes.status}`);
-
+ 
     const rows = await lookupRes.json();
     exists = Array.isArray(rows) && rows.length > 0;
   } catch (e) {
     console.error('[send-otp] account lookup failed', e?.message);
     return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
   }
-
+ 
   if (isReset) {
     if (!exists) {
       return res.status(404).json({ error: 'No account found with this phone number.', code: 'NOT_REGISTERED' });
@@ -123,8 +144,8 @@ export default async function handler(req, res) {
   } else if (exists) {
     return res.status(409).json({ error: 'This phone number already has an account.', code: 'ALREADY_REGISTERED' });
   }
-
-  // ---- Gate 4: send ------------------------------------------------------
+ 
+  // ---- Gate 5: send ------------------------------------------------------
   try {
     const response = await fetch(
       `https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`,
@@ -139,13 +160,13 @@ export default async function handler(req, res) {
         body: new URLSearchParams({ To: normalized, Channel: 'sms' }),
       }
     );
-
+ 
     const data = await response.json();
-
+ 
     if (data.status === 'pending') {
       return res.status(200).json({ success: true });
     }
-
+ 
     // Twilio's own message can reveal routing and account details, so it is
     // logged rather than returned to the browser.
     console.error('[send-otp] twilio rejected', data);
