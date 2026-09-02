@@ -1158,7 +1158,7 @@ async function verifyResetOtp(){
   const btn=document.querySelector('#t-step-21 .t-btn');
   btn.disabled=true;btn.textContent='Verifying…';
   try{
-    const res=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});
+    const res=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code,purpose:'reset'})});
     const d=await res.json();
     if(d.success){pendingResetTicket=d.verificationTicket;goTStep(22);}
     else{err.textContent=d.error||'Invalid code.';err.style.display='block';}
