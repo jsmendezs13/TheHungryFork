@@ -16,13 +16,25 @@ const phoneLimiter = makeLimiter({ requests: 3, window: '24 h', prefix: 'sendotp
 // Per IP: stops a loop from a single source.
 const ipLimiter = makeLimiter({ requests: 5, window: '1 h', prefix: 'sendotp:ip' });
 
-// Global circuit breaker. Per-IP limits are easy to evade with rotating
-// addresses; this caps total spend no matter where the traffic comes from.
-// The August incident sent 484 messages. With this, it would have stopped at
-// 50 and the rest would have cost nothing.
+// ---------------------------------------------------------------------------
+// Global circuit breakers — separate budgets for signup and reset
+// ---------------------------------------------------------------------------
 //
-// Raise this as real signups grow — 3 to 5 times your realistic peak hour.
-const globalLimiter = makeLimiter({ requests: 50, window: '1 h', prefix: 'sendotp:global' });
+// Signups and resets no longer share one counter, so a flood of fake signups
+// can't lock existing users out of resetting their PIN.
+//
+// 50 new signups per hour. Raise this before a launch or a promotion; a busy
+// day of ~300 signups averages 12-13 per hour, so 50 leaves room for bursts.
+// The August incident sent 484 messages — this would have stopped it at 50.
+const globalSignupLimiter = makeLimiter({
+  requests: 50, window: '1 h', prefix: 'sendotp:global:signup',
+});
+
+// Resets only affect people who already have an account, so the number should
+// always be small. If 15 people reset in one hour, something is wrong.
+const globalResetLimiter = makeLimiter({
+  requests: 15, window: '1 h', prefix: 'sendotp:global:reset',
+});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -30,14 +42,16 @@ export default async function handler(req, res) {
   const { phone, purpose } = req.body || {};
   if (!phone) return res.status(400).json({ error: 'Phone number is required' });
 
+  const isReset = purpose === 'reset';
+
   // ---- Gate 1: US only, free ---------------------------------------------
   //
-  // This is the fix for the actual attack. The old code ended with:
+  // The old code ended with:
   //
   //   else if (!phone.startsWith('+')) phone = '+' + phone;
   //
-  // Non-digits had already been stripped, so that branch always ran and
-  // happily built +223... numbers for Mali. There was no country check at all.
+  // Non-digits had already been stripped, so that branch always ran and built
+  // +223... numbers for Mali. There was no country check at all.
   //
   // A foreign number now dies here, before Twilio is contacted, at zero cost.
   const normalized = normalizeUsPhone(phone);
@@ -47,9 +61,11 @@ export default async function handler(req, res) {
 
   // ---- Gate 2: rate limits, ~free ----------------------------------------
   //
-  // failOpen: false everywhere here. If Redis is unreachable we refuse to
-  // send. An SMS endpoint running with no limits is worse than one that is
-  // briefly unavailable — that is exactly how the August bill happened.
+  // failOpen: false everywhere. If Redis is unreachable we refuse to send. An
+  // SMS endpoint running with no limits is worse than one that is briefly
+  // unavailable — that is exactly how the August bill happened.
+  const globalLimiter = isReset ? globalResetLimiter : globalSignupLimiter;
+
   const [globalOk, phoneOk, ipOk] = await Promise.all([
     allow(globalLimiter, 'all', { failOpen: false }),
     allow(phoneLimiter, keyFor(normalized), { failOpen: false }),
@@ -58,8 +74,15 @@ export default async function handler(req, res) {
 
   if (!globalOk) {
     // Worth alerting on: either real growth or an attack in progress.
-    console.error('[send-otp] GLOBAL LIMIT TRIPPED', { ip: clientIp(req) });
-    return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
+    console.error('[send-otp] GLOBAL LIMIT TRIPPED', {
+      flow: isReset ? 'reset' : 'signup',
+      ip: clientIp(req),
+    });
+    return res.status(503).json({
+      error: isReset
+        ? 'PIN reset is temporarily unavailable. Please try again later.'
+        : 'Signup is temporarily unavailable. Please try again later.',
+    });
   }
 
   if (!phoneOk || !ipOk) {
@@ -67,9 +90,6 @@ export default async function handler(req, res) {
   }
 
   // ---- Gate 3: account state ---------------------------------------------
-  //
-  // Signup: the number must not already have an account.
-  // Reset:  the number must have one.
   //
   // The old version wrapped this in a try/catch that fell through to Twilio if
   // the lookup failed, with a comment saying downstream steps would protect
@@ -96,7 +116,7 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
   }
 
-  if (purpose === 'reset') {
+  if (isReset) {
     if (!exists) {
       return res.status(404).json({ error: 'No account found with this phone number.', code: 'NOT_REGISTERED' });
     }
