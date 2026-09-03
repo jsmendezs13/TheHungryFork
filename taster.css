@@ -1,0 +1,49 @@
+/* taster.css — shared by index.html and menu.html.
+   Both pages used to carry byte-identical copies of these rules. The Turnstile
+   widget was once added to one page and not the other; keeping one copy is how
+   that stops happening. Edit here, never in the pages. */
+
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--ink); color: var(--white); padding: .8rem 1.6rem; border-radius: 999px; font-size: .85rem; font-weight: 500; z-index: 9999; transition: transform .3s; pointer-events: none; font-family: var(--sans); box-shadow: var(--shadow-md); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── TASTER MODAL ── */
+  .t-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.6); z-index:800; align-items:center; justify-content:center; padding:1rem; }
+  .t-overlay.open { display:flex; }
+  .t-box { background:var(--white); border-radius:16px; width:100%; max-width:420px; overflow:hidden; animation:slideUp .22s ease; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); }
+  .t-header { background:var(--off-white); padding:1.3rem 1.5rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+  .t-header h3 { color:var(--text); font-family:var(--serif); font-size:1.25rem; font-weight:600; }
+  .t-close { background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; line-height:1; }
+  .t-close:hover { color:var(--text); }
+  .t-body { padding:1.6rem 1.5rem; }
+  .t-step { display:none; }
+  .t-step.active { display:block; }
+  .t-label { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.45rem; font-family:var(--sans); }
+  .t-sub { font-size:.85rem; font-weight:300; color:var(--muted); font-family:var(--sans); margin-bottom:1.1rem; line-height:1.6; }
+  .t-input { width:100%; border:1px solid var(--border); background:#fff; border-radius:10px; padding:.75rem 1rem; font-size:.9rem; font-family:var(--sans); color:var(--text); outline:none; transition:border-color .2s, box-shadow .2s; margin-bottom:.85rem; }
+  .t-input:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(154,51,36,.1); }
+  .t-input-code { text-align:center; font-size:1.9rem; letter-spacing:.5em; font-weight:600; }
+  .t-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.9rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s, transform .15s; }
+  .t-btn:hover { background:#463629; transform:translateY(-1px); }
+  .t-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; transform:none; }
+  .t-btn-ghost { width:100%; background:transparent; color:var(--text); border:1px solid var(--text); border-radius:999px; padding:.85rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:all .2s; margin-top:.6rem; }
+  .t-btn-ghost:hover { background:var(--off-white); }
+  .t-err { color:var(--red); font-size:.82rem; font-family:var(--sans); margin-bottom:.75rem; display:none; }
+  .t-resend { text-align:center; margin-top:.75rem; font-size:.82rem; color:var(--muted); font-family:var(--sans); }
+  .t-resend a { color:var(--red); cursor:pointer; text-decoration:underline; }
+  .t-divider { border:none; border-top:1px solid var(--border); margin:1rem 0; }
+  .t-choice { display:flex; flex-direction:column; gap:.75rem; }
+  .t-choice-header { text-align:center; margin-bottom:.5rem; }
+  .t-choice-icon { font-size:2.3rem; display:block; margin-bottom:.5rem; }
+  .t-choice-title { font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); margin-bottom:.3rem; }
+  .t-choice-sub { font-size:.84rem; font-weight:300; color:var(--muted); font-family:var(--sans); line-height:1.6; }
+  .t-select { width:100%; border:1px solid var(--border); border-radius:10px; padding:.75rem 1rem; font-size:.9rem; font-family:var(--sans); color:var(--text); outline:none; background:#fff; margin-bottom:.85rem; }
+  .t-select:focus { border-color:var(--red); }
+  .t-checkbox-row { display:flex; align-items:flex-start; gap:.6rem; margin-bottom:.85rem; font-family:var(--sans); font-size:.8rem; font-weight:300; color:var(--muted); }
+  .t-checkbox-row input { margin-top:3px; accent-color:var(--red); }
+
+
+  /* ── Shared additions (merge of index/menu) ── */
+  .t-hint { font-family: var(--sans); font-size: .78rem; color: var(--muted); margin: -.35rem 0 .75rem; }
+  .t-confirm { border: 1px solid var(--border); border-radius: 12px; padding: .9rem; margin: .25rem 0 .75rem; background: var(--off-white); }
+  .t-confirm-q { font-family: var(--sans); font-size: .88rem; color: var(--text); margin-bottom: .75rem; line-height: 1.5; }
+  .t-confirm-num { font-weight: 600; white-space: nowrap; }
