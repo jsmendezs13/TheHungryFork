@@ -144,6 +144,7 @@
   .r-body { padding:1.4rem 1.5rem; }
   .r-dish-name { font-family:var(--serif); font-size:1.55rem; font-weight:600; color:var(--text); margin-bottom:2px; }
   .r-dish-desc { font-size:.82rem; font-weight:300; color:var(--muted); font-family:var(--sans); margin-bottom:1.3rem; }
+  .r-textarea + .r-section { margin-top:1.15rem; }
   .r-section { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.75rem; font-family:var(--sans); }
   .r-slider-row { margin-bottom:1rem; }
   .r-slider-label { display:flex; justify-content:space-between; font-size:.83rem; font-family:var(--sans); color:var(--text); margin-bottom:.3rem; }
@@ -674,6 +675,7 @@
         <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
         <input type="hidden" id="sl-sig" value="3"><div class="r-stars-input" data-target="sl-sig" data-label="lbl-sig"></div>
       </div>
+      <textarea class="r-textarea" id="r-dish-comment" aria-label="Comment about this dish"></textarea>
 
       <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
       <div class="r-slider-row">
@@ -684,11 +686,7 @@
         <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
         <input type="hidden" id="sl-atm" value="3"><div class="r-stars-input" data-target="sl-atm" data-label="lbl-atm"></div>
       </div>
-
-      <div class="r-section" style="margin-top:1rem;">💬 Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <textarea class="r-textarea" id="r-dish-comment" placeholder="What did you think of this dish?"></textarea>
-      <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
-
+      <textarea class="r-textarea" id="r-rest-comment" aria-label="Comment about the restaurant"></textarea>
 
       <div class="t-err" id="r-err" style="display:none;"></div>
       <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review</button>
