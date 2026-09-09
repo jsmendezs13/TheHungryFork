@@ -492,6 +492,7 @@
   };
 </script>
 <script src="/taster.js"></script>
+<script src="/dishes.js"></script>
 
 <script>
 // ── SUPABASE CLIENT ──
@@ -508,30 +509,7 @@ async function sbFetch(path, method='GET', body=null){
   return{ok:res.ok,data,status:res.status};
 }
 
-// ── DISHES (local for now — will come from Supabase later) ──
-const DISHES=[
-  {id:'tbone-fork-steak',name:'T-Bone Fork Steak',desc:'Grilled to perfection. BBQ sauce, coleslaw, fries & roasted vegetables',price:38,emoji:'🥩',category:'chefs-pick',
-   img:'1_T_Bone_Fork_Steak_I.png',imgOpen:'1_T_Bone_Fork_Steak_II.png',
-   about:'Our signature T-Bone, hand-selected and grilled over open flame. Served with house-made BBQ sauce, creamy coleslaw, crispy fries, and seasonal roasted vegetables.',
-   allergens:'Gluten, Dairy, Eggs',mods:'Can remove fries · Sauce on the side · Cannot be made vegan'},
-  {id:'korean-bbq-wing',name:'Korean BBQ Wing',desc:'Mango Habanero Sauce',price:16,emoji:'🍗',category:'starters',
-   img:'korean-bbq-wing-plate.jpg',imgOpen:'korean-bbq-wing-open.jpg'},
-  {id:'steak-frites',name:'Steak Frites',desc:'Grilled Hanger Steak, French Fries, House Salad, Steak Sauce',price:26,emoji:'🥩',category:'entree',
-   img:'steak-frites-plate.jpg',imgOpen:'steak-frites-open.jpg',
-   about:'The strip steak is also known as a Sirloin steak, ours is served with the bone, a great steak! Roquefort butter is served on the side. Choice of mashed potato or french fries.',
-   allergens:'Dairy, Allium, Citrus, Alcohol',mods:'No Butter',
-   choices:["Maitre' d butter: herbs, shallot, lemon, reduced wine","Roquefort butter: bleu cheese, shallot, heavy cream"]},
-  {id:'lobster-ravioli',name:'Lobster Ravioli',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🦞',category:'entree',
-   img:'lobster-ravioli-plate.jpg',imgOpen:'lobster-ravioli-open.jpg'},
-  {id:'atlantic-salmon',name:'Pan Seared Atlantic Salmon',desc:'Shaved Fennel, Cherry Tomato, Pink Sauce',price:25,emoji:'🐟',category:'entree',
-   img:'atlantic-salmon-plate.jpg',imgOpen:'atlantic-salmon-open.jpg'},
-  {id:'burrata-salad',name:'Burrata Mozzarella Salad',desc:'Heirloom Tomato, Fresh Basil, Cherry Demi Glaze',price:20,emoji:'🥗',category:'salads',
-   img:'burrata-salad-plate.jpg',imgOpen:'burrata-salad-open.jpg'},
-  {id:'french-fries',name:'French Fries',desc:'Classic golden fries, crispy outside, fluffy inside',price:8,emoji:'🍟',category:'sides',
-   img:'french-fries-plate.jpg',imgOpen:'french-fries-open.jpg'},
-  {id:'sweet-potato-fries',name:'Sweet Potato Fries',desc:'Lightly seasoned, naturally sweet',price:8,emoji:'🍠',category:'sides',
-   img:'sweet-potato-fries-plate.jpg',imgOpen:'sweet-potato-fries-open.jpg'},
-];
+// ── DISHES (loaded from Supabase by dishes.js) ──
 const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
 const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks','top-rated'];
 const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},'top-rated':{label:'Top Rated',emoji:'\u2B50'}};
@@ -539,7 +517,7 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 // ── STATE ──
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
 let currentDishId=null, activeFilter='chefs-pick', selectedPhoto=null;
-const RESTAURANT_ID=1, DISH_ID_MAP={'korean-bbq-wing':1,'steak-frites':2,'lobster-ravioli':3,'atlantic-salmon':4,'burrata-salad':5,'french-fries':6,'sweet-potato-fries':7,'tbone-fork-steak':2};
+const RESTAURANT_ID=1;
 
 
 // ── MENU ──
@@ -1040,8 +1018,14 @@ railInit();
 
 // ── INIT ──
 loadSession();
-loadOverallRating();
 warpInit();
+
+// The menu lives in Supabase now, so anything reading DISHES or DISH_ID_MAP
+// has to wait for it. Only the rating needs dish data on this page; the rest
+// of the homepage renders immediately, as before.
+loadDishes()
+  .then(loadOverallRating)
+  .catch(e => console.error('[index] could not load dishes', e));
 (function(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('dish'))window.location.replace('menu.html'+window.location.search);
