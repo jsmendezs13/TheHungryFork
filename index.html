@@ -383,9 +383,7 @@
       <h1 class="video-hero-title">The Hungry Fork</h1>
       <p class="video-hero-tagline">Delicious Cousin</p>
       <div class="vh-rating-live" onclick="openForkInfo()" title="What is Fork's Rating?">
-        <img src="laurel-left.png" class="vh-laurel" alt="" onerror="this.style.display='none'">
         <div class="vh-stars"><svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E150D"/><stop offset="1" stop-color="#3E0B06"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A31108"/><stop offset="1" stop-color="#5E0A04"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C41508"/><stop offset="1" stop-color="#750A04"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E02414"/><stop offset="1" stop-color="#8E0B05"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg><div id="vh-stars-fill" style="display:none;"></div></div>
-        <img src="laurel-left.png" class="vh-laurel vh-laurel-r" alt="" onerror="this.style.display='none'">
       </div>
       <div class="vh-rating-caption" onclick="openForkInfo()" style="cursor:pointer;">Fork's Rating<span id="vh-rating-num"></span></div>
     </div>
@@ -400,7 +398,6 @@
     </div>
   </div>
 </div>
-
 
 
 <!-- FOOTER -->
@@ -475,7 +472,6 @@
 <!-- FORK'S RATING INFO -->
 <div class="cs-overlay" id="fork-info" onclick="if(event.target===this)closeForkInfo()">
   <div class="cs-box">
-    <img src="laurel-left.png" style="height:46px;margin-bottom:.6rem;" alt="" onerror="this.style.display='none'">
     <div class="cs-title" style="font-size:1.55rem;">What is Fork's Rating?</div>
     <p class="cs-sub" style="text-align:center;">Fork's Rating is our independent taste score for restaurants and dishes across the city &mdash; powered entirely by real reviews from verified tasters. No critics, no ads. Just honest forks.<br><br>Log in, rate the dishes you try, and every review brings you closer to <strong>Fork's Lucky Bite</strong> &mdash; a free dish for one lucky taster.</p>
     <button class="cs-close" onclick="closeForkInfo();openTasterModal();">Log In &amp; Start Rating</button>
@@ -593,7 +589,6 @@ function warpTo(i){
   };
   warpRAF=requestAnimationFrame(step);
 }
-function warpGo(dir){warpTo(warpIdx+dir);}
 function updateWarpCatName(){
   const el=document.getElementById('warp-cat-name');
   if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
@@ -686,10 +681,7 @@ function updateCaveDots(){document.querySelectorAll('.cave-vdot').forEach((v,i)=
 function playCardAnim(card,cls){if(!cls)return;card.classList.remove('anim-l','anim-r','anim-u','anim-d');void card.offsetWidth;card.classList.add(cls);}
 function caveDish(dir){if(!caveDishes.length)return;const n=caveDishIdx+dir;if(n<0||n>=caveDishes.length)return;caveDishIdx=n;caveViewIdx=0;renderCave(dir>0?'anim-l':'anim-r');}
 function caveView(dir){if(!caveDishes.length)return;const n=caveViewIdx+dir;if(n<0||n>2)return;caveViewIdx=n;renderCave(dir>0?'anim-u':'anim-d');}
-function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir);}
 function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;caveViewIdx=0;renderCave(dir);}
-function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
-function caveShare(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;shareDish();}
 function caveInitTouch(){
   const zone=document.getElementById('cave-card-zone');
   if(!zone)return;
@@ -726,10 +718,6 @@ function caveGesture(dx,dy){
   }
   caveView(dy>0?1:-1);
 }
-function scrollToMenu(){
-  const room=document.getElementById('warp-room');
-  if(room)room.scrollIntoView({behavior:'smooth',block:'start'});
-}
 function warpInit(){
   warpBuild();
   updateWarpCatName();
@@ -762,26 +750,6 @@ function warpInit(){
 }
 
 // ── DISH MODAL ──
-function renderDishModal(id){
-  const d=DISHES.find(x=>x.id===id);
-  if(!d)return;
-  currentDishId=id;
-  document.getElementById('modal-dish-emoji').textContent=d.emoji;
-  document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
-  loadReviews(id,RESTAURANT_ID);
-  document.getElementById('modal').classList.add('open');
-}
-function showDishModal(id){
-  renderDishModal(id);
-  const url=new URL(window.location);
-  url.searchParams.set('dish',id);
-  history.pushState({dish:id},'',url);
-}
-function openModal(id,e){
-  e.stopPropagation();
-  showDishModal(id);
-}
 function closeModalUI(){document.getElementById('modal').classList.remove('open');}
 function closeModal(){
   closeModalUI();
@@ -791,33 +759,6 @@ function closeModal(){
     history.pushState({},'',url);
   }
 }
-function closeModalOnOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
-async function shareDish(){
-  if(!currentDishId)return;
-  const d=DISHES.find(x=>x.id===currentDishId);
-  if(!d)return;
-  const url=new URL(window.location);
-  url.searchParams.set('dish',currentDishId);
-  const shareUrl=url.toString();
-  if(navigator.share){
-    try{await navigator.share({title:d.name+' — The Hungry Fork',text:'Check out '+d.name+' at The Hungry Fork!',url:shareUrl});}catch(e){}
-  }else{
-    try{await navigator.clipboard.writeText(shareUrl);showToast('Link copied!');}
-    catch(e){showToast('Could not copy link.');}
-  }
-}
-window.addEventListener('popstate',()=>{
-  const params=new URLSearchParams(window.location.search);
-  const dishId=params.get('dish');
-  if(dishId&&DISHES.find(d=>d.id===dishId))renderDishModal(dishId);
-  else closeModalUI();
-});
-function startRating(){
-  closeModal();
-  if(!currentTaster){openTasterModal();return;}
-  openRatingModal();
-}
-
 // ── RATING MODAL ──
 function openRatingModal(){
   if(!currentDishId)return;
@@ -836,60 +777,6 @@ function openRatingModal(){
   document.getElementById('rating-modal').classList.add('open');
 }
 function closeRatingModal(){document.getElementById('rating-modal').classList.remove('open');}
-function handlePhotoSelect(input){
-  if(input.files&&input.files[0]){
-    selectedPhoto=input.files[0];
-    const el=document.getElementById('r-photo-name');
-    el.textContent='📷 '+selectedPhoto.name;el.style.display='block';
-  }
-}
-
-// ── SUBMIT RATING ──
-async function submitRating(){
-  if(!currentTaster||!currentDishId)return;
-  const btn=document.getElementById('r-submit-btn');
-  const err=document.getElementById('r-err');
-  err.style.display='none';
-  btn.disabled=true;btn.textContent='Posting…';
-  const payload={
-    taster_id:currentTaster.id,
-    restaurant_id:RESTAURANT_ID,
-    dish_id:DISH_ID_MAP[currentDishId]||1,
-    flavor:parseInt(document.getElementById('sl-flavor').value),
-    worth_every_bite:parseInt(document.getElementById('sl-worth').value),
-    signature_style:parseInt(document.getElementById('sl-sig').value),
-    hospitality:parseInt(document.getElementById('sl-hosp').value),
-    atmosphere_vibe:parseInt(document.getElementById('sl-atm').value),
-    dish_comment:document.getElementById('r-dish-comment').value.trim()||null,
-    restaurant_comment:document.getElementById('r-rest-comment').value.trim()||null,
-    photo_url:null,
-  };
-  try{
-    const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
-    const globalNum=(Array.isArray(countData)?countData.length:0)+1;
-    payload.global_rating_number=globalNum;
-    const{ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload);
-    if(ok){
-      closeRatingModal();
-      showToast('Review posted! Thank you');
-      loadOverallRating();
-      caveRatings={};
-      if(document.getElementById('cave').classList.contains('open'))renderCave();
-      if(globalNum%1000===0)showLuckyBite(globalNum);
-    }else{
-      const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
-      err.textContent='Error ('+status+'): '+msg;
-      err.style.display='block';
-      console.error('Review submit error:',data);
-    }
-  }catch(e){
-    err.textContent='Network error: '+e.message;
-    err.style.display='block';
-    console.error('Review submit exception:',e);
-  }
-  btn.disabled=false;btn.textContent='Post Review';
-}
-
 // ── LOAD REVIEWS ──
 async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-list',labelId='reviews-label'){
   const dbDishId=DISH_ID_MAP[dishId]||1;
@@ -1004,15 +891,6 @@ function viewTastingDish(dishId){
 }
 
 // ── LUCKY BITE ──
-function showLuckyBite(num){
-  document.getElementById('lucky-number').textContent='#'+num;
-  document.getElementById('lucky-overlay').classList.add('open');
-}
-async function claimLuckyBite(){
-  document.getElementById('lucky-overlay').classList.remove('open');
-  showToast('🎉 Lucky Bite claimed! Enjoy your free meal!');
-}
-
 // ── MAPS ──
 function showMapsChooser(e){e.preventDefault();document.getElementById('maps-modal').classList.add('open');}
 function closeMapsChooser(){document.getElementById('maps-modal').classList.remove('open');}
@@ -1020,15 +898,6 @@ function closeMapsChooser(){document.getElementById('maps-modal').classList.remo
 // ── TOAST ──
 
 // ── OVERALL RATING (Seb's Rate) ──
-function renderStars(val){
-  const full=Math.floor(val);
-  const half=(val-full)>=0.5;
-  let s='★'.repeat(full);
-  if(half)s+='½';
-  const rest=5-full-(half?1:0);
-  s+='☆'.repeat(Math.max(rest,0));
-  return s;
-}
 async function loadOverallRating(){
   const fill=document.getElementById('vh-stars-fill');
   const num=document.getElementById('vh-rating-num');
