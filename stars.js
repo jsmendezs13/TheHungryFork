@@ -44,6 +44,11 @@ function setForkStars(fillId, avg) {
       fill.innerHTML = source.outerHTML;
     }
     if (wrap) wrap.classList.add('stars-scored');
+    // The fill divs in the markup carry an id but no class, so styling them by
+    // class silently missed and the cloned stars stacked underneath instead of
+    // overlapping. Tag the element here and the CSS cannot miss it.
+    fill.classList.add('fork-stars-fill');
+    if (!fill.querySelector('svg')) fill.classList.add('fork-stars-text');
     fill.dataset.starsReady = '1';
   }
 
