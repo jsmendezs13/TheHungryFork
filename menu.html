@@ -151,9 +151,6 @@
   .r-slider { width:100%; accent-color:var(--red); }
   .r-textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:.75rem 1rem; font-size:.88rem; font-family:var(--sans); resize:vertical; min-height:75px; outline:none; margin-bottom:.85rem; background:#fff; }
   .r-textarea:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(154,51,36,.1); }
-  .r-file-label { display:block; border:1px dashed var(--border); border-radius:10px; padding:.8rem; text-align:center; font-size:.82rem; color:var(--muted); font-family:var(--sans); cursor:pointer; margin-bottom:.85rem; transition:border-color .2s; background:var(--off-white); }
-  .r-file-label:hover { border-color:var(--red); color:var(--red); }
-  .r-file-input { display:none; }
   .r-submit { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.95rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s; margin-top:.5rem; }
   .r-submit:hover { background:#463629; }
   .r-submit:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
@@ -255,7 +252,6 @@
   .vh-laurel-r { transform:scaleX(-1); }
   .vh-stars { position:relative; font-size:2.4rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
   .vh-stars-base { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(70,12,9,.3); filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
-  .vh-stars-fill { display:none; }
   #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
   @media (max-width:600px){ .vh-stars{font-size:2rem;} .vh-laurel{height:60px;} }
 
@@ -304,7 +300,13 @@
   .cave-stars-wrap { text-align:center; margin-top:.75rem; }
   .cave-stars { position:relative; display:inline-block; font-size:1.7rem; letter-spacing:.1em; line-height:1; }
   .cave-stars-base { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(70,12,9,.3); filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
-  .cave-stars-fill { display:none; }
+  /* Fork's Rating: a dimmed set of stars underneath, and the coloured set
+     clipped to the score on top. Before this, the fill layer was display:none
+     and every rating drew five solid red stars. See stars.js. */
+  .stars-scored > .fork-stars,
+  .stars-scored > .cave-stars-base { filter:grayscale(.9) brightness(1.8) opacity(.3); }
+  .vh-stars-fill, .cave-stars-fill { display:block; position:absolute; top:0; left:0; height:100%; width:0; overflow:hidden; pointer-events:none; white-space:nowrap; transition:width .45s ease; }
+  .cave-stars-fill { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .cave-stars-caption { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-top:.35rem; }
   .cave-dish-name { font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); text-align:center; margin-top:.5rem; line-height:1.15; }
   .cave-dish-price { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--red); margin-top:.15rem; }
@@ -687,9 +689,6 @@
       <textarea class="r-textarea" id="r-rest-comment" placeholder="How was the restaurant experience?"></textarea>
 
       <div class="r-section">📷 Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.78rem;">(optional)</span></div>
-      <label class="r-file-label" for="r-photo-input">📷 Tap to take a photo of your dish</label>
-      <input type="file" class="r-file-input" id="r-photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
-      <div id="r-photo-name" style="font-size:0.78rem;color:var(--green);font-family:'Inter',sans-serif;margin-bottom:0.5rem;display:none;"></div>
 
       <div class="t-err" id="r-err" style="display:none;"></div>
       <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review</button>
@@ -793,6 +792,7 @@
 </script>
 <script src="/taster.js"></script>
 <script src="/dishes.js"></script>
+<script src="/stars.js"></script>
 
 <script>
 // ── SUPABASE CLIENT ──
@@ -816,7 +816,7 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 
 // ── STATE ──
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
-let currentDishId=null, activeFilter='chefs-pick', selectedPhoto=null;
+let currentDishId=null, activeFilter='chefs-pick';
 const RESTAURANT_ID=1;
 
 
@@ -981,7 +981,7 @@ function renderCave(animClass,mediaOnly){
     </section>
     <div class="cave-scroll">
     <section class="cave-sec cave-sec-info">
-      <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill" style="display:none;"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       <div class="cave-dish-name">${d.name}</div>
       <div class="cave-dish-price">$${d.price}</div>
       <button class="cave-share-btn" onclick="caveShare()">Share</button>
@@ -1001,6 +1001,7 @@ function renderCave(animClass,mediaOnly){
 function loadZoneStars(d){
   const dbId=DISH_ID_MAP[d.id]||1;
   caveDishRating(dbId).then(r=>{
+    setForkStars('cave-stars-fill', r.avg);
     const cap=document.getElementById('cave-stars-caption');
     if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:"Fork's Rating · No ratings yet";
   });
@@ -1193,20 +1194,11 @@ function openRatingModal(){
   document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
   document.getElementById('r-dish-comment').value='';
   document.getElementById('r-rest-comment').value='';
-  document.getElementById('r-photo-name').style.display='none';
   document.getElementById('r-err').style.display='none';
-  selectedPhoto=null;
   loadReviews(currentDishId,RESTAURANT_ID,'r-reviews-list','r-reviews-label');
   document.getElementById('rating-modal').classList.add('open');
 }
 function closeRatingModal(){document.getElementById('rating-modal').classList.remove('open');}
-function handlePhotoSelect(input){
-  if(input.files&&input.files[0]){
-    selectedPhoto=input.files[0];
-    const el=document.getElementById('r-photo-name');
-    el.textContent='📷 '+selectedPhoto.name;el.style.display='block';
-  }
-}
 
 // ── STAR INPUTS ──
 function paintStarRow(row){
@@ -1268,7 +1260,6 @@ async function submitRating(){
     reviewer_name:currentTaster.first_name||null,
     dish_comment:document.getElementById('r-dish-comment').value.trim()||null,
     restaurant_comment:document.getElementById('r-rest-comment').value.trim()||null,
-    photo_url:null,
   };
   try{
     let ok,data,status;
@@ -1522,12 +1513,12 @@ async function loadOverallRating(){
   try{
     const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe`);
     if(!ok||!data.length){
-      fill.style.width='0%';
+      setForkStars('vh-stars-fill', 0);
       if(num)num.textContent='';
       return;
     }
     const avg=data.reduce((sum,r)=>sum+((r.hospitality+r.atmosphere_vibe)/2),0)/data.length;
-    fill.style.width=(avg/5*100)+'%';
+    setForkStars('vh-stars-fill', avg);
     if(num)num.textContent=' · '+avg.toFixed(1)+' ('+data.length+(data.length===1?' rating)':' ratings)');
   }catch(e){}
 }
