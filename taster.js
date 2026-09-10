@@ -308,20 +308,107 @@ function loadSession(){
   }catch(e){}
 }
 function logout(){localStorage.removeItem('hf_taster');currentTaster=null;currentSession=null;updateNavBtn();showToast('Logged out. See you next time!');}
-function updateNavBtn(){
-  const btn=document.getElementById('nav-taster-btn');
-  const tastingsBtn=document.getElementById('nav-tastings-btn');
-  if(!btn)return;
-  if(currentTaster){
-    btn.textContent=currentTaster.first_name;
-    btn.onclick=()=>{if(confirm('Log out?'))logout();};
-    if(tastingsBtn)tastingsBtn.style.display='inline-block';
-  }else{
-    btn.textContent='Log In';
-    btn.onclick=openTasterModal;
-    if(tastingsBtn)tastingsBtn.style.display='none';
-  }
+
+// ── CORNER ACCOUNT MENU ──
+//
+// The account links used to be two buttons in each page footer, plus a third
+// copy rebuilt by hand inside menu.html's cave view. Three copies of the same
+// three links, and the cave one had to be re-rendered on every login state
+// change or it went stale. One fixed control in the top-right corner replaces
+// all of them: it is injected here, it re-renders itself from currentTaster,
+// and it is the only place that decides what a signed-in taster may see.
+var HF_CORNER_HTML =
+  '<div class="hf-corner" id="hf-corner">'
++   '<button class="hf-corner-toggle" id="hf-corner-toggle" type="button" aria-label="Account menu" aria-expanded="false" aria-controls="hf-corner-items">'
++     '<span></span><span></span><span></span><i class="hf-corner-dot"></i>'
++   '</button>'
++   '<div class="hf-corner-items" id="hf-corner-items"></div>'
++ '</div>';
+
+// first_name is whatever the taster typed at signup, so it never goes into
+// innerHTML raw.
+function hfEsc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+function openCornerMenu(){
+  const root=document.getElementById('hf-corner');
+  if(!root)return;
+  root.classList.add('open');
+  const t=document.getElementById('hf-corner-toggle');
+  if(t)t.setAttribute('aria-expanded','true');
+}
+function closeCornerMenu(){
+  const root=document.getElementById('hf-corner');
+  if(!root)return;
+  root.classList.remove('open');
+  const t=document.getElementById('hf-corner-toggle');
+  if(t)t.setAttribute('aria-expanded','false');
+}
+function toggleCornerMenu(){
+  const root=document.getElementById('hf-corner');
+  if(!root)return;
+  if(root.classList.contains('open'))closeCornerMenu();else openCornerMenu();
+}
+
+// Kept under its old name because saveSession, loadSession and logout all call
+// it, on both pages.
+function updateNavBtn(){
+  const root=document.getElementById('hf-corner');
+  const list=document.getElementById('hf-corner-items');
+  if(!list)return;
+
+  const items=[];
+  if(currentTaster){
+    items.push({label:'Hi, '+(currentTaster.first_name||'there'), kind:'label', cls:'hf-corner-name'});
+    items.push({label:'My Tastings', act:'tastings'});
+    // Only a restaurant admin is offered the manager page, and the page itself
+    // checks again on the server. This is a menu, not a lock.
+    if(currentTaster.is_restaurant_admin)items.push({label:'Manager', href:'/manager.html', cls:'hf-corner-manager'});
+    items.push({label:'Log Out', act:'logout'});
+  }else{
+    items.push({label:'Log In', act:'login'});
+  }
+
+  list.innerHTML=items.map(function(it,i){
+    const style=' style="--d:'+(i*45)+'ms"';
+    const cls='hf-corner-item'+(it.cls?' '+it.cls:'');
+    const text=hfEsc(it.label);
+    if(it.kind==='label')return '<div class="'+cls+'"'+style+'>'+text+'</div>';
+    if(it.href)return '<a class="'+cls+'" href="'+it.href+'"'+style+'>'+text+'</a>';
+    return '<button type="button" class="'+cls+'" data-act="'+it.act+'"'+style+'>'+text+'</button>';
+  }).join('');
+
+  if(root)root.classList.toggle('signed-in',!!currentTaster);
+}
+
+// One delegated listener rather than inline onclick, because the pills are
+// rebuilt from scratch on every login state change.
+document.addEventListener('click',function(e){
+  const t=e.target;
+  if(!t||!t.closest)return;
+  const item=t.closest('.hf-corner-item[data-act]');
+  if(item){
+    closeCornerMenu();
+    const act=item.getAttribute('data-act');
+    if(act==='login')openTasterModal();
+    else if(act==='tastings'){if(typeof openMyTastings==='function')openMyTastings();}
+    else if(act==='logout'){if(confirm('Log out?'))logout();}
+    return;
+  }
+  if(t.closest('#hf-corner-toggle')){toggleCornerMenu();return;}
+  if(!t.closest('#hf-corner'))closeCornerMenu();
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCornerMenu();});
+
+(function(){
+  const host=document.createElement('div');
+  host.innerHTML=HF_CORNER_HTML;
+  while(host.firstChild)document.body.appendChild(host.firstChild);
+  updateNavBtn(); // draws the logged-out state; loadSession() redraws if there is a session
+})();
 
 // ── TASTER MODAL ──
 function openTasterModal(){document.getElementById('taster-modal').classList.add('open');goTStep(currentTaster?99:0);}
