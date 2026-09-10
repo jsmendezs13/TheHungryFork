@@ -47,3 +47,46 @@
   .t-confirm { border: 1px solid var(--border); border-radius: 12px; padding: .9rem; margin: .25rem 0 .75rem; background: var(--off-white); }
   .t-confirm-q { font-family: var(--sans); font-size: .88rem; color: var(--text); margin-bottom: .75rem; line-height: 1.5; }
   .t-confirm-num { font-weight: 600; white-space: nowrap; }
+
+
+  /* ── CORNER ACCOUNT MENU ──
+     The account links used to sit in the page footers, at the bottom of a long
+     scroll, and in the cave view they had to be re-rendered by hand every time
+     the login state changed. They are one fixed control in the top-right corner
+     now, shared by both pages and by the cave, so there is a single place that
+     decides what a signed-in taster is allowed to see. */
+  .hf-corner { position:fixed; top:calc(env(safe-area-inset-top,0px) + 8px); right:14px; z-index:650; display:flex; flex-direction:column; align-items:flex-end; gap:8px; font-family:var(--sans); transition:opacity .18s ease; }
+  .hf-corner-toggle { position:relative; width:44px; height:44px; border-radius:50%; border:1px solid rgba(20,16,13,.14); background:rgba(252,249,244,.94); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); box-shadow:0 4px 14px rgba(0,0,0,.22); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:0; transition:transform .15s ease, background .2s; }
+  .hf-corner-toggle:hover { transform:translateY(-1px); }
+  .hf-corner-toggle span { display:block; width:17px; height:2px; border-radius:2px; background:var(--ink); transition:transform .28s cubic-bezier(.22,.8,.3,1), opacity .18s ease; }
+  /* Three 2px bars with a 4px gap: the outer two are 6px off centre, so 6px of
+     travel is exactly what turns them into a cross. */
+  .hf-corner.open .hf-corner-toggle span:nth-child(1) { transform:translateY(6px) rotate(45deg); }
+  .hf-corner.open .hf-corner-toggle span:nth-child(2) { opacity:0; }
+  .hf-corner.open .hf-corner-toggle span:nth-child(3) { transform:translateY(-6px) rotate(-45deg); }
+  .hf-corner-dot { position:absolute; top:2px; right:2px; width:9px; height:9px; border-radius:50%; background:var(--red); border:2px solid var(--white); display:none; }
+  .hf-corner.signed-in .hf-corner-dot { display:block; }
+
+  .hf-corner-items { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .hf-corner-item { display:block; white-space:nowrap; border:1px solid rgba(20,16,13,.12); background:var(--white); color:var(--text); border-radius:999px; padding:.55rem 1rem; font-size:.72rem; font-weight:500; letter-spacing:.09em; text-transform:uppercase; font-family:var(--sans); text-decoration:none; text-align:right; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.18);
+    opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-10px) scale(.94);
+    transition:opacity .22s ease, transform .28s cubic-bezier(.22,.8,.3,1), visibility 0s linear .3s, background .2s; }
+  /* Opening staggers each pill by --d so they unfold; closing drops the delays
+     so the menu gets out of the way at once. */
+  .hf-corner.open .hf-corner-item { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1);
+    transition:opacity .22s ease var(--d,0s), transform .28s cubic-bezier(.22,.8,.3,1) var(--d,0s), visibility 0s, background .2s; }
+  .hf-corner-item:hover { background:var(--off-white); }
+  .hf-corner-name { background:var(--ink); border-color:var(--ink); color:var(--white); cursor:default; }
+  .hf-corner-name:hover { background:var(--ink); }
+  .hf-corner-manager { border-color:rgba(154,51,36,.45); color:var(--red); }
+
+  /* The menu floats above the page and above the cave, but it must never sit on
+     top of a dialog. z-index handles the ones stacked above it; this covers the
+     dish and map sheets, which sit below. */
+  body:has(.modal-overlay.open) .hf-corner,
+  body:has(.maps-modal.open) .hf-corner,
+  body:has(.r-overlay.open) .hf-corner,
+  body:has(.t-overlay.open) .hf-corner,
+  body:has(.cs-overlay.open) .hf-corner,
+  body:has(.lucky-overlay.open) .hf-corner,
+  body:has(.vid-overlay.open) .hf-corner { opacity:0; visibility:hidden; pointer-events:none; }
