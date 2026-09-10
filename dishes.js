@@ -41,13 +41,26 @@ function normalizeDish(row) {
     ingredients: row.ingredients
       ? String(row.ingredients).split(',').map(s => s.trim()).filter(Boolean)
       : [],
-    soldOutUntil: row.sold_out_until ? new Date(row.sold_out_until) : null
+    soldOutUntil: row.sold_out_until ? new Date(row.sold_out_until) : null,
+    chefsPick: !!row.is_chefs_pick,
+    hidden:    !!row.is_hidden
   };
 }
 
-// The manager marks a dish sold out until a moment in time; it clears itself.
+// A dish stays sold out until the manager clears it by hand — deliberately no
+// automatic reset, so nothing comes back on the menu without someone deciding
+// it is actually available again.
 function dishIsSoldOut(d) {
-  return !!(d && d.soldOutUntil && d.soldOutUntil > new Date());
+  return !!(d && d.soldOutUntil);
+}
+
+// Which dish is the Chef's Pick is a flag on the dish now, set by the manager
+// in one click, rather than a slug written into the pages. The category
+// fallback keeps the cave populated on restaurants where nobody has set the
+// flag yet; it can go once every restaurant has one.
+function chefsPickDishes() {
+  const flagged = DISHES.filter(d => d.chefsPick);
+  return flagged.length ? flagged : DISHES.filter(d => d.category === 'chefs-pick');
 }
 
 const DISH_COLUMNS = [
