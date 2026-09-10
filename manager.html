@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Manager · The Hungry Fork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --red: #B01015; --red-dark: #7E0A0E; --red-light: #F7E3E1;
+    --white: #FCF9F4; --off-white: #F5EEE3; --text: #2B211A;
+    --muted: #8A7B6E; --border: #E9E0D3; --star-on: #D9A441;
+    --star-off: #DCD2C4; --green: #4C7A4C; --ink: #2B211A;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --shadow-sm: 0 1px 3px rgba(43,33,26,.06);
+    --shadow-md: 0 10px 30px rgba(43,33,26,.10);
+    --shadow-lg: 0 20px 50px rgba(43,33,26,.18);
+  }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.65; -webkit-font-smoothing:antialiased; padding-bottom:4rem; }
+
+  .m-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .m-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .m-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
+  .m-topbar-spacer { width:64px; }
+
+  .m-wrap { max-width:720px; margin:0 auto; padding:1.5rem 1rem 0; }
+
+  .m-card { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.4rem 1.2rem; box-shadow:var(--shadow-sm); margin-bottom:1rem; }
+  .m-eyebrow { font-size:.66rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.5rem; }
+  .m-h { font-family:var(--serif); font-size:1.6rem; font-weight:600; line-height:1.2; margin-bottom:.4rem; }
+  .m-sub { font-size:.86rem; font-weight:300; color:var(--muted); line-height:1.6; }
+
+  .m-btn { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.85rem 1.6rem; font-size:.78rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s, transform .15s; }
+  .m-btn:hover { background:#463629; transform:translateY(-1px); }
+  .m-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; transform:none; }
+
+  .m-select { width:100%; border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem; font-size:.9rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; }
+  .m-select:focus { border-color:var(--red); }
+
+  .m-role { display:inline-block; font-size:.6rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; padding:.2rem .6rem; border-radius:999px; background:var(--off-white); color:var(--muted); border:1px solid var(--border); }
+  .m-role.platform { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .m-role.owner { background:var(--red-light); color:var(--red-dark); border-color:rgba(176,16,21,.25); }
+
+  /* ── DISH ROW ── */
+  .m-dish { background:var(--white); border:1px solid var(--border); border-radius:14px; margin-bottom:.7rem; box-shadow:var(--shadow-sm); overflow:hidden; transition:opacity .2s; }
+  .m-dish.is-hidden { opacity:.55; }
+  .m-dish-head { display:flex; align-items:center; gap:.85rem; padding:.95rem 1rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-dish-emoji { font-size:1.6rem; line-height:1; flex:none; }
+  .m-dish-id { flex:1; min-width:0; }
+  .m-dish-name { font-family:var(--serif); font-size:1.15rem; font-weight:600; line-height:1.25; }
+  .m-dish-meta { font-size:.74rem; color:var(--muted); margin-top:.1rem; }
+  .m-dish-caret { color:var(--muted); font-size:.8rem; flex:none; transition:transform .25s; }
+  .m-dish.open .m-dish-caret { transform:rotate(90deg); }
+
+  .m-flags { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.35rem; }
+  .m-flag { font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; }
+  .m-flag.sold { background:#F6E2E1; color:var(--red-dark); }
+  .m-flag.hid  { background:var(--off-white); color:var(--muted); }
+  .m-flag.pick { background:#EDE3C9; color:#7A5B12; }
+
+  .m-dish-body { display:none; padding:0 1rem 1.1rem; border-top:1px solid var(--border); }
+  .m-dish.open .m-dish-body { display:block; }
+
+  .m-switch-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.85rem 0; border-bottom:1px solid var(--border); }
+  .m-switch-label { font-size:.88rem; }
+  .m-switch-note { font-size:.72rem; color:var(--muted); line-height:1.5; margin-top:.1rem; }
+  .m-switch { flex:none; width:50px; height:29px; border-radius:999px; border:none; background:var(--star-off); position:relative; cursor:pointer; transition:background .22s; padding:0; }
+  .m-switch::after { content:''; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.28); transition:transform .22s; }
+  .m-switch.on { background:var(--green); }
+  .m-switch.on::after { transform:translateX(21px); }
+  .m-switch.on.warn { background:var(--red); }
+  .m-switch:disabled { opacity:.5; cursor:not-allowed; }
+
+  .m-field { margin-top:.95rem; }
+  .m-field-label { font-size:.66rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.35rem; }
+  .m-input, .m-textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:.65rem .85rem; font-size:.9rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; transition:border-color .2s; }
+  .m-input:focus, .m-textarea:focus { border-color:var(--red); }
+  .m-textarea { resize:vertical; min-height:80px; line-height:1.6; }
+  .m-count { font-size:.68rem; color:var(--muted); text-align:right; margin-top:.2rem; }
+  .m-count.over { color:var(--red); font-weight:600; }
+
+  .m-actions { display:flex; align-items:center; gap:.7rem; margin-top:1rem; }
+  .m-save { background:var(--red); color:#fff; border:none; border-radius:999px; padding:.7rem 1.4rem; font-size:.72rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .m-save:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+  .m-revert { background:none; border:none; color:var(--muted); font-size:.76rem; text-decoration:underline; cursor:pointer; font-family:var(--sans); }
+
+  .m-locked { margin-top:1rem; padding:.8rem .9rem; background:var(--off-white); border-radius:10px; font-size:.76rem; color:var(--muted); line-height:1.65; }
+
+  .m-empty { text-align:center; padding:3rem 1rem; color:var(--muted); font-size:.9rem; }
+  .m-err { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.85rem 1rem; font-size:.85rem; margin-bottom:1rem; }
+
+  .m-skel { height:74px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:14px; margin-bottom:.7rem; border:1px solid var(--border); }
+  @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+<link rel="stylesheet" href="/taster.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head>
+<body>
+
+<div class="m-topbar">
+  <a href="index.html" class="m-home">&#8249; Site</a>
+  <div class="m-topbar-title">Manager</div>
+  <span class="m-topbar-spacer"></span>
+</div>
+
+<div class="m-wrap" id="m-wrap">
+  <div class="m-skel"></div>
+  <div class="m-skel"></div>
+  <div class="m-skel"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>window.TASTER={successLabel:'Continue',onSuccess:function(){boot();}};</script>
+<script src="/taster.js"></script>
+<script>
+// ── manager.html ──
+//
+// The dashboard a restaurant uses to run its own menu without calling
+// Sebastian: sold out, hidden, Chef's Pick, price and the written details.
+//
+// Nothing on this page is a security boundary. It hides buttons the account
+// may not use, but every save goes to /api/manager-dish, which re-checks the
+// caller's role against the database before it writes a single column. If
+// somebody unhides a button in their console, the server still says no.
+
+const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHdyandzcXJsZmR4Z3FtcHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjczMTksImV4cCI6MjA5ODM0MzMxOX0.eeD6NYU4u-heag5LbkZJT-jENI3AuodlMzebOsxOv2c';
+
+const LIMITS = { description:600, about:4000, modifications:1000, wine:400, cocktail:400, ingredients:1000 };
+
+let ACCESS = null;         // what this account may do, straight from the server
+let RESTAURANT = null;     // the one being managed right now
+let DISHES_ROWS = [];      // raw dish rows for that restaurant
+let openDishId = null;
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function wrap(){return document.getElementById('m-wrap');}
+
+// ── LOAD ──
+async function boot(){
+  const w = wrap();
+  if(!currentSession){
+    w.innerHTML =
+      '<div class="m-card">'
+    + '<div class="m-eyebrow">Restaurant access</div>'
+    + '<div class="m-h">Log in to manage your menu</div>'
+    + '<div class="m-sub">Use the same phone number and PIN you use on the site. If your account has not been given access yet, ask Seb\'s Analytics to add it.</div>'
+    + '<div style="margin-top:1.2rem;"><button class="m-btn" onclick="openTasterModal()">Log In</button></div>'
+    + '</div>';
+    return;
+  }
+
+  w.innerHTML = '<div class="m-skel"></div><div class="m-skel"></div>';
+
+  let data;
+  try{
+    const res = await fetch('/api/my-access', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
+    });
+    data = await res.json();
+    if(res.status===401){ logout(); boot(); return; }
+    if(!res.ok) throw new Error(data.error||'Could not load your access.');
+  }catch(e){
+    w.innerHTML = '<div class="m-err">'+esc(e.message||'Could not reach the server.')+'</div>';
+    return;
+  }
+
+  ACCESS = data;
+
+  if(!ACCESS.restaurants.length){
+    w.innerHTML =
+      '<div class="m-card">'
+    + '<div class="m-eyebrow">No access yet</div>'
+    + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+    + '<div class="m-sub">This account is not a manager or owner of any restaurant yet. Ask Seb\'s Analytics to add it, then reload this page.</div>'
+    + '</div>';
+    return;
+  }
+
+  RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
+  await loadDishes();
+}
+
+async function loadDishes(){
+  const w = wrap();
+  w.innerHTML = header() + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>';
+  try{
+    // Hidden dishes must appear here — hiding one on the public menu is not the
+    // same as losing the switch that brings it back.
+    const res = await fetch(SUPABASE_URL+'/rest/v1/dishes?restaurant_id=eq.'+RESTAURANT.id
+      +'&select=id,slug,name,emoji,price,description,about,modifications,wine,cocktail,ingredients,restaurant_category,is_chefs_pick,is_hidden,sold_out_until,sort_order'
+      +'&order=sort_order.asc',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    if(!res.ok) throw new Error('Could not load the menu ('+res.status+').');
+    DISHES_ROWS = await res.json();
+  }catch(e){
+    w.innerHTML = header() + '<div class="m-err">'+esc(e.message)+'</div>';
+    return;
+  }
+  render();
+}
+
+// ── RENDER ──
+function header(){
+  const picker = ACCESS.restaurants.length>1
+    ? '<div class="m-field" style="margin-top:1rem;">'
+      + '<div class="m-field-label">Restaurant</div>'
+      + '<select class="m-select" id="m-rest" onchange="switchRestaurant(this.value)">'
+      + ACCESS.restaurants.map(r=>'<option value="'+r.id+'"'+(String(r.id)===String(RESTAURANT.id)?' selected':'')+'>'+esc(r.name)+'</option>').join('')
+      + '</select></div>'
+    : '';
+  const roleClass = RESTAURANT.role==='platform'?'platform':(RESTAURANT.role==='owner'?'owner':'');
+  const roleLabel = RESTAURANT.role==='platform'?'Platform admin':RESTAURANT.role;
+  return '<div class="m-card">'
+    + '<div class="m-eyebrow">Signed in as '+esc(ACCESS.firstName||'')+'</div>'
+    + '<div class="m-h">'+esc(RESTAURANT.name||'Restaurant')+'</div>'
+    + '<div style="margin-top:.4rem;"><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span></div>'
+    + picker
+    + '</div>';
+}
+
+function render(){
+  if(!DISHES_ROWS.length){
+    wrap().innerHTML = header() + '<div class="m-empty">This restaurant has no dishes yet.</div>';
+    return;
+  }
+  wrap().innerHTML = header() + DISHES_ROWS.map(dishCard).join('');
+}
+
+function dishCard(d){
+  const open = String(d.id)===String(openDishId);
+  const soldOut = !!d.sold_out_until;
+  const flags = []
+    .concat(soldOut ? '<span class="m-flag sold">Sold out</span>' : [])
+    .concat(d.is_hidden ? '<span class="m-flag hid">Hidden</span>' : [])
+    .concat(d.is_chefs_pick ? '<span class="m-flag pick">Chef\'s Pick</span>' : []);
+
+  return '<div class="m-dish'+(open?' open':'')+(d.is_hidden?' is-hidden':'')+'" id="dish-'+d.id+'">'
+    + '<div class="m-dish-head" onclick="toggleDish('+d.id+')">'
+    +   '<span class="m-dish-emoji">'+esc(d.emoji||'🍽️')+'</span>'
+    +   '<div class="m-dish-id">'
+    +     '<div class="m-dish-name">'+esc(d.name)+'</div>'
+    +     '<div class="m-dish-meta">$'+Number(d.price||0).toFixed(2)+' &middot; '+esc(d.restaurant_category||'')+'</div>'
+    +     (flags.length?'<div class="m-flags">'+flags.join('')+'</div>':'')
+    +   '</div>'
+    +   '<span class="m-dish-caret">&#9656;</span>'
+    + '</div>'
+    + '<div class="m-dish-body">'
+    +   switchRow(d.id,'sold_out',soldOut,'Sold out','Comes off the menu as sold out and stays that way until you switch it back. Nothing resets it overnight.',true)
+    +   switchRow(d.id,'is_hidden',!!d.is_hidden,'Hidden from the menu','Nobody sees this dish on the site at all. Use it for a dish that is off for the season.',false)
+    +   switchRow(d.id,'is_chefs_pick',!!d.is_chefs_pick,'Chef\'s Pick','Only one dish at a time. Turning this on takes it off whichever dish has it now.',false)
+    +   textFields(d)
+    +   '<div class="m-actions">'
+    +     '<button class="m-save" id="save-'+d.id+'" onclick="saveText('+d.id+')" disabled>Save changes</button>'
+    +     '<button class="m-revert" onclick="revert('+d.id+')">Undo</button>'
+    +   '</div>'
+    +   '<div class="m-locked"><strong>Photos, dish name and allergens are not editable here.</strong> Photography is work Seb\'s Analytics is paid for, the name is what every review is attached to, and a wrong allergen is a hospital visit rather than a typo. Message Seb for any of the three.</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function switchRow(dishId, field, on, label, note, warn){
+  return '<div class="m-switch-row">'
+    + '<div><div class="m-switch-label">'+label+'</div><div class="m-switch-note">'+note+'</div></div>'
+    + '<button class="m-switch'+(on?' on':'')+(warn?' warn':'')+'" id="sw-'+dishId+'-'+field+'"'
+    +   ' role="switch" aria-checked="'+(on?'true':'false')+'" aria-label="'+label+'"'
+    +   ' onclick="toggleFlag('+dishId+',\''+field+'\')"></button>'
+    + '</div>';
+}
+
+function textFields(d){
+  const f = (field,label,value,type)=>{
+    const id = 'f-'+d.id+'-'+field;
+    const control = type==='area'
+      ? '<textarea class="m-textarea" id="'+id+'" oninput="dirty('+d.id+',\''+field+'\')" maxlength="'+(LIMITS[field]+200)+'">'+esc(value||'')+'</textarea>'
+      : '<input class="m-input" id="'+id+'" value="'+esc(value==null?'':value)+'" oninput="dirty('+d.id+',\''+field+'\')"'
+        + (type==='price'?' type="number" step="0.01" min="0" max="10000" inputmode="decimal"':'')+'>';
+    const counter = LIMITS[field] ? '<div class="m-count" id="c-'+d.id+'-'+field+'">'+String(value||'').length+' / '+LIMITS[field]+'</div>' : '';
+    return '<div class="m-field"><div class="m-field-label">'+label+'</div>'+control+counter+'</div>';
+  };
+  return f('price','Price',d.price,'price')
+    + f('description','Short description',d.description,'area')
+    + f('about','About this dish',d.about,'area')
+    + f('ingredients','Ingredients (comma separated)',d.ingredients,'area')
+    + f('modifications','Modifications',d.modifications,'area')
+    + f('wine','Wine pairing',d.wine,'text')
+    + f('cocktail','Cocktail pairing',d.cocktail,'text');
+}
+
+// ── INTERACTION ──
+function toggleDish(id){
+  openDishId = String(openDishId)===String(id) ? null : id;
+  render();
+}
+
+function switchRestaurant(id){
+  RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(id)) || RESTAURANT;
+  openDishId = null;
+  loadDishes();
+}
+
+function rowFor(id){ return DISHES_ROWS.find(d=>String(d.id)===String(id)); }
+
+function dirty(id, field){
+  const d = rowFor(id); if(!d) return;
+  const el = document.getElementById('f-'+id+'-'+field);
+  const counter = document.getElementById('c-'+id+'-'+field);
+  if(counter && LIMITS[field]){
+    const n = el.value.length;
+    counter.textContent = n+' / '+LIMITS[field];
+    counter.classList.toggle('over', n>LIMITS[field]);
+  }
+  const changed = collectText(id);
+  const save = document.getElementById('save-'+id);
+  if(save) save.disabled = !Object.keys(changed).length || anyOver(id);
+}
+
+function anyOver(id){
+  return Object.keys(LIMITS).some(field=>{
+    const el = document.getElementById('f-'+id+'-'+field);
+    return el && el.value.length > LIMITS[field];
+  });
+}
+
+// Only the fields that actually differ get sent, so two managers editing
+// different parts of the same dish do not overwrite each other's work.
+function collectText(id){
+  const d = rowFor(id); if(!d) return {};
+  const out = {};
+  const priceEl = document.getElementById('f-'+id+'-price');
+  if(priceEl){
+    const n = Number(priceEl.value);
+    if(priceEl.value!=='' && Number.isFinite(n) && Math.round(n*100)!==Math.round(Number(d.price||0)*100)) out.price = n;
+  }
+  ['description','about','ingredients','modifications','wine','cocktail'].forEach(field=>{
+    const el = document.getElementById('f-'+id+'-'+field);
+    if(!el) return;
+    const now = el.value.trim();
+    const before = (d[field]==null?'':String(d[field])).trim();
+    if(now !== before) out[field] = now.length ? now : null;
+  });
+  return out;
+}
+
+function revert(id){ render(); }
+
+async function toggleFlag(id, field){
+  const d = rowFor(id); if(!d) return;
+  const btn = document.getElementById('sw-'+id+'-'+field);
+  const current = field==='sold_out' ? !!d.sold_out_until : !!d[field];
+  if(btn) btn.disabled = true;
+  const saved = await save(id, { [field]: !current });
+  if(btn) btn.disabled = false;
+  if(saved) showToast(labelFor(field)+(!current?' on':' off')+' · '+d.name);
+}
+
+function labelFor(f){
+  return f==='sold_out' ? 'Sold out' : f==='is_hidden' ? 'Hidden' : 'Chef\'s Pick';
+}
+
+async function saveText(id){
+  const changes = collectText(id);
+  if(!Object.keys(changes).length) return;
+  const btn = document.getElementById('save-'+id);
+  if(btn){ btn.disabled = true; btn.textContent='Saving…'; }
+  const saved = await save(id, changes);
+  if(btn){ btn.textContent='Save changes'; btn.disabled = true; }
+  if(saved) showToast('Saved');
+}
+
+// The one path to the server. It replaces the whole row from the response, so
+// what the screen shows after a save is what the database actually holds —
+// including the Chef's Pick that just moved off another dish.
+async function save(id, changes){
+  try{
+    const res = await fetch('/api/manager-dish',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({dishId:id, changes})
+    });
+    const data = await res.json();
+    if(res.status===401){ showToast('Your session expired. Please log in again.'); logout(); boot(); return false; }
+    if(!res.ok){ showToast(data.error||'Could not save that.'); return false; }
+
+    const i = DISHES_ROWS.findIndex(d=>String(d.id)===String(id));
+    if(i>=0) DISHES_ROWS[i] = data.dish;
+    // Chef's Pick is exclusive, so the server may have cleared it elsewhere.
+    if(data.dish.is_chefs_pick) DISHES_ROWS.forEach(d=>{ if(String(d.id)!==String(id)) d.is_chefs_pick=false; });
+    render();
+    return true;
+  }catch(e){
+    showToast('Network error. Please try again.');
+    return false;
+  }
+}
+
+loadSession();
+boot();
+</script>
+</body>
+</html>
