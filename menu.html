@@ -870,6 +870,7 @@ const STAR_GLYPH='<svg class="star-glyph" viewBox="0 0 100 100"><path fill="curr
 // ── CAVE INTERIOR (enter a category) ──
 let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
 function caveListFor(key){
+  if(key==='chefs-pick')return chefsPickDishes();
   if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
   return DISHES.filter(d=>d.category===key);
 }
@@ -1597,7 +1598,11 @@ loadSession();
   const dishId=params.get('dish');
   const cat=params.get('cat');
   if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);return;}
-  if(cat&&CATEGORY_ORDER.includes(cat)){warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();}
+  if(cat&&CATEGORY_ORDER.includes(cat)){
+    warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
+    // ?enter=1 opens the cave straight away — the home page video uses it.
+    if(params.get('enter')==='1'&&caveListFor(cat).length)enterCave();
+  }
 })();
 </script>
 </body>
