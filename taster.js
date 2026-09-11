@@ -364,9 +364,19 @@ function updateNavBtn(){
   if(currentTaster){
     items.push({label:'Hi, '+(currentTaster.first_name||'there'), kind:'label', cls:'hf-corner-name'});
     items.push({label:'My Tastings', act:'tastings'});
-    // Only a restaurant admin is offered the manager page, and the page itself
-    // checks again on the server. This is a menu, not a lock.
-    if(currentTaster.is_restaurant_admin)items.push({label:'Manager', href:'/manager.html', cls:'hf-corner-manager'});
+        // Two different flags, because there are two different kinds of access:
+    // is_platform_admin is Sebastian, who is above every restaurant, and
+    // is_restaurant_admin marks an account that holds a role at one — the
+    // roles API keeps it in step with the restaurant_roles table so that
+    // ordinary customers never pay for an extra request just to find out they
+    // are not managers.
+    //
+    // This only decides whether a link is drawn. manager.html asks the server
+    // what the account may actually do, so unhiding this in a console gets you
+    // a page that says no.
+    if(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin){
+      items.push({label:'Manager', href:'/manager.html', cls:'hf-corner-manager'});
+    }
     items.push({label:'Log Out', act:'logout'});
   }else{
     items.push({label:'Log In', act:'login'});
