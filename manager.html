@@ -195,12 +195,18 @@ async function boot(){
   ACCESS = data;
 
   if(!ACCESS.restaurants.length){
-    w.innerHTML =
-      '<div class="m-card">'
-    + '<div class="m-eyebrow">No access yet</div>'
-    + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
-    + '<div class="m-sub">This account is not a manager or owner of any restaurant yet. Ask Seb\'s Analytics to add it, then reload this page.</div>'
-    + '</div>';
+    // Two very different reasons for an empty list, and saying the wrong one
+    // sends you looking in the wrong place. A platform admin sees every
+    // restaurant there is, so an empty list means there are none — not that
+    // the account lacks permission.
+    const reason = ACCESS.isPlatformAdmin
+      ? '<div class="m-eyebrow">Nothing to manage</div>'
+        + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+        + '<div class="m-sub">You are the platform admin, so you see every restaurant — and right now the <strong>restaurants</strong> table has no rows in it. Add the restaurant, then reload.</div>'
+      : '<div class="m-eyebrow">No access yet</div>'
+        + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+        + '<div class="m-sub">This account is not a manager or owner of any restaurant yet. Ask Seb\'s Analytics to add it, then reload this page.</div>';
+    w.innerHTML = '<div class="m-card">' + reason + '</div>';
     return;
   }
 
