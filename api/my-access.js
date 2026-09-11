@@ -20,10 +20,27 @@ export default async function handler(req, res) {
 
   let restaurants = [];
 
-  if (access.isPlatformAdmin) {
+    if (access.isPlatformAdmin) {
     // You see every restaurant on the platform.
     const r = await sb('/restaurants?select=id,name&order=name.asc');
-    restaurants = (Array.isArray(r.data) ? r.data : []).map((x) => ({
+
+    // If this query FAILS, say so. The old version quietly turned any failure
+    // into an empty list, so a broken permission and a genuinely empty table
+    // produced the same screen — and the screen blamed the table. Never let a
+    // failed read masquerade as a successful empty one.
+    if (!r.ok) {
+      console.error('[my-access] restaurants read failed', r.status);
+      return res.status(502).json({
+        error: 'Could not read the restaurants table (status ' + r.status + ').',
+      });
+    }
+    if (!Array.isArray(r.data)) {
+      return res.status(502).json({
+        error: 'The restaurants table returned something unexpected.',
+      });
+    }
+
+    restaurants = r.data.map((x) => ({
       id: x.id,
       name: x.name,
       role: 'platform',
