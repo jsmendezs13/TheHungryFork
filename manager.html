@@ -142,6 +142,26 @@ let openDishId = null;
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function wrap(){return document.getElementById('m-wrap');}
 
+
+// A serverless function that crashes returns Vercel's plain-text error page,
+// not JSON, and res.json() then throws "Unexpected token 'A'…" — an error
+// about the error, which says nothing about what broke. Read the body once,
+// try to parse it, and if it is not JSON report the status and what the
+// server actually said.
+async function callApi(path, options){
+  const res = await fetch(path, options);
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch(e){}
+  if(data === null && !res.ok){
+    const snippet = text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160);
+    throw new Error('The server returned '+res.status+' instead of data'
+      + (snippet ? ' — "'+snippet+'"' : '')
+      + '. Check the function logs in Vercel.');
+  }
+  return { res, data: data || {} };
+}
+
 // ── LOAD ──
 async function boot(){
   const w = wrap();
@@ -160,11 +180,11 @@ async function boot(){
 
   let data;
   try{
-    const res = await fetch('/api/my-access', {
+    const {res, data:payload} = await callApi('/api/my-access', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
     });
-    data = await res.json();
+    data = payload;
     if(res.status===401){ logout(); boot(); return; }
     if(!res.ok) throw new Error(data.error||'Could not load your access.');
   }catch(e){
@@ -380,12 +400,11 @@ async function saveText(id){
 // including the Chef's Pick that just moved off another dish.
 async function save(id, changes){
   try{
-    const res = await fetch('/api/manager-dish',{
+    const {res, data} = await callApi('/api/manager-dish',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
       body:JSON.stringify({dishId:id, changes})
     });
-    const data = await res.json();
     if(res.status===401){ showToast('Your session expired. Please log in again.'); logout(); boot(); return false; }
     if(!res.ok){ showToast(data.error||'Could not save that.'); return false; }
 
@@ -396,7 +415,7 @@ async function save(id, changes){
     render();
     return true;
   }catch(e){
-    showToast('Network error. Please try again.');
+    showToast(e.message || 'Network error. Please try again.');
     return false;
   }
 }
