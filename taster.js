@@ -259,7 +259,7 @@ const TASTER_MODAL_HTML = `
         <input class="t-input" id="signup-pin2" type="password" placeholder="Confirm PIN" maxlength="6" inputmode="numeric">
         <div class="t-checkbox-row">
           <input type="checkbox" id="signup-privacy">
-          <label for="signup-privacy">I agree to the <a href="#" style="color:var(--red);">Privacy Policy</a> and <a href="#" style="color:var(--red);">Terms of Service</a>.</label>
+          <label for="signup-privacy">I agree to the <a href="/privacy.html" target="_blank" rel="noopener" style="color:var(--red);">Privacy Policy</a> and <a href="/terms.html" target="_blank" rel="noopener" style="color:var(--red);">Terms of Service</a>.</label>
         </div>
         <div class="t-checkbox-row">
           <input type="checkbox" id="signup-promos">
@@ -364,7 +364,8 @@ function updateNavBtn(){
   if(currentTaster){
     items.push({label:'Hi, '+(currentTaster.first_name||'there'), kind:'label', cls:'hf-corner-name'});
     items.push({label:'My Tastings', act:'tastings'});
-        // Two different flags, because there are two different kinds of access:
+    items.push({label:'My Visits', act:'visits'});
+    // Two different flags, because there are two different kinds of access:
     // is_platform_admin is Sebastian, who is above every restaurant, and
     // is_restaurant_admin marks an account that holds a role at one — the
     // roles API keeps it in step with the restaurant_roles table so that
@@ -405,13 +406,14 @@ document.addEventListener('click',function(e){
     const act=item.getAttribute('data-act');
     if(act==='login')openTasterModal();
     else if(act==='tastings'){if(typeof openMyTastings==='function')openMyTastings();}
+    else if(act==='visits'){if(typeof openMyVisits==='function')openMyVisits();}
     else if(act==='logout'){if(confirm('Log out?'))logout();}
     return;
   }
   if(t.closest('#hf-corner-toggle')){toggleCornerMenu();return;}
   if(!t.closest('#hf-corner'))closeCornerMenu();
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCornerMenu();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeCornerMenu();if(typeof closeMyVisits==='function')closeMyVisits();}});
 
 (function(){
   const host=document.createElement('div');
@@ -651,3 +653,271 @@ async function doSignup(){
   }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
   btn.disabled=false;btn.textContent='Create My Account 🍴';
 }
+
+// ── MY VISITS: the check-in QR and the two calendars ────────────────────────
+//
+// The customer shows a QR. A member of staff points their own phone's camera
+// at it, the link opens, and they press Confirm. That is the whole system, and
+// the direction matters: a code printed on the table could be photographed and
+// used from home, but nobody can fake a waiter standing there pressing a
+// button.
+//
+// Nothing here draws the QR. The server does that and sends back a finished
+// picture, so there is no QR library in the browser, no request to a QR
+// website, and no third party that gets told a customer is at dinner.
+
+var HF_VISITS_HTML =
+  '<div class="hf-v-overlay" id="hf-v-overlay" onclick="if(event.target===this)closeMyVisits()">'
++   '<div class="hf-v-box">'
++     '<div class="hf-v-header">'
++       '<h3>My Visits</h3>'
++       '<button class="t-close" onclick="closeMyVisits()" aria-label="Close">&#10005;</button>'
++     '</div>'
++     '<div class="hf-v-body">'
++       '<div class="hf-v-checkin" id="hf-v-checkin"></div>'
++       '<div id="hf-v-calendar"></div>'
++     '</div>'
++   '</div>'
++ '</div>';
+
+var HFV = {
+  visits: [], places: [], today: '', place: 'all',
+  year: 0, month: 0,           // the month on screen
+  expiry: 0, refreshes: 0,
+  tick: null, loaded: false
+};
+
+function openMyVisits(){
+  if(!currentTaster){openTasterModal();return;}
+  const o=document.getElementById('hf-v-overlay');
+  if(!o)return;
+  o.classList.add('open');
+  hfvShowIdle();
+  hfvLoadCalendar();
+}
+function closeMyVisits(){
+  const o=document.getElementById('hf-v-overlay');
+  if(o)o.classList.remove('open');
+  hfvStop();
+}
+// Every timer this screen starts is stopped here. A countdown left running
+// behind a closed dialog would keep asking the server for codes nobody can see.
+function hfvStop(){
+  if(HFV.tick){clearInterval(HFV.tick);HFV.tick=null;}
+  HFV.expiry=0;HFV.refreshes=0;
+}
+
+function hfvApi(path, body){
+  return fetch(path,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+    body:JSON.stringify(body||{})
+  }).then(function(res){
+    return res.text().then(function(text){
+      var data=null;
+      try{data=text?JSON.parse(text):null;}catch(e){}
+      if(data===null&&!res.ok){
+        throw new Error('The server returned '+res.status+' instead of data.');
+      }
+      if(!res.ok)throw new Error((data&&data.error)||'Something went wrong.');
+      return data||{};
+    });
+  });
+}
+
+// ── The check-in code ──
+function hfvShowIdle(){
+  hfvStop();
+  const box=document.getElementById('hf-v-checkin');
+  if(!box)return;
+  box.innerHTML=
+    '<button class="t-btn" id="hf-v-go" onclick="hfvRequestCode()">Check In</button>'
+  + '<div class="hf-v-qr-msg" style="margin-top:.75rem;">Tap this at the restaurant, then show the code to your waiter.</div>';
+}
+
+function hfvRequestCode(){
+  const box=document.getElementById('hf-v-checkin');
+  if(!box)return;
+  box.innerHTML='<div class="hf-v-qr-msg">Making your code…</div>';
+  hfvApi('/api/checkin-token').then(function(d){
+    // The SVG comes from our own server, but it goes into innerHTML, so it is
+    // still checked for being what it claims to be before it gets there.
+    const svg=(typeof d.svg==='string'&&d.svg.trim().slice(0,4)==='<svg')?d.svg:'';
+    if(!svg)throw new Error('Could not draw your code.');
+    HFV.expiry=new Date(d.expiresAt).getTime();
+    box.innerHTML=
+      '<div class="hf-v-qr" id="hf-v-qr">'+svg+'</div>'
+    + '<div class="hf-v-bar"><i id="hf-v-bar"></i></div>'
+    + (d.shortCode
+        ? '<div class="hf-v-code">'+hfEsc(d.shortCode)+'</div>'
+          +'<div class="hf-v-code-note">If the camera will not read it, your waiter can type these six characters.</div>'
+        : '')
+    + '<div class="hf-v-qr-msg" id="hf-v-msg" style="margin-top:.7rem;">Show this to your waiter.</div>';
+    hfvStartCountdown();
+  }).catch(function(e){
+    box.innerHTML=
+      '<div class="t-err" style="display:block;">'+hfEsc(e.message||'Could not get a code.')+'</div>'
+    + '<button class="t-btn" onclick="hfvRequestCode()">Try again</button>';
+  });
+}
+
+function hfvStartCountdown(){
+  if(HFV.tick)clearInterval(HFV.tick);
+  const total=Math.max(1,HFV.expiry-Date.now());
+  HFV.tick=setInterval(function(){
+    const bar=document.getElementById('hf-v-bar');
+    const left=HFV.expiry-Date.now();
+    if(bar)bar.style.width=Math.max(0,Math.min(100,(left/total)*100))+'%';
+    if(left>0)return;
+
+    clearInterval(HFV.tick);HFV.tick=null;
+    // A code that has run out is replaced automatically, because the customer
+    // is standing at a table and should not have to think about it. But an
+    // account left open on a kitchen counter must not ask forever, so after
+    // about a quarter of an hour it stops and waits to be asked.
+    HFV.refreshes++;
+    if(HFV.refreshes<=10){hfvRequestCode();return;}
+    const box=document.getElementById('hf-v-checkin');
+    if(box)box.innerHTML=
+      '<div class="hf-v-qr-msg" style="margin-bottom:.8rem;">That code expired.</div>'
+    + '<button class="t-btn" onclick="hfvRequestCode()">Show a new code</button>';
+  },200);
+}
+
+// ── The calendars ──
+function hfvLoadCalendar(){
+  const box=document.getElementById('hf-v-calendar');
+  if(!box)return;
+  if(!HFV.loaded)box.innerHTML='<div class="hf-v-empty">Loading your visits…</div>';
+  hfvApi('/api/my-checkins').then(function(d){
+    HFV.visits=Array.isArray(d.visits)?d.visits:[];
+    HFV.places=Array.isArray(d.restaurants)?d.restaurants:[];
+    // The restaurant's clock, not the phone's. Someone opening this from
+    // California should still see the New York day marked.
+    HFV.today=d.today||'';
+    if(!HFV.year){
+      const parts=(HFV.today||'1970-01-01').split('-');
+      HFV.year=Number(parts[0]);HFV.month=Number(parts[1])-1;
+    }
+    HFV.loaded=true;
+    hfvRender();
+  }).catch(function(e){
+    box.innerHTML='<div class="hf-v-empty">'+hfEsc(e.message||'Could not load your visits.')+'</div>';
+  });
+}
+
+function hfvPick(id){HFV.place=id;hfvRender();}
+function hfvMonthStep(n){
+  var m=HFV.month+n, y=HFV.year;
+  if(m<0){m=11;y--;}
+  if(m>11){m=0;y++;}
+  HFV.year=y;HFV.month=m;
+  hfvRender();
+}
+
+function hfvPad(n){return (n<10?'0':'')+n;}
+function hfvKey(y,m,d){return y+'-'+hfvPad(m+1)+'-'+hfvPad(d);}
+
+function hfvRender(){
+  const box=document.getElementById('hf-v-calendar');
+  if(!box)return;
+
+  if(!HFV.visits.length){
+    box.innerHTML='<div class="hf-v-empty">No visits yet.<br>Check in at a restaurant and this fills up.</div>';
+    return;
+  }
+
+  // The two calendars Sebastian asked for are one calendar and a filter: "All"
+  // is every restaurant together, and each pill is that restaurant on its own.
+  const mine=HFV.place==='all'
+    ? HFV.visits
+    : HFV.visits.filter(function(v){return String(v.restaurantId)===String(HFV.place);});
+  // How many visits fell on each day, not merely whether one did. On the "All"
+  // view a person can lunch at one restaurant and dine at another, which is two
+  // visits on one square — and a tally that counted squares would disagree with
+  // the all-time total sitting next to it.
+  const days={};
+  mine.forEach(function(v){days[v.date]=(days[v.date]||0)+1;});
+
+  // A row of pills was fine for two restaurants and fell apart at twenty — it
+  // wrapped to three lines and pushed the calendar off the screen. A dropdown
+  // is one line tall whatever the number, and it is the same control the
+  // manager page already uses to switch restaurant.
+  //
+  // Each line carries its own count, so choosing between twenty restaurants
+  // does not mean opening twenty of them to find out.
+  const counts={};
+  HFV.visits.forEach(function(v){
+    counts[v.restaurantId]=(counts[v.restaurantId]||0)+1;
+  });
+  const sorted=HFV.places.slice().sort(function(a,b){
+    return String(a.name||'').localeCompare(String(b.name||''));
+  });
+
+  var pills='<select class="hf-v-select" id="hf-v-place" aria-label="Which restaurant"'
+    + ' onchange="hfvPick(this.value)">'
+    + '<option value="all"'+(HFV.place==='all'?' selected':'')+'>'
+    +   'All restaurants &nbsp;&middot;&nbsp; '+HFV.visits.length
+    +   (HFV.visits.length===1?' visit':' visits')
+    + '</option>';
+  sorted.forEach(function(p){
+    const n=counts[p.id]||0;
+    pills+='<option value="'+hfEsc(p.id)+'"'+(String(HFV.place)===String(p.id)?' selected':'')+'>'
+      + hfEsc(p.name)+' &nbsp;&middot;&nbsp; '+n+(n===1?' visit':' visits')
+      + '</option>';
+  });
+  pills+='</select>';
+
+  const monthName=new Date(Date.UTC(HFV.year,HFV.month,1))
+    .toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+
+  // Nobody has visits in the future, so the forward arrow stops at this month.
+  const nowParts=(HFV.today||'1970-01-01').split('-');
+  const atNow=(HFV.year>Number(nowParts[0]))||(HFV.year===Number(nowParts[0])&&HFV.month>=Number(nowParts[1])-1);
+
+  var head='<div class="hf-v-month">'
+    + '<button class="hf-v-arrow" onclick="hfvMonthStep(-1)" aria-label="Previous month">&#8249;</button>'
+    + '<div class="hf-v-month-name">'+hfEsc(monthName)+'</div>'
+    + '<button class="hf-v-arrow" onclick="hfvMonthStep(1)" aria-label="Next month"'+(atNow?' disabled':'')+'>&#8250;</button>'
+    + '</div>';
+
+  var grid='<div class="hf-v-grid">';
+  ['S','M','T','W','T','F','S'].forEach(function(d){grid+='<div class="hf-v-dow">'+d+'</div>';});
+  const first=new Date(Date.UTC(HFV.year,HFV.month,1)).getUTCDay();
+  const total=new Date(Date.UTC(HFV.year,HFV.month+1,0)).getUTCDate();
+  for(var i=0;i<first;i++)grid+='<div class="hf-v-day empty"></div>';
+  var thisMonth=0;
+  for(var d=1;d<=total;d++){
+    const key=hfvKey(HFV.year,HFV.month,d);
+    const count=days[key]||0;
+    var cls='hf-v-day';
+    if(count){cls+=' went';thisMonth+=count;}
+    // Two restaurants in one day is one square but two visits, so the square
+    // says so rather than quietly hiding one of them.
+    if(count>1)cls+=' multi';
+    if(key===HFV.today)cls+=' today';
+    grid+='<div class="'+cls+'"'+(count>1?' title="'+count+' visits"':'')+'>'+d
+       +(count>1?'<i class="hf-v-dots">'+new Array(Math.min(count,3)+1).join('&bull;')+'</i>':'')
+       +'</div>';
+  }
+  grid+='</div>';
+
+  const last=mine.length?mine.map(function(v){return v.date;}).sort().pop():null;
+  const lastLabel=last
+    ? new Date(last+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})
+    : '—';
+
+  const tally='<div class="hf-v-tally">'
+    + '<div><b>'+thisMonth+'</b><span>This month</span></div>'
+    + '<div><b>'+mine.length+'</b><span>All time</span></div>'
+    + '<div><b>'+hfEsc(lastLabel)+'</b><span>Last visit</span></div>'
+    + '</div>';
+
+  box.innerHTML=pills+head+grid+tally;
+}
+
+(function(){
+  const host=document.createElement('div');
+  host.innerHTML=HF_VISITS_HTML;
+  while(host.firstChild)document.body.appendChild(host.firstChild);
+})();
