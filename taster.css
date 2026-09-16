@@ -89,4 +89,65 @@
   body:has(.t-overlay.open) .hf-corner,
   body:has(.cs-overlay.open) .hf-corner,
   body:has(.lucky-overlay.open) .hf-corner,
+  body:has(.hf-v-overlay.open) .hf-corner,
   body:has(.vid-overlay.open) .hf-corner { opacity:0; visibility:hidden; pointer-events:none; }
+
+  /* The handle beside a reviewer's name. It lived only in menu.html, so when
+     index.html started showing handles too they came out unstyled. Shared
+     stylesheet, one copy. */
+  .reviewer-handle { font-family:var(--sans); font-size:.68rem; font-weight:400; color:var(--muted); margin-left:.35rem; letter-spacing:.02em; }
+
+  /* ── MY VISITS ──
+     The check-in QR and the two calendars. One overlay, built the same way as
+     the taster modal above so it inherits the same behaviour on a phone. */
+  .hf-v-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.6); z-index:800; align-items:center; justify-content:center; padding:1rem; }
+  .hf-v-overlay.open { display:flex; }
+  .hf-v-box { background:var(--white); border-radius:16px; width:100%; max-width:440px; overflow:hidden; animation:slideUp .22s ease; max-height:92vh; overflow-y:auto; box-shadow:var(--shadow-lg); }
+  .hf-v-header { background:var(--off-white); padding:1.3rem 1.5rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2; }
+  .hf-v-header h3 { color:var(--text); font-family:var(--serif); font-size:1.25rem; font-weight:600; }
+  .hf-v-body { padding:1.4rem 1.5rem 1.8rem; }
+
+  /* The check-in panel */
+  .hf-v-checkin { text-align:center; padding-bottom:1.3rem; border-bottom:1px solid var(--border); margin-bottom:1.3rem; }
+  .hf-v-qr { width:232px; height:232px; margin:0 auto .9rem; background:#fff; border:1px solid var(--border); border-radius:14px; padding:10px; display:flex; align-items:center; justify-content:center; }
+  .hf-v-qr svg { width:100%; height:100%; display:block; }
+  .hf-v-qr-msg { font-family:var(--sans); font-size:.82rem; color:var(--muted); font-weight:300; line-height:1.6; }
+  .hf-v-code { font-family:var(--sans); font-size:1.15rem; letter-spacing:.3em; font-weight:600; color:var(--text); margin:.15rem 0 .5rem; }
+  .hf-v-code-note { font-family:var(--sans); font-size:.7rem; color:var(--muted); font-weight:300; }
+  /* The bar empties over ninety seconds. A number counting down makes people
+     anxious; a bar just tells them to get on with it. */
+  .hf-v-bar { height:4px; background:var(--border); border-radius:999px; overflow:hidden; margin:.9rem auto .4rem; max-width:232px; }
+  .hf-v-bar i { display:block; height:100%; background:var(--red); border-radius:999px; width:100%; }
+
+  /* Calendar */
+  /* One line whatever the number of restaurants. The pills this replaced
+     wrapped onto a third row at about a dozen and pushed the calendar under
+     the fold. */
+  .hf-v-select { width:100%; border:1px solid var(--border); background:#fff; color:var(--text);
+    border-radius:10px; padding:.7rem 2.3rem .7rem .9rem; margin-bottom:1.1rem;
+    font-family:var(--sans); font-size:.88rem; font-weight:400; line-height:1.4; cursor:pointer; outline:none;
+    -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238A7B6E' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5L6 6.5L11 1.5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right .9rem center; background-size:12px 8px;
+    text-overflow:ellipsis; }
+  .hf-v-select:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(176,16,21,.1); }
+  .hf-v-month { display:flex; align-items:center; justify-content:space-between; margin-bottom:.8rem; }
+  .hf-v-month-name { font-family:var(--serif); font-size:1.1rem; font-weight:600; color:var(--text); }
+  .hf-v-arrow { background:none; border:1px solid var(--border); border-radius:50%; width:30px; height:30px; color:var(--text); cursor:pointer; font-size:.9rem; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .hf-v-arrow:disabled { color:var(--border); cursor:default; }
+  .hf-v-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .hf-v-dow { text-align:center; font-family:var(--sans); font-size:.6rem; font-weight:600; letter-spacing:.12em; color:var(--muted); padding-bottom:.3rem; }
+  .hf-v-day { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; font-family:var(--sans); font-size:.78rem; font-weight:400; color:var(--muted); background:var(--off-white); }
+  .hf-v-day.empty { background:transparent; }
+  .hf-v-day.today { box-shadow:inset 0 0 0 1.5px var(--text); color:var(--text); font-weight:600; }
+  .hf-v-day.went { background:var(--red); color:#fff; font-weight:600; box-shadow:none; }
+  /* A day with more than one restaurant in it. The square can only be marked
+     once, so the dots underneath say how many visits it holds. */
+  .hf-v-day.multi { flex-direction:column; gap:0; line-height:1; }
+  .hf-v-dots { font-style:normal; font-size:.5rem; letter-spacing:.06em; opacity:.85; margin-top:1px; }
+  .hf-v-day.went.today { box-shadow:inset 0 0 0 1.5px var(--ink); }
+  .hf-v-tally { display:flex; gap:.7rem; margin-top:1.1rem; }
+  .hf-v-tally div { flex:1; background:var(--off-white); border-radius:12px; padding:.75rem .5rem; text-align:center; }
+  .hf-v-tally b { display:block; font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); line-height:1.1; }
+  .hf-v-tally span { font-family:var(--sans); font-size:.62rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .hf-v-empty { font-family:var(--sans); font-size:.85rem; font-weight:300; color:var(--muted); text-align:center; padding:1.4rem 0; line-height:1.6; }
