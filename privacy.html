@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy · The Hungry Fork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --red:#B01015; --red-dark:#7E0A0E; --red-light:#F7E3E1;
+    --white:#FCF9F4; --off-white:#F5EEE3; --text:#2B211A;
+    --muted:#8A7B6E; --border:#E9E0D3; --ink:#2B211A;
+    --serif:'Cormorant Garamond', Georgia, serif;
+    --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.75; -webkit-font-smoothing:antialiased; }
+
+  .p-topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .p-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .p-topbar-title { font-family:var(--serif); font-size:1.1rem; font-weight:600; color:var(--white); }
+  .p-spacer { width:56px; }
+
+  .p-wrap { max-width:720px; margin:0 auto; padding:2.2rem 1.15rem 4rem; }
+  h1 { font-family:var(--serif); font-size:clamp(2rem,7vw,2.9rem); font-weight:600; line-height:1.1; margin-bottom:.4rem; }
+  .p-updated { font-size:.78rem; color:var(--muted); letter-spacing:.04em; margin-bottom:2rem; }
+  h2 { font-family:var(--serif); font-size:1.4rem; font-weight:600; margin:2.4rem 0 .7rem; }
+  p { margin-bottom:.95rem; font-weight:300; }
+  strong { font-weight:600; }
+  a { color:var(--red); }
+  ul { margin:0 0 1.1rem 1.1rem; font-weight:300; }
+  li { margin-bottom:.5rem; padding-left:.2rem; }
+
+  .p-lead { background:var(--white); border:1px solid var(--border); border-left:3px solid var(--red); border-radius:12px; padding:1.1rem 1.2rem; margin-bottom:2rem; }
+  .p-lead p:last-child { margin-bottom:0; }
+
+  table { width:100%; border-collapse:collapse; margin:0 0 1.4rem; font-size:.88rem; }
+  th, td { text-align:left; padding:.65rem .7rem; border-bottom:1px solid var(--border); vertical-align:top; font-weight:300; }
+  th { font-family:var(--sans); font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+  td:first-child { font-weight:500; white-space:nowrap; }
+  .p-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  /* On a phone the three columns were squeezed to about 100px each and the
+     third one — "who can see it" — sat off the right edge behind a sideways
+     scroll nobody performs. That is the column the whole table exists for, so
+     below 560px each row becomes a small card and every cell carries its own
+     heading. */
+  @media (max-width:560px) {
+    .p-table-scroll { overflow-x:visible; }
+    table, tbody, tr, td { display:block; width:100%; }
+    thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    tr { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:.35rem .2rem; margin-bottom:.8rem; }
+    td { border-bottom:1px solid var(--border); padding:.6rem .8rem; }
+    tr td:last-child { border-bottom:none; }
+    td:first-child { font-family:var(--serif); font-size:1.15rem; font-weight:600; white-space:normal; }
+    td[data-label]:not(:first-child)::before {
+      content:attr(data-label);
+      display:block; font-size:.6rem; font-weight:600; letter-spacing:.16em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:.15rem;
+    }
+  }
+
+  .p-foot { border-top:1px solid var(--border); margin-top:3rem; padding-top:1.4rem; font-size:.8rem; color:var(--muted); }
+  .p-foot a { margin-right:1rem; }
+</style>
+</head>
+<body>
+
+<div class="p-topbar">
+  <a href="index.html" class="p-home">&#8249; Site</a>
+  <div class="p-topbar-title">Privacy</div>
+  <span class="p-spacer"></span>
+</div>
+
+<div class="p-wrap">
+
+<h1>Privacy Policy</h1>
+<div class="p-updated">The Hungry Fork &middot; Last updated 16 September 2026</div>
+
+<div class="p-lead">
+  <p><strong>The short version.</strong> We ask for your name, phone number, date of birth and gender so you can have an account and rate dishes. <strong>The name you give is shown publicly on the reviews you write.</strong> Your phone number is never shown to anyone. We never sell your personal information.</p>
+  <p>If you choose to check in at a restaurant, we also keep a record of that visit. We never track where your phone is.</p>
+  <p>The rest of this page explains exactly what we hold, why, and who else touches it.</p>
+</div>
+
+<p>The Hungry Fork is operated by <strong>Seb&rsquo;s Analytics LLC</strong>, a limited liability company in the State of New York. This policy covers thehungryfork.fun.</p>
+
+<h2>What we collect, and why</h2>
+
+<div class="p-table-scroll">
+<table>
+  <thead>
+    <tr><th>Information</th><th>Why we have it</th><th>Who can see it</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td data-label="Information">First name<br>Last name</td>
+      <td data-label="Why we have it">To address you, and to show who wrote a review.</td>
+      <td data-label="Who can see it"><strong>Your full name is public</strong> next to your reviews &mdash; first name and last name.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Public handle<br><span style="font-weight:300;">e.g. Karol_I</span></td>
+      <td data-label="Why we have it">Several people share a first name. This tells them apart without revealing anything personal. It is generated for you; you cannot choose or change it.</td>
+      <td data-label="Who can see it">Public, next to your reviews.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Phone number</td>
+      <td data-label="Why we have it">It is how you log in, and we text a code to confirm the number is really yours.</td>
+      <td data-label="Who can see it"><strong>Never shown to anyone</strong> — not to other users, not to restaurants.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">6-digit PIN</td>
+      <td data-label="Why we have it">To log you in.</td>
+      <td data-label="Who can see it"><strong>Nobody, including us.</strong> We store only a scrambled version, protected by a secret key kept outside the database. Your actual PIN is never written down.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Date of birth</td>
+      <td data-label="Why we have it">To confirm you are old enough to use the service, and for the research described below.</td>
+      <td data-label="Who can see it">Only us. Never shown.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Gender</td>
+      <td data-label="Why we have it">For the research described below. You choose from a short list, including &ldquo;other&rdquo;.</td>
+      <td data-label="Who can see it">Only us. Never shown.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Your ratings and comments</td>
+      <td data-label="Why we have it">They are the point of the service.</td>
+      <td data-label="Who can see it"><strong>Public.</strong> Anyone can read them, including restaurants.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Your visits<br><span style="font-weight:300;">check-ins</span></td>
+      <td data-label="Why we have it">To keep the visit calendar in your account. A visit is recorded only when you choose to show your check-in code and a member of restaurant staff confirms it.</td>
+      <td data-label="Who can see it"><strong>Only you and us.</strong> The member of staff confirming it sees your name at that moment. Nobody is given a list of where you have been.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Promotions preference</td>
+      <td data-label="Why we have it">Whether you ticked the box to hear about offers.</td>
+      <td data-label="Who can see it">Only us.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">IP address</td>
+      <td data-label="Why we have it">Used briefly to stop automated abuse of our signup and login. We store a scrambled form, not the address itself.</td>
+      <td data-label="Who can see it">Only us.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>We do not collect</strong> your email address, your payment details, or photographs. We do not run advertising, and we do not use analytics or tracking services.</p>
+
+<p><strong>We never track where your phone is.</strong> The site does not ask for your location and could not follow you if it wanted to. The only place-and-time information we hold is a check-in you decided to make, which is explained below.</p>
+
+<h2>Cookies and what stays on your phone</h2>
+
+<p>We do not use cookies or tracking pixels. We do store two small pieces of information in your own browser, on your own device: the fact that you are logged in, and any dishes you have saved as favourites. They never leave your device, and clearing your browser data removes them.</p>
+
+<h2>Checking in at a restaurant</h2>
+
+<p>If you want a record of the restaurants you have been to, you can check in. It works like this:</p>
+
+<ul>
+  <li>You tap <strong>Check In</strong> and your phone shows a code for <strong>90 seconds</strong>.</li>
+  <li>A member of restaurant staff scans it and confirms you are there.</li>
+  <li>We record the restaurant, the date, and which member of staff confirmed it.</li>
+</ul>
+
+<p>Three things worth knowing:</p>
+
+<ul>
+  <li><strong>The code holds nothing about you.</strong> Not your name, not your number, not your account. If somebody photographs it over your shoulder, they have a ticket that stops working in a minute and a half &mdash; and using it would only record a visit for <em>you</em>.</li>
+  <li><strong>Only one visit per restaurant per day</strong> is recorded, whatever happens.</li>
+  <li><strong>It is entirely your choice.</strong> You can eat at every restaurant on this site and never check in once. Nothing else on The Hungry Fork depends on it.</li>
+</ul>
+
+<h2>Research</h2>
+
+<p>Seb&rsquo;s Analytics LLC studies how people choose food &mdash; how prices, dishes, age and gender relate to what people enjoy. Your ratings feed that research, and so does how often people return to a restaurant, if you check in.</p>
+
+<p>Two commitments about it:</p>
+
+<ul>
+  <li><strong>Only group figures ever leave.</strong> Anything we publish, present or share with a client is a statistic about a group &mdash; an average, a percentage, a count. Never a row about a person.</li>
+  <li><strong>We never publish anything that identifies you.</strong> Your name, phone number, date of birth and gender are never attached to anything we share, in any form.</li>
+</ul>
+
+<p>Your reviews remain public on this site under your name and handle, as they are today. That is separate from the research and is how a review site works.</p>
+
+<h2>Who else touches your information</h2>
+
+<p>We do not sell your personal information, and we do not share it with anyone for their own purposes. A few companies handle parts of it in order to run the service:</p>
+
+<div class="p-table-scroll">
+<table>
+  <thead>
+    <tr><th>Company</th><th>What they do</th><th>What they receive</th></tr>
+  </thead>
+  <tbody>
+    <tr><td data-label="Company">Twilio</td><td data-label="What they do">Sends your verification text message.</td><td data-label="What they receive">Your phone number.</td></tr>
+    <tr><td data-label="Company">Supabase</td><td data-label="What they do">Stores the database.</td><td data-label="What they receive">Everything listed above.</td></tr>
+    <tr><td data-label="Company">Vercel</td><td data-label="What they do">Runs the website.</td><td data-label="What they receive">Information as it passes through, including your IP address.</td></tr>
+    <tr><td data-label="Company">Cloudflare</td><td data-label="What they do">Checks that a real person is signing up, not a machine.</td><td data-label="What they receive">Technical signals from your browser.</td></tr>
+    <tr><td data-label="Company">Upstash</td><td data-label="What they do">Counts login attempts to block attacks.</td><td data-label="What they receive">A scrambled form of your phone number and IP address &mdash; not the originals.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>All of these are United States companies and your information is stored in the United States. This service is intended for people in the United States, and we can only send verification codes to US phone numbers.</p>
+
+<h2>How long we keep it</h2>
+
+<p>We keep your account information for as long as your account exists. If you ask us to delete your account, we delete your name, phone number, date of birth and gender.</p>
+
+<p>Reviews are handled separately: a review can be detached from your account rather than erased, so that a restaurant&rsquo;s rating does not change because someone left. If you want your reviews removed as well, say so and we will remove them.</p>
+
+<p><strong>Your check-ins are deleted with your account</strong> &mdash; all of them, in full. Unlike a review, nobody else&rsquo;s rating depends on them. You can also ask us to delete your visit history and keep the rest of your account.</p>
+
+<h2>Your choices</h2>
+
+<ul>
+  <li><strong>See what we hold about you.</strong> Ask, and we will send it.</li>
+  <li><strong>Correct it.</strong> Ask, and we will fix it.</li>
+  <li><strong>Delete it.</strong> Ask, and we will delete your account as described above.</li>
+  <li><strong>Stop hearing about promotions</strong> at any time.</li>
+</ul>
+
+<p>Write to <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a> from a message we can connect to your account, or tell us the phone number on the account. We reply within 30 days.</p>
+
+<h2>Age</h2>
+
+<p>You must be at least 13 years old to create an account. We do not knowingly collect information from children under 13. If you believe a child under 13 has an account, write to <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a> and we will delete it.</p>
+
+<h2>Keeping it safe</h2>
+
+<p>Your PIN is stored scrambled, protected by a secret key held outside the database, so that even someone who obtained a copy of the database could not work out your PIN. Access to customer information is restricted to the server itself; the code that runs in your browser cannot read it. Nothing online is ever perfectly safe, and we do not claim otherwise &mdash; but if there is ever a breach affecting your information, we will tell you.</p>
+
+<h2>Changes</h2>
+
+<p>If we change this policy, the new version appears here with a new date at the top. If a change materially affects how we use your information, we will make it clear rather than hoping you re-read the page.</p>
+
+<h2>Contact</h2>
+
+<p>Seb&rsquo;s Analytics LLC &middot; New York, NY<br>
+<a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a></p>
+
+<p>This policy is governed by the laws of the State of New York.</p>
+
+<div class="p-foot">
+  <a href="index.html">Home</a>
+  <a href="terms.html">Terms of Service</a>
+  <br><br>
+  &copy;2026 Seb&rsquo;s Analytics LLC
+</div>
+
+</div>
+</body>
+</html>
