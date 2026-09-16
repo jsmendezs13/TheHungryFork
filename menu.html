@@ -365,6 +365,32 @@
   .cave-nav-hint .hint-label { font-family:var(--serif); font-size:1rem; border:2px solid #C01108; border-radius:5px; padding:.12rem .8rem; }
   .hint-tri { color:#C01108; font-size:.72rem; line-height:1; }
   .cave-photo-row { display:flex; align-items:center; gap:.3rem; width:100%; justify-content:center; }
+
+  /* ── SOLD OUT ──
+     The manager marks a dish sold out and it stays that way until they clear
+     it by hand. The plate goes grey and says so across the front, so nobody
+     reads a colour photo of a dish the kitchen has run out of. */
+  .cave-media { position:relative; }
+  .cave-media.is-sold img { filter:grayscale(1) brightness(.58) contrast(.92); transition:filter .25s; }
+  .cave-sold-tag { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-7deg);
+    background:rgba(20,16,13,.68); color:#fff; font-family:var(--sans);
+    font-size:clamp(.72rem,3.2vw,1.05rem); font-weight:700; letter-spacing:.3em; text-transform:uppercase;
+    padding:.5rem 1rem .5rem 1.3rem; border:2px solid rgba(255,255,255,.92); border-radius:6px;
+    white-space:nowrap; pointer-events:none; text-shadow:0 2px 10px rgba(0,0,0,.7);
+    box-shadow:0 8px 28px rgba(0,0,0,.45); }
+  .cave-sold-note { font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--red); margin-top:.3rem; }
+
+  /* Shown on every dish, always, whether or not the restaurant has declared
+     anything. A line that only appeared sometimes would turn its absence into
+     a statement that the dish is safe, which is not something this site can
+     ever promise. */
+  .cave-allergen-ask { font-family:var(--sans); font-size:.7rem; font-weight:500; color:var(--muted);
+    letter-spacing:.04em; text-align:center; margin:.5rem 0 0; }
+
+  /* The handle beside a reviewer's name. Several people are called Karol; the
+     phone number that tells them apart must never appear, so this does. */
+  .reviewer-handle { font-family:var(--sans); font-size:.68rem; font-weight:400; color:var(--muted); margin-left:.35rem; letter-spacing:.02em; }
   .cave-side { display:flex; align-items:center; gap:4px; cursor:pointer; min-width:44px; justify-content:center; -webkit-tap-highlight-color:transparent; }
   .side-emoji { font-size:1.45rem; }
   .cave-recs { display:flex; gap:1rem; width:100%; justify-content:space-around; margin-top:1rem; padding-top:.9rem; border-top:1px solid var(--border); }
@@ -621,6 +647,7 @@
   <img src="hungry-fork-logo.png" alt="The Hungry Fork">
   <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
   <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
+  <p style="margin-top:10px;"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></p>
 </footer>
 
 <!-- DISH VIEW MODAL -->
@@ -945,10 +972,16 @@ function renderCave(animClass,mediaOnly){
       ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.5rem;"><strong>Choice of the following:</strong></p>`+d.choices.map(x=>`<p class="cave-meta-line">${x}</p>`).join(''):''}
     </div>`;
   }
+  // Sold out is a flag the manager sets from /manager.html; it clears only when
+  // a person clears it. Nothing here resets on a timer.
+  const soldOut = dishIsSoldOut(d);
+  const soldTag = soldOut ? '<span class="cave-sold-tag">Sold Out</span>' : '';
+
   if(mediaOnly){
     const mediaEl=card.querySelector('.cave-media');
     if(mediaEl){
-      mediaEl.innerHTML=media;
+      mediaEl.className = 'cave-media' + (soldOut ? ' is-sold' : '');
+      mediaEl.innerHTML = media + soldTag;
       playCardAnim(card,animClass);
       return;
     }
@@ -960,7 +993,7 @@ function renderCave(animClass,mediaOnly){
       <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
       <div class="cave-photo-row">
         ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
-        <div class="cave-media">${media}</div>
+        <div class="cave-media${soldOut?' is-sold':''}">${media}${soldTag}</div>
         ${multi?`<button class="cave-side" onclick="caveDish(1)" aria-label="Next dish"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></button>`:'<span class="cave-side"></span>'}
       </div>
       <div class="cave-vdots-h">
@@ -974,6 +1007,8 @@ function renderCave(animClass,mediaOnly){
       <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       <div class="cave-dish-name">${d.name}</div>
       <div class="cave-dish-price">$${d.price}</div>
+      ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
+      <div class="cave-allergen-ask">Always ask staff about allergens.</div>
       <button class="cave-share-btn" onclick="caveShare()">Share</button>
     </section>
     <section class="cave-sec cave-sec-recs">
@@ -1004,6 +1039,7 @@ function caveFootHTML(){
     + '<img src="hungry-fork-logo.png" alt="The Hungry Fork">'
     + '<div class="cave-foot-line">123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm</div>'
     + '<div class="cave-foot-line">Powered by <a href="index.html">Seb\'s Analytics LLC</a></div>'
+    + '<div class="cave-foot-line"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></div>'
     + '</div>';
 }
 function cavePin(e,id){
@@ -1245,7 +1281,11 @@ async function submitRating(){
     signature_style:parseInt(document.getElementById('sl-sig').value),
     hospitality:parseInt(document.getElementById('sl-hosp').value),
     atmosphere_vibe:parseInt(document.getElementById('sl-atm').value),
-    reviewer_name:currentTaster.first_name||null,
+    // Full name, not just the first. Several people are called Karol and the
+    // handle beside it is what makes them distinct, but Sebastian wants the
+    // whole name shown. Reviews posted before this keep whatever they stored.
+    reviewer_name:[currentTaster.first_name,currentTaster.last_name].filter(Boolean).join(' ')||null,
+    reviewer_username:currentTaster.username||null,
     dish_comment:document.getElementById('r-dish-comment').value.trim()||null,
     restaurant_comment:document.getElementById('r-rest-comment').value.trim()||null,
   };
@@ -1307,7 +1347,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
     const canReply=currentTaster&&currentTaster.is_restaurant_admin&&currentTaster.restaurant_id===restaurantId;
     list.innerHTML=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const name=r.reviewer_name||r.tasters?.first_name||(currentTaster&&r.taster_id===currentTaster.id?currentTaster.first_name:'Anonymous');
+      const name=reviewerLabel(r);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       let replyHtml='';
       if(r.reply_text){
@@ -1347,6 +1387,18 @@ async function postReply(reviewId,dishId,restaurantId,listId,labelId){
 // ── REVIEWS PANEL ──
 let rvData=[],rvSort='new';
 function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
+// A review shows the name the person typed plus the handle the platform gave
+// them. The name is theirs and repeats; the handle is unique and assigned.
+function reviewerLabel(r){
+  const name = r.reviewer_name || r.tasters?.first_name
+    || (currentTaster && r.taster_id === currentTaster.id ? currentTaster.first_name : 'Anonymous');
+  const handle = r.reviewer_username
+    || (currentTaster && r.taster_id === currentTaster.id ? currentTaster.username : '');
+  // hfEsc comes from taster.js, which loads before this script. Escaping here
+  // is a small fix on the side: reviewer_name is whatever the browser sent when
+  // the review was posted, and it was going into innerHTML raw.
+  return hfEsc(name) + (handle ? '<span class="reviewer-handle">(' + hfEsc(handle) + ')</span>' : '');
+}
 function rvStarsInline(n){let out='';for(let i=1;i<=5;i++){out+=`<span class="rv-star${i<=n?' on':''}">${STAR_GLYPH}</span>`;}return out;}
 async function openReviewsPanel(){
   if(!caveDishes.length)return;
@@ -1396,7 +1448,7 @@ function rvRenderList(){
   else arr.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   if(!arr.length){list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';return;}
   list.innerHTML=arr.map(r=>{
-    const name=r.reviewer_name||r.tasters?.first_name||(currentTaster&&r.taster_id===currentTaster.id?currentTaster.first_name:'Anonymous');
+    const name=reviewerLabel(r);
     const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
     return`<div class="review-item">
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
