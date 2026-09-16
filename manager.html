@@ -89,7 +89,45 @@
   .m-save:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
   .m-revert { background:none; border:none; color:var(--muted); font-size:.76rem; text-decoration:underline; cursor:pointer; font-family:var(--sans); }
 
+  /* ── ALLERGEN CHECKLIST ── */
+  .m-group { border-top:1px solid var(--border); margin-top:1.1rem; padding-top:.9rem; }
+  .m-group-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-group-title { font-family:var(--serif); font-size:1.02rem; font-weight:600; }
+  .m-group-sum { font-size:.7rem; color:var(--muted); }
+  .m-group-caret { color:var(--muted); font-size:.75rem; transition:transform .25s; }
+  .m-group.open .m-group-caret { transform:rotate(90deg); }
+  .m-group-body { display:none; padding-top:.7rem; }
+  .m-group.open .m-group-body { display:block; }
+
+  .m-alg-note { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.75rem .85rem; font-size:.76rem; line-height:1.6; margin-bottom:.9rem; }
+  .m-alg-sub { font-size:.64rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:.9rem 0 .5rem; }
+  .m-alg-sub:first-child { margin-top:0; }
+  .m-alg-grid { display:grid; grid-template-columns:1fr 1fr; gap:.4rem .6rem; }
+  @media (max-width:420px) { .m-alg-grid { grid-template-columns:1fr; } }
+  .m-alg { display:flex; align-items:center; gap:.5rem; padding:.42rem .55rem; border:1px solid var(--border); border-radius:9px; background:#fff; cursor:pointer; font-size:.82rem; -webkit-tap-highlight-color:transparent; }
+  .m-alg input { accent-color:var(--red); width:16px; height:16px; flex:none; margin:0; }
+  .m-alg.on { border-color:rgba(176,16,21,.45); background:#FDF4F3; font-weight:500; }
+  .m-alg.major { border-left:3px solid var(--red); }
+
+  .m-alg-count { display:inline-block; font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; background:#F6E2E1; color:var(--red-dark); }
+  .m-alg-count.none { background:var(--off-white); color:var(--muted); }
+
   .m-locked { margin-top:1rem; padding:.8rem .9rem; background:var(--off-white); border-radius:10px; font-size:.76rem; color:var(--muted); line-height:1.65; }
+
+  /* ── PEOPLE ── */
+  .m-person { display:flex; align-items:center; gap:.8rem; padding:.75rem 0; border-bottom:1px solid var(--border); }
+  .m-person:last-child { border-bottom:none; }
+  .m-person-id { flex:1; min-width:0; }
+  .m-person-name { font-size:.92rem; font-weight:500; }
+  .m-person-sub { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+  .m-person-x { flex:none; background:none; border:1px solid var(--border); color:var(--muted); border-radius:999px; padding:.3rem .75rem; font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .m-person-x:hover { border-color:var(--red); color:var(--red); }
+  .m-person-x:disabled { opacity:.4; cursor:not-allowed; }
+  .m-add-row { display:flex; gap:.5rem; margin-top:1rem; flex-wrap:wrap; }
+  .m-add-row .m-input { flex:1 1 160px; }
+  .m-add-row .m-select { flex:0 1 130px; }
+  .m-codes { display:flex; align-items:center; gap:.45rem; font-size:.7rem; color:var(--muted); margin-top:.25rem; }
+  .m-codes input { accent-color:var(--red); margin:0; }
 
   .m-empty { text-align:center; padding:3rem 1rem; color:var(--muted); font-size:.9rem; }
   .m-err { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.85rem 1rem; font-size:.85rem; margin-bottom:1rem; }
@@ -132,7 +170,7 @@
 const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHdyandzcXJsZmR4Z3FtcHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjczMTksImV4cCI6MjA5ODM0MzMxOX0.eeD6NYU4u-heag5LbkZJT-jENI3AuodlMzebOsxOv2c';
 
-const LIMITS = { description:600, about:4000, modifications:1000, wine:400, cocktail:400, ingredients:1000 };
+const LIMITS = { name:80, description:600, about:4000, modifications:1000, wine:400, cocktail:400, ingredients:1000, allergens_text:1000 };
 
 let ACCESS = null;         // what this account may do, straight from the server
 let RESTAURANT = null;     // the one being managed right now
@@ -231,6 +269,7 @@ async function loadDishes(){
     return;
   }
   render();
+  loadPeople();   // fills in the People card once the dishes are on screen
 }
 
 // ── RENDER ──
@@ -253,11 +292,12 @@ function header(){
 }
 
 function render(){
+  const people = peopleSection();
   if(!DISHES_ROWS.length){
-    wrap().innerHTML = header() + '<div class="m-empty">This restaurant has no dishes yet.</div>';
+    wrap().innerHTML = header() + people + '<div class="m-empty">This restaurant has no dishes yet.</div>';
     return;
   }
-  wrap().innerHTML = header() + DISHES_ROWS.map(dishCard).join('');
+  wrap().innerHTML = header() + people + DISHES_ROWS.map(dishCard).join('');
 }
 
 function dishCard(d){
@@ -266,7 +306,10 @@ function dishCard(d){
   const flags = []
     .concat(soldOut ? '<span class="m-flag sold">Sold out</span>' : [])
     .concat(d.is_hidden ? '<span class="m-flag hid">Hidden</span>' : [])
-    .concat(d.is_chefs_pick ? '<span class="m-flag pick">Chef\'s Pick</span>' : []);
+    .concat(d.is_chefs_pick ? '<span class="m-flag pick">Chef\'s Pick</span>' : [])
+    // Visible from the list, because a dish with no allergens declared is the
+    // one that needs attention.
+    .concat(allergenCount(d) === 0 ? '<span class="m-flag sold">No allergens set</span>' : []);
 
   return '<div class="m-dish'+(open?' open':'')+(d.is_hidden?' is-hidden':'')+'" id="dish-'+d.id+'">'
     + '<div class="m-dish-head" onclick="toggleDish('+d.id+')">'
@@ -287,7 +330,7 @@ function dishCard(d){
     +     '<button class="m-save" id="save-'+d.id+'" onclick="saveText('+d.id+')" disabled>Save changes</button>'
     +     '<button class="m-revert" onclick="revert('+d.id+')">Undo</button>'
     +   '</div>'
-    +   '<div class="m-locked"><strong>Photos, dish name and allergens are not editable here.</strong> Photography is work Seb\'s Analytics is paid for, the name is what every review is attached to, and a wrong allergen is a hospital visit rather than a typo. Message Seb for any of the three.</div>'
+    +   '<div class="m-locked"><strong>Photos are not editable here.</strong> Photography is work Seb\'s Analytics is paid for &mdash; message Seb to change a dish photo. Everything else about this dish is yours to edit.</div>'
     + '</div>'
     + '</div>';
 }
@@ -311,13 +354,249 @@ function textFields(d){
     const counter = LIMITS[field] ? '<div class="m-count" id="c-'+d.id+'-'+field+'">'+String(value||'').length+' / '+LIMITS[field]+'</div>' : '';
     return '<div class="m-field"><div class="m-field-label">'+label+'</div>'+control+counter+'</div>';
   };
-  return f('price','Price',d.price,'price')
+  return f('name','Dish name',d.name,'text')
+    + f('price','Price',d.price,'price')
     + f('description','Short description',d.description,'area')
     + f('about','About this dish',d.about,'area')
     + f('ingredients','Ingredients (comma separated)',d.ingredients,'area')
     + f('modifications','Modifications',d.modifications,'area')
     + f('wine','Wine pairing',d.wine,'text')
-    + f('cocktail','Cocktail pairing',d.cocktail,'text');
+    + f('cocktail','Cocktail pairing',d.cocktail,'text')
+    + classifySection(d)
+    + allergenSection(d);
+}
+
+
+// ── ALLERGENS ──
+// The same 30 keys as api/_lib/dish-fields.js, with names a person can read.
+// The major nine come first because they cause most serious reactions and a
+// manager in a rush should meet them before 'buckwheat'.
+const ALLERGEN_GROUPS = [
+  { title: 'The major nine', major: true, items: [
+    ['allergen_milk_dairy','Milk / dairy'], ['allergen_eggs','Eggs'],
+    ['allergen_fish','Fish'], ['allergen_crustaceans','Crustaceans (shrimp, crab)'],
+    ['allergen_tree_nuts','Tree nuts'], ['allergen_peanuts','Peanuts'],
+    ['allergen_wheat','Wheat'], ['allergen_soy','Soy'], ['allergen_sesame','Sesame'],
+  ]},
+  { title: 'Also commonly declared', items: [
+    ['allergen_molluscs','Molluscs (clams, squid)'], ['allergen_gluten_cereals','Gluten cereals'],
+    ['allergen_celery','Celery'], ['allergen_mustard','Mustard'],
+    ['allergen_sulphites','Sulphites'], ['allergen_lupin','Lupin'],
+  ]},
+  { title: 'Everything else', items: [
+    ['allergen_coconut','Coconut'], ['allergen_corn_maize','Corn / maize'],
+    ['allergen_other_seeds','Other seeds'], ['allergen_other_legumes','Other legumes'],
+    ['allergen_buckwheat','Buckwheat'], ['allergen_rice','Rice'],
+    ['allergen_fruits','Fruits'], ['allergen_vegetables','Vegetables'],
+    ['allergen_garlic_onion','Garlic / onion'], ['allergen_spices_herbs','Spices / herbs'],
+    ['allergen_meat_alpha_gal','Red meat (alpha-gal)'], ['allergen_gelatin_collagen','Gelatin / collagen'],
+    ['allergen_yeast','Yeast'], ['allergen_additives_preservatives','Additives / preservatives'],
+    ['allergen_other','Other'],
+  ]},
+];
+const ALLERGEN_KEYS = ALLERGEN_GROUPS.flatMap(g => g.items.map(i => i[0]));
+
+// How the dish is classified. Plain short labels, used for search and for the
+// research later — not descriptions.
+const CLASSIFY_FIELDS = [
+  ['dish_type','Dish type'], ['cuisine_origin','Cuisine origin'],
+  ['main_ingredient','Main ingredient'], ['protein_type','Protein type'],
+  ['cooking_method','Cooking method'], ['flavor_profile','Flavour profile'],
+  ['meal_moment','Meal moment'], ['temperature','Temperature'],
+  ['spice_level','Spice level'], ['portion_format','Portion format'],
+];
+
+// Which collapsible sections are open, by dish. Kept outside the render so a
+// save does not fold everything up again mid-edit.
+let openGroups = {};
+function groupOpen(dishId, key){ return !!(openGroups[dishId] && openGroups[dishId][key]); }
+function toggleGroup(dishId, key){
+  openGroups[dishId] = openGroups[dishId] || {};
+  openGroups[dishId][key] = !openGroups[dishId][key];
+  render();
+}
+
+function allergenCount(d){ return ALLERGEN_KEYS.filter(k => d[k] === true).length; }
+
+function allergenSection(d){
+  const n = allergenCount(d);
+  const open = groupOpen(d.id, 'alg');
+  const body =
+      '<div class="m-alg-note"><strong>This is the restaurant\'s own declaration.</strong> '
+    + 'Tick everything the dish contains, including anything it touches in the kitchen. '
+    + 'A customer with that allergy sees a warning on this dish. '
+    + 'Leaving a box unticked is read as &ldquo;not present&rdquo; &mdash; so if you are unsure, tick it.</div>'
+    + ALLERGEN_GROUPS.map(g =>
+        '<div class="m-alg-sub">'+g.title+'</div>'
+      + '<div class="m-alg-grid">'
+      + g.items.map(([key,label])=>{
+          const on = d[key] === true;
+          return '<label class="m-alg'+(on?' on':'')+(g.major?' major':'')+'">'
+            + '<input type="checkbox"'+(on?' checked':'')+' onchange="toggleAllergen('+d.id+',\''+key+'\',this.checked)">'
+            + '<span>'+label+'</span></label>';
+        }).join('')
+      + '</div>'
+      ).join('')
+    + '<div class="m-field"><div class="m-field-label">Anything else worth saying</div>'
+    + '<textarea class="m-textarea" id="f-'+d.id+'-allergens_text" oninput="dirty('+d.id+',\'allergens_text\')" '
+    + 'placeholder="e.g. fried in the same oil as shellfish">'+esc(d.allergens_text||'')+'</textarea>'
+    + '<div class="m-count" id="c-'+d.id+'-allergens_text">'+String(d.allergens_text||'').length+' / 1000</div></div>';
+
+  return '<div class="m-group'+(open?' open':'')+'">'
+    + '<div class="m-group-head" onclick="toggleGroup('+d.id+',\'alg\')">'
+    +   '<div><span class="m-group-title">Allergens</span> '
+    +   '<span class="m-alg-count'+(n?'':' none')+'">'+(n?n+' ticked':'none set')+'</span></div>'
+    +   '<span class="m-group-caret">&#9656;</span>'
+    + '</div>'
+    + '<div class="m-group-body">'+body+'</div>'
+    + '</div>';
+}
+
+function classifySection(d){
+  const open = groupOpen(d.id, 'cls');
+  const filled = CLASSIFY_FIELDS.filter(([k]) => d[k]).length;
+  const body = CLASSIFY_FIELDS.map(([key,label]) =>
+      '<div class="m-field"><div class="m-field-label">'+label+'</div>'
+    + '<input class="m-input" id="f-'+d.id+'-'+key+'" value="'+esc(d[key]==null?'':d[key])+'" '
+    + 'oninput="dirty('+d.id+',\''+key+'\')"></div>').join('');
+  return '<div class="m-group'+(open?' open':'')+'">'
+    + '<div class="m-group-head" onclick="toggleGroup('+d.id+',\'cls\')">'
+    +   '<div><span class="m-group-title">Classification</span> '
+    +   '<span class="m-group-sum">'+filled+' of '+CLASSIFY_FIELDS.length+' filled</span></div>'
+    +   '<span class="m-group-caret">&#9656;</span>'
+    + '</div>'
+    + '<div class="m-group-body">'+body+'</div>'
+    + '</div>';
+}
+
+// An allergen saves the moment it is ticked. No Save button between a manager
+// remembering the dish has sesame in it and the warning reaching a customer.
+async function toggleAllergen(dishId, key, checked){
+  const d = rowFor(dishId); if(!d) return;
+  const saved = await save(dishId, { [key]: !!checked });
+  if(saved) showToast(checked ? 'Allergen added' : 'Allergen removed');
+}
+
+
+// ── PEOPLE ──
+// The page draws only what the server says this account may do; the server
+// decides again on every request. api/roles.js has the rule: you may grant or
+// remove a role strictly below your own level.
+let PEOPLE = null;
+
+const ROLE_LABEL = { owner:'Owner', manager:'Manager', crew:'Crew' };
+const ROLE_LEVEL = { crew:1, manager:2, owner:3 };
+
+async function loadPeople(){
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'list', restaurantId:RESTAURANT.id})
+    });
+    if(!res.ok) throw new Error(data.error||'Could not load the people list.');
+    PEOPLE = data;
+  }catch(e){
+    PEOPLE = {error:e.message};
+  }
+  render();
+}
+
+function peopleSection(){
+  if(!PEOPLE) return '<div class="m-card"><div class="m-eyebrow">People</div><div class="m-sub">Loading…</div></div>';
+  if(PEOPLE.error) return '<div class="m-card"><div class="m-eyebrow">People</div><div class="m-err" style="margin:0;">'+esc(PEOPLE.error)+'</div></div>';
+
+  // You may appoint any role below your own. Platform admin (4) can appoint
+  // owners; an owner (3) cannot.
+  const grantable = Object.keys(ROLE_LEVEL).filter(r => PEOPLE.myLevel > ROLE_LEVEL[r])
+                          .sort((a,b)=>ROLE_LEVEL[b]-ROLE_LEVEL[a]);
+
+  const list = PEOPLE.people.length
+    ? PEOPLE.people.map(p =>
+        '<div class="m-person">'
+      + '<div class="m-person-id">'
+      +   '<div class="m-person-name">'+esc(p.name)+' <span class="m-role'+(p.role==='owner'?' owner':'')+'">'+esc(ROLE_LABEL[p.role]||p.role)+'</span></div>'
+      +   '<div class="m-person-sub">'+(p.username?esc(p.username)+' · ':'')+(p.phoneEnds?'ends '+esc(p.phoneEnds):'')+'</div>'
+      +   (p.role==='crew'
+            ? '<label class="m-codes"><input type="checkbox"'+(p.canIssueCodes?' checked':'')
+              + ' onchange="setCodes('+p.id+',this.checked)"> can give out loyalty codes '
+              + '<span style="opacity:.7;">(not active yet)</span></label>'
+            : '')
+      + '</div>'
+      + '<button class="m-person-x" onclick="removePerson('+p.id+',\''+esc(p.name).replace(/'/g,"\\'")+'\')"'
+      +   (p.canRemove?'':' disabled title="Your role cannot remove this person"')+'>Remove</button>'
+      + '</div>').join('')
+    : '<div class="m-sub" style="padding:.5rem 0;">Nobody has a role here yet.</div>';
+
+  const adder = grantable.length
+    ? '<div class="m-add-row">'
+      + '<input class="m-input" id="add-phone" type="tel" placeholder="Phone number" inputmode="tel">'
+      + '<select class="m-select" id="add-role">'
+      +   grantable.map(r=>'<option value="'+r+'">'+ROLE_LABEL[r]+'</option>').join('')
+      + '</select>'
+      + '<button class="m-btn" id="add-btn" onclick="addPerson()">Add</button>'
+      + '</div>'
+      + '<div class="m-sub" style="margin-top:.6rem;font-size:.76rem;">'
+      + 'They need an account on the site already &mdash; adding a number that has never signed up would leave a permission waiting for whoever claims that number next.'
+      + '</div>'
+    : '<div class="m-sub" style="margin-top:.8rem;">Your role cannot appoint anyone here.</div>';
+
+  return '<div class="m-card">'
+    + '<div class="m-eyebrow">People</div>'
+    + '<div class="m-h" style="font-size:1.25rem;margin-bottom:.8rem;">Who can manage '+esc(RESTAURANT.name||'this restaurant')+'</div>'
+    + list + adder
+    + '</div>';
+}
+
+async function addPerson(){
+  const phoneEl = document.getElementById('add-phone');
+  const roleEl  = document.getElementById('add-role');
+  const btn     = document.getElementById('add-btn');
+  const phone = (phoneEl.value||'').trim();
+  if(!phone){ showToast('Enter a phone number'); return; }
+
+  btn.disabled = true; btn.textContent = 'Adding…';
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'grant', restaurantId:RESTAURANT.id, phone, role:roleEl.value})
+    });
+    if(!res.ok){ showToast(data.error||'Could not add that person.'); }
+    else {
+      showToast(data.added.name+' is now '+ROLE_LABEL[data.added.role]);
+      phoneEl.value='';
+      await loadPeople();
+      return;
+    }
+  }catch(e){ showToast(e.message||'Network error.'); }
+  btn.disabled = false; btn.textContent = 'Add';
+}
+
+async function removePerson(roleId, name){
+  if(!confirm('Remove '+name+'?')) return;
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'revoke', restaurantId:RESTAURANT.id, roleId})
+    });
+    if(!res.ok){ showToast(data.error||'Could not remove that person.'); return; }
+    showToast('Removed');
+    loadPeople();
+  }catch(e){ showToast(e.message||'Network error.'); }
+}
+
+async function setCodes(roleId, on){
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'codes', restaurantId:RESTAURANT.id, roleId, canIssueCodes:on})
+    });
+    if(!res.ok) showToast(data.error||'Could not save that.');
+    else showToast(on?'Can give out codes':'Cannot give out codes');
+  }catch(e){ showToast(e.message||'Network error.'); }
 }
 
 // ── INTERACTION ──
@@ -329,6 +608,7 @@ function toggleDish(id){
 function switchRestaurant(id){
   RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(id)) || RESTAURANT;
   openDishId = null;
+  PEOPLE = null;          // the previous restaurant's people are not this one's
   loadDishes();
 }
 
@@ -365,7 +645,9 @@ function collectText(id){
     const n = Number(priceEl.value);
     if(priceEl.value!=='' && Number.isFinite(n) && Math.round(n*100)!==Math.round(Number(d.price||0)*100)) out.price = n;
   }
-  ['description','about','ingredients','modifications','wine','cocktail'].forEach(field=>{
+  const TEXTY = ['name','description','about','ingredients','modifications','wine','cocktail','allergens_text']
+    .concat(CLASSIFY_FIELDS.map(c=>c[0]));
+  TEXTY.forEach(field=>{
     const el = document.getElementById('f-'+id+'-'+field);
     if(!el) return;
     const now = el.value.trim();
