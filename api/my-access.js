@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
   let restaurants = [];
 
-    if (access.isPlatformAdmin) {
+  if (access.isPlatformAdmin) {
     // You see every restaurant on the platform.
     const r = await sb('/restaurants?select=id,name&order=name.asc');
 
