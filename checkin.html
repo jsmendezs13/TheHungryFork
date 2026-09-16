@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<!-- A live ticket sits in this page's URL for ninety seconds. Referrers are the
+     one way a URL leaks to somebody else's server, so they are turned off. -->
+<meta name="referrer" content="no-referrer">
+<title>Confirm a Visit · The Hungry Fork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --red: #B01015; --red-dark: #7E0A0E; --red-light: #F7E3E1;
+    --white: #FCF9F4; --off-white: #F5EEE3; --text: #2B211A;
+    --muted: #8A7B6E; --border: #E9E0D3; --green: #4C7A4C; --ink: #2B211A;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --shadow-sm: 0 1px 3px rgba(43,33,26,.06);
+    --shadow-md: 0 10px 30px rgba(43,33,26,.10);
+    --shadow-lg: 0 20px 50px rgba(43,33,26,.18);
+  }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.65; -webkit-font-smoothing:antialiased; }
+
+  .m-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .m-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .m-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
+  .m-topbar-spacer { width:64px; }
+
+  .c-wrap { max-width:460px; margin:0 auto; padding:2rem 1rem 3rem; }
+  .m-card { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.5rem 1.3rem; box-shadow:var(--shadow-sm); margin-bottom:1rem; }
+  .m-eyebrow { font-size:.66rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.5rem; }
+  .m-h { font-family:var(--serif); font-size:1.7rem; font-weight:600; line-height:1.2; margin-bottom:.4rem; }
+  .m-sub { font-size:.86rem; font-weight:300; color:var(--muted); line-height:1.6; }
+  .m-err { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.85rem 1rem; font-size:.85rem; margin-bottom:1rem; }
+
+  .m-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:1rem 1.6rem; font-size:.82rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s, transform .15s; }
+  .m-btn:hover { background:#463629; transform:translateY(-1px); }
+  .m-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; transform:none; }
+  .m-btn-ghost { width:100%; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); margin-top:.6rem; }
+  .m-select { width:100%; border:1px solid var(--border); border-radius:10px; padding:.75rem .9rem; font-size:.95rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; margin-bottom:1rem; }
+
+  .c-who { text-align:center; padding:.4rem 0 1.2rem; }
+  .c-name { font-family:var(--serif); font-size:2rem; font-weight:600; line-height:1.15; }
+  .c-handle { font-size:.78rem; color:var(--muted); letter-spacing:.06em; margin-top:.15rem; }
+  .c-mark { width:66px; height:66px; border-radius:50%; margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; font-size:2rem; background:var(--red-light); color:var(--red-dark); }
+  .c-mark.done { background:#E4EFE4; color:var(--green); }
+  .c-note { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; font-size:.82rem; color:var(--muted); font-weight:300; margin-bottom:1rem; text-align:center; }
+  /* The "they have already been in today" line sat in a grey box identical to
+     the restaurant name above it, so the one thing the waiter needed to notice
+     looked exactly like the thing they did not. */
+  .c-note.c-warn { background:var(--red-light); color:var(--red-dark); border:1px solid rgba(176,16,21,.25); font-weight:400; }
+  .c-code-input { width:100%; border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem; font-size:1.5rem; letter-spacing:.35em; text-align:center; font-weight:600; font-family:var(--sans); text-transform:uppercase; color:var(--text); background:#fff; outline:none; margin-bottom:1rem; }
+  .c-code-input:focus { border-color:var(--red); }
+  .m-skel { height:150px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:14px; border:1px solid var(--border); }
+  @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+<link rel="stylesheet" href="/taster.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head>
+<body>
+
+<div class="m-topbar">
+  <a href="index.html" class="m-home">&#8249; Site</a>
+  <div class="m-topbar-title">Check In</div>
+  <span class="m-topbar-spacer"></span>
+</div>
+
+<div class="c-wrap" id="c-wrap"><div class="m-skel"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>window.TASTER={successLabel:'Continue',onSuccess:function(){boot();}};</script>
+<script src="/taster.js"></script>
+<script>
+// ── checkin.html ──
+//
+// What opens when a member of staff points their phone's camera at a
+// customer's QR code. The customer never sees this page.
+//
+// The page shows a name and a button. Everything that matters happens in
+// /api/checkin-confirm, which re-reads the pressing account's role from the
+// database before it records anything — so this page is allowed to be simple,
+// and unhiding a button in a console achieves nothing.
+
+let TICKET = null;      // the long ticket out of the QR link
+let PREVIEW = null;     // what the server told us about it
+let CHOSEN  = null;     // which restaurant, when staff work at more than one
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function wrap(){return document.getElementById('c-wrap');}
+
+async function callApi(path, body){
+  const res = await fetch(path,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+    body:JSON.stringify(body||{})
+  });
+  const text = await res.text();
+  let data=null;
+  try{ data = text ? JSON.parse(text) : null; }catch(e){}
+  if(data===null && !res.ok){
+    const snippet = text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160);
+    throw new Error('The server returned '+res.status+(snippet?' — "'+snippet+'"':'')+'.');
+  }
+  return { res, data: data || {} };
+}
+
+function boot(){
+  // The ticket is read once and then wiped out of the address bar. It is
+  // single-use and dies in ninety seconds anyway, but a URL in a browser's
+  // history is a URL that gets shared by accident.
+  if(TICKET===null){
+    const params = new URLSearchParams(location.search);
+    TICKET = params.get('t') || '';
+    if(TICKET) history.replaceState(null,'','/checkin.html');
+  }
+
+  if(!currentSession){
+    wrap().innerHTML =
+      '<div class="m-card">'
+    + '<div class="m-eyebrow">Staff only</div>'
+    + '<div class="m-h">Log in to confirm this visit</div>'
+    + '<div class="m-sub">Use your own phone number and PIN. Your account has to be listed as crew, manager or owner at the restaurant — ask your manager if it is not.</div>'
+    + '<div style="margin-top:1.3rem;"><button class="m-btn" onclick="openTasterModal()">Log In</button></div>'
+    + '</div>';
+    return;
+  }
+
+  if(!TICKET){ askForCode(); return; }
+  lookUp({ token: TICKET });
+}
+
+// The fallback: a camera that will not focus, and six characters read aloud.
+function askForCode(err){
+  wrap().innerHTML =
+    '<div class="m-card">'
+  + (err ? '<div class="m-err">'+esc(err)+'</div>' : '')
+  + '<div class="m-eyebrow">Confirm a visit</div>'
+  + '<div class="m-h">Type their code</div>'
+  + '<div class="m-sub" style="margin-bottom:1.1rem;">Ask the customer to tap <strong>Check In</strong> on their account. Six characters appear under their QR code.</div>'
+  + '<input class="c-code-input" id="c-code" maxlength="8" autocomplete="off" autocapitalize="characters" '
+  +        'autocorrect="off" spellcheck="false" placeholder="A2C4E6" aria-label="Check-in code">'
+  + '<button class="m-btn" onclick="submitCode()">Find</button>'
+  + '</div>';
+  const box=document.getElementById('c-code');
+  if(box){ box.focus(); box.addEventListener('keydown',function(e){ if(e.key==='Enter') submitCode(); }); }
+}
+
+function submitCode(){
+  const raw=(document.getElementById('c-code')||{}).value||'';
+  if(raw.replace(/[^0-9A-Za-z]/g,'').length!==6){ askForCode('That code is six characters.'); return; }
+  lookUp({ code: raw });
+}
+
+// Look, do not touch. This deliberately does not spend the ticket — a waiter
+// who opens the link and gets distracted has not destroyed anything.
+async function lookUp(body){
+  wrap().innerHTML='<div class="m-skel"></div>';
+  let data, res;
+  try{
+    ({res, data} = await callApi('/api/checkin-confirm', body));
+    if(res.status===401){ logout(); boot(); return; }
+    if(!res.ok) throw new Error(data.error||'That code did not work.');
+  }catch(e){
+    // Back to the manual form, with the reason on it: the next thing a waiter
+    // does is ask for a fresh code, and they need somewhere to type it.
+    askForCode(e.message||'That code did not work.');
+    return;
+  }
+
+  PREVIEW = data;
+  PREVIEW.body = body;
+  CHOSEN = data.restaurantId != null ? String(data.restaurantId)
+         : (data.restaurants && data.restaurants.length===1 ? String(data.restaurants[0].id) : null);
+  renderConfirm();
+}
+
+function renderConfirm(){
+  const places = PREVIEW.restaurants || [];
+  const picker = places.length>1
+    ? '<div class="m-sub" style="margin-bottom:.4rem;">Which restaurant?</div>'
+      + '<select class="m-select" id="c-place" onchange="CHOSEN=this.value">'
+      + places.map(function(p){
+          return '<option value="'+esc(p.id)+'"'+(String(p.id)===String(CHOSEN)?' selected':'')+'>'+esc(p.name)+'</option>';
+        }).join('')
+      + '</select>'
+    : (places.length===1 ? '<div class="c-note">'+esc(places[0].name)+'</div>' : '');
+
+  wrap().innerHTML =
+    '<div class="m-card">'
+  + '<div class="c-who">'
+  +   '<div class="m-eyebrow">Confirm this visit</div>'
+  +   '<div class="c-name">'+esc(PREVIEW.customer.name)+'</div>'
+  +   (PREVIEW.customer.username ? '<div class="c-handle">['+esc(PREVIEW.customer.username)+']</div>' : '')
+  + '</div>'
+  + picker
+  + (PREVIEW.alreadyToday
+      ? '<div class="c-note c-warn">They have already been marked here today. One visit per day counts, so pressing Confirm will not add another.</div>'
+      : '')
+  + '<button class="m-btn" id="c-go" onclick="confirmVisit()">Confirm Visit</button>'
+  + '<button class="m-btn-ghost" onclick="location.href=\'/index.html\'">Cancel</button>'
+  + '</div>';
+}
+
+async function confirmVisit(){
+  const btn=document.getElementById('c-go');
+  if(btn){ btn.disabled=true; btn.textContent='Confirming…'; }
+  if(!CHOSEN){ renderConfirm(); return; }
+
+  let data, res;
+  try{
+    ({res, data} = await callApi('/api/checkin-confirm',
+      Object.assign({}, PREVIEW.body, { confirm:true, restaurantId:CHOSEN })));
+    if(!res.ok) throw new Error(data.error||'Could not record that visit.');
+  }catch(e){
+    wrap().innerHTML =
+      '<div class="m-card">'
+    + '<div class="m-err">'+esc(e.message)+'</div>'
+    + '<button class="m-btn" onclick="askForCode()">Try another code</button>'
+    + '</div>';
+    return;
+  }
+
+  const nth = data.visitsHere
+    ? (data.visitsHere===1 ? 'Their first visit here.' : 'Visit number '+data.visitsHere+' here.')
+    : '';
+
+  wrap().innerHTML =
+    '<div class="m-card">'
+  + '<div class="c-who">'
+  +   '<div class="c-mark done">&#10003;</div>'
+  +   '<div class="m-eyebrow">'+(data.alreadyToday?'Already marked today':'Visit confirmed')+'</div>'
+  +   '<div class="c-name">'+esc(data.customer.name)+'</div>'
+  +   (data.restaurant ? '<div class="c-handle">'+esc(data.restaurant.name)+'</div>' : '')
+  + '</div>'
+  + (nth ? '<div class="c-note">'+esc(nth)+'</div>' : '')
+  + '<button class="m-btn" onclick="askForCode()">Next customer</button>'
+  + '<button class="m-btn-ghost" onclick="location.href=\'/index.html\'">Done</button>'
+  + '</div>';
+}
+
+loadSession();
+boot();
+</script>
+</body>
+</html>
