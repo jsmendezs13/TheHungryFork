@@ -9,28 +9,38 @@
 //
 // What a manager may NOT change, and why:
 //   image, image_open  — photography is work Sebastian is paid for
-//   name, slug         — a dish's identity; its reviews are attached to it
-//   allergen_*         — a wrong allergen is a hospital visit, not a typo
+//   slug               — it is in URLs and in the category routing
 //   restaurant_id      — nobody moves a dish to another restaurant
+//
+// Allergens ARE editable here, which reverses an earlier decision. Locking
+// them looked careful and was the opposite: a locked field stays empty, and an
+// empty allergen list helps nobody. The restaurant is the only party that
+// knows what is in the dish, so the restaurant declares it — as explicit
+// checkboxes rather than free text, and labelled on the menu as the
+// restaurant's own statement.
 
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, canEditDishes, sb } from './_lib/roles.js';
+import { TEXT_FIELDS, isAllergen } from './_lib/dish-fields.js';
 
 // Generous, because a manager marking a busy Friday night sold out will click
 // a lot. Tight enough that a stolen session cannot rewrite the whole menu.
 const writeLimiter = makeLimiter({ requests: 80, window: '5 m', prefix: 'dish:write' });
 
-const MAX = {
-  description: 600,
-  about: 4000,
-  modifications: 1000,
-  wine: 400,
-  cocktail: 400,
-  ingredients: 1000,
-};
+// The lengths live in _lib/dish-fields.js, next to the allergen list.
+const MAX = TEXT_FIELDS;
 
 // Returns { ok, value } or { ok:false, error }.
 function clean(field, raw) {
+  // Allergens. Thirty plain booleans, and the reason this endpoint exists at
+  // all: only the kitchen knows what is in the pan, so only the restaurant can
+  // declare it. Ticking one is a statement by that restaurant, and the menu
+  // labels it as such.
+  if (isAllergen(field)) {
+    if (typeof raw !== 'boolean') return { ok: false, error: 'Allergen values must be true or false.' };
+    return { ok: true, value: raw };
+  }
+
   if (field === 'is_hidden' || field === 'is_chefs_pick') {
     if (typeof raw !== 'boolean') return { ok: false, error: field + ' must be true or false.' };
     return { ok: true, value: raw };
@@ -86,11 +96,15 @@ export default async function handler(req, res) {
   // The dish decides which restaurant is being touched — never the caller.
   // Taking restaurant_id from the request body would let a manager at one
   // restaurant edit a dish at another just by changing a number.
-  const found = await sb(`/dishes?id=eq.${id}&select=id,restaurant_id`);
+  // The whole row, not just the id — the change log needs the values as they
+  // were before this request, and "peanuts true → false" is a different event
+  // from "false → true".
+  const found = await sb(`/dishes?id=eq.${id}&select=*`);
   if (!found.ok || !Array.isArray(found.data) || found.data.length === 0) {
     return res.status(404).json({ error: 'That dish no longer exists.' });
   }
-  const restaurantId = found.data[0].restaurant_id;
+  const before = found.data[0];
+  const restaurantId = before.restaurant_id;
 
   const access = await loadAccess(tasterId);
   if (!canEditDishes(access, restaurantId)) {
@@ -125,6 +139,35 @@ export default async function handler(req, res) {
 
   if (!updated.ok || !Array.isArray(updated.data) || updated.data.length === 0) {
     return res.status(500).json({ error: 'Could not save that change.' });
+  }
+
+  // ── The change log ──
+  // Written after the change succeeded, and deliberately not allowed to fail
+  // the request: a manager marking a dish sold out on a Friday night must not
+  // be blocked because the logging table is unhappy. A missing log line is a
+  // gap; a manager who cannot update the menu is an outage.
+  //
+  // Only fields that actually changed are recorded. Saving a form without
+  // touching anything should not fill the log with noise.
+  try {
+    const rows = Object.entries(patch)
+      .filter(([column, value]) => String(before[column] ?? '') !== String(value ?? ''))
+      .map(([column, value]) => ({
+        dish_id:         id,
+        restaurant_id:   restaurantId,
+        changed_by:      tasterId,
+        changed_by_name: access.firstName || null,
+        field:           column,
+        old_value:       before[column] === null || before[column] === undefined ? null : String(before[column]),
+        new_value:       value === null || value === undefined ? null : String(value),
+      }));
+
+    if (rows.length) {
+      const logged = await sb('/dish_changes', { method: 'POST', body: JSON.stringify(rows) });
+      if (!logged.ok) console.error('[manager-dish] change log write failed', logged.status);
+    }
+  } catch (e) {
+    console.error('[manager-dish] change log threw', e?.message);
   }
 
   console.log('[manager-dish] taster', tasterId, 'dish', id, Object.keys(patch).join(','));
