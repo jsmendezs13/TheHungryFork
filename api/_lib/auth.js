@@ -80,19 +80,45 @@ export function normalizeUsPhone(input) {
 // PIN validation
 // ---------------------------------------------------------------------------
  
-const WEAK_PINS = new Set([
-  '000000', '111111', '222222', '333333', '444444',
-  '555555', '666666', '777777', '888888', '999999',
-  '123456', '654321', '121212', '112233', '123123',
-  '098765', '101010', '012345',
-]);
- 
+// There used to be a list of 18 banned PINs here — 123456, 000000 and so on.
+// Sebastian removed it on purpose: this is a restaurant menu, people are
+// standing at a table with a plate going cold, and a signup that argues with
+// them about their PIN is a signup that does not finish.
+//
+// What actually stops someone guessing a PIN is the rate limit in login.js —
+// 5 attempts per phone number per 15 minutes. A million possible PINs at 480
+// guesses a day is not a way in. The blocked list only mattered for the twenty
+// or so PINs a person would try first, and it cost every honest user a
+// rejection to cover them.
+//
+// The one place that trade is worse: an account that can edit a menu, or the
+// platform admin account. The guard for those belongs at the moment a role is
+// granted — "this PIN is too weak to be a manager" — not in every customer's
+// signup. That check is not written yet.
+// ---------------------------------------------------------------------------
+// Names
+// ---------------------------------------------------------------------------
+// The server used to accept anything truthy, so a single space passed — ' ' is
+// not empty in JavaScript. Both names are required, and "required" has to mean
+// something: at least one actual letter.
+//
+// Deliberately permissive beyond that. \p{L} matches a letter in ANY script, so
+// 李, Ñuñez and O'Brien all pass. A name field that only accepts A-Z tells a
+// large part of New York that their name is invalid, which is both wrong and
+// insulting.
+
+export function validateName(value, label) {
+  if (typeof value !== 'string') return { ok: false, error: `Please enter your ${label}.` };
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: false, error: `Please enter your ${label}.` };
+  if (trimmed.length > 60) return { ok: false, error: `That ${label} is too long.` };
+  if (!/\p{L}/u.test(trimmed)) return { ok: false, error: `Please enter a real ${label}.` };
+  return { ok: true, value: trimmed };
+}
+
 export function validatePin(pin) {
   if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) {
     return { ok: false, error: 'PIN must be exactly 6 digits.' };
-  }
-  if (WEAK_PINS.has(pin)) {
-    return { ok: false, error: 'That PIN is too easy to guess. Please choose another.' };
   }
   return { ok: true };
 }
