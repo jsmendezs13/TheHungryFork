@@ -803,7 +803,9 @@
 <script>
   window.TASTER = {
     successLabel: 'Rate This Dish',
-    onSuccess: function(){ openRatingModal(); }
+    // A fresh login can be a manager logging in, so ask the server again
+    // before anything decides whether to draw a reply box.
+    onSuccess: function(){ loadMyLevel(); openRatingModal(); }
   };
 </script>
 <script src="/taster.js"></script>
@@ -834,6 +836,37 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
 let currentDishId=null, activeFilter='chefs-pick';
 const RESTAURANT_ID=1;
+
+// ── MAY THIS ACCOUNT REPLY? ──
+//
+// This used to be read straight out of localStorage:
+//   currentTaster.is_restaurant_admin && currentTaster.restaurant_id===restaurantId
+// Two problems with that. It used the legacy flags, so nobody appointed through
+// the roles table ever saw the reply box. And it was decided by a copy of the
+// account saved in the browser, which keeps saying "manager" long after the
+// person has been removed.
+//
+// Now the server answers, from the roles table, on page load. It is only asked
+// when the account might be staff at all, so an ordinary customer pays nothing.
+// And it is only about drawing a box: /api/review-reply re-checks the role
+// before it writes a single character.
+let MY_LEVEL = 0;   // 0 none · 1 crew · 2 manager · 3 owner · 4 platform
+
+async function loadMyLevel(){
+  MY_LEVEL = 0;
+  if(!currentTaster || !currentSession) return;
+  if(!(currentTaster.is_platform_admin || currentTaster.is_restaurant_admin)) return;
+  try{
+    const res = await fetch('/api/my-access', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
+    });
+    if(!res.ok) return;
+    const data = await res.json();
+    const here = (data.restaurants||[]).find(r=>String(r.id)===String(RESTAURANT_ID));
+    MY_LEVEL = here ? (here.level||0) : 0;
+  }catch(e){ /* no reply box is the safe failure */ }
+}
 
 
 // ── MENU ──
@@ -1344,7 +1377,8 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       return;
     }
     label.textContent=`Reviews (${data.length})`;
-    const canReply=currentTaster&&currentTaster.is_restaurant_admin&&currentTaster.restaurant_id===restaurantId;
+    // 2 = manager. Owners and the platform admin are above it.
+    const canReply = MY_LEVEL >= 2 && String(restaurantId) === String(RESTAURANT_ID);
     list.innerHTML=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const name=reviewerLabel(r);
@@ -1373,13 +1407,22 @@ async function postReply(reviewId,dishId,restaurantId,listId,labelId){
   const textarea=document.getElementById('reply-input-'+reviewId);
   const text=textarea.value.trim();
   if(!text)return;
+  // Through the API, never straight at the table. The browser has no privilege
+  // on reply_text any more — migration 9 — so this is the only route, and it
+  // checks the roles table before it writes.
   try{
-    const{ok}=await sbFetch(`/rest/v1/reviews?id=eq.${reviewId}`,'PATCH',{reply_text:text,reply_created_at:new Date().toISOString()});
-    if(ok){
+    const res = await fetch('/api/review-reply', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({reviewId:reviewId, text:text})
+    });
+    const raw = await res.text();
+    let data=null; try{ data = raw ? JSON.parse(raw) : null; }catch(e){}
+    if(res.ok){
       showToast('Reply posted!');
       loadReviews(dishId,restaurantId,listId,labelId);
     }else{
-      showToast('Could not post reply.');
+      showToast((data&&data.error) || ('Could not post reply ('+res.status+').'));
     }
   }catch(e){showToast('Network error.');}
 }
@@ -1635,6 +1678,7 @@ railInit();
 // ── INIT ──
 // This page IS the menu, so nothing can be drawn until the dishes arrive.
 loadSession();
+loadMyLevel();
 (async function(){
   try{
     await loadDishes();
