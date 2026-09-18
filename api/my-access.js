@@ -5,7 +5,7 @@
 // who was removed sees the truth the moment they refresh instead of keeping a
 // dashboard that still looks like it works.
 
-import { tasterIdFromRequest, loadAccess, sb, LEVEL } from './_lib/roles.js';
+import { tasterIdFromRequest, loadAccess, sb, LEVEL, accessProblem } from './_lib/roles.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -16,7 +16,8 @@ export default async function handler(req, res) {
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
 
   const access = await loadAccess(tasterId);
-  if (!access) return res.status(401).json({ error: 'Please log in again.' });
+  const problem = accessProblem(access);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
 
   let restaurants = [];
 
