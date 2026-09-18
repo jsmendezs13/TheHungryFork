@@ -75,6 +75,19 @@ export async function loadAccess(tasterId) {
 
   if (!who.ok || !Array.isArray(who.data) || who.data.length === 0) return null;
 
+  // If the roles table itself could not be read, we do NOT know what this
+  // person may do — and "no roles" is not the answer. It only looks like one.
+  //
+  // This is exactly how restaurant_roles stayed broken from the day it was
+  // created: the read was failing, the failure produced an empty list, and an
+  // empty list is indistinguishable from an honest "this person is not a
+  // manager anywhere". Migration 8 fixed the cause; this makes sure the next
+  // one announces itself instead of hiding behind a plausible answer.
+  const rolesUnavailable = !roles.ok || !Array.isArray(roles.data);
+  if (rolesUnavailable) {
+    console.error('[roles] restaurant_roles read failed', roles.status);
+  }
+
   // One person can hold more than one role at the same restaurant; the
   // strongest one wins.
   const byRestaurant = {};
@@ -95,7 +108,29 @@ export async function loadAccess(tasterId) {
     firstName: who.data[0].first_name,
     isPlatformAdmin: !!who.data[0].is_platform_admin,
     byRestaurant,
+    rolesUnavailable,
   };
+}
+
+// Every endpoint that calls loadAccess should run its result through this
+// before deciding anything, so the answer to "can I?" is never "no" when the
+// truth is "we could not find out".
+//
+// A platform admin is the exception, and deliberately so: their standing comes
+// from tasters.is_platform_admin, not from the roles table, so the outage does
+// not change what they may do — and they are the one person who can go and fix
+// it. Locking Sebastian out of his own dashboard because the roles table is
+// unreachable would be the opposite of helpful.
+export function accessProblem(access) {
+  if (!access) return { status: 401, error: 'Please log in again.' };
+  if (access.rolesUnavailable && !access.isPlatformAdmin) {
+    return {
+      status: 502,
+      error: 'Could not read the permissions table, so we cannot tell what you are allowed to do. '
+           + 'This is a problem on our side, not with your account. Please try again in a moment.',
+    };
+  }
+  return null;
 }
 
 // Platform admin outranks every restaurant. Everyone else is only as strong as
