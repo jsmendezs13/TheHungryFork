@@ -850,22 +850,27 @@ const RESTAURANT_ID=1;
 // when the account might be staff at all, so an ordinary customer pays nothing.
 // And it is only about drawing a box: /api/review-reply re-checks the role
 // before it writes a single character.
-let MY_LEVEL = 0;   // 0 none · 1 crew · 2 manager · 3 owner · 4 platform
+let MY_LEVEL = 0;        // 0 none · 1 crew · 2 manager · 3 owner · 4 platform
+let MY_LEVEL_READY = null;   // the request, so a reader can wait for it
 
-async function loadMyLevel(){
-  MY_LEVEL = 0;
-  if(!currentTaster || !currentSession) return;
-  if(!(currentTaster.is_platform_admin || currentTaster.is_restaurant_admin)) return;
-  try{
-    const res = await fetch('/api/my-access', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
-    });
-    if(!res.ok) return;
-    const data = await res.json();
-    const here = (data.restaurants||[]).find(r=>String(r.id)===String(RESTAURANT_ID));
-    MY_LEVEL = here ? (here.level||0) : 0;
-  }catch(e){ /* no reply box is the safe failure */ }
+function loadMyLevel(){
+  MY_LEVEL_READY = (async function(){
+    MY_LEVEL = 0;
+    if(!currentTaster || !currentSession) return 0;
+    if(!(currentTaster.is_platform_admin || currentTaster.is_restaurant_admin)) return 0;
+    try{
+      const res = await fetch('/api/my-access', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
+      });
+      if(!res.ok) return 0;
+      const data = await res.json();
+      const here = (data.restaurants||[]).find(r=>String(r.id)===String(RESTAURANT_ID));
+      MY_LEVEL = here ? (here.level||0) : 0;
+    }catch(e){ /* no reply box is the safe failure */ }
+    return MY_LEVEL;
+  })();
+  return MY_LEVEL_READY;
 }
 
 
@@ -1365,6 +1370,10 @@ async function submitRating(){
 
 // ── LOAD REVIEWS ──
 async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-list',labelId='reviews-label'){
+  // Wait for "may I reply?" before drawing, or a deep link straight to a dish
+  // renders the list while the answer is still in flight and the reply box
+  // never appears until something happens to re-render it.
+  if(MY_LEVEL_READY){ try{ await MY_LEVEL_READY; }catch(e){} }
   const dbDishId=DISH_ID_MAP[dishId]||1;
   try{
     let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
