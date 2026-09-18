@@ -20,7 +20,7 @@
 //   3. they are not confirming themselves
 
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
-import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb } from './_lib/roles.js';
+import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb, accessProblem } from './_lib/roles.js';
 import { hashToken, normalizeShortCode, newYorkDate } from './_lib/checkin.js';
 
 // Aimed at the six-character fallback code, which is the only guessable thing
@@ -42,7 +42,11 @@ export default async function handler(req, res) {
 
   // ── Where does this member of staff work? ───────────────────────────────
   const access = await loadAccess(staffId);
-  if (!access) return res.status(401).json({ error: 'Please log in again.' });
+  // A waiter must never be told "you do not work here" because the roles table
+  // was unreachable. That sends them to their manager for a problem their
+  // manager cannot fix.
+  const problem = accessProblem(access);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
 
   let places = [];
   if (access.isPlatformAdmin) {
