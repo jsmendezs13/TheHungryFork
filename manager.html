@@ -200,8 +200,29 @@ async function callApi(path, options){
   return { res, data: data || {} };
 }
 
+// ── STALE SCREEN ──
+//
+// Sebastian noticed that removing someone did not change their screen until
+// they logged out. He was right, and it is worth being precise about what it
+// means: every save goes to /api, which re-reads the roles table on that
+// request, so a removed manager can already do nothing. The page just has not
+// been told yet.
+//
+// Still, a dashboard that looks like it works and refuses everything is a bad
+// way to find out. So the page re-asks whenever it comes back to the front —
+// which is when someone picks their phone up again — and no more than once a
+// minute, because a page left open all service should not poll.
+let lastChecked = 0;
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState !== 'visible') return;
+  if(!currentSession) return;
+  if(Date.now() - lastChecked < 60000) return;
+  boot();
+});
+
 // ── LOAD ──
 async function boot(){
+  lastChecked = Date.now();
   const w = wrap();
   if(!currentSession){
     w.innerHTML =
@@ -713,4 +734,3 @@ boot();
 </script>
 </body>
 </html>
-
