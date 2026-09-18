@@ -22,7 +22,7 @@
 // for the reason explained in _lib/roles.js: the token is up to 30 days stale.
 
 import { makeLimiter, allow, keyFor, normalizeUsPhone } from './_lib/auth.js';
-import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb } from './_lib/roles.js';
+import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb, accessProblem } from './_lib/roles.js';
 
 const ROLE_RANK = { crew: LEVEL.crew, manager: LEVEL.manager, owner: LEVEL.owner };
 
@@ -44,6 +44,9 @@ export default async function handler(req, res) {
   }
 
   const access = await loadAccess(tasterId);
+  const problem = accessProblem(access);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
+
   const myLevel = levelAt(access, restId);
   if (myLevel < LEVEL.manager) {
     return res.status(403).json({ error: 'You do not have permission to manage people here.' });
@@ -56,7 +59,14 @@ export default async function handler(req, res) {
       '&select=id,taster_id,role,can_issue_codes,created_at&order=role.asc'
     );
     if (!rows.ok || !Array.isArray(rows.data)) {
-      return res.status(502).json({ error: 'Could not read the people list.' });
+      // The status is in the message on purpose. "Could not read the people
+      // list" sent Sebastian looking at the People feature; "status 401" would
+      // have pointed straight at the grant that was missing.
+      console.error('[roles] restaurant_roles list failed', rows.status);
+      return res.status(502).json({
+        error: 'Could not read the people list (the database answered ' + rows.status + '). '
+             + 'If that is a 401 or 403, service_role is missing its grant on restaurant_roles.',
+      });
     }
 
     // Names come from a second lookup rather than an embedded join, because the
