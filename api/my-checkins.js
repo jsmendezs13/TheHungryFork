@@ -21,8 +21,13 @@ export default async function handler(req, res) {
     `/check_ins?taster_id=eq.${tasterId}&select=restaurant_id,visit_date&order=visit_date.desc&limit=2000`
   );
   if (!rows.ok || !Array.isArray(rows.data)) {
-    console.error('[my-checkins] read failed', rows.status);
-    return res.status(502).json({ error: 'Could not read your visits.' });
+    console.error('[my-checkins] read failed', rows.status, rows.data?.message);
+    return res.status(502).json({
+      error: 'Could not read your visits (the database answered ' + rows.status + '). '
+           + (rows.status === 404
+               ? 'That usually means migration 7 has not been run yet.'
+               : 'If that is a 401 or 403, service_role is missing its grant on check_ins.'),
+    });
   }
 
   // Names for the restaurant picker. Only the ones they have actually been to
