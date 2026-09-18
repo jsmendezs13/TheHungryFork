@@ -20,7 +20,7 @@
 // restaurant's own statement.
 
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
-import { tasterIdFromRequest, loadAccess, canEditDishes, sb } from './_lib/roles.js';
+import { tasterIdFromRequest, loadAccess, canEditDishes, sb, accessProblem } from './_lib/roles.js';
 import { TEXT_FIELDS, isAllergen } from './_lib/dish-fields.js';
 
 // Generous, because a manager marking a busy Friday night sold out will click
@@ -107,6 +107,9 @@ export default async function handler(req, res) {
   const restaurantId = before.restaurant_id;
 
   const access = await loadAccess(tasterId);
+  const problem = accessProblem(access);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
+
   if (!canEditDishes(access, restaurantId)) {
     // Same message whether the account was never a manager or was removed five
     // minutes ago — there is nothing useful to learn from the difference.
