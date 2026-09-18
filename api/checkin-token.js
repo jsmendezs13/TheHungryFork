@@ -63,8 +63,13 @@ export default async function handler(req, res) {
     }),
   });
   if (!created.ok) {
-    console.error('[checkin-token] insert failed', created.status);
-    return res.status(500).json({ error: 'Could not create your check-in code.' });
+    console.error('[checkin-token] insert failed', created.status, created.data?.message);
+    return res.status(500).json({
+      error: 'Could not create your check-in code (the database answered ' + created.status + '). '
+           + (created.status === 404
+               ? 'That usually means migration 7 has not been run yet.'
+               : 'If that is a 401 or 403, service_role is missing its grant on check_in_tokens.'),
+    });
   }
 
   // Housekeeping, here rather than in a scheduled job: this table is pure
