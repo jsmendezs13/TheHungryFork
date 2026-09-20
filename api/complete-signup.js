@@ -57,14 +57,21 @@ export default async function handler(req, res) {
   if (!verificationTicket) return res.status(400).json({ error: 'Missing verification ticket' });
   if (!first_name || !last_name || !date_of_birth || !gender || !phone_number || !pin) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
 
   // Both names are required and must contain a letter. The signup form checks
   // this too, but the form is not the authority — anyone can POST here.
+  //
+  // These four lines used to sit INSIDE the block above, after its return.
+  // JavaScript was happy: the file parsed, the function deployed, and the
+  // module loaded. But `const firstCheck` was then scoped to that block, so
+  // line 113 below threw ReferenceError on every single signup, and the catch
+  // turned it into the word "Server error". Nobody could create an account
+  // from 16 to 20 September because of a brace in the wrong place.
   const firstCheck = validateName(first_name, 'first name');
   if (!firstCheck.ok) return res.status(400).json({ error: firstCheck.error });
   const lastCheck = validateName(last_name, 'last name');
   if (!lastCheck.ok) return res.status(400).json({ error: lastCheck.error });
-  }
 
   // PIN rules. The old version accepted any value here while reset-pin.js
   // required 6 digits; both now use the same rule.
@@ -171,7 +178,12 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, session, taster: stripSecrets(taster) });
   } catch (e) {
+    // "Server error" on its own cost four days. Whatever went wrong, say what
+    // it was: the person seeing this is either Sebastian or somebody who
+    // deserves better than a shrug.
     console.error('[complete-signup]', e);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({
+      error: 'Something broke while creating your account: ' + (e?.message || 'unknown error'),
+    });
   }
 }
