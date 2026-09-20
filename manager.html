@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Manager · The Hungry Fork</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<meta name="theme-color" content="#2B211A">
-<title>The Hungry Fork — Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  * { margin:0; padding:0; box-sizing:border-box; }
   :root {
     --red: #B01015; --red-dark: #7E0A0E; --red-light: #F7E3E1;
     --white: #FCF9F4; --off-white: #F5EEE3; --text: #2B211A;
@@ -21,1707 +21,716 @@
     --shadow-md: 0 10px 30px rgba(43,33,26,.10);
     --shadow-lg: 0 20px 50px rgba(43,33,26,.18);
   }
-  html { scroll-behavior: smooth; }
-  body { font-family: var(--sans); font-weight: 400; color: var(--text); background: var(--white); line-height: 1.65; -webkit-font-smoothing: antialiased; }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.65; -webkit-font-smoothing:antialiased; padding-bottom:4rem; }
 
-  /* ── NAV ── */
-  nav { background: rgba(252,249,244,.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
-  .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.1rem; display: flex; align-items: center; justify-content: space-between; height: 62px; }
-  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-  .nav-logo img { height: 38px; width: auto; border-radius: 50%; }
-  .nav-logo-text { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; color: var(--text); letter-spacing: .02em; }
-  .nav-right { display: flex; align-items: center; gap: .6rem; }
-  .nav-back { color: var(--muted); font-size: .74rem; text-decoration: none; font-family: var(--sans); letter-spacing: .04em; }
-  .nav-back:hover { color: var(--text); }
+  .m-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .m-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .m-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
+  .m-topbar-spacer { width:64px; }
 
-  /* ── VIDEO HERO ── */
-  .video-hero { position: relative; width: 100%; height: 100svh; min-height: 560px; overflow: hidden; background: #14100D; }
-  .video-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .video-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20,16,13,.35) 0%, rgba(20,16,13,.05) 35%, rgba(20,16,13,.45) 72%, rgba(20,16,13,.75) 100%); }
-  .video-hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 2.5rem 1.6rem 4.2rem; text-align: center; color: var(--white); }
-  .video-hero-eyebrow { font-family: var(--sans); font-weight: 400; font-size: .72rem; letter-spacing: .34em; text-transform: uppercase; opacity: .85; margin-bottom: .9rem; }
-  .video-hero-logo { width: 68px; height: auto; margin-bottom: 1rem; border-radius: 50%; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
-  .video-hero-title { font-family: var(--serif); font-size: clamp(2.8rem, 9vw, 4.6rem); font-weight: 500; letter-spacing: .01em; line-height: 1.05; text-shadow: 0 2px 20px rgba(0,0,0,.45); }
-  .video-hero-tagline { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem; letter-spacing: .06em; opacity: .9; margin-top: .5rem; margin-bottom: 2rem; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
-  .video-hero-cta { background: transparent; color: var(--white); border: 1px solid rgba(252,249,244,.85); border-radius: 999px; padding: .95rem 2.8rem; font-size: .78rem; font-weight: 500; font-family: var(--sans); letter-spacing: .22em; text-transform: uppercase; cursor: pointer; transition: all .25s; }
-  .video-hero-cta:hover { background: var(--white); color: var(--ink); }
-  .video-hero-scroll-hint { position: absolute; bottom: 1.4rem; left: 50%; transform: translateX(-50%); color: rgba(252,249,244,.75); font-size: 1.2rem; animation: bounce 2s infinite; }
-  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(7px);} }
+  .m-wrap { max-width:720px; margin:0 auto; padding:1.5rem 1rem 0; }
 
-  /* ── INFO BAR ── */
-  .hero-info-bar { background: var(--ink); padding: 1.3rem 1.4rem 1.6rem; text-align: center; }
-  .hero-meta { display: flex; align-items: center; justify-content: center; gap: 1.4rem; flex-wrap: wrap; font-size: .78rem; color: rgba(252,249,244,.85); font-family: var(--sans); letter-spacing: .03em; margin-bottom: 1rem; }
-  .overall-stars { color: var(--star-on); font-size: 1.05rem; letter-spacing: 2px; }
-  .overall-count { font-size: .72rem; color: rgba(252,249,244,.6); font-family: var(--sans); }
-  .red-divider { height: 1px; background: var(--border); }
+  .m-card { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.4rem 1.2rem; box-shadow:var(--shadow-sm); margin-bottom:1rem; }
+  .m-eyebrow { font-size:.66rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.5rem; }
+  .m-h { font-family:var(--serif); font-size:1.6rem; font-weight:600; line-height:1.2; margin-bottom:.4rem; }
+  .m-sub { font-size:.86rem; font-weight:300; color:var(--muted); line-height:1.6; }
 
-  /* ── FILTER BAR ── */
-  .filter-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 .9rem; position: sticky; top: 62px; z-index: 90; }
-  .filter-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 1.6rem; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  .filter-inner::-webkit-scrollbar { display: none; }
-  .filter-btn { padding: 14px 2px 12px; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: .76rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: color .2s, border-color .2s; font-family: var(--sans); white-space: nowrap; border-radius: 0; }
-  .filter-btn.active { color: var(--text); border-bottom-color: var(--red); background: transparent; }
-  .filter-btn:hover:not(.active) { color: var(--text); }
+  .m-btn { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.85rem 1.6rem; font-size:.78rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s, transform .15s; }
+  .m-btn:hover { background:#463629; transform:translateY(-1px); }
+  .m-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; transform:none; }
 
-  /* ── CHEF'S PICK ── */
-  .chefs-pick-section { background: var(--white); padding: 3.4rem 1.4rem 3rem; }
-  .chefs-pick-inner { max-width: 760px; margin: 0 auto; text-align: center; }
-  .chefs-pick-label { display: inline-block; background: transparent; color: var(--red); font-family: var(--sans); font-size: .7rem; font-weight: 600; letter-spacing: .34em; text-transform: uppercase; padding: 0; margin-bottom: 1rem; }
-  .chefs-pick-title { font-family: var(--serif); font-size: clamp(2.2rem, 6vw, 3.4rem); font-weight: 500; color: var(--text); line-height: 1.1; margin-bottom: .4rem; }
-  .chefs-pick-subtitle { font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--muted); margin-bottom: 1rem; }
-  .chefs-pick-price { font-family: var(--serif); font-size: 1.6rem; font-weight: 500; color: var(--red); margin-bottom: 1.8rem; }
-  .chefs-pick-media { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; max-width: 100%; overflow: hidden; }
-  .chefs-pick-media video { width: 100%; border-radius: 4px; object-fit: cover; height: 300px; }
-  .chefs-pick-photo-col { display: flex; flex-direction: column; gap: 1rem; }
-  .chefs-pick-photo-col img { width: 100%; height: 143px; border-radius: 4px; object-fit: cover; }
-  .chefs-pick-desc { font-family: var(--sans); font-weight: 300; font-size: .95rem; color: var(--muted); line-height: 1.85; margin: 0 auto 1.8rem; max-width: 520px; }
-  .allergen-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: .8rem; justify-content: center; }
-  .allergen-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--off-white); border: none; border-radius: 999px; padding: 5px 14px; font-size: .74rem; font-family: var(--sans); color: var(--muted); }
-  .mod-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-  .mod-tag { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 5px 14px; font-size: .72rem; font-family: var(--sans); }
-  .mod-tag.can { background: rgba(76,122,76,.08); border: none; color: var(--green); }
-  .mod-tag.cannot { background: rgba(154,51,36,.07); border: none; color: var(--red); }
-  @media (max-width: 600px) { .chefs-pick-media { grid-template-columns: 1fr; } .chefs-pick-photo-col { flex-direction: row; } .chefs-pick-photo-col img { max-height: 160px; } }
+  .m-select { width:100%; border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem; font-size:.9rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; }
+  .m-select:focus { border-color:var(--red); }
 
-  /* ── CAROUSEL ── */
-  .chefs-carousel { position: relative; width: 100%; margin-bottom: 1.6rem; border-radius: 4px; overflow: hidden; box-shadow: var(--shadow-md); }
-  .chefs-carousel-track { display: flex; transition: transform 0.35s ease; touch-action: pan-y; }
-  .chefs-carousel-slide { min-width: 100%; height: 500px; }
-  .chefs-carousel-slide video, .chefs-carousel-slide img { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--off-white); }
-  .chefs-carousel-dots { display: flex; justify-content: center; gap: 8px; padding: 12px 0 4px; }
-  .chefs-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background .2s, transform .2s; }
-  .chefs-dot.active { background: var(--red); transform: scale(1.2); }
-  @media (max-width: 600px) { .chefs-carousel-slide { height: 300px; } }
+  .m-role { display:inline-block; font-size:.6rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; padding:.2rem .6rem; border-radius:999px; background:var(--off-white); color:var(--muted); border:1px solid var(--border); }
+  .m-role.platform { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .m-role.owner { background:var(--red-light); color:var(--red-dark); border-color:rgba(176,16,21,.25); }
 
-  /* ── MENU ── */
-  .menu-section { max-width: 1100px; margin: 0 auto; padding: 2.6rem 1.4rem 1.4rem; }
-  .category-label { font-family: var(--serif); font-size: 1.9rem; font-weight: 500; color: var(--text); margin-bottom: .3rem; padding-bottom: 0; border-bottom: none; text-align: center; }
-  .category-label::after { content: ''; display: block; width: 34px; height: 2px; background: var(--red); margin: .7rem auto 1.6rem; }
-  .dishes-grid { display: flex; flex-wrap: nowrap; gap: 1.1rem; margin-bottom: 3rem; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: .25rem .25rem 1rem; scrollbar-width: none; }
-  .dishes-grid::-webkit-scrollbar { display: none; }
-  .dishes-grid .dish-card { width: 300px; flex-shrink: 0; scroll-snap-align: center; }
-  .dish-card { background: #fff; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; transition: transform .25s ease, box-shadow .25s ease; box-shadow: var(--shadow-sm); }
-  .dish-card:hover, .dish-card:active { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-  .dish-img { height: 180px; background: linear-gradient(150deg, #F5EEE3, #EFE5D6); display: flex; align-items: center; justify-content: center; font-size: 3.4rem; position: relative; }
-  .dish-rating-badge { position: absolute; top: 10px; right: 10px; background: rgba(252,249,244,.95); border-radius: 999px; padding: 3px 10px; font-size: .76rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 4px; font-family: var(--sans); }
-  .dish-rating-badge .star { color: var(--star-on); }
-  .dish-body { padding: 1.15rem 1.25rem 1.3rem; }
-  .dish-name { font-family: var(--serif); font-size: 1.28rem; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.2; }
-  .dish-desc { font-size: .82rem; font-weight: 300; color: var(--muted); line-height: 1.6; margin-bottom: .9rem; font-family: var(--sans); }
-  .dish-footer { display: flex; align-items: center; justify-content: space-between; }
-  .dish-price { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; color: var(--red); }
-  .dish-review-count { font-size: .72rem; color: var(--muted); font-family: var(--sans); }
-  .rate-btn { padding: 8px 16px; border-radius: 999px; background: transparent; color: var(--red); border: 1px solid var(--red); font-size: .72rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: all .2s; font-family: var(--sans); }
-  .rate-btn:hover { background: var(--red); color: var(--white); }
+  /* ── DISH ROW ── */
+  .m-dish { background:var(--white); border:1px solid var(--border); border-radius:14px; margin-bottom:.7rem; box-shadow:var(--shadow-sm); overflow:hidden; transition:opacity .2s; }
+  .m-dish.is-hidden { opacity:.55; }
+  .m-dish-head { display:flex; align-items:center; gap:.85rem; padding:.95rem 1rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-dish-emoji { font-size:1.6rem; line-height:1; flex:none; }
+  .m-dish-id { flex:1; min-width:0; }
+  .m-dish-name { font-family:var(--serif); font-size:1.15rem; font-weight:600; line-height:1.25; }
+  .m-dish-meta { font-size:.74rem; color:var(--muted); margin-top:.1rem; }
+  .m-dish-caret { color:var(--muted); font-size:.8rem; flex:none; transition:transform .25s; }
+  .m-dish.open .m-dish-caret { transform:rotate(90deg); }
 
-  /* ── FOOTER ── */
-  footer { background: var(--ink); color: rgba(252,249,244,.65); text-align: center; padding: 3rem 1.6rem 2.6rem; margin-top: 0; font-family: var(--sans); font-weight: 300; font-size: .82rem; letter-spacing: .03em; }
-  footer img { height: 54px; margin-bottom: 1rem; border-radius: 50%; }
-  footer a { color: var(--white); text-decoration: none; border-bottom: 1px solid rgba(252,249,244,.3); }
+  .m-flags { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.35rem; }
+  .m-flag { font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; }
+  .m-flag.sold { background:#F6E2E1; color:var(--red-dark); }
+  .m-flag.hid  { background:var(--off-white); color:var(--muted); }
+  .m-flag.pick { background:#EDE3C9; color:#7A5B12; }
 
-  /* ── MAPS SHEET ── */
-  .maps-modal { display:none; position:fixed; inset:0; background:rgba(20,16,13,.55); z-index:500; align-items:flex-end; justify-content:center; padding-bottom:2rem; }
-  .maps-modal.open { display:flex; }
-  .maps-sheet { background:var(--white); border-radius:18px; width:100%; max-width:400px; overflow:hidden; animation:slideUp .22s ease; box-shadow:var(--shadow-lg); }
-  .maps-sheet-title { text-align:center; padding:1rem; font-size:.82rem; color:var(--muted); font-family:var(--sans); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:8px; }
-  .maps-option { display:flex; align-items:center; gap:12px; padding:1rem 1.5rem; font-size:.95rem; font-family:var(--sans); color:var(--text); text-decoration:none; border-bottom:1px solid var(--border); transition:background .15s; }
-  .maps-option:hover { background:var(--off-white); }
-  .maps-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
-  .maps-cancel { display:block; text-align:center; padding:1rem; font-size:.95rem; font-family:var(--sans); color:var(--red); font-weight:600; cursor:pointer; }
-  .maps-cancel:hover { background:var(--off-white); }
+  .m-dish-body { display:none; padding:0 1rem 1.1rem; border-top:1px solid var(--border); }
+  .m-dish.open .m-dish-body { display:block; }
 
-  @keyframes slideUp { from { transform: translateY(22px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .m-switch-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.85rem 0; border-bottom:1px solid var(--border); }
+  .m-switch-label { font-size:.88rem; }
+  .m-switch-note { font-size:.72rem; color:var(--muted); line-height:1.5; margin-top:.1rem; }
+  .m-switch { flex:none; width:50px; height:29px; border-radius:999px; border:none; background:var(--star-off); position:relative; cursor:pointer; transition:background .22s; padding:0; }
+  .m-switch::after { content:''; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.28); transition:transform .22s; }
+  .m-switch.on { background:var(--green); }
+  .m-switch.on::after { transform:translateX(21px); }
+  .m-switch.on.warn { background:var(--red); }
+  .m-switch:disabled { opacity:.5; cursor:not-allowed; }
 
-  /* ── RATING MODAL ── */
-  .r-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.6); z-index:700; align-items:center; justify-content:center; padding:1rem; }
-  .r-overlay.open { display:flex; }
-  .r-box { background:var(--white); border-radius:16px; width:100%; max-width:460px; overflow:hidden; animation:slideUp .22s ease; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); }
-  .r-hero { background:linear-gradient(150deg, var(--off-white), #EFE2D2); height:110px; display:flex; align-items:center; justify-content:center; font-size:3.2rem; position:relative; border-bottom:1px solid var(--border); }
-  .r-close { position:absolute; top:12px; right:12px; background:rgba(252,249,244,.95); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; font-size:.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text); }
-  .r-close:hover { background:var(--ink); color:var(--white); border-color:var(--ink); }
-  .r-body { padding:1.4rem 1.5rem; }
-  .r-dish-name { font-family:var(--serif); font-size:1.55rem; font-weight:600; color:var(--text); margin-bottom:2px; }
-  .r-dish-desc { font-size:.82rem; font-weight:300; color:var(--muted); font-family:var(--sans); margin-bottom:1.3rem; }
-  .r-textarea + .r-section { margin-top:1.15rem; }
-  .r-section { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.75rem; font-family:var(--sans); }
-  .r-slider-row { margin-bottom:1rem; }
-  .r-slider-label { display:flex; justify-content:space-between; font-size:.83rem; font-family:var(--sans); color:var(--text); margin-bottom:.3rem; }
-  .r-slider-label span:last-child { font-weight:600; color:var(--red); }
-  .r-slider { width:100%; accent-color:var(--red); }
-  .r-textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:.75rem 1rem; font-size:.88rem; font-family:var(--sans); resize:vertical; min-height:75px; outline:none; margin-bottom:.85rem; background:#fff; }
-  .r-textarea:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(154,51,36,.1); }
-  .r-submit { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.95rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s; margin-top:.5rem; }
-  .r-submit:hover { background:#463629; }
-  .r-submit:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
-  .r-divider { border:none; border-top:1px solid var(--border); margin:1.25rem 0; }
-  .r-reviews-label { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.75rem; font-family:var(--sans); }
-  .r-reviews-list { max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:.75rem; }
-  .r-review-item { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; border-left:2px solid var(--red); }
-  .r-review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
-  .r-reviewer-name { font-size:.85rem; font-weight:600; color:var(--text); font-family:var(--sans); }
-  .r-review-score { font-size:.82rem; color:var(--red); font-family:var(--sans); font-weight:600; }
-  .r-review-text { font-size:.82rem; font-weight:300; color:var(--muted); line-height:1.6; font-family:var(--sans); }
-  .r-review-date { font-size:.7rem; color:#B7A99A; margin-top:3px; font-family:var(--sans); }
-  .r-no-reviews { font-size:.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:var(--sans); }
+  .m-field { margin-top:.95rem; }
+  .m-field-label { font-size:.66rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.35rem; }
+  .m-input, .m-textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:.65rem .85rem; font-size:.9rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; transition:border-color .2s; }
+  .m-input:focus, .m-textarea:focus { border-color:var(--red); }
+  .m-textarea { resize:vertical; min-height:80px; line-height:1.6; }
+  .m-count { font-size:.68rem; color:var(--muted); text-align:right; margin-top:.2rem; }
+  .m-count.over { color:var(--red); font-weight:600; }
 
-  /* ── DISH MODAL ── */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.6); z-index:200; align-items:center; justify-content:center; padding:1rem; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--white); border-radius:16px; width:100%; max-width:500px; overflow:hidden; animation:slideUp .22s ease; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); }
-  .modal-hero { background:linear-gradient(150deg, var(--off-white), #EFE2D2); height:135px; display:flex; align-items:center; justify-content:center; font-size:3.8rem; position:relative; border-bottom:1px solid var(--border); }
-  .modal-close { position:absolute; top:12px; right:12px; background:rgba(252,249,244,.95); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; font-size:.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text); }
-  .modal-close:hover { background:var(--ink); color:var(--white); border-color:var(--ink); }
-  .modal-body { padding:1.6rem 1.5rem; }
-  .modal-dish-name { font-family:var(--serif); font-size:1.7rem; font-weight:600; color:var(--text); margin-bottom:3px; line-height:1.15; }
-  .modal-dish-desc { font-size:.85rem; font-weight:300; color:var(--muted); margin-bottom:1.5rem; font-family:var(--sans); }
-  .modal-section-label { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.6rem; font-family:var(--sans); }
-  .reviews-divider { border:none; border-top:1px solid var(--border); margin:1.25rem 0; }
-  .reviews-list { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:.75rem; }
-  .review-item { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; border-left:2px solid var(--red); }
-  .review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
-  .reviewer-name { font-size:.85rem; font-weight:600; color:var(--text); font-family:var(--sans); }
-  .review-stars { color:var(--red); font-size:.85rem; }
-  .review-text { font-size:.82rem; font-weight:300; color:var(--muted); line-height:1.6; font-family:var(--sans); }
-  .review-date { font-size:.7rem; color:#B7A99A; margin-top:3px; font-family:var(--sans); }
-  .no-reviews { font-size:.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:var(--sans); }
-  .rate-dish-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.9rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s; }
-  .rate-dish-btn:hover { background:#463629; }
-  .review-reply { margin-top:8px; padding:9px 12px; background:rgba(154,51,36,.06); border-radius:8px; font-size:.8rem; color:var(--text); font-family:var(--sans); }
-  .review-reply-form { margin-top:8px; }
-  .reply-textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:.55rem .8rem; font-size:.8rem; font-family:var(--sans); resize:vertical; min-height:50px; margin-bottom:.4rem; background:#fff; }
-  .reply-btn { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.5rem 1.1rem; font-size:.72rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .m-actions { display:flex; align-items:center; gap:.7rem; margin-top:1rem; }
+  .m-save { background:var(--red); color:#fff; border:none; border-radius:999px; padding:.7rem 1.4rem; font-size:.72rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .m-save:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+  .m-revert { background:none; border:none; color:var(--muted); font-size:.76rem; text-decoration:underline; cursor:pointer; font-family:var(--sans); }
 
-  /* ── LUCKY BITE ── */
-  .lucky-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.88); z-index:900; align-items:center; justify-content:center; padding:1rem; }
-  .lucky-overlay.open { display:flex; }
-  .lucky-box { background:var(--white); border-radius:20px; width:100%; max-width:380px; padding:2.6rem 2rem; text-align:center; animation:slideUp .3s ease; box-shadow:var(--shadow-lg); }
-  .lucky-emoji { font-size:3.6rem; display:block; margin-bottom:1rem; }
-  .lucky-title { font-family:var(--serif); font-size:1.8rem; font-weight:600; color:var(--red); margin-bottom:.5rem; line-height:1.2; }
-  .lucky-number { font-size:3rem; font-weight:700; color:var(--red); font-family:var(--serif); margin:1rem 0; }
-  .lucky-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.7; }
-  .lucky-claim-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:1rem; font-size:.82rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  /* ── ALLERGEN CHECKLIST ── */
+  .m-group { border-top:1px solid var(--border); margin-top:1.1rem; padding-top:.9rem; }
+  .m-group-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-group-title { font-family:var(--serif); font-size:1.02rem; font-weight:600; }
+  .m-group-sum { font-size:.7rem; color:var(--muted); }
+  .m-group-caret { color:var(--muted); font-size:.75rem; transition:transform .25s; }
+  .m-group.open .m-group-caret { transform:rotate(90deg); }
+  .m-group-body { display:none; padding-top:.7rem; }
+  .m-group.open .m-group-body { display:block; }
 
-  @media (max-width: 600px) {
-    .nav-back { display:none; }
-    .nav-inner { padding: 0 1rem; }
-    .dishes-grid .dish-card { width: 82vw; }
-    .menu-section { padding: 2rem 1.1rem 1rem; }
-    .chefs-pick-section { padding: 2.6rem 1.1rem 2.4rem; }
-    .hero-meta { gap:.7rem; font-size:.74rem; }
-  }
+  .m-alg-note { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.75rem .85rem; font-size:.76rem; line-height:1.6; margin-bottom:.9rem; }
+  .m-alg-sub { font-size:.64rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:.9rem 0 .5rem; }
+  .m-alg-sub:first-child { margin-top:0; }
+  .m-alg-grid { display:grid; grid-template-columns:1fr 1fr; gap:.4rem .6rem; }
+  @media (max-width:420px) { .m-alg-grid { grid-template-columns:1fr; } }
+  .m-alg { display:flex; align-items:center; gap:.5rem; padding:.42rem .55rem; border:1px solid var(--border); border-radius:9px; background:#fff; cursor:pointer; font-size:.82rem; -webkit-tap-highlight-color:transparent; }
+  .m-alg input { accent-color:var(--red); width:16px; height:16px; flex:none; margin:0; }
+  .m-alg.on { border-color:rgba(176,16,21,.45); background:#FDF4F3; font-weight:500; }
+  .m-alg.major { border-left:3px solid var(--red); }
 
-  /* ── HERO ELEMENTS (grade, flag, rating, menu button) ── */
-  .hero-grade { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 16px); left:16px; width:72px; height:auto; z-index:6; filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
-  .vh-center { margin-top:auto; margin-bottom:1.4rem; display:flex; flex-direction:column; align-items:center; }
-  .vh-flag { height:26px; width:auto; display:block; margin:0 auto .55rem; cursor:pointer; filter:drop-shadow(0 1px 4px rgba(0,0,0,.55)); }
-  .vh-rating { width:min(300px, 72vw); height:auto; margin-top:1.2rem; filter:drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
-  .vh-rating-caption { font-family:var(--sans); font-size:.7rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--white); margin-top:.45rem; text-shadow:0 1px 8px rgba(0,0,0,.65); }
-  .vh-btn-rail { position:relative; width:100%; height:150px; perspective:700px; perspective-origin:50% 28%; touch-action:pan-y; }
-  .vh-btn { position:absolute; left:50%; top:6px; transform-style:preserve-3d; display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; -webkit-tap-highlight-color:transparent; will-change:transform,opacity; }
-  .vh-btn img { width:76px; height:auto; filter:drop-shadow(0 6px 16px rgba(0,0,0,.55)); pointer-events:none; }
-  .vh-btn span { font-family:var(--sans); font-size:.62rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); white-space:nowrap; pointer-events:none; }
-  .cs-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.72); z-index:850; align-items:center; justify-content:center; padding:1.4rem; }
-  .cs-overlay.open { display:flex; }
-  .cs-box { background:var(--white); border-radius:20px; width:100%; max-width:340px; padding:2.4rem 1.8rem 1.8rem; text-align:center; animation:slideUp .25s ease; box-shadow:var(--shadow-lg); }
-  .cs-icon { width:72px; height:auto; margin-bottom:1rem; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); }
-  .cs-title { font-family:var(--serif); font-size:1.7rem; font-weight:600; color:var(--text); margin-bottom:.4rem; }
-  .cs-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); line-height:1.7; margin-bottom:1.4rem; }
-  .cs-close { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.8rem 2.4rem; font-size:.76rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
-  .video-hero-content { padding:1.8rem 1.4rem 1.4rem; }
+  .m-alg-count { display:inline-block; font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; background:#F6E2E1; color:var(--red-dark); }
+  .m-alg-count.none { background:var(--off-white); color:var(--muted); }
 
-  /* ── MENU ACCORDION (C&W style) ── */
-  .cat-row { text-align:center; padding:1.1rem 1rem 1.02rem; font-family:var(--sans); font-size:.82rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); background:var(--white); border-top:1px solid var(--border); cursor:pointer; transition:color .2s, background .2s; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
-  #menu-swipe-zone .cat-row:last-of-type { border-bottom:1px solid var(--border); }
-  .cat-row:hover { color:var(--text); }
-  .cat-row.active { color:var(--red); font-weight:600; background:var(--off-white); }
-  .cat-panel { display:none; background:var(--white); border-top:1px solid var(--border); }
-  .cat-panel.open { display:block; }
-  .cat-panel-inner { max-width:1100px; margin:0 auto; padding:1.9rem 1.1rem .7rem; }
+  .m-locked { margin-top:1rem; padding:.8rem .9rem; background:var(--off-white); border-radius:10px; font-size:.76rem; color:var(--muted); line-height:1.65; }
 
-  /* ── SANITARY GRADE ON DISHES ── */
-  .dish-grade { position:absolute; top:8px; left:8px; width:42px; height:auto; z-index:4; filter:drop-shadow(0 2px 6px rgba(0,0,0,.3)); }
+  /* ── PEOPLE ── */
+  .m-person { display:flex; align-items:center; gap:.8rem; padding:.75rem 0; border-bottom:1px solid var(--border); }
+  .m-person:last-child { border-bottom:none; }
+  .m-person-id { flex:1; min-width:0; }
+  .m-person-name { font-size:.92rem; font-weight:500; }
+  .m-person-sub { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+  .m-person-x { flex:none; background:none; border:1px solid var(--border); color:var(--muted); border-radius:999px; padding:.3rem .75rem; font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .m-person-x:hover { border-color:var(--red); color:var(--red); }
+  .m-person-x:disabled { opacity:.4; cursor:not-allowed; }
+  .m-add-row { display:flex; gap:.5rem; margin-top:1rem; flex-wrap:wrap; }
+  .m-add-row .m-input { flex:1 1 160px; }
+  .m-add-row .m-select { flex:0 1 130px; }
+  .m-codes { display:flex; align-items:center; gap:.45rem; font-size:.7rem; color:var(--muted); margin-top:.25rem; }
+  .m-codes input { accent-color:var(--red); margin:0; }
 
-  /* ── FOOTER ACCOUNT LINKS ── */
-  .footer-link { background:none; border:none; color:var(--white); opacity:.75; text-decoration:underline; cursor:pointer; font-family:var(--sans); font-size:.8rem; margin:0 .55rem; letter-spacing:.04em; }
-  .footer-link:hover { opacity:1; }
+  .m-empty { text-align:center; padding:3rem 1rem; color:var(--muted); font-size:.9rem; }
+  .m-err { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.85rem 1rem; font-size:.85rem; margin-bottom:1rem; }
 
-  /* ── LIVE FORK'S RATING (glossy red stars) ── */
-  .vh-rating-live { display:flex; align-items:center; gap:10px; margin-top:1.2rem; }
-  .vh-laurel { height:74px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
-  .vh-laurel-r { transform:scaleX(-1); }
-  .vh-stars { position:relative; font-size:2.4rem; letter-spacing:.1em; line-height:1; font-family:'Segoe UI Symbol','Noto Sans Symbols',sans-serif; }
-  .vh-stars-base { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(70,12,9,.3); filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
-  #vh-rating-num { letter-spacing:.06em; text-transform:none; opacity:.85; }
-  @media (max-width:600px){ .vh-stars{font-size:2rem;} .vh-laurel{height:60px;} }
-
-  /* ── 3D WARP ROOM ── */
-  #warp-room { position:relative; overflow:hidden; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:2rem 0 1.6rem; }
-  .warp-bg { position:absolute; inset:-10% -40%; pointer-events:none; opacity:.55; will-change:transform; }
-  #warp-bg-far { background:radial-gradient(240px 140px at 20% 30%, rgba(176,16,21,.10), transparent 70%), radial-gradient(300px 180px at 75% 25%, rgba(255,200,140,.05), transparent 70%); }
-  .warp-bg-near { background:radial-gradient(200px 120px at 35% 75%, rgba(176,16,21,.14), transparent 70%), radial-gradient(260px 150px at 85% 70%, rgba(255,170,90,.06), transparent 70%); }
-  .warp-hint { text-align:center; font-family:var(--sans); font-size:.68rem; font-weight:500; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.55); margin-bottom:1.2rem; position:relative; z-index:5; }
-  .warp-viewport { position:relative; height:clamp(320px, 92vw, 440px); perspective:950px; perspective-origin:50% 40%; touch-action:pan-y; }
-  #warp-stage { position:absolute; inset:0; transform-style:preserve-3d; }
-  .warp-portal { position:absolute; top:50%; left:50%; width:min(62vw, 330px); height:min(78vw, 415px); transform-style:preserve-3d; cursor:pointer; will-change:transform, opacity; }
-  .portal-arch { width:100%; height:100%; border-radius:50% 50% 10px 10px / 42% 42% 10px 10px; background:linear-gradient(160deg, #6E6459 0%, #544A40 45%, #3E352D 100%); box-shadow:inset 0 0 0 6px rgba(0,0,0,.25), inset 0 6px 14px rgba(255,255,255,.12), 0 24px 50px rgba(0,0,0,.55); padding:16px 14px 14px; display:flex; flex-direction:column; }
-  .portal-arch-title { text-align:center; font-family:var(--sans); font-weight:600; font-size:.78rem; letter-spacing:.24em; text-transform:uppercase; color:#EFE7D5; text-shadow:0 2px 2px rgba(0,0,0,.65); padding:6px 4px 12px; white-space:nowrap; overflow:hidden; }
-  .portal-opening { position:relative; flex:1; border-radius:50% 50% 8px 8px / 46% 46% 8px 8px; background:radial-gradient(80% 55% at 50% 42%, #3A1210 0%, #1C0908 55%, #0D0505 100%); box-shadow:inset 0 0 30px rgba(0,0,0,.9), inset 0 0 0 5px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .portal-ring { position:absolute; width:58%; aspect-ratio:1; border-radius:50%; border:4px solid rgba(230,40,30,.75); box-shadow:0 0 22px 6px rgba(200,20,15,.5), inset 0 0 18px 4px rgba(200,20,15,.45); animation:portalPulse 2.6s ease-in-out infinite; }
-  .portal-ring::after { content:''; position:absolute; inset:14%; border-radius:50%; border:2px solid rgba(255,90,70,.5); box-shadow:0 0 14px 3px rgba(200,30,20,.4); }
-  @keyframes portalPulse { 0%,100%{transform:scale(1);opacity:.85;} 50%{transform:scale(1.06);opacity:1;} }
-  .portal-emoji { position:relative; font-size:3rem; filter:drop-shadow(0 5px 12px rgba(0,0,0,.7)); }
-  .warp-arrow { position:absolute; top:50%; transform:translateY(-50%); z-index:200; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1.4rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
-  .warp-arrow:hover { background:rgba(252,249,244,.25); }
-  .warp-arrow-l { left:10px; } .warp-arrow-r { right:10px; }
-  .warp-dots { display:flex; gap:9px; justify-content:center; margin-top:1.3rem; position:relative; z-index:5; }
-  .warp-dot { width:8px; height:8px; border-radius:50%; background:rgba(252,249,244,.28); cursor:pointer; transition:all .25s; }
-  .warp-dot.active { background:var(--red); transform:scale(1.3); box-shadow:0 0 8px rgba(200,20,15,.7); }
-
-  /* ── WARP EXTRAS ── */
-  .warp-cat-name { text-align:center; font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--white); margin-top:.9rem; position:relative; z-index:5; }
-  .warp-tap-hint { text-align:center; font-family:var(--sans); font-size:.62rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:rgba(252,249,244,.5); margin-top:.3rem; position:relative; z-index:5; }
-  #warp-stage.warp-zoom { transition:transform .42s ease-in; transform:translateZ(560px); }
-
-  /* ── CAVE INTERIOR ── */
-  .cave-overlay { display:none; position:fixed; inset:0; z-index:600; background:radial-gradient(140% 100% at 50% 0%, #38261D 0%, #1E130D 55%, #120B07 100%); }
-  .cave-overlay.open { display:flex; animation:caveIn .5s cubic-bezier(.22,.8,.3,1); }
-  @keyframes caveIn { from{opacity:0; transform:scale(1.18);} to{opacity:1; transform:scale(1);} }
-  .cave-inner { position:relative; flex:1; display:flex; flex-direction:column; padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 14px); max-width:560px; margin:0 auto; width:100%; min-height:0; }
-  .cave-back { position:absolute; top:calc(env(safe-area-inset-top,0px) + 10px); left:12px; z-index:20; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:38px; height:38px; border-radius:50%; font-size:1.5rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .cave-cat { text-align:center; font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.75); padding:.7rem 0 .95rem; }
-  .cave-card-zone { position:relative; flex:1; display:flex; align-items:stretch; min-height:0; }
-  .cave-card { position:relative; flex:1; background:var(--white); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.55); padding:2.7rem 1.3rem 1.4rem; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; min-height:0; }
-  .cave-grade { position:absolute; top:12px; left:12px; width:56px; z-index:5; text-align:center; }
-  .cave-grade img { width:46px; height:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
-  .cave-grade-label { font-family:var(--sans); font-size:.4rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); line-height:1.35; margin-top:-7px; }
-  .cave-photo { max-width:72%; max-height:30vh; object-fit:contain; flex:0 1 auto; min-height:0; }
-  .cave-photo-fallback { font-size:5rem; display:flex; align-items:center; justify-content:center; padding:2.5rem 0; }
-  .cave-stars-wrap { text-align:center; margin-top:.75rem; }
-  .cave-stars { position:relative; display:inline-block; font-size:1.7rem; letter-spacing:.1em; line-height:1; }
-  .cave-stars-base { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px rgba(70,12,9,.3); filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
-  /* Fork's Rating: a dimmed set of stars underneath, and the coloured set
-     clipped to the score on top. Before this, the fill layer was display:none
-     and every rating drew five solid red stars. See stars.js. */
-  .cave-stars.stars-scored > .fork-stars,
-  .vh-stars.stars-scored > .fork-stars,
-  .stars-scored > .cave-stars-base { filter:grayscale(1) brightness(1.6) opacity(.34) drop-shadow(0 1px 3px rgba(0,0,0,.25)) !important; }
-  .fork-stars-fill { display:block; position:absolute; top:0; left:0; height:100%; width:0; overflow:hidden; pointer-events:none; white-space:nowrap; transition:width .45s ease; }
-  .fork-stars-fill.fork-stars-text { background:linear-gradient(90deg,#2E0B08 0%,#6E1410 22%,#A81208 48%,#E01C10 75%,#FF6B5E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .cave-stars-caption { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-top:.35rem; }
-  .cave-dish-name { font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); text-align:center; margin-top:.5rem; line-height:1.15; }
-  .cave-dish-price { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--red); margin-top:.15rem; }
-  .cave-view-caption { font-family:var(--serif); font-style:italic; color:var(--muted); font-size:.95rem; margin-top:.25rem; }
-  .cave-text-view { width:100%; height:100%; overflow-y:auto; padding:0 .3rem; -webkit-overflow-scrolling:touch; }
-  .cave-about { font-family:var(--sans); font-weight:300; font-size:.95rem; line-height:1.8; color:var(--text); margin:.9rem 0 1rem; }
-  .cave-meta-line { font-family:var(--sans); font-weight:300; font-size:.88rem; line-height:1.7; color:var(--muted); }
-  .cave-meta-line strong { color:var(--text); font-weight:600; }
-  .cave-vdots { position:absolute; right:5px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:9px; z-index:15; }
-  .cave-vdot { width:7px; height:7px; border-radius:50%; background:rgba(252,249,244,.3); cursor:pointer; transition:all .25s; }
-  .cave-vdot.active { background:var(--red); transform:scale(1.35); box-shadow:0 0 8px rgba(200,20,15,.7); }
-  .cave-hdots { display:flex; gap:8px; justify-content:center; padding:.95rem 0 .25rem; }
-  .cave-hint { text-align:center; font-family:var(--sans); font-size:.62rem; letter-spacing:.22em; text-transform:uppercase; color:rgba(252,249,244,.5); padding-bottom:.7rem; }
-  .cave-actions { display:flex; gap:.7rem; justify-content:center; }
-  .cave-rate-btn { flex:1; max-width:260px; background:var(--red); color:#fff; border:none; border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
-  .cave-share-btn { background:transparent; border:1px solid #C01108; color:#FF6B5E; border-radius:999px; padding:.85rem 1.2rem; font-size:.78rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
-  .anim-l { animation:cardL .34s cubic-bezier(.25,.8,.3,1); }
-  .anim-r { animation:cardR .34s cubic-bezier(.25,.8,.3,1); }
-  .anim-u { animation:cardU .3s ease; }
-  .anim-d { animation:cardD .3s ease; }
-  @keyframes cardL { from{opacity:.25; transform:translateX(78%);} to{opacity:1; transform:translateX(0);} }
-  @keyframes cardR { from{opacity:.25; transform:translateX(-78%);} to{opacity:1; transform:translateX(0);} }
-  @keyframes cardU { from{opacity:0; transform:translateY(46px);} to{opacity:1; transform:translateY(0);} }
-  @keyframes cardD { from{opacity:0; transform:translateY(-46px);} to{opacity:1; transform:translateY(0);} }
-
-  /* ── MENU PAGE ── */
-  body { background:#150D09; }
-  #warp-room { animation:pageIn .55s ease; }
-  @keyframes pageIn { from{opacity:0; transform:scale(1.1);} to{opacity:1; transform:scale(1);} }
-  .menu-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px; background:rgba(21,13,9,.92); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-bottom:1px solid rgba(252,249,244,.08); }
-  .menu-home { color:rgba(252,249,244,.8); text-decoration:none; font-family:var(--sans); font-size:.8rem; letter-spacing:.06em; }
-  .menu-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
-  #arrive-flash { position:fixed; inset:0; z-index:960; pointer-events:none; background:radial-gradient(140% 110% at 50% 55%, #D40F0A 0%, #A00B06 42%, #5E0503 72%, #2E0201 100%); animation:arriveOut .65s ease .1s forwards; }
-  @keyframes arriveOut { from{opacity:1;} to{opacity:0; visibility:hidden;} }
-  .r-stars-input { display:flex; gap:9px; font-size:1.75rem; line-height:1; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
-  .r-stars-input span { color:#E7DCCB; transition:transform .12s, color .12s; }
-  .r-stars-input span.on:nth-child(1) { color:#6E1410; }
-  .r-stars-input span.on:nth-child(2) { color:#98150D; }
-  .r-stars-input span.on:nth-child(3) { color:#C01108; }
-  .r-stars-input span.on:nth-child(4) { color:#E5261A; }
-  .r-stars-input span.on:nth-child(5) { color:#FF5A4C; }
-  .r-stars-input span:active { transform:scale(1.25); }
-  .fork-stars { width:min(158px,42vw); height:auto; display:block; margin:0 auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
-  .cave-stars .fork-stars { width:130px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
-  .star-glyph { width:25px; height:25px; display:block; }
-  .star-inline { width:12px; height:12px; display:inline-block; vertical-align:-1px; }
-  .tasting-item { display:flex; align-items:flex-start; gap:.55rem; }
-  .tasting-main { flex:1; min-width:0; }
-  .pin-btn { background:none; border:none; padding:2px; cursor:pointer; color:#C9BCA9; flex-shrink:0; margin-top:2px; }
-  .pin-btn .pin-svg { width:17px; height:17px; display:block; }
-  .pin-btn.pinned { color:#C01108; }
-  .tasting-thumb { width:44px; height:34px; object-fit:cover; border-radius:6px; margin:0 .5rem; flex-shrink:0; }
-  .tasting-thumb-emoji { display:flex; align-items:center; justify-content:center; font-size:1.1rem; background:var(--off-white); }
-  .brand-red-text { background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:600; font-style:normal; }
-  .cave-nav-hint { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#C01108; margin:.25rem 0; -webkit-tap-highlight-color:transparent; }
-  .cave-nav-hint .hint-label { font-family:var(--serif); font-size:1rem; border:2px solid #C01108; border-radius:5px; padding:.12rem .8rem; }
-  .hint-tri { color:#C01108; font-size:.72rem; line-height:1; }
-  .cave-photo-row { display:flex; align-items:center; gap:.3rem; width:100%; justify-content:center; }
-
-  /* ── SOLD OUT ──
-     The manager marks a dish sold out and it stays that way until they clear
-     it by hand. The plate goes grey and says so across the front, so nobody
-     reads a colour photo of a dish the kitchen has run out of. */
-  .cave-media { position:relative; }
-  .cave-media.is-sold img { filter:grayscale(1) brightness(.58) contrast(.92); transition:filter .25s; }
-  .cave-sold-tag { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-7deg);
-    background:rgba(20,16,13,.68); color:#fff; font-family:var(--sans);
-    font-size:clamp(.72rem,3.2vw,1.05rem); font-weight:700; letter-spacing:.3em; text-transform:uppercase;
-    padding:.5rem 1rem .5rem 1.3rem; border:2px solid rgba(255,255,255,.92); border-radius:6px;
-    white-space:nowrap; pointer-events:none; text-shadow:0 2px 10px rgba(0,0,0,.7);
-    box-shadow:0 8px 28px rgba(0,0,0,.45); }
-  .cave-sold-note { font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.2em;
-    text-transform:uppercase; color:var(--red); margin-top:.3rem; }
-
-  /* Shown on every dish, always, whether or not the restaurant has declared
-     anything. A line that only appeared sometimes would turn its absence into
-     a statement that the dish is safe, which is not something this site can
-     ever promise. */
-  .cave-allergen-ask { font-family:var(--sans); font-size:.7rem; font-weight:500; color:var(--muted);
-    letter-spacing:.04em; text-align:center; margin:.5rem 0 0; }
-
-  /* The handle beside a reviewer's name. Several people are called Karol; the
-     phone number that tells them apart must never appear, so this does. */
-  .reviewer-handle { font-family:var(--sans); font-size:.68rem; font-weight:400; color:var(--muted); margin-left:.35rem; letter-spacing:.02em; }
-  .cave-side { display:flex; align-items:center; gap:4px; cursor:pointer; min-width:44px; justify-content:center; -webkit-tap-highlight-color:transparent; }
-  .side-emoji { font-size:1.45rem; }
-  .cave-recs { display:flex; gap:1rem; width:100%; justify-content:space-around; margin-top:1rem; padding-top:.9rem; border-top:1px solid var(--border); }
-  .cave-rec { display:flex; flex-direction:column; align-items:center; gap:.35rem; flex:1; }
-  .rec-title { font-family:var(--serif); color:#C01108; font-size:1rem; text-align:center; line-height:1.25; }
-  .cave-rec img { max-height:105px; max-width:88%; object-fit:contain; }
-  .rec-emoji { font-size:2.8rem; }
-  .rec-name { font-family:var(--sans); font-size:.72rem; color:var(--muted); }
-  .rv-summary { display:flex; gap:1.1rem; align-items:center; margin-bottom:1rem; }
-  .rv-avg { font-family:var(--serif); font-size:2.6rem; font-weight:600; color:var(--text); line-height:1; }
-  .rv-count { font-family:var(--sans); font-size:.76rem; color:var(--muted); margin-top:2px; }
-  .rv-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
-  .rv-bar-row { display:flex; align-items:center; gap:8px; font-family:var(--sans); font-size:.7rem; color:var(--muted); }
-  .rv-bar { flex:1; height:8px; background:var(--off-white); border-radius:4px; overflow:hidden; }
-  .rv-bar-fill { height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
-  .rv-your-box { background:var(--off-white); border:1px solid var(--border); border-radius:12px; padding:.8rem 1rem; margin-bottom:1rem; text-align:center; }
-  .rv-your-label { font-family:var(--sans); font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:.4rem; }
-  .rv-your-stars { display:flex; gap:5px; justify-content:center; }
-  .rv-star { color:#E7DCCB; }
-  .rv-star.on { color:#C01108; }
-  .rv-star .star-glyph { width:16px; height:16px; }
-  .rv-filters { display:flex; gap:.5rem; margin-bottom:.9rem; }
-  .rv-chip { background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.45rem 1rem; font-family:var(--sans); font-size:.76rem; color:var(--muted); cursor:pointer; }
-  .rv-chip.active { background:var(--red); border-color:var(--red); color:#fff; }
-  .cave-sec { width:100%; padding:1rem .9rem; }
-  .cave-sec-media { position:relative; padding-top:2.6rem; border-bottom:1px solid var(--border); }
-  .cave-sec-info { display:flex; flex-direction:column; align-items:center; gap:.35rem; border-bottom:1px solid var(--border); }
-  .cave-sec-info .cave-share-btn { margin-top:.7rem; }
-  .cave-sec-recs { padding-bottom:1.2rem; }
-  .cave-sec-recs .cave-recs { margin-top:0; padding-top:0; border-top:none; }
-  .cave-media { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; }
-  .cave-pin { position:absolute; top:12px; right:12px; z-index:6; background:none; border:none; padding:4px; cursor:pointer; color:#D6C9B6; }
-  .cave-pin .pin-svg { width:24px; height:24px; display:block; }
-  .cave-pin.pinned { color:#C01108; }
-  .cave-side { background:none; border:none; padding:2px; display:flex; align-items:center; gap:3px; cursor:pointer; min-width:40px; justify-content:center; -webkit-tap-highlight-color:transparent; }
-  .cave-vdots-h { display:flex; gap:8px; justify-content:center; margin-top:.7rem; }
-  .cave-vdots-h .cave-vdot { background:#DDD1C0; }
-  .cave-vdots-h .cave-vdot.active { background:#C01108; }
-  /* ── transparent dish stage (for PNG dishes) ── */
-  .cave-card { background:transparent !important; box-shadow:none !important; padding:.6rem .5rem 1rem !important; overflow-x:hidden; }
-  .cave-sec { padding:.6rem .7rem; }
-  .cave-sec-media { min-height:52vh; display:flex; flex-direction:column; justify-content:center; padding-top:2.9rem; border-bottom:1px solid rgba(252,249,244,.14); }
-  .cave-sec-info { gap:.15rem; padding:.85rem .7rem .95rem; border-bottom:1px solid rgba(252,249,244,.14); }
-  .cave-sec-recs { padding-top:.85rem; }
-  .cave-photo { max-width:88%; max-height:38vh; }
-  .cave-dish-name { color:var(--white); font-size:1.35rem; }
-  .cave-dish-price { font-size:1.05rem; color:#FF6B5E; }
-  .cave-stars-caption { color:rgba(252,249,244,.72); }
-  .cave-stars .fork-stars { width:118px; }
-  .cave-view-caption { color:rgba(252,249,244,.68); }
-  .cave-grade-label { color:rgba(252,249,244,.75) !important; }
-  .cave-text-view { color:rgba(252,249,244,.9); max-height:38vh; }
-  .cave-about { color:rgba(252,249,244,.92); }
-  .cave-meta-line { color:rgba(252,249,244,.7); }
-  .cave-meta-line strong { color:var(--white); }
-  .rec-title { color:#FF6B5E; font-size:.92rem; }
-  .rec-name { color:rgba(252,249,244,.7); }
-  .cave-rec img { max-height:88px; }
-  .cave-share-btn { margin-top:.55rem !important; padding:.62rem 1.5rem; font-size:.72rem; }
-  .cave-vdots-h { margin-top:.5rem; }
-  .cave-vdots-h .cave-vdot { background:rgba(252,249,244,.32); }
-  .cave-photo-fallback { padding:1.2rem 0; }
-  .exploded-row { display:flex; align-items:center; justify-content:center; gap:.5rem; width:100%; }
-  .exploded-row .cave-photo-open { max-width:60%; max-height:38vh; flex:0 1 auto; }
-  .ing-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; justify-content:space-around; align-self:stretch; max-height:38vh; text-align:left; flex:0 0 auto; max-width:38%; }
-  .ing-list li { position:relative; font-family:var(--sans); font-weight:500; font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(252,249,244,.85); padding-left:14px; line-height:1.35; }
-  .ing-list li::before { content:''; position:absolute; left:0; top:.42em; width:8px; height:1px; background:#C01108; }
-  .ing-list li::after { content:''; position:absolute; left:7px; top:calc(.42em - 1.5px); width:4px; height:4px; border-radius:50%; background:#C01108; }
-  @media (max-width:380px){ .ing-list li { font-size:.54rem; } }
-  /* ═══ DISEÑO RESPONSIVO — se adapta a cualquier pantalla ═══ */
-  #cave .cave-card { display:flex; flex-direction:column; overflow:hidden; }
-  /* la foto ocupa una parte proporcional de la altura disponible, con límites suaves */
-  #cave .cave-sec-media { flex:0 1 auto; min-height:0; overflow:visible; padding-bottom:.8rem; border-bottom:none; }
-  #cave .cave-photo-row { height:clamp(180px, 40vh, 460px); display:flex; align-items:center; justify-content:center; }
-  #cave .cave-media { height:100%; width:100%; display:flex; align-items:center; justify-content:center; }
-  #cave .cave-media > img.cave-photo { width:100%; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
-  #cave .exploded-row { height:100%; align-items:center; gap:.3rem; }
-  #cave .exploded-row > img.cave-photo-open { width:auto; height:auto; max-width:62%; max-height:100%; object-fit:contain; }
-  #cave .ing-list { height:auto; max-height:100%; align-self:center; max-width:36%; }
-  #cave .ing-list li { font-size:clamp(.5rem, 2.6vw, .78rem); }
-  /* zona inferior con su propia barra de desplazamiento */
-  #cave .cave-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(252,249,244,.45) transparent; }
-  #cave .cave-scroll::-webkit-scrollbar { width:5px; }
-  #cave .cave-scroll::-webkit-scrollbar-track { background:transparent; }
-  #cave .cave-scroll::-webkit-scrollbar-thumb { background:rgba(252,249,244,.45); border-radius:3px; }
-  @supports (scrollbar-gutter: stable) { #cave .cave-scroll { scrollbar-gutter:stable both-edges; } }
-  @supports not (scrollbar-gutter: stable) { #cave .cave-scroll { padding-left:5px; } }
-  #cave .cave-sec-info { border-top:1px solid rgba(252,249,244,.14); padding:1.3rem 1rem 1rem; }
-  #cave .cave-sec-recs { padding:1rem; }
-  /* textos y bebidas proporcionales */
-  #cave .cave-dish-name { font-size:clamp(1.15rem, 5vw, 1.7rem); }
-  #cave .cave-dish-price { font-size:clamp(.95rem, 4vw, 1.3rem); }
-  #cave .cave-rec img { max-height:clamp(90px, 17vh, 170px) !important; max-width:92%; }
-  #cave .cave-stars .fork-stars { width:clamp(96px, 34vw, 170px); }
-  /* sin puntos */
-  #cave .cave-vdots-h, #cave .cave-hdots, #cave .cave-vdots { display:none !important; }
-  /* ═══ TODO A PANTALLA COMPLETA (sin márgenes laterales) ═══ */
-  #cave .cave-inner { max-width:none !important; width:100% !important; padding-left:0 !important; padding-right:0 !important; }
-  #cave .cave-card-zone { padding-left:0 !important; padding-right:0 !important; }
-  #cave .cave-card { padding-left:0 !important; padding-right:0 !important; width:100% !important; }
-  #cave .cave-sec-media { padding-left:0 !important; padding-right:0 !important; width:100% !important; }
-  #cave .cave-photo-row { width:100% !important; height:clamp(200px, 44vh, 520px) !important; }
-  #cave .cave-media > img.cave-photo { width:100% !important; }
-  #cave .exploded-row { width:100% !important; }
-  #cave .exploded-row > img.cave-photo-open { max-width:64% !important; }
-  #cave .ing-list { max-width:34% !important; }
-  #cave .cave-scroll { width:100% !important; }
-  #cave .cave-sec-info, #cave .cave-sec-recs { width:100% !important; padding-left:.9rem !important; padding-right:.9rem !important; }
-  #cave .cave-recs { width:100% !important; }
-  #cave .cave-grade { left:10px !important; } #cave .cave-pin { right:10px !important; }
-  /* ═══ ESCRITORIO / LAPTOP: columna centrada (el móvil no se toca) ═══ */
-  @media (min-width:760px){
-    #cave .cave-inner { max-width:540px !important; margin:0 auto !important; }
-    #cave .cave-card { border-radius:0; }
-    #cave .cave-photo-row { height:clamp(240px, 40vh, 430px) !important; }
-    #cave .cave-rec img { max-height:135px !important; }
-    #cave .cave-grade { left:12px !important; } #cave .cave-pin { right:12px !important; }
-    #cave .cave-overlay { padding:0; }
-  }
-  /* ── pie de página dentro del plato ── */
-  #cave .cave-foot { text-align:center; padding:1.6rem 1rem 2rem; border-top:1px solid rgba(252,249,244,.12); margin-top:.6rem; font-family:var(--sans); font-weight:300; font-size:.8rem; color:rgba(252,249,244,.6); }
-  #cave .cave-foot img { height:46px; margin-bottom:.7rem; }
-  #cave .cave-foot-line { margin-bottom:.25rem; }
-  #cave .cave-foot a { color:rgba(252,249,244,.85); }
-  /* ── quitar las flechas laterales de platos ── */
-  #cave .cave-side { display:none !important; }
-  /* ═══════════════════════════════════════════════════════════
-     LAPTOP / DESKTOP (760px o más): diseño horizontal de dos columnas
-     El teléfono no se ve afectado por ninguna de estas reglas.
-     ═══════════════════════════════════════════════════════════ */
-  @media (min-width:760px){
-    #cave .cave-inner { max-width:1180px !important; padding:calc(env(safe-area-inset-top,0px) + 14px) 2rem 1.4rem !important; }
-    #cave .cave-cat { padding-bottom:1rem; font-size:.78rem; }
-    /* la tarjeta se divide en dos columnas: foto | información */
-    #cave .cave-card { display:grid !important; grid-template-columns:1.05fr .95fr !important; gap:2.2rem !important; align-items:center !important; overflow:hidden !important; }
-    #cave .cave-sec-media { padding:0 !important; border:none !important; align-self:center !important; }
-    #cave .cave-photo-row { height:min(62vh, 520px) !important; max-height:min(62vh,520px) !important; }
-    #cave .cave-media > img.cave-photo { max-height:100% !important; }
-    #cave .exploded-row > img.cave-photo-open { max-width:60% !important; }
-    #cave .ing-list { max-width:38% !important; }
-    #cave .ing-list li { font-size:.82rem !important; letter-spacing:.08em; }
-    /* columna derecha: todo visible, con scroll solo si hace falta */
-    #cave .cave-scroll { max-height:78vh !important; padding-right:.4rem !important; border:none !important; }
-    #cave .cave-sec-info { border-top:none !important; border-bottom:1px solid rgba(252,249,244,.14) !important; padding:0 0 1.6rem !important; text-align:center; }
-    #cave .cave-dish-name { font-size:2.1rem !important; }
-    #cave .cave-dish-price { font-size:1.35rem !important; }
-    #cave .cave-stars .fork-stars { width:190px !important; }
-    #cave .cave-share-btn { padding:.8rem 2.4rem !important; font-size:.78rem !important; }
-    #cave .cave-sec-recs { padding:1.6rem 0 0 !important; }
-    #cave .cave-recs { gap:2rem !important; }
-    #cave .cave-rec img { max-height:170px !important; }
-    #cave .rec-title { font-size:1.05rem !important; }
-    #cave .cave-foot { padding:1.4rem 0 .6rem !important; }
-    #cave .cave-foot img { height:40px !important; }
-    /* el corazón y el sello acompañan la foto */
-    #cave .cave-grade { left:0 !important; top:0 !important; }
-    #cave .cave-pin { right:auto !important; left:auto !important; top:0 !important; }
-    #cave .cave-sec-media .cave-pin { position:absolute; right:0 !important; }
-  }
-  /* pantallas muy anchas: un poco más de aire */
-  @media (min-width:1280px){
-    #cave .cave-inner { max-width:1320px !important; }
-    #cave .cave-photo-row { height:min(66vh, 600px) !important; max-height:min(66vh,600px) !important; }
-  }
-  /* ═══ SOLO ESCRITORIO: tipografía más grande ═══ */
-  @media (min-width:760px){
-    #cave .cave-cat { font-size:.92rem !important; letter-spacing:.34em !important; }
-    #cave .cave-dish-name { font-size:2.5rem !important; }
-    #cave .cave-dish-price { font-size:1.6rem !important; }
-    #cave .cave-stars-caption { font-size:.82rem !important; letter-spacing:.2em !important; }
-    #cave .cave-share-btn { font-size:.92rem !important; padding:.95rem 2.8rem !important; letter-spacing:.14em !important; }
-    #cave .rec-title { font-size:1.3rem !important; }
-    #cave .rec-name { font-size:1.02rem !important; }
-    #cave .ing-list li { font-size:.98rem !important; letter-spacing:.06em !important; padding-left:19px !important; }
-    #cave .ing-list li::before { width:12px !important; }
-    #cave .ing-list li::after { left:11px !important; width:6px !important; height:6px !important; }
-    #cave .cave-about { font-size:1.06rem !important; line-height:1.85 !important; }
-    #cave .cave-meta-line { font-size:1rem !important; line-height:1.75 !important; }
-    #cave .cave-grade-label { font-size:.52rem !important; }
-    #cave .cave-foot { font-size:.95rem !important; }
-    #cave .cave-view-caption { font-size:1.1rem !important; }
-  }
-  @media (min-width:1280px){
-    #cave .cave-dish-name { font-size:2.9rem !important; }
-    #cave .cave-dish-price { font-size:1.8rem !important; }
-    #cave .ing-list li { font-size:1.08rem !important; }
-    #cave .rec-title { font-size:1.4rem !important; }
-    #cave .cave-about { font-size:1.14rem !important; }
-  }
-  /* ── SOLO ESCRITORIO: sello sanitario y corazón más grandes ── */
-  @media (min-width:760px){
-    #cave .cave-grade { width:92px !important; }
-    #cave .cave-grade img { width:56px !important; }
-    #cave .cave-grade-label { font-size:.68rem !important; letter-spacing:.1em !important; margin-top:-2px !important; }
-    #cave .cave-pin .pin-svg { width:38px !important; height:38px !important; }
-  }
-  @media (min-width:1280px){
-    #cave .cave-grade { width:108px !important; }
-    #cave .cave-grade img { width:96px !important; }
-    #cave .cave-grade-label { font-size:.76rem !important; }
-    #cave .cave-pin .pin-svg { width:44px !important; height:44px !important; }
-  }
-  /* ── descripción centrada (teléfono y portátil) + corazón más adentro ── */
-  #cave .cave-text-view { text-align:center !important; max-width:min(680px, 88%) !important; margin:0 auto !important; padding:0 !important; }
-  #cave .cave-about, #cave .cave-meta-line { text-align:center !important; }
-  #cave .cave-pin { right:45px !important; top:20px !important; }
-  @media (min-width:760px){
-    #cave .cave-pin { right:84px !important; top:24px !important; }
-    #cave .cave-text-view { max-width:min(760px, 82%) !important; }
-  }
+  .m-skel { height:74px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:14px; margin-bottom:.7rem; border:1px solid var(--border); }
+  @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 
-
-<!-- TOP BAR -->
-<div class="menu-topbar">
-  <a href="index.html" class="menu-home">&#8249; Home</a>
-  <div class="menu-topbar-title">The Menu</div>
-  <span style="width:58px;"></span>
+<div class="m-topbar">
+  <a href="index.html" class="m-home">&#8249; Site</a>
+  <div class="m-topbar-title">Manager</div>
+  <span class="m-topbar-spacer"></span>
 </div>
 
-<!-- 3D WARP MENU -->
-<div id="warp-room">
-  <div class="warp-bg" id="warp-bg-far"></div>
-  <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
-  <div class="warp-hint">Swipe to explore &middot; Tap a cave to enter</div>
-  <div class="warp-viewport" id="warp-viewport">
-    <div id="warp-stage"></div>
-    <button class="warp-arrow warp-arrow-l" onclick="warpGo(-1)" aria-label="Previous">&#8249;</button>
-    <button class="warp-arrow warp-arrow-r" onclick="warpGo(1)" aria-label="Next">&#8250;</button>
-  </div>
-  <div class="warp-dots" id="warp-dots"></div>
-  <div class="warp-cat-name" id="warp-cat-name"></div>
-  <div class="warp-tap-hint">Tap the cave to enter</div>
-</div>
-<!-- CAVE INTERIOR -->
-<div id="cave" class="cave-overlay">
-  <div class="cave-inner">
-    <button class="cave-back" onclick="exitCave()" aria-label="Back">&#8249;</button>
-    <div class="cave-cat" id="cave-cat"></div>
-    <div class="cave-card-zone" id="cave-card-zone">
-      <div class="cave-card" id="cave-card"></div>
-    </div>
-    <div class="cave-hdots" id="cave-hdots"></div>
-  </div>
-</div>
-<!-- END 3D WARP MENU -->
-
-<!-- FOOTER -->
-<footer>
-  <img src="hungry-fork-logo.png" alt="The Hungry Fork">
-  <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
-  <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
-  <p style="margin-top:10px;"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></p>
-</footer>
-
-<!-- DISH VIEW MODAL -->
-<div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
-  <div class="modal">
-    <div class="modal-hero">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-      <span id="modal-dish-emoji">🍽️</span>
-    </div>
-    <div class="modal-body">
-      <div class="modal-dish-name" id="modal-name"></div>
-      <div class="modal-dish-desc" id="modal-desc"></div>
-      <button class="rate-dish-btn" onclick="startRating()">Rate this dish</button>
-      <button class="rate-dish-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:0.6rem;" onclick="shareDish()">🔗 Share this dish</button>
-      <hr class="reviews-divider">
-      <div class="modal-section-label" id="reviews-label">Reviews</div>
-      <div class="reviews-list" id="reviews-list"></div>
-    </div>
-  </div>
+<div class="m-wrap" id="m-wrap">
+  <div class="m-skel"></div>
+  <div class="m-skel"></div>
+  <div class="m-skel"></div>
 </div>
 
-<!-- RATING MODAL -->
-<div class="r-overlay" id="rating-modal">
-  <div class="r-box">
-    <div class="r-hero">
-      <button class="r-close" onclick="closeRatingModal()">✕</button>
-      <span id="r-dish-emoji">🍽️</span>
-    </div>
-    <div class="r-body">
-      <div class="r-dish-name" id="r-dish-name"></div>
-      <div class="r-dish-desc" id="r-dish-desc"></div>
-
-      <div class="r-section">🍽️ Dish Rating</div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
-        <input type="hidden" id="sl-flavor" value="3"><div class="r-stars-input" data-target="sl-flavor" data-label="lbl-flavor"></div>
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
-        <input type="hidden" id="sl-worth" value="3"><div class="r-stars-input" data-target="sl-worth" data-label="lbl-worth"></div>
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
-        <input type="hidden" id="sl-sig" value="3"><div class="r-stars-input" data-target="sl-sig" data-label="lbl-sig"></div>
-      </div>
-      <textarea class="r-textarea" id="r-dish-comment" aria-label="Comment about this dish"></textarea>
-
-      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
-        <input type="hidden" id="sl-hosp" value="3"><div class="r-stars-input" data-target="sl-hosp" data-label="lbl-hosp"></div>
-      </div>
-      <div class="r-slider-row">
-        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
-        <input type="hidden" id="sl-atm" value="3"><div class="r-stars-input" data-target="sl-atm" data-label="lbl-atm"></div>
-      </div>
-      <textarea class="r-textarea" id="r-rest-comment" aria-label="Comment about the restaurant"></textarea>
-
-      <div class="t-err" id="r-err" style="display:none;"></div>
-      <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review</button>
-
-      <hr class="r-divider">
-      <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
-      <div class="r-reviews-list" id="r-reviews-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- REVIEWS PANEL -->
-<div class="r-overlay" id="reviews-modal" onclick="if(event.target===this)closeReviewsPanel()">
-  <div class="r-box">
-    <div class="r-hero" style="height:64px;">
-      <button class="r-close" onclick="closeReviewsPanel()">&#10005;</button>
-      <span id="rv-title" style="font-family:var(--serif);font-weight:600;color:var(--text);font-size:1.2rem;">Reviews</span>
-    </div>
-    <div class="r-body">
-      <div class="rv-summary">
-        <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-count" id="rv-count"></div></div>
-        <div class="rv-bars" id="rv-bars"></div>
-      </div>
-      <div id="rv-your"></div>
-      <div class="rv-filters">
-        <button class="rv-chip active" onclick="rvSetSort('new',this)">Newest</button>
-        <button class="rv-chip" onclick="rvSetSort('high',this)">Highest</button>
-        <button class="rv-chip" onclick="rvSetSort('low',this)">Lowest</button>
-      </div>
-      <div class="reviews-list" id="rv-list" style="max-height:280px;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- MY TASTINGS MODAL -->
-<div class="t-overlay" id="tastings-modal">
-  <div class="t-box">
-    <div class="t-header">
-      <h3>🍽️ My Tastings</h3>
-      <button class="t-close" onclick="closeMyTastings()">✕</button>
-    </div>
-    <div class="t-body">
-      <div class="t-sub">Every dish you've rated, and where you had it.</div>
-      <div id="tastings-list" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- MAPS CHOOSER -->
-<div class="maps-modal" id="maps-modal" onclick="if(event.target===this)closeMapsChooser()">
-  <div class="maps-sheet">
-    <div class="maps-sheet-title">
-      <img src="hungry-fork-logo.png" alt="" style="height:28px; width:auto; border-radius:4px; background:white; padding:2px;">
-      Open location in…
-    </div>
-    <a class="maps-option" href="https://www.google.com/maps/place/Stone+St,+New+York,+NY+10004/@40.7040321,-74.0115947,17z" target="_blank" onclick="closeMapsChooser()">
-      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🗺️</div>Google Maps
-    </a>
-    <a class="maps-option" href="https://waze.com/ul?ll=40.7040321,-74.0115947&navigate=yes" target="_blank" onclick="closeMapsChooser()">
-      <div class="maps-icon" style="background:#05c8f7; color:white;">W</div>Waze
-    </a>
-    <a class="maps-option" href="https://maps.apple.com/?q=Stone+Street&ll=40.7040321,-74.0115947" target="_blank" onclick="closeMapsChooser()">
-      <div class="maps-icon" style="background:#fff; border:1px solid #e8e0e0;">🍎</div>Apple Maps
-    </a>
-    <span class="maps-cancel" onclick="closeMapsChooser()">Cancel</span>
-  </div>
-</div>
-
-<!-- LUCKY BITE WIN SCREEN -->
-<div class="lucky-overlay" id="lucky-overlay">
-  <div class="lucky-box">
-    <span class="lucky-emoji">🎉</span>
-    <div class="lucky-title">You Won Fork's Lucky Bite!</div>
-    <div class="lucky-number" id="lucky-number">#1000</div>
-    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free dish</strong>! Tap below to confirm you received it.</div>
-    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
-  </div>
-</div>
-
-<!-- COMING SOON -->
-<div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
-  <div class="cs-box">
-    <img src="menu-button-blank.png" class="cs-icon" alt="">
-    <div class="cs-title" id="cs-title"></div>
-    <p class="cs-sub">Coming soon &mdash; we are cooking something special for you.</p>
-    <button class="cs-close" onclick="closeComingSoon()">Close</button>
-  </div>
-</div>
-
-<div id="arrive-flash"></div>
 <div class="toast" id="toast"></div>
 
-<!-- Shared taster account modal: markup, styles and logic for login,
-     signup and PIN reset. Identical on both pages, so it lives in one
-     file now. Must load before the page script below, which uses it. -->
-<script>
-  window.TASTER = {
-    successLabel: 'Rate This Dish',
-    // A fresh login can be a manager logging in, so ask the server again
-    // before anything decides whether to draw a reply box.
-    onSuccess: function(){ loadMyLevel(); openRatingModal(); }
-  };
-</script>
+<script>window.TASTER={successLabel:'Continue',onSuccess:function(){boot();}};</script>
 <script src="/taster.js"></script>
-<script src="/dishes.js"></script>
-<script src="/stars.js"></script>
-
 <script>
-// ── SUPABASE CLIENT ──
+// ── manager.html ──
+//
+// The dashboard a restaurant uses to run its own menu without calling
+// Sebastian: sold out, hidden, Chef's Pick, price and the written details.
+//
+// Nothing on this page is a security boundary. It hides buttons the account
+// may not use, but every save goes to /api/manager-dish, which re-checks the
+// caller's role against the database before it writes a single column. If
+// somebody unhides a button in their console, the server still says no.
+
 const SUPABASE_URL = 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHdyandzcXJsZmR4Z3FtcHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjczMTksImV4cCI6MjA5ODM0MzMxOX0.eeD6NYU4u-heag5LbkZJT-jENI3AuodlMzebOsxOv2c';
-async function sbFetch(path, method='GET', body=null){
-  const headers={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(currentSession||SUPABASE_KEY)};
-  if(method==='POST')headers['Prefer']='return=representation';
-  const opts={method,headers};
-  if(body)opts.body=JSON.stringify(body);
-  const res=await fetch(SUPABASE_URL+path,opts);
-  let data=null;
-  try{data=await res.json();}catch(e){data=[];}
-  return{ok:res.ok,data,status:res.status};
+
+const LIMITS = { name:80, description:600, about:4000, modifications:1000, wine:400, cocktail:400, ingredients:1000, allergens_text:1000 };
+
+let ACCESS = null;         // what this account may do, straight from the server
+let RESTAURANT = null;     // the one being managed right now
+let DISHES_ROWS = [];      // raw dish rows for that restaurant
+let openDishId = null;
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function wrap(){return document.getElementById('m-wrap');}
+
+
+// A serverless function that crashes returns Vercel's plain-text error page,
+// not JSON, and res.json() then throws "Unexpected token 'A'…" — an error
+// about the error, which says nothing about what broke. Read the body once,
+// try to parse it, and if it is not JSON report the status and what the
+// server actually said.
+async function callApi(path, options){
+  const res = await fetch(path, options);
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch(e){}
+  if(data === null && !res.ok){
+    const snippet = text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160);
+    throw new Error('The server returned '+res.status+' instead of data'
+      + (snippet ? ' — "'+snippet+'"' : '')
+      + '. Check the function logs in Vercel.');
+  }
+  return { res, data: data || {} };
 }
 
-// ── DISHES (loaded from Supabase by dishes.js) ──
-const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
-const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks','top-rated'];
-const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},'top-rated':{label:'Top Rated',emoji:'\u2B50'}};
-
-// ── STATE ──
-// currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
-let currentDishId=null, activeFilter='chefs-pick';
-const RESTAURANT_ID=1;
-
-// ── MAY THIS ACCOUNT REPLY? ──
+// ── STALE SCREEN ──
 //
-// This used to be read straight out of localStorage:
-//   currentTaster.is_restaurant_admin && currentTaster.restaurant_id===restaurantId
-// Two problems with that. It used the legacy flags, so nobody appointed through
-// the roles table ever saw the reply box. And it was decided by a copy of the
-// account saved in the browser, which keeps saying "manager" long after the
-// person has been removed.
+// Sebastian noticed that removing someone did not change their screen until
+// they logged out. He was right, and it is worth being precise about what it
+// means: every save goes to /api, which re-reads the roles table on that
+// request, so a removed manager can already do nothing. The page just has not
+// been told yet.
 //
-// Now the server answers, from the roles table, on page load. It is only asked
-// when the account might be staff at all, so an ordinary customer pays nothing.
-// And it is only about drawing a box: /api/review-reply re-checks the role
-// before it writes a single character.
-let MY_LEVEL = 0;        // 0 none · 1 crew · 2 manager · 3 owner · 4 platform
-let MY_LEVEL_READY = null;   // the request, so a reader can wait for it
+// Still, a dashboard that looks like it works and refuses everything is a bad
+// way to find out. So the page re-asks whenever it comes back to the front —
+// which is when someone picks their phone up again — and no more than once a
+// minute, because a page left open all service should not poll.
+let lastChecked = 0;
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState !== 'visible') return;
+  if(!currentSession) return;
+  if(Date.now() - lastChecked < 60000) return;
+  boot();
+});
 
-function loadMyLevel(){
-  MY_LEVEL_READY = (async function(){
-    MY_LEVEL = 0;
-    if(!currentTaster || !currentSession) return 0;
-
-    // The flags come from the copy of the account saved in the browser at
-    // login. If somebody logged in before those columns existed, their stored
-    // copy has neither field — not false, ABSENT — and the old check read that
-    // as "not staff" and gave up. The person then had to log out and back in,
-    // and had no way of knowing that.
-    //
-    // So: if the stored copy knows the answer and the answer is no, stop. If it
-    // does not even have the fields, it is too old to be trusted and we ask the
-    // server. Customers who logged in recently carry `false` and still cost
-    // nothing.
-    const knowsFlags = currentTaster.is_platform_admin    !== undefined
-                    || currentTaster.is_restaurant_admin  !== undefined;
-    if(knowsFlags && !(currentTaster.is_platform_admin || currentTaster.is_restaurant_admin)) return 0;
-    try{
-      const res = await fetch('/api/my-access', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
-      });
-      if(!res.ok) return 0;
-      const data = await res.json();
-      const here = (data.restaurants||[]).find(r=>String(r.id)===String(RESTAURANT_ID));
-      MY_LEVEL = here ? (here.level||0) : 0;
-    }catch(e){ /* no reply box is the safe failure */ }
-    return MY_LEVEL;
-  })();
-  return MY_LEVEL_READY;
-}
-
-
-// ── MENU ──
-// ── 3D WARP ROOM ──
-let warpPos=0, warpIdx=0, warpRAF=null;
-function warpSpacing(){return Math.min(window.innerWidth*0.62,380);}
-function warpWrap(d){const n=CATEGORY_ORDER.length;return((d%n)+n*1.5)%n-n/2;}
-function warpNorm(i){const n=CATEGORY_ORDER.length;return((Math.round(i)%n)+n)%n;}
-function warpBuild(){
-  const stage=document.getElementById('warp-stage');
-  if(!stage)return;
-  stage.innerHTML='';
-  CATEGORY_ORDER.forEach((k,i)=>{
-    const m=WARP_META[k];
-    const p=document.createElement('div');
-    p.className='warp-portal';p.dataset.idx=i;
-    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
-    p.addEventListener('click',()=>{if(Math.abs(warpWrap(i-warpPos))>0.3)warpTo(i);else enterCave();});
-    stage.appendChild(p);
-  });
-  document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
-}
-function warpRender(){
-  const sp=warpSpacing();
-  document.querySelectorAll('.warp-portal').forEach(p=>{
-    const d=warpWrap(p.dataset.idx-warpPos), ad=Math.abs(d);
-    p.style.transform=`translate(-50%,-50%) translateX(${d*sp}px) translateZ(${-ad*240}px) rotateY(${-d*22}deg)`;
-    p.style.opacity=ad>2.6?'0':String(1-ad*0.22);
-    p.style.filter=`brightness(${Math.max(1-ad*0.3,0.4)})`;
-    p.style.zIndex=String(100-Math.round(ad*10));
-  });
-  const far=document.getElementById('warp-bg-far'),near=document.getElementById('warp-bg-near');
-  if(far)far.style.transform=`translateX(${-Math.sin(warpPos/CATEGORY_ORDER.length*2*Math.PI)*sp*0.5}px)`;
-  if(near)near.style.transform=`translateX(${-Math.sin(warpPos/CATEGORY_ORDER.length*2*Math.PI+1.3)*sp*0.9}px)`;
-  document.querySelectorAll('.warp-dot').forEach(dt=>dt.classList.toggle('active',parseInt(dt.dataset.i)===warpIdx));
-}
-function warpTo(i){
-  const target=warpPos+warpWrap(i-warpPos);
-  warpIdx=warpNorm(i);
-  activeFilter=CATEGORY_ORDER[warpIdx];
-  updateWarpCatName();
-  if(warpRAF)cancelAnimationFrame(warpRAF);
-  const step=()=>{
-    const diff=target-warpPos;
-    if(Math.abs(diff)<0.004){warpPos=target;warpRender();warpRAF=null;return;}
-    warpPos+=diff*0.16;
-    warpRender();
-    warpRAF=requestAnimationFrame(step);
-  };
-  warpRAF=requestAnimationFrame(step);
-}
-function warpGo(dir){warpTo(Math.round(warpPos)+dir);}
-function updateWarpCatName(){
-  const el=document.getElementById('warp-cat-name');
-  if(el)el.textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
-}
-
-const FORK_STARS='<svg class="fork-stars" viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="fs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A1610"/><stop offset="1" stop-color="#260805"/></linearGradient><linearGradient id="fs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E150D"/><stop offset="1" stop-color="#3E0B06"/></linearGradient><linearGradient id="fs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A31108"/><stop offset="1" stop-color="#5E0A04"/></linearGradient><linearGradient id="fs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C41508"/><stop offset="1" stop-color="#750A04"/></linearGradient><linearGradient id="fs5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E02414"/><stop offset="1" stop-color="#8E0B05"/></linearGradient></defs><g stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round"><path transform="translate(0,0)" fill="url(#fs1)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(115,0)" fill="url(#fs2)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(230,0)" fill="url(#fs3)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(345,0)" fill="url(#fs4)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/><path transform="translate(460,0)" fill="url(#fs5)" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></g></svg>';
-const STAR_GLYPH='<svg class="star-glyph" viewBox="0 0 100 100"><path fill="currentColor" stroke="rgba(0,0,0,.25)" stroke-width="3" stroke-linejoin="round" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
-
-// ── CAVE INTERIOR (enter a category) ──
-let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
-function caveListFor(key){
-  if(key==='chefs-pick')return chefsPickDishes();
-  if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
-  return DISHES.filter(d=>d.category===key);
-}
-function enterCave(startId){
-  const key=CATEGORY_ORDER[warpIdx];
-  caveDishes=caveListFor(key);
-  caveDishIdx=Math.max(0,caveDishes.findIndex(d=>d.id===startId));
-  caveViewIdx=0;
-  document.getElementById('cave-cat').textContent=WARP_META[key].label;
-  const stage=document.getElementById('warp-stage');
-  stage.classList.add('warp-zoom');
-  setTimeout(()=>{
-    document.getElementById('cave').classList.add('open');
-    document.body.style.overflow='hidden';
-    renderCave();
-    setTimeout(()=>stage.classList.remove('warp-zoom'),200);
-  },380);
-}
-function exitCave(){
-  document.getElementById('cave').classList.remove('open');
-  document.body.style.overflow='';
-}
-function recImgErr(img,emoji){
-  const dv=document.createElement('div');
-  dv.className='rec-emoji';
-  dv.textContent=emoji;
-  img.replaceWith(dv);
-}
-function caveImgErr(img,emoji){
-  const div=document.createElement('div');
-  div.className='cave-photo-fallback';
-  div.textContent=emoji;
-  img.replaceWith(div);
-}
-async function caveDishRating(dbId){
-  if(caveRatings[dbId])return caveRatings[dbId];
-  try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);
-    if(ok&&data.length){
-      const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
-      caveRatings[dbId]={avg,count:data.length};
-    }else caveRatings[dbId]={avg:0,count:0};
-  }catch(e){caveRatings[dbId]={avg:0,count:0};}
-  return caveRatings[dbId];
-}
-function renderCave(animClass,mediaOnly){
-  const card=document.getElementById('cave-card');
-  const hdots=document.getElementById('cave-hdots');
-  if(!card)return;
-  if(!caveDishes.length){
-    card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
-    hdots.innerHTML='';
-    updateCaveDots();playCardAnim(card,animClass);
+// ── LOAD ──
+async function boot(){
+  lastChecked = Date.now();
+  const w = wrap();
+  if(!currentSession){
+    w.innerHTML =
+      '<div class="m-card">'
+    + '<div class="m-eyebrow">Restaurant access</div>'
+    + '<div class="m-h">Log in to manage your menu</div>'
+    + '<div class="m-sub">Use the same phone number and PIN you use on the site. If your account has not been given access yet, ask Seb\'s Analytics to add it.</div>'
+    + '<div style="margin-top:1.2rem;"><button class="m-btn" onclick="openTasterModal()">Log In</button></div>'
+    + '</div>';
     return;
   }
-  const d=caveDishes[caveDishIdx];
-  currentDishId=d.id;
-  const prevD=caveDishes[(caveDishIdx-1+caveDishes.length)%caveDishes.length];
-  const nextD=caveDishes[(caveDishIdx+1)%caveDishes.length];
-  const multi=caveDishes.length>1;
-  let media;
-  if(caveViewIdx===0){
-    media=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
-  }else if(caveViewIdx===1){
-    const ing=(d.ingredients&&d.ingredients.length)?`<ul class="ing-list">`+d.ingredients.map(x=>`<li>${x}</li>`).join('')+`</ul>`:'';
-    media=`<div class="exploded-row"><img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div>`;
-  }else{
-    media=`<div class="cave-text-view">
-      <p class="cave-about">${d.about||d.desc}</p>
-      ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
-      ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
-      ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.5rem;"><strong>Choice of the following:</strong></p>`+d.choices.map(x=>`<p class="cave-meta-line">${x}</p>`).join(''):''}
-    </div>`;
-  }
-  // Sold out is a flag the manager sets from /manager.html; it clears only when
-  // a person clears it. Nothing here resets on a timer.
-  const soldOut = dishIsSoldOut(d);
-  const soldTag = soldOut ? '<span class="cave-sold-tag">Sold Out</span>' : '';
 
-  if(mediaOnly){
-    const mediaEl=card.querySelector('.cave-media');
-    if(mediaEl){
-      mediaEl.className = 'cave-media' + (soldOut ? ' is-sold' : '');
-      mediaEl.innerHTML = media + soldTag;
-      playCardAnim(card,animClass);
-      return;
-    }
+  w.innerHTML = '<div class="m-skel"></div><div class="m-skel"></div>';
+
+  let data;
+  try{
+    const {res, data:payload} = await callApi('/api/my-access', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
+    });
+    data = payload;
+    if(res.status===401){ logout(); boot(); return; }
+    if(!res.ok) throw new Error(data.error||'Could not load your access.');
+  }catch(e){
+    w.innerHTML = '<div class="m-err">'+esc(e.message||'Could not reach the server.')+'</div>';
+    return;
   }
-  const pinned=getPins().includes(d.id);
-  card.innerHTML=`
-    <section class="cave-sec cave-sec-media">
-      <div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
-      <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
-      <div class="cave-photo-row">
-        ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
-        <div class="cave-media${soldOut?' is-sold':''}">${media}${soldTag}</div>
-        ${multi?`<button class="cave-side" onclick="caveDish(1)" aria-label="Next dish"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></button>`:'<span class="cave-side"></span>'}
-      </div>
-      <div class="cave-vdots-h">
-        <span class="cave-vdot${caveViewIdx===0?' active':''}" onclick="caveSetView(0)" title="Plate"></span>
-        <span class="cave-vdot${caveViewIdx===1?' active':''}" onclick="caveSetView(1)" title="Ingredients"></span>
-        <span class="cave-vdot${caveViewIdx===2?' active':''}" onclick="caveSetView(2)" title="Description"></span>
-      </div>
-    </section>
-    <div class="cave-scroll">
-    <section class="cave-sec cave-sec-info">
-      <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
-      <div class="cave-dish-name">${d.name}</div>
-      <div class="cave-dish-price">$${d.price}</div>
-      ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
-      <div class="cave-allergen-ask">Always ask staff about allergens.</div>
-      <button class="cave-share-btn" onclick="caveShare()">Share</button>
-    </section>
-    <section class="cave-sec cave-sec-recs">
-      <div class="cave-recs">
-        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${d.id}-wine.png" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
-        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.png" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
-      </div>
-    </section>
-    ${caveFootHTML()}
-    </div>`;
-  hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
-  updateCaveDots();playCardAnim(card,animClass);
-  loadZoneStars(d);
+
+  ACCESS = data;
+
+  if(!ACCESS.restaurants.length){
+    // Two very different reasons for an empty list, and saying the wrong one
+    // sends you looking in the wrong place. A platform admin sees every
+    // restaurant there is, so an empty list means there are none — not that
+    // the account lacks permission.
+    const reason = ACCESS.isPlatformAdmin
+      ? '<div class="m-eyebrow">Nothing to manage</div>'
+        + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+        + '<div class="m-sub">You are the platform admin, so you see every restaurant — and right now the <strong>restaurants</strong> table has no rows in it. Add the restaurant, then reload.</div>'
+      : '<div class="m-eyebrow">No access yet</div>'
+        + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+        + '<div class="m-sub">This account is not a manager or owner of any restaurant yet. Ask Seb\'s Analytics to add it, then reload this page.</div>';
+    w.innerHTML = '<div class="m-card">' + reason + '</div>';
+    return;
+  }
+
+  RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
+  await loadDishes();
 }
-function loadZoneStars(d){
-  const dbId=DISH_ID_MAP[d.id]||1;
-  caveDishRating(dbId).then(r=>{
-    setForkStars('cave-stars-fill', r.avg);
-    const cap=document.getElementById('cave-stars-caption');
-    if(cap)cap.textContent=r.count?`Fork's Rating · ${r.avg.toFixed(1)} (${r.count} rating${r.count===1?'':'s'})`:"Fork's Rating · No ratings yet";
-  });
+
+async function loadDishes(){
+  const w = wrap();
+  w.innerHTML = header() + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>';
+  try{
+    // Hidden dishes must appear here — hiding one on the public menu is not the
+    // same as losing the switch that brings it back.
+    const res = await fetch(SUPABASE_URL+'/rest/v1/dishes?restaurant_id=eq.'+RESTAURANT.id
+      +'&select=id,slug,name,emoji,price,description,about,modifications,wine,cocktail,ingredients,restaurant_category,is_chefs_pick,is_hidden,sold_out_until,sort_order'
+      +'&order=sort_order.asc',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    if(!res.ok) throw new Error('Could not load the menu ('+res.status+').');
+    DISHES_ROWS = await res.json();
+  }catch(e){
+    w.innerHTML = header() + '<div class="m-err">'+esc(e.message)+'</div>';
+    return;
+  }
+  render();
+  loadPeople();   // fills in the People card once the dishes are on screen
 }
-function caveFootHTML(){
-  // The account links used to be rebuilt here from currentTaster, which meant
-  // renderCave() had to run again on every login and logout. The corner menu
-  // is fixed and always on screen, cave included, so the footer is static now.
-  return '<div class="cave-foot">'
-    + '<img src="hungry-fork-logo.png" alt="The Hungry Fork">'
-    + '<div class="cave-foot-line">123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm</div>'
-    + '<div class="cave-foot-line">Powered by <a href="index.html">Seb\'s Analytics LLC</a></div>'
-    + '<div class="cave-foot-line"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></div>'
+
+// ── RENDER ──
+function header(){
+  const picker = ACCESS.restaurants.length>1
+    ? '<div class="m-field" style="margin-top:1rem;">'
+      + '<div class="m-field-label">Restaurant</div>'
+      + '<select class="m-select" id="m-rest" onchange="switchRestaurant(this.value)">'
+      + ACCESS.restaurants.map(r=>'<option value="'+r.id+'"'+(String(r.id)===String(RESTAURANT.id)?' selected':'')+'>'+esc(r.name)+'</option>').join('')
+      + '</select></div>'
+    : '';
+  const roleClass = RESTAURANT.role==='platform'?'platform':(RESTAURANT.role==='owner'?'owner':'');
+  const roleLabel = RESTAURANT.role==='platform'?'Platform admin':RESTAURANT.role;
+  return '<div class="m-card">'
+    + '<div class="m-eyebrow">Signed in as '+esc(ACCESS.firstName||'')+'</div>'
+    + '<div class="m-h">'+esc(RESTAURANT.name||'Restaurant')+'</div>'
+    + '<div style="margin-top:.4rem;"><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span></div>'
+    + picker
     + '</div>';
 }
-function cavePin(e,id){
-  e.stopPropagation();
-  let p=getPins();
-  if(p.includes(id)){p=p.filter(x=>x!==id);showToast('Removed from your favorites');}
-  else{p.push(id);showToast('Saved! It will show first in My Tastings');}
-  localStorage.setItem('hf_pins',JSON.stringify(p));
-  const btn=e.currentTarget;
-  if(btn)btn.classList.toggle('pinned',p.includes(id));
+
+function render(){
+  const people = peopleSection();
+  if(!DISHES_ROWS.length){
+    wrap().innerHTML = header() + people + '<div class="m-empty">This restaurant has no dishes yet.</div>';
+    return;
+  }
+  wrap().innerHTML = header() + people + DISHES_ROWS.map(dishCard).join('');
 }
-function updateCaveDots(){}
-function playCardAnim(card,cls){
-  if(!cls)return;
-  const media=card.querySelector('.cave-sec-media');
-  const info=card.querySelector('.cave-sec-info');
-  const targets=(cls==='anim-u'||cls==='anim-d')?[media]:[media,info];
-  targets.forEach(el=>{
-    if(!el)return;
-    el.classList.remove('anim-l','anim-r','anim-u','anim-d');
-    void el.offsetWidth;
-    el.classList.add(cls);
-  });
+
+function dishCard(d){
+  const open = String(d.id)===String(openDishId);
+  const soldOut = !!d.sold_out_until;
+  const flags = []
+    .concat(soldOut ? '<span class="m-flag sold">Sold out</span>' : [])
+    .concat(d.is_hidden ? '<span class="m-flag hid">Hidden</span>' : [])
+    .concat(d.is_chefs_pick ? '<span class="m-flag pick">Chef\'s Pick</span>' : [])
+    // Visible from the list, because a dish with no allergens declared is the
+    // one that needs attention.
+    .concat(allergenCount(d) === 0 ? '<span class="m-flag sold">No allergens set</span>' : []);
+
+  return '<div class="m-dish'+(open?' open':'')+(d.is_hidden?' is-hidden':'')+'" id="dish-'+d.id+'">'
+    + '<div class="m-dish-head" onclick="toggleDish('+d.id+')">'
+    +   '<span class="m-dish-emoji">'+esc(d.emoji||'🍽️')+'</span>'
+    +   '<div class="m-dish-id">'
+    +     '<div class="m-dish-name">'+esc(d.name)+'</div>'
+    +     '<div class="m-dish-meta">$'+Number(d.price||0).toFixed(2)+' &middot; '+esc(d.restaurant_category||'')+'</div>'
+    +     (flags.length?'<div class="m-flags">'+flags.join('')+'</div>':'')
+    +   '</div>'
+    +   '<span class="m-dish-caret">&#9656;</span>'
+    + '</div>'
+    + '<div class="m-dish-body">'
+    +   switchRow(d.id,'sold_out',soldOut,'Sold out','Comes off the menu as sold out and stays that way until you switch it back. Nothing resets it overnight.',true)
+    +   switchRow(d.id,'is_hidden',!!d.is_hidden,'Hidden from the menu','Nobody sees this dish on the site at all. Use it for a dish that is off for the season.',false)
+    +   switchRow(d.id,'is_chefs_pick',!!d.is_chefs_pick,'Chef\'s Pick','Only one dish at a time. Turning this on takes it off whichever dish has it now.',false)
+    +   textFields(d)
+    +   '<div class="m-actions">'
+    +     '<button class="m-save" id="save-'+d.id+'" onclick="saveText('+d.id+')" disabled>Save changes</button>'
+    +     '<button class="m-revert" onclick="revert('+d.id+')">Undo</button>'
+    +   '</div>'
+    +   '<div class="m-locked"><strong>Photos are not editable here.</strong> Photography is work Seb\'s Analytics is paid for &mdash; message Seb to change a dish photo. Everything else about this dish is yours to edit.</div>'
+    + '</div>'
+    + '</div>';
 }
-function caveDish(dir){if(!caveDishes.length)return;caveDishIdx=(caveDishIdx+dir+caveDishes.length)%caveDishes.length;renderCave(dir>0?'anim-l':'anim-r');}
-function caveView(dir){if(!caveDishes.length)return;caveViewIdx=(caveViewIdx+dir+3)%3;renderCave(dir>0?'anim-u':'anim-d',true);}
-function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir,true);}
-function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;renderCave(dir);}
-function caveOpenDish(id){
-  const d=DISHES.find(x=>x.id===id);
-  if(!d)return;
-  const ci=CATEGORY_ORDER.indexOf(d.category);
-  if(ci>=0){warpIdx=ci;warpPos=ci;updateWarpCatName();warpRender();}
-  enterCave(id);
+
+function switchRow(dishId, field, on, label, note, warn){
+  return '<div class="m-switch-row">'
+    + '<div><div class="m-switch-label">'+label+'</div><div class="m-switch-note">'+note+'</div></div>'
+    + '<button class="m-switch'+(on?' on':'')+(warn?' warn':'')+'" id="sw-'+dishId+'-'+field+'"'
+    +   ' role="switch" aria-checked="'+(on?'true':'false')+'" aria-label="'+label+'"'
+    +   ' onclick="toggleFlag('+dishId+',\''+field+'\')"></button>'
+    + '</div>';
 }
-function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
-function caveShare(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;shareDish();}
-function caveInitTouch(){
-  const zone=document.getElementById('cave-card-zone');
-  if(!zone)return;
-  let sx=0,sy=0,tracking=false,mdown=false,inMedia=false;
-  const startedInMedia=t=>!!(t&&t.closest&&t.closest('.cave-sec-media'));
-  zone.addEventListener('touchstart',e=>{
-    sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;
-    inMedia=startedInMedia(e.target);
-  },{passive:true});
-  zone.addEventListener('touchmove',e=>{
-    if(!tracking)return;
-    const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
-    // block the page only for horizontal swipes, or vertical swipes that start on the photo
-    if(adx>ady||(inMedia&&ady>adx))e.preventDefault();
-  },{passive:false});
-  zone.addEventListener('touchend',e=>{
-    if(!tracking)return;tracking=false;
-    const dx=sx-e.changedTouches[0].clientX,dy=sy-e.changedTouches[0].clientY;
-    caveGesture(dx,dy,inMedia);
-  },{passive:true});
-  zone.addEventListener('mousedown',e=>{mdown=true;sx=e.clientX;sy=e.clientY;inMedia=startedInMedia(e.target);});
-  window.addEventListener('mouseup',e=>{if(!mdown)return;mdown=false;caveGesture(sx-e.clientX,sy-e.clientY,inMedia);});
-  window.addEventListener('keydown',e=>{
-    if(!document.getElementById('cave').classList.contains('open'))return;
-    if(e.target.matches('input,textarea,select'))return;
-    if(e.key==='Escape')exitCave();
-    else if(e.key==='ArrowRight')caveDish(1);
-    else if(e.key==='ArrowLeft')caveDish(-1);
-    else if(e.key==='ArrowDown')caveView(1);
-    else if(e.key==='ArrowUp')caveView(-1);
-  });
-}
-function caveGesture(dx,dy,inMedia){
-  const adx=Math.abs(dx),ady=Math.abs(dy);
-  if(adx>ady){ if(adx>36)caveDish(dx>0?1:-1); return; }
-  if(inMedia&&ady>36)caveView(dy>0?1:-1);
-}
-function scrollToMenu(){
-  const room=document.getElementById('warp-room');
-  if(room)room.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function warpInit(){
-  warpBuild();
-  updateWarpCatName();
-  warpRender();
-  const vp=document.getElementById('warp-viewport');
-  if(!vp)return;
-  let sx=0,sy=0,p0=0,dragging=false,st=0;
-  const down=(x,y)=>{dragging=true;sx=x;sy=y;p0=warpPos;st=Date.now();if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}};
-  const move=x=>{if(!dragging)return;warpPos=p0+(sx-x)/warpSpacing();warpRender();};
-  const up=x=>{
-    if(!dragging)return;dragging=false;
-    const dx=sx-x, dt=Date.now()-st;
-    let t=Math.round(warpPos);
-    if(Math.abs(dx)>45&&dt<350&&t===Math.round(p0))t=Math.round(p0)+(dx>0?1:-1);
-    warpTo(t);
+
+function textFields(d){
+  const f = (field,label,value,type)=>{
+    const id = 'f-'+d.id+'-'+field;
+    const control = type==='area'
+      ? '<textarea class="m-textarea" id="'+id+'" oninput="dirty('+d.id+',\''+field+'\')" maxlength="'+(LIMITS[field]+200)+'">'+esc(value||'')+'</textarea>'
+      : '<input class="m-input" id="'+id+'" value="'+esc(value==null?'':value)+'" oninput="dirty('+d.id+',\''+field+'\')"'
+        + (type==='price'?' type="number" step="0.01" min="0" max="10000" inputmode="decimal"':'')+'>';
+    const counter = LIMITS[field] ? '<div class="m-count" id="c-'+d.id+'-'+field+'">'+String(value||'').length+' / '+LIMITS[field]+'</div>' : '';
+    return '<div class="m-field"><div class="m-field-label">'+label+'</div>'+control+counter+'</div>';
   };
-  vp.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
-  vp.addEventListener('touchmove',e=>{
-    if(!dragging)return;
-    const dx=Math.abs(sx-e.touches[0].clientX),dy=Math.abs(sy-e.touches[0].clientY);
-    if(dx>dy)e.preventDefault();
-    move(e.touches[0].clientX);
-  },{passive:false});
-  vp.addEventListener('touchend',e=>up(e.changedTouches[0].clientX),{passive:true});
-  vp.addEventListener('mousedown',e=>{e.preventDefault();down(e.clientX,e.clientY);});
-  window.addEventListener('mousemove',e=>move(e.clientX));
-  window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
-  window.addEventListener('resize',warpRender);
-  caveInitTouch();
+  return f('name','Dish name',d.name,'text')
+    + f('price','Price',d.price,'price')
+    + f('description','Short description',d.description,'area')
+    + f('about','About this dish',d.about,'area')
+    + f('ingredients','Ingredients (comma separated)',d.ingredients,'area')
+    + f('modifications','Modifications',d.modifications,'area')
+    + f('wine','Wine pairing',d.wine,'text')
+    + f('cocktail','Cocktail pairing',d.cocktail,'text')
+    + classifySection(d)
+    + allergenSection(d);
 }
 
-// ── DISH MODAL ──
-function renderDishModal(id){
-  const d=DISHES.find(x=>x.id===id);
-  if(!d)return;
-  currentDishId=id;
-  document.getElementById('modal-dish-emoji').textContent=d.emoji;
-  document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
-  loadReviews(id,RESTAURANT_ID);
-  document.getElementById('modal').classList.add('open');
-}
-function showDishModal(id){
-  renderDishModal(id);
-  const url=new URL(window.location);
-  url.searchParams.set('dish',id);
-  history.pushState({dish:id},'',url);
-}
-function openModal(id,e){
-  e.stopPropagation();
-  showDishModal(id);
-}
-function closeModalUI(){document.getElementById('modal').classList.remove('open');}
-function closeModal(){
-  closeModalUI();
-  const url=new URL(window.location);
-  if(url.searchParams.has('dish')){
-    url.searchParams.delete('dish');
-    history.pushState({},'',url);
-  }
-}
-function closeModalOnOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
-async function shareDish(){
-  if(!currentDishId)return;
-  const d=DISHES.find(x=>x.id===currentDishId);
-  if(!d)return;
-  const url=new URL(window.location);
-  url.searchParams.set('dish',currentDishId);
-  const shareUrl=url.toString();
-  if(navigator.share){
-    try{await navigator.share({title:d.name+' — The Hungry Fork',text:'Check out '+d.name+' at The Hungry Fork!',url:shareUrl});}catch(e){}
-  }else{
-    try{await navigator.clipboard.writeText(shareUrl);showToast('Link copied!');}
-    catch(e){showToast('Could not copy link.');}
-  }
-}
-window.addEventListener('popstate',()=>{
-  const params=new URLSearchParams(window.location.search);
-  const dishId=params.get('dish');
-  if(dishId&&DISHES.find(d=>d.id===dishId))renderDishModal(dishId);
-  else closeModalUI();
-});
-function startRating(){
-  closeModal();
-  if(!currentTaster){openTasterModal();return;}
-  openRatingModal();
+
+// ── ALLERGENS ──
+// The same 30 keys as api/_lib/dish-fields.js, with names a person can read.
+// The major nine come first because they cause most serious reactions and a
+// manager in a rush should meet them before 'buckwheat'.
+const ALLERGEN_GROUPS = [
+  { title: 'The major nine', major: true, items: [
+    ['allergen_milk_dairy','Milk / dairy'], ['allergen_eggs','Eggs'],
+    ['allergen_fish','Fish'], ['allergen_crustaceans','Crustaceans (shrimp, crab)'],
+    ['allergen_tree_nuts','Tree nuts'], ['allergen_peanuts','Peanuts'],
+    ['allergen_wheat','Wheat'], ['allergen_soy','Soy'], ['allergen_sesame','Sesame'],
+  ]},
+  { title: 'Also commonly declared', items: [
+    ['allergen_molluscs','Molluscs (clams, squid)'], ['allergen_gluten_cereals','Gluten cereals'],
+    ['allergen_celery','Celery'], ['allergen_mustard','Mustard'],
+    ['allergen_sulphites','Sulphites'], ['allergen_lupin','Lupin'],
+  ]},
+  { title: 'Everything else', items: [
+    ['allergen_coconut','Coconut'], ['allergen_corn_maize','Corn / maize'],
+    ['allergen_other_seeds','Other seeds'], ['allergen_other_legumes','Other legumes'],
+    ['allergen_buckwheat','Buckwheat'], ['allergen_rice','Rice'],
+    ['allergen_fruits','Fruits'], ['allergen_vegetables','Vegetables'],
+    ['allergen_garlic_onion','Garlic / onion'], ['allergen_spices_herbs','Spices / herbs'],
+    ['allergen_meat_alpha_gal','Red meat (alpha-gal)'], ['allergen_gelatin_collagen','Gelatin / collagen'],
+    ['allergen_yeast','Yeast'], ['allergen_additives_preservatives','Additives / preservatives'],
+    ['allergen_other','Other'],
+  ]},
+];
+const ALLERGEN_KEYS = ALLERGEN_GROUPS.flatMap(g => g.items.map(i => i[0]));
+
+// How the dish is classified. Plain short labels, used for search and for the
+// research later — not descriptions.
+const CLASSIFY_FIELDS = [
+  ['dish_type','Dish type'], ['cuisine_origin','Cuisine origin'],
+  ['main_ingredient','Main ingredient'], ['protein_type','Protein type'],
+  ['cooking_method','Cooking method'], ['flavor_profile','Flavour profile'],
+  ['meal_moment','Meal moment'], ['temperature','Temperature'],
+  ['spice_level','Spice level'], ['portion_format','Portion format'],
+];
+
+// Which collapsible sections are open, by dish. Kept outside the render so a
+// save does not fold everything up again mid-edit.
+let openGroups = {};
+function groupOpen(dishId, key){ return !!(openGroups[dishId] && openGroups[dishId][key]); }
+function toggleGroup(dishId, key){
+  openGroups[dishId] = openGroups[dishId] || {};
+  openGroups[dishId][key] = !openGroups[dishId][key];
+  render();
 }
 
-// ── RATING MODAL ──
-function openRatingModal(){
-  if(!currentDishId)return;
-  const d=DISHES.find(x=>x.id===currentDishId);
-  document.getElementById('r-dish-emoji').textContent=d.emoji;
-  document.getElementById('r-dish-name').textContent=d.name;
-  document.getElementById('r-dish-desc').textContent='$'+d.price+' · '+d.desc;
-  ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
-  ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
-  document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
-  document.getElementById('r-dish-comment').value='';
-  document.getElementById('r-rest-comment').value='';
-  document.getElementById('r-err').style.display='none';
-  loadReviews(currentDishId,RESTAURANT_ID,'r-reviews-list','r-reviews-label');
-  document.getElementById('rating-modal').classList.add('open');
-}
-function closeRatingModal(){document.getElementById('rating-modal').classList.remove('open');}
+function allergenCount(d){ return ALLERGEN_KEYS.filter(k => d[k] === true).length; }
 
-// ── STAR INPUTS ──
-function paintStarRow(row){
-  const v=parseInt(document.getElementById(row.dataset.target).value)||0;
-  [...row.children].forEach((s,i)=>s.classList.toggle('on',i<v));
-}
-function initStarRows(){
-  document.querySelectorAll('.r-stars-input').forEach(row=>{
-    row.innerHTML='';
-    for(let i=1;i<=5;i++){
-      const s=document.createElement('span');
-      s.innerHTML=STAR_GLYPH;
-      s.setAttribute('role','button');
-      s.addEventListener('click',()=>{
-        document.getElementById(row.dataset.target).value=i;
-        document.getElementById(row.dataset.label).textContent=i;
-        paintStarRow(row);
-      });
-      row.appendChild(s);
-    }
-    paintStarRow(row);
-  });
-}
-initStarRows();
+function allergenSection(d){
+  const n = allergenCount(d);
+  const open = groupOpen(d.id, 'alg');
+  const body =
+      '<div class="m-alg-note"><strong>This is the restaurant\'s own declaration.</strong> '
+    + 'Tick everything the dish contains, including anything it touches in the kitchen. '
+    + 'A customer with that allergy sees a warning on this dish. '
+    + 'Leaving a box unticked is read as &ldquo;not present&rdquo; &mdash; so if you are unsure, tick it.</div>'
+    + ALLERGEN_GROUPS.map(g =>
+        '<div class="m-alg-sub">'+g.title+'</div>'
+      + '<div class="m-alg-grid">'
+      + g.items.map(([key,label])=>{
+          const on = d[key] === true;
+          return '<label class="m-alg'+(on?' on':'')+(g.major?' major':'')+'">'
+            + '<input type="checkbox"'+(on?' checked':'')+' onchange="toggleAllergen('+d.id+',\''+key+'\',this.checked)">'
+            + '<span>'+label+'</span></label>';
+        }).join('')
+      + '</div>'
+      ).join('')
+    + '<div class="m-field"><div class="m-field-label">Anything else worth saying</div>'
+    + '<textarea class="m-textarea" id="f-'+d.id+'-allergens_text" oninput="dirty('+d.id+',\'allergens_text\')" '
+    + 'placeholder="e.g. fried in the same oil as shellfish">'+esc(d.allergens_text||'')+'</textarea>'
+    + '<div class="m-count" id="c-'+d.id+'-allergens_text">'+String(d.allergens_text||'').length+' / 1000</div></div>';
 
-// ── SUBMIT RATING ──
-async function submitRating(){
-  if(!currentTaster||!currentDishId)return;
-  const btn=document.getElementById('r-submit-btn');
-  const err=document.getElementById('r-err');
-  err.style.display='none';
-  btn.disabled=true;btn.textContent='Posting…';
-  const dbDish=DISH_ID_MAP[currentDishId]||1;
-  let updateReviewId=null;
+  return '<div class="m-group'+(open?' open':'')+'">'
+    + '<div class="m-group-head" onclick="toggleGroup('+d.id+',\'alg\')">'
+    +   '<div><span class="m-group-title">Allergens</span> '
+    +   '<span class="m-alg-count'+(n?'':' none')+'">'+(n?n+' ticked':'none set')+'</span></div>'
+    +   '<span class="m-group-caret">&#9656;</span>'
+    + '</div>'
+    + '<div class="m-group-body">'+body+'</div>'
+    + '</div>';
+}
+
+function classifySection(d){
+  const open = groupOpen(d.id, 'cls');
+  const filled = CLASSIFY_FIELDS.filter(([k]) => d[k]).length;
+  const body = CLASSIFY_FIELDS.map(([key,label]) =>
+      '<div class="m-field"><div class="m-field-label">'+label+'</div>'
+    + '<input class="m-input" id="f-'+d.id+'-'+key+'" value="'+esc(d[key]==null?'':d[key])+'" '
+    + 'oninput="dirty('+d.id+',\''+key+'\')"></div>').join('');
+  return '<div class="m-group'+(open?' open':'')+'">'
+    + '<div class="m-group-head" onclick="toggleGroup('+d.id+',\'cls\')">'
+    +   '<div><span class="m-group-title">Classification</span> '
+    +   '<span class="m-group-sum">'+filled+' of '+CLASSIFY_FIELDS.length+' filled</span></div>'
+    +   '<span class="m-group-caret">&#9656;</span>'
+    + '</div>'
+    + '<div class="m-group-body">'+body+'</div>'
+    + '</div>';
+}
+
+// An allergen saves the moment it is ticked. No Save button between a manager
+// remembering the dish has sesame in it and the warning reaching a customer.
+async function toggleAllergen(dishId, key, checked){
+  const d = rowFor(dishId); if(!d) return;
+  const saved = await save(dishId, { [key]: !!checked });
+  if(saved) showToast(checked ? 'Allergen added' : 'Allergen removed');
+}
+
+
+// ── PEOPLE ──
+// The page draws only what the server says this account may do; the server
+// decides again on every request. api/roles.js has the rule: you may grant or
+// remove a role strictly below your own level.
+let PEOPLE = null;
+
+const ROLE_LABEL = { owner:'Owner', manager:'Manager', crew:'Crew' };
+const ROLE_LEVEL = { crew:1, manager:2, owner:3 };
+
+async function loadPeople(){
   try{
-    const{ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at`);
-    if(dupOk&&dupData.length){
-      const prev=dupData[0];
-      const ageDays=(Date.now()-new Date(prev.created_at).getTime())/86400000;
-      if(ageDays<30){
-        const wait=Math.ceil(30-ageDays);
-        err.textContent='You already rated this dish. You can update your rating in '+wait+' day'+(wait===1?'':'s')+' — one score per dish, refreshed monthly.';
-        err.style.display='block';
-        btn.disabled=false;btn.textContent='Post Review';
-        return;
-      }
-      updateReviewId=prev.id;
-    }
-  }catch(e){}
-  const payload={
-    taster_id:currentTaster.id,
-    restaurant_id:RESTAURANT_ID,
-    dish_id:dbDish,
-    flavor:parseInt(document.getElementById('sl-flavor').value),
-    worth_every_bite:parseInt(document.getElementById('sl-worth').value),
-    signature_style:parseInt(document.getElementById('sl-sig').value),
-    hospitality:parseInt(document.getElementById('sl-hosp').value),
-    atmosphere_vibe:parseInt(document.getElementById('sl-atm').value),
-    // Full name, not just the first. Several people are called Karol and the
-    // handle beside it is what makes them distinct, but Sebastian wants the
-    // whole name shown. Reviews posted before this keep whatever they stored.
-    reviewer_name:[currentTaster.first_name,currentTaster.last_name].filter(Boolean).join(' ')||null,
-    reviewer_username:currentTaster.username||null,
-    dish_comment:document.getElementById('r-dish-comment').value.trim()||null,
-    restaurant_comment:document.getElementById('r-rest-comment').value.trim()||null,
-  };
-  try{
-    let ok,data,status;
-    if(updateReviewId){
-      payload.created_at=new Date().toISOString();
-      ({ok,data,status}=await sbFetch(`/rest/v1/reviews?id=eq.${updateReviewId}`,'PATCH',payload));
-      if(ok){
-        closeRatingModal();
-        showToast('Your rating was updated! Thank you');
-      }
-    }else{
-      const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
-      const globalNum=(Array.isArray(countData)?countData.length:0)+1;
-      payload.global_rating_number=globalNum;
-      ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
-      if(ok){
-        closeRatingModal();
-        if(globalNum%1000===0){
-          showToast('Review #'+globalNum+' — LUCKY BITE! 🎉');
-          showLuckyBite(globalNum);
-        }else{
-          showToast('Review #'+globalNum+' posted! '+(1000-globalNum%1000)+' to the next Lucky Bite');
-        }
-      }
-    }
-    if(ok){
-      loadOverallRating();
-      caveRatings={};
-      if(document.getElementById('cave').classList.contains('open'))renderCave();
-    }else{
-      const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
-      if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
-      else{err.textContent='Error ('+status+'): '+msg;}
-      err.style.display='block';
-    }
-  }catch(e){
-    err.textContent='Network error: '+e.message;
-    err.style.display='block';
-  }
-  btn.disabled=false;btn.textContent='Post Review';
-}
-
-// ── LOAD REVIEWS ──
-async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-list',labelId='reviews-label'){
-  // Wait for "may I reply?" before drawing, or a deep link straight to a dish
-  // renders the list while the answer is still in flight and the reply box
-  // never appears until something happens to re-render it.
-  if(MY_LEVEL_READY){ try{ await MY_LEVEL_READY; }catch(e){} }
-  const dbDishId=DISH_ID_MAP[dishId]||1;
-  try{
-    let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
-    if(!ok||!Array.isArray(data)){({ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*&order=created_at.desc`));}
-    const list=document.getElementById(listId);
-    const label=document.getElementById(labelId);
-    if(!ok||!data.length){
-      label.textContent='Reviews (0)';
-      list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';
-      return;
-    }
-    label.textContent=`Reviews (${data.length})`;
-    // 2 = manager. Owners and the platform admin are above it.
-    const canReply = MY_LEVEL >= 2 && String(restaurantId) === String(RESTAURANT_ID);
-    list.innerHTML=data.map(r=>{
-      const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const name=reviewerLabel(r);
-      const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-      let replyHtml='';
-      if(r.reply_text){
-        replyHtml=`<div class="review-reply"><strong>Restaurant reply:</strong> ${r.reply_text}</div>`;
-      }else if(canReply){
-        replyHtml=`<div class="review-reply-form">
-          <textarea class="reply-textarea" id="reply-input-${r.id}" placeholder="Write a reply as the restaurant…"></textarea>
-          <button class="reply-btn" onclick="postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')">Post Reply</button>
-        </div>`;
-      }
-      return`<div class="review-item">
-        <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
-        ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
-        <div class="review-date">${date}</div>
-        ${replyHtml}
-      </div>`;
-    }).join('');
-  }catch(e){}
-}
-
-// ── RESTAURANT REPLY ──
-async function postReply(reviewId,dishId,restaurantId,listId,labelId){
-  const textarea=document.getElementById('reply-input-'+reviewId);
-  const text=textarea.value.trim();
-  if(!text)return;
-  // Through the API, never straight at the table. The browser has no privilege
-  // on reply_text any more — migration 9 — so this is the only route, and it
-  // checks the roles table before it writes.
-  try{
-    const res = await fetch('/api/review-reply', {
+    const {res, data} = await callApi('/api/roles', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
-      body:JSON.stringify({reviewId:reviewId, text:text})
+      body:JSON.stringify({action:'list', restaurantId:RESTAURANT.id})
     });
-    const raw = await res.text();
-    let data=null; try{ data = raw ? JSON.parse(raw) : null; }catch(e){}
-    if(res.ok){
-      showToast('Reply posted!');
-      loadReviews(dishId,restaurantId,listId,labelId);
-    }else{
-      showToast((data&&data.error) || ('Could not post reply ('+res.status+').'));
-    }
-  }catch(e){showToast('Network error.');}
-}
-
-// ── REVIEWS PANEL ──
-let rvData=[],rvSort='new';
-function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
-// A review shows the name the person typed plus the handle the platform gave
-// them. The name is theirs and repeats; the handle is unique and assigned.
-function reviewerLabel(r){
-  const name = r.reviewer_name || r.tasters?.first_name
-    || (currentTaster && r.taster_id === currentTaster.id ? currentTaster.first_name : 'Anonymous');
-  const handle = r.reviewer_username
-    || (currentTaster && r.taster_id === currentTaster.id ? currentTaster.username : '');
-  // hfEsc comes from taster.js, which loads before this script. Escaping here
-  // is a small fix on the side: reviewer_name is whatever the browser sent when
-  // the review was posted, and it was going into innerHTML raw.
-  return hfEsc(name) + (handle ? '<span class="reviewer-handle">(' + hfEsc(handle) + ')</span>' : '');
-}
-function rvStarsInline(n){let out='';for(let i=1;i<=5;i++){out+=`<span class="rv-star${i<=n?' on':''}">${STAR_GLYPH}</span>`;}return out;}
-async function openReviewsPanel(){
-  if(!caveDishes.length)return;
-  const d=caveDishes[caveDishIdx];
-  currentDishId=d.id;
-  document.getElementById('rv-title').textContent=d.name;
-  document.getElementById('reviews-modal').classList.add('open');
-  document.getElementById('rv-list').innerHTML='<div class="no-reviews">Loading…</div>';
-  const dbId=DISH_ID_MAP[d.id]||1;
-  try{
-    let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);
-    if(!ok||!Array.isArray(data)){
-      ({ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*&order=created_at.desc`));
-    }
-    rvData=(ok&&Array.isArray(data))?data:[];
-  }catch(e){rvData=[];}
-  rvRender();
-}
-function closeReviewsPanel(){document.getElementById('reviews-modal').classList.remove('open');}
-function rvSetSort(s,btn){rvSort=s;document.querySelectorAll('.rv-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rvRenderList();}
-function rvRender(){
-  const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
-  if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
-  else{
-    const avg=rvData.reduce((s,r)=>s+rvScore(r),0)/rvData.length;
-    avgEl.textContent=avg.toFixed(1);
-    cntEl.textContent='('+rvData.length+')';
-    const dist=[0,0,0,0,0];
-    rvData.forEach(r=>{const b=Math.min(5,Math.max(1,Math.round(rvScore(r))));dist[b-1]++;});
-    bars.innerHTML=[5,4,3,2,1].map(i=>`<div class="rv-bar-row"><span>${i}</span><div class="rv-bar"><div class="rv-bar-fill" style="width:${dist[i-1]/rvData.length*100}%"></div></div></div>`).join('');
-  }
-  const yr=document.getElementById('rv-your');
-  const mine=currentTaster?rvData.find(r=>r.taster_id===currentTaster.id):null;
-  if(mine){
-    const md=new Date(mine.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-    yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
-  }else{
-    yr.innerHTML=`<div class="rv-your-box" onclick="closeReviewsPanel();caveRate();" style="cursor:pointer;"><div class="rv-your-label">${currentTaster?'Tap to rate this dish':'Log in and rate this dish'}</div><div class="rv-your-stars">${rvStarsInline(0)}</div></div>`;
-  }
-  rvRenderList();
-}
-function rvRenderList(){
-  const list=document.getElementById('rv-list');
-  let arr=[...rvData];
-  if(rvSort==='high')arr.sort((a,b)=>rvScore(b)-rvScore(a));
-  else if(rvSort==='low')arr.sort((a,b)=>rvScore(a)-rvScore(b));
-  else arr.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  if(!arr.length){list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';return;}
-  list.innerHTML=arr.map(r=>{
-    const name=reviewerLabel(r);
-    const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-    return`<div class="review-item">
-      <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
-      ${r.dish_comment?`<div class="review-text">${r.dish_comment}</div>`:''}
-      <div class="review-date">${date}</div>
-      ${r.reply_text?`<div class="review-reply"><strong>Restaurant reply:</strong> ${r.reply_text}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-// ── MY TASTINGS ──
-function openMyTastings(){
-  if(!currentTaster){openTasterModal();return;}
-  document.getElementById('tastings-modal').classList.add('open');
-  loadMyTastings();
-}
-function closeMyTastings(){document.getElementById('tastings-modal').classList.remove('open');}
-const PIN_SVG='<svg viewBox="0 0 24 24" class="pin-svg"><path fill="currentColor" d="M12 21s-7.2-4.6-9.3-9A5.4 5.4 0 0 1 12 6.1 5.4 5.4 0 0 1 21.3 12c-2.1 4.4-9.3 9-9.3 9z"/></svg>';
-const TASTING_STAR='<svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
-function getPins(){try{return JSON.parse(localStorage.getItem('hf_pins')||'[]');}catch(e){return[];}}
-function togglePin(e,id){
-  e.stopPropagation();
-  let p=getPins();
-  if(p.includes(id))p=p.filter(x=>x!==id);else p.push(id);
-  localStorage.setItem('hf_pins',JSON.stringify(p));
-  loadMyTastings();
-}
-function tastingThumbErr(img,emoji){const d=document.createElement('div');d.className='tasting-thumb tasting-thumb-emoji';d.textContent=emoji;img.replaceWith(d);}
-
-async function loadMyTastings(){
-  const list=document.getElementById('tastings-list');
-  list.innerHTML='<div class="no-reviews">Loading…</div>';
-  try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
-    if(!ok||!data.length){
-      list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
-      return;
-    }
-    const pins=getPins();
-    const rows=data.map(r=>{
-      const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);
-      const dishInfo=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
-      const dishId=dishEntry?dishEntry[0]:null;
-      return{r,score,dishInfo,dishId,pinned:!!(dishId&&pins.includes(dishId))};
-    });
-    rows.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
-    list.innerHTML=rows.map(({r,score,dishInfo,dishId,pinned})=>{
-      const dishName=dishInfo?dishInfo.name:('Dish #'+r.dish_id);
-      const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-      const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
-      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
-      const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
-      return`<div class="review-item tasting-item"${clickAttr}>
-        ${pinBtn}
-        <div class="tasting-main">
-          <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
-          <div class="review-text brand-red-text">The Hungry Fork</div>
-          <div class="review-date">${date}</div>
-        </div>
-      </div>`;
-    }).join('');
+    if(!res.ok) throw new Error(data.error||'Could not load the people list.');
+    PEOPLE = data;
   }catch(e){
-    list.innerHTML='<div class="no-reviews">Could not load your tastings.</div>';
+    PEOPLE = {error:e.message};
   }
-}
-function viewTastingDish(dishId){
-  closeMyTastings();
-  caveOpenDish(dishId);
+  render();
 }
 
-// ── LUCKY BITE ──
-function showLuckyBite(num){
-  document.getElementById('lucky-number').textContent='#'+num;
-  document.getElementById('lucky-overlay').classList.add('open');
-}
-async function claimLuckyBite(){
-  document.getElementById('lucky-overlay').classList.remove('open');
-  showToast('🎉 Lucky Bite claimed! Enjoy your free dish!');
+function peopleSection(){
+  if(!PEOPLE) return '<div class="m-card"><div class="m-eyebrow">People</div><div class="m-sub">Loading…</div></div>';
+  if(PEOPLE.error) return '<div class="m-card"><div class="m-eyebrow">People</div><div class="m-err" style="margin:0;">'+esc(PEOPLE.error)+'</div></div>';
+
+  // You may appoint any role below your own. Platform admin (4) can appoint
+  // owners; an owner (3) cannot.
+  const grantable = Object.keys(ROLE_LEVEL).filter(r => PEOPLE.myLevel > ROLE_LEVEL[r])
+                          .sort((a,b)=>ROLE_LEVEL[b]-ROLE_LEVEL[a]);
+
+  const list = PEOPLE.people.length
+    ? PEOPLE.people.map(p =>
+        '<div class="m-person">'
+      + '<div class="m-person-id">'
+      +   '<div class="m-person-name">'+esc(p.name)+' <span class="m-role'+(p.role==='owner'?' owner':'')+'">'+esc(ROLE_LABEL[p.role]||p.role)+'</span></div>'
+      +   '<div class="m-person-sub">'+(p.username?esc(p.username)+' · ':'')+(p.phoneEnds?'ends '+esc(p.phoneEnds):'')+'</div>'
+      +   (p.role==='crew'
+            ? '<label class="m-codes"><input type="checkbox"'+(p.canIssueCodes?' checked':'')
+              + ' onchange="setCodes('+p.id+',this.checked)"> can give out loyalty codes '
+              + '<span style="opacity:.7;">(not active yet)</span></label>'
+            : '')
+      + '</div>'
+      + '<button class="m-person-x" onclick="removePerson('+p.id+',\''+esc(p.name).replace(/'/g,"\\'")+'\')"'
+      +   (p.canRemove?'':' disabled title="Your role cannot remove this person"')+'>Remove</button>'
+      + '</div>').join('')
+    : '<div class="m-sub" style="padding:.5rem 0;">Nobody has a role here yet.</div>';
+
+  const adder = grantable.length
+    ? '<div class="m-add-row">'
+      + '<input class="m-input" id="add-phone" type="tel" placeholder="Phone number" inputmode="tel">'
+      + '<select class="m-select" id="add-role">'
+      +   grantable.map(r=>'<option value="'+r+'">'+ROLE_LABEL[r]+'</option>').join('')
+      + '</select>'
+      + '<button class="m-btn" id="add-btn" onclick="addPerson()">Add</button>'
+      + '</div>'
+      + '<div class="m-sub" style="margin-top:.6rem;font-size:.76rem;">'
+      + 'They need an account on the site already &mdash; adding a number that has never signed up would leave a permission waiting for whoever claims that number next.'
+      + '</div>'
+    : '<div class="m-sub" style="margin-top:.8rem;">Your role cannot appoint anyone here.</div>';
+
+  return '<div class="m-card">'
+    + '<div class="m-eyebrow">People</div>'
+    + '<div class="m-h" style="font-size:1.25rem;margin-bottom:.8rem;">Who can manage '+esc(RESTAURANT.name||'this restaurant')+'</div>'
+    + list + adder
+    + '</div>';
 }
 
-// ── MAPS ──
-function showMapsChooser(e){e.preventDefault();document.getElementById('maps-modal').classList.add('open');}
-function closeMapsChooser(){document.getElementById('maps-modal').classList.remove('open');}
+async function addPerson(){
+  const phoneEl = document.getElementById('add-phone');
+  const roleEl  = document.getElementById('add-role');
+  const btn     = document.getElementById('add-btn');
+  const phone = (phoneEl.value||'').trim();
+  if(!phone){ showToast('Enter a phone number'); return; }
 
-// ── TOAST ──
-
-// ── OVERALL RATING (Seb's Rate) ──
-function renderStars(val){
-  const full=Math.floor(val);
-  const half=(val-full)>=0.5;
-  let s='★'.repeat(full);
-  if(half)s+='½';
-  const rest=5-full-(half?1:0);
-  s+='☆'.repeat(Math.max(rest,0));
-  return s;
-}
-async function loadOverallRating(){
-  const fill=document.getElementById('vh-stars-fill');
-  const num=document.getElementById('vh-rating-num');
-  if(!fill)return;
+  btn.disabled = true; btn.textContent = 'Adding…';
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe`);
-    if(!ok||!data.length){
-      setForkStars('vh-stars-fill', 0);
-      if(num)num.textContent='';
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'grant', restaurantId:RESTAURANT.id, phone, role:roleEl.value})
+    });
+    if(!res.ok){ showToast(data.error||'Could not add that person.'); }
+    else {
+      showToast(data.added.name+' is now '+ROLE_LABEL[data.added.role]);
+      phoneEl.value='';
+      await loadPeople();
       return;
     }
-    const avg=data.reduce((sum,r)=>sum+((r.hospitality+r.atmosphere_vibe)/2),0)/data.length;
-    setForkStars('vh-stars-fill', avg);
-    if(num)num.textContent=' · '+avg.toFixed(1)+' ('+data.length+(data.length===1?' rating)':' ratings)');
-  }catch(e){}
+  }catch(e){ showToast(e.message||'Network error.'); }
+  btn.disabled = false; btn.textContent = 'Add';
 }
 
-// ── COMING SOON ──
-function openComingSoon(name){
-  document.getElementById('cs-title').textContent=name;
-  document.getElementById('cs-overlay').classList.add('open');
-}
-function closeComingSoon(){document.getElementById('cs-overlay').classList.remove('open');}
-// ── 3D BUTTON RAIL (moves like the warp room) ──
-let railPos=3, railIdx=3, railRAF=null;
-function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
-function railRender(){
-  const sp=railSpacing();
-  document.querySelectorAll('.vh-btn').forEach(b=>{
-    const d=b.dataset.idx-railPos, ad=Math.abs(d);
-    const sc=ad<1?1+(1-ad)*0.5:1;
-    b.style.transform=`translateX(-50%) translateX(${d*sp}px) translateZ(${-ad*85}px) rotateY(${-d*16}deg) scale(${sc})`;
-    b.style.opacity=ad>3?'0':String(1-ad*0.16);
-    b.style.zIndex=String(100-Math.round(ad*10));
-  });
-}
-function railTo(i){
-  i=Math.max(0,Math.min(6,i));
-  railIdx=i;
-  if(railRAF)cancelAnimationFrame(railRAF);
-  const step=()=>{
-    const diff=railIdx-railPos;
-    if(Math.abs(diff)<0.004){railPos=railIdx;railRender();railRAF=null;return;}
-    railPos+=diff*0.18;
-    railRender();
-    railRAF=requestAnimationFrame(step);
-  };
-  railRAF=requestAnimationFrame(step);
-}
-function railInit(){
-  const rail=document.getElementById('vh-btn-rail');
-  if(!rail)return;
-  railRender();
-  document.querySelectorAll('.vh-btn').forEach(b=>{
-    b.addEventListener('click',()=>{
-      const i=parseInt(b.dataset.idx);
-      if(Math.abs(i-railPos)>0.3){railTo(i);return;}
-      if(b.dataset.menu)scrollToMenu();
-      else openComingSoon(b.dataset.name);
+async function removePerson(roleId, name){
+  if(!confirm('Remove '+name+'?')) return;
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'revoke', restaurantId:RESTAURANT.id, roleId})
     });
-  });
-  let sx=0,sy=0,p0=0,dragging=false,st=0,moved=false;
-  const down=(x,y)=>{dragging=true;moved=false;sx=x;sy=y;p0=railPos;st=Date.now();if(railRAF){cancelAnimationFrame(railRAF);railRAF=null;}};
-  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;railPos=Math.max(-0.3,Math.min(6.3,p0+(sx-x)/railSpacing()));railRender();};
-  const up=x=>{
-    if(!dragging)return;dragging=false;
-    const dx=sx-x,dt=Date.now()-st;
-    let t=Math.round(railPos);
-    if(Math.abs(dx)>40&&dt<350&&t===Math.round(p0))t=Math.round(p0)+(dx>0?1:-1);
-    railTo(t);
-  };
-  rail.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
-  rail.addEventListener('touchmove',e=>{
-    if(!dragging)return;
-    const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
-    if(adx>ady)e.preventDefault();
-    move(e.touches[0].clientX);
-  },{passive:false});
-  rail.addEventListener('touchend',e=>up(e.changedTouches[0].clientX),{passive:true});
-  rail.addEventListener('mousedown',e=>{e.preventDefault();down(e.clientX,e.clientY);});
-  window.addEventListener('mousemove',e=>move(e.clientX));
-  window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
-  window.addEventListener('resize',railRender);
+    if(!res.ok){ showToast(data.error||'Could not remove that person.'); return; }
+    showToast('Removed');
+    loadPeople();
+  }catch(e){ showToast(e.message||'Network error.'); }
 }
-railInit();
 
-// ── INIT ──
-// This page IS the menu, so nothing can be drawn until the dishes arrive.
+async function setCodes(roleId, on){
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'codes', restaurantId:RESTAURANT.id, roleId, canIssueCodes:on})
+    });
+    if(!res.ok) showToast(data.error||'Could not save that.');
+    else showToast(on?'Can give out codes':'Cannot give out codes');
+  }catch(e){ showToast(e.message||'Network error.'); }
+}
+
+// ── INTERACTION ──
+function toggleDish(id){
+  openDishId = String(openDishId)===String(id) ? null : id;
+  render();
+}
+
+function switchRestaurant(id){
+  RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(id)) || RESTAURANT;
+  openDishId = null;
+  PEOPLE = null;          // the previous restaurant's people are not this one's
+  loadDishes();
+}
+
+function rowFor(id){ return DISHES_ROWS.find(d=>String(d.id)===String(id)); }
+
+function dirty(id, field){
+  const d = rowFor(id); if(!d) return;
+  const el = document.getElementById('f-'+id+'-'+field);
+  const counter = document.getElementById('c-'+id+'-'+field);
+  if(counter && LIMITS[field]){
+    const n = el.value.length;
+    counter.textContent = n+' / '+LIMITS[field];
+    counter.classList.toggle('over', n>LIMITS[field]);
+  }
+  const changed = collectText(id);
+  const save = document.getElementById('save-'+id);
+  if(save) save.disabled = !Object.keys(changed).length || anyOver(id);
+}
+
+function anyOver(id){
+  return Object.keys(LIMITS).some(field=>{
+    const el = document.getElementById('f-'+id+'-'+field);
+    return el && el.value.length > LIMITS[field];
+  });
+}
+
+// Only the fields that actually differ get sent, so two managers editing
+// different parts of the same dish do not overwrite each other's work.
+function collectText(id){
+  const d = rowFor(id); if(!d) return {};
+  const out = {};
+  const priceEl = document.getElementById('f-'+id+'-price');
+  if(priceEl){
+    const n = Number(priceEl.value);
+    if(priceEl.value!=='' && Number.isFinite(n) && Math.round(n*100)!==Math.round(Number(d.price||0)*100)) out.price = n;
+  }
+  const TEXTY = ['name','description','about','ingredients','modifications','wine','cocktail','allergens_text']
+    .concat(CLASSIFY_FIELDS.map(c=>c[0]));
+  TEXTY.forEach(field=>{
+    const el = document.getElementById('f-'+id+'-'+field);
+    if(!el) return;
+    const now = el.value.trim();
+    const before = (d[field]==null?'':String(d[field])).trim();
+    if(now !== before) out[field] = now.length ? now : null;
+  });
+  return out;
+}
+
+function revert(id){ render(); }
+
+async function toggleFlag(id, field){
+  const d = rowFor(id); if(!d) return;
+  const btn = document.getElementById('sw-'+id+'-'+field);
+  const current = field==='sold_out' ? !!d.sold_out_until : !!d[field];
+  if(btn) btn.disabled = true;
+  const saved = await save(id, { [field]: !current });
+  if(btn) btn.disabled = false;
+  if(saved) showToast(labelFor(field)+(!current?' on':' off')+' · '+d.name);
+}
+
+function labelFor(f){
+  return f==='sold_out' ? 'Sold out' : f==='is_hidden' ? 'Hidden' : 'Chef\'s Pick';
+}
+
+async function saveText(id){
+  const changes = collectText(id);
+  if(!Object.keys(changes).length) return;
+  const btn = document.getElementById('save-'+id);
+  if(btn){ btn.disabled = true; btn.textContent='Saving…'; }
+  const saved = await save(id, changes);
+  if(btn){ btn.textContent='Save changes'; btn.disabled = true; }
+  if(saved) showToast('Saved');
+}
+
+// The one path to the server. It replaces the whole row from the response, so
+// what the screen shows after a save is what the database actually holds —
+// including the Chef's Pick that just moved off another dish.
+async function save(id, changes){
+  try{
+    const {res, data} = await callApi('/api/manager-dish',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({dishId:id, changes})
+    });
+    if(res.status===401){ showToast('Your session expired. Please log in again.'); logout(); boot(); return false; }
+    if(!res.ok){ showToast(data.error||'Could not save that.'); return false; }
+
+    const i = DISHES_ROWS.findIndex(d=>String(d.id)===String(id));
+    if(i>=0) DISHES_ROWS[i] = data.dish;
+    // Chef's Pick is exclusive, so the server may have cleared it elsewhere.
+    if(data.dish.is_chefs_pick) DISHES_ROWS.forEach(d=>{ if(String(d.id)!==String(id)) d.is_chefs_pick=false; });
+    render();
+    return true;
+  }catch(e){
+    showToast(e.message || 'Network error. Please try again.');
+    return false;
+  }
+}
+
 loadSession();
-loadMyLevel();
-(async function(){
-  try{
-    await loadDishes();
-  }catch(e){
-    console.error('[menu] could not load dishes', e);
-    showToast('The menu could not load. Please refresh in a moment.');
-    return;   // deliberately no hardcoded fallback: a stale menu with wrong
-              // prices is worse than an honest error.
-  }
-  loadOverallRating();
-  warpInit();
-  const params=new URLSearchParams(window.location.search);
-  const dishId=params.get('dish');
-  const cat=params.get('cat');
-  if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);return;}
-  if(cat&&CATEGORY_ORDER.includes(cat)){
-    warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
-    // ?enter=1 opens the cave straight away — the home page video uses it.
-    if(params.get('enter')==='1'&&caveListFor(cat).length)enterCave();
-  }
-})();
+boot();
 </script>
 </body>
 </html>
