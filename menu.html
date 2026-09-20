@@ -857,7 +857,20 @@ function loadMyLevel(){
   MY_LEVEL_READY = (async function(){
     MY_LEVEL = 0;
     if(!currentTaster || !currentSession) return 0;
-    if(!(currentTaster.is_platform_admin || currentTaster.is_restaurant_admin)) return 0;
+
+    // The flags come from the copy of the account saved in the browser at
+    // login. If somebody logged in before those columns existed, their stored
+    // copy has neither field — not false, ABSENT — and the old check read that
+    // as "not staff" and gave up. The person then had to log out and back in,
+    // and had no way of knowing that.
+    //
+    // So: if the stored copy knows the answer and the answer is no, stop. If it
+    // does not even have the fields, it is too old to be trusted and we ask the
+    // server. Customers who logged in recently carry `false` and still cost
+    // nothing.
+    const knowsFlags = currentTaster.is_platform_admin    !== undefined
+                    || currentTaster.is_restaurant_admin  !== undefined;
+    if(knowsFlags && !(currentTaster.is_platform_admin || currentTaster.is_restaurant_admin)) return 0;
     try{
       const res = await fetch('/api/my-access', {
         method:'POST',
