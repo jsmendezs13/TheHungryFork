@@ -14,6 +14,9 @@
     --red: #B01015; --red-dark: #7E0A0E; --red-light: #F7E3E1;
     --white: #FCF9F4; --off-white: #F5EEE3; --text: #2B211A;
     --muted: #8A7B6E; --border: #E9E0D3; --star-on: #D9A441;
+    /* Readable secondary text — the same value as on menu.html. --muted is
+       3.55:1 on a card; this clears 4.5:1. */
+    --quiet: #6F6255;
     --star-off: #DCD2C4; --green: #4C7A4C; --ink: #2B211A;
     --serif: 'Cormorant Garamond', Georgia, serif;
     --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
@@ -228,6 +231,32 @@
   .cs-title { font-family:var(--serif); font-size:1.7rem; font-weight:600; color:var(--text); margin-bottom:.4rem; }
   .cs-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); line-height:1.7; margin-bottom:1.4rem; }
   .cs-close { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.8rem 2.4rem; font-size:.76rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; font-family:var(--sans); cursor:pointer; }
+
+  /* ── WHAT IS FORK'S RATING? — the restaurant's own score ──
+     The box someone gets when they tap the stars at the top of the page. It
+     used to end with a Lucky Bite promotion; now it shows the score they
+     tapped, broken down the way the reviews panel on the menu does it. Scoped
+     to #fork-info: .cs-box and .cs-sub are shared with other pop-ups. */
+  #fork-info .cs-box { max-height:calc(100vh - 2.8rem); overflow-y:auto; padding-top:2rem; }
+  /* Readable, like the reviews: thin --muted text measures under 4.5:1. */
+  #fork-info .cs-sub { font-weight:400; color:var(--text); margin-bottom:1.2rem; }
+  .fi-name { font-family:var(--sans); font-size:.64rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:.55rem; }
+  .fi-score { display:flex; gap:1rem; align-items:center; margin-bottom:.8rem; text-align:left; }
+  .fi-avg { font-family:var(--serif); font-size:2.6rem; font-weight:600; color:var(--text); line-height:1; }
+  .fi-count { font-family:var(--sans); font-size:.74rem; color:var(--quiet); margin-top:2px; }
+  .fi-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .fi-bar-row { display:flex; align-items:center; gap:8px; font-family:var(--sans); font-size:.68rem; color:var(--quiet); }
+  .fi-bar { flex:1; height:8px; background:var(--off-white); border-radius:4px; overflow:hidden; }
+  .fi-bar-fill { height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
+  .fi-window { display:flex; background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:3px; margin-bottom:1rem; }
+  .fi-win { flex:1; background:none; border:none; border-radius:999px; padding:.42rem .1rem; font-family:var(--sans); font-size:.68rem; color:var(--quiet); cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
+  .fi-win.active { background:#fff; color:var(--text); font-weight:600; box-shadow:0 1px 2px rgba(43,33,26,.14); }
+  .fi-full { text-align:left; background:var(--off-white); border:1px solid var(--border); border-radius:10px; padding:.75rem .85rem .45rem; margin-bottom:1.3rem; }
+  .fi-label { font-family:var(--sans); font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:.5rem; }
+  .fi-row { display:flex; align-items:center; gap:.6rem; margin-bottom:7px; font-family:var(--sans); }
+  .fi-row-label { flex:1; min-width:0; font-size:.72rem; color:var(--quiet); }
+  .fi-row .rv-srow { flex:0 0 auto; width:86px; height:auto; display:block; }
+  .fi-row-num { flex:0 0 24px; text-align:right; font-size:.74rem; font-weight:600; color:var(--text); }
   .video-hero-content { padding:1.8rem 1.4rem 1.4rem; }
 
   /* ── MENU ACCORDION (C&W style) ── */
@@ -443,7 +472,28 @@
 <div class="cs-overlay" id="fork-info" onclick="if(event.target===this)closeForkInfo()">
   <div class="cs-box">
     <div class="cs-title" style="font-size:1.55rem;">What is Fork's Rating?</div>
-    <p class="cs-sub" style="text-align:center;">Fork's Rating is our independent taste score for restaurants and dishes across the city &mdash; powered entirely by real reviews from verified tasters. No critics, no ads. Just honest forks.<br><br>Log in, rate the dishes you try, and every review brings you closer to <strong>Fork's Lucky Bite</strong> &mdash; a free dish for one lucky taster.</p>
+    <p class="cs-sub" style="text-align:center;">Fork's Rating is our independent taste score for restaurants and dishes across the city &mdash; powered entirely by real reviews from verified tasters. No critics, no ads. Just honest forks.</p>
+
+    <!-- The restaurant's own score — the stars the person just tapped — laid
+         out the way the reviews panel on the menu does it: the number and its
+         spread, the period it covers, and the two scores it is made of.
+         (This is where the Lucky Bite promotion used to be.) Filled in by
+         fiRender(). -->
+    <div class="fi-name" id="fi-name"></div>
+    <div class="fi-score">
+      <div><div class="fi-avg" id="fi-avg">&ndash;</div><div class="fi-count" id="fi-count"></div></div>
+      <div class="fi-bars" id="fi-bars"></div>
+    </div>
+    <div class="fi-window" role="group" aria-label="Rating period">
+      <button class="fi-win" onclick="fiSetWindow(30,this)">1 month</button>
+      <button class="fi-win" onclick="fiSetWindow(90,this)">3 months</button>
+      <button class="fi-win active" onclick="fiSetWindow(365,this)">12 months</button>
+      <button class="fi-win" onclick="fiSetWindow(0,this)">All time</button>
+    </div>
+    <div class="fi-full">
+      <div class="fi-label">About the restaurant</div>
+      <div id="fi-rows"></div>
+    </div>
     <button class="cs-close" onclick="closeForkInfo();openTasterModal();">Log In &amp; Start Rating</button>
     <div style="margin-top:.7rem;"><a onclick="closeForkInfo()" style="font-family:var(--sans);font-size:.78rem;color:var(--muted);text-decoration:underline;cursor:pointer;">Maybe later</a></div>
   </div>
@@ -488,7 +538,10 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 // ── STATE ──
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
 let currentDishId=null, activeFilter='chefs-pick';
+// These two travel together, as on menu.html: when this site is deployed for
+// another client, both change.
 const RESTAURANT_ID=1;
+const RESTAURANT_NAME='The Hungry Fork';
 
 
 // ── MENU ──
@@ -784,22 +837,60 @@ function closeMapsChooser(){document.getElementById('maps-modal').classList.remo
 
 // ── TOAST ──
 
-// ── OVERALL RATING (Seb's Rate) ──
+// ── THE RESTAURANT'S FORK'S RATING ──
+//
+// Two places show it: the stars at the top of the page, and the "What is
+// Fork's Rating?" box those stars open. They are fed from ONE fetch and worked
+// out by ONE function, so the header and the box can never show different
+// numbers for the same period.
+//
+// The restaurant's score is the two scores about the ROOM — Hospitality and
+// Atmosphere & Vibe — not the three about the plate; each dish has its own.
+// Every rating counts, over the last twelve months by default (stars.js).
+let fiRows = null;                     // every rating at this restaurant, all time
+// typeof guard: this runs as the page loads — see the note on rvWindow in menu.html.
+let fiWindow = (typeof ratingDefaultDays === 'function') ? ratingDefaultDays() : 365;   // what the box shows
+
+function restaurantScore(rows){
+  const ok  = (v)=>Number.isFinite(Number(v)) && Number(v)>0;
+  const avg = (vals)=>vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : NaN;
+  const both = rows.filter(r=>ok(r.hospitality)&&ok(r.atmosphere_vibe))
+                   .map(r=>(Number(r.hospitality)+Number(r.atmosphere_vibe))/2);
+  const dist = [0,0,0,0,0];
+  both.forEach(s=>{ dist[Math.min(5,Math.max(1,Math.round(s)))-1]++; });
+  return {
+    score: avg(both),
+    count: both.length,
+    dist,
+    hospitality: avg(rows.filter(r=>ok(r.hospitality)).map(r=>Number(r.hospitality))),
+    atmosphere:  avg(rows.filter(r=>ok(r.atmosphere_vibe)).map(r=>Number(r.atmosphere_vibe))),
+  };
+}
+
+async function loadRestaurantRatings(){
+  if(fiRows) return fiRows;
+  try{
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe,created_at`);
+    // Only a real answer is kept. A failed request leaves fiRows empty so the
+    // next attempt asks again, instead of showing "no ratings" for good.
+    if(ok&&Array.isArray(data)) fiRows=data;
+  }catch(e){}
+  return fiRows||[];
+}
+
 async function loadOverallRating(){
   const fill=document.getElementById('vh-stars-fill');
   const num=document.getElementById('vh-rating-num');
   if(!fill)return;
-  try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe`);
-    if(!ok||!data.length){
-      setForkStars('vh-stars-fill', 0);
-      if(num)num.textContent='';
-      return;
-    }
-    const avg=data.reduce((sum,r)=>sum+((r.hospitality+r.atmosphere_vibe)/2),0)/data.length;
-    setForkStars('vh-stars-fill', avg);
-    if(num)num.textContent=' · '+avg.toFixed(1)+' ('+data.length+(data.length===1?' rating)':' ratings)');
-  }catch(e){}
+  const rows=(await loadRestaurantRatings()).filter(r=>ratingInWindow(r,ratingDefaultDays()));
+  const s=restaurantScore(rows);
+  if(!s.count){
+    setForkStars('vh-stars-fill', 0);
+    if(num)num.textContent='';
+    return;
+  }
+  setForkStars('vh-stars-fill', s.score);
+  if(num)num.textContent=' · '+s.score.toFixed(1)+' ('+s.count+(s.count===1?' rating)':' ratings)');
 }
 
 // ── ENTER MENU PAGE ──
@@ -809,8 +900,40 @@ function menuEnter(){
 }
 
 // ── FORK'S RATING INFO ──
-function openForkInfo(){document.getElementById('fork-info').classList.add('open');}
+async function openForkInfo(){
+  document.getElementById('fork-info').classList.add('open');
+  fiRender();                          // draws at once from what is already loaded
+  await loadRestaurantRatings();       // normally a no-op: the header fetched it
+  fiRender();
+}
 function closeForkInfo(){document.getElementById('fork-info').classList.remove('open');}
+
+function fiSetWindow(days,btn){
+  fiWindow=days;
+  document.querySelectorAll('.fi-win').forEach(b=>b.classList.toggle('active',b===btn));
+  fiRender();
+}
+
+function fiRender(){
+  const nameEl=document.getElementById('fi-name');
+  if(nameEl) nameEl.textContent=RESTAURANT_NAME;
+  const s=restaurantScore((fiRows||[]).filter(r=>ratingInWindow(r,fiWindow)));
+  const shown=(v)=>Number.isFinite(v)?v.toFixed(1):'–';
+
+  document.getElementById('fi-avg').textContent=shown(s.score);
+  document.getElementById('fi-count').textContent='('+s.count+')';
+  document.getElementById('fi-bars').innerHTML = s.count
+    ? [5,4,3,2,1].map(i=>`<div class="fi-bar-row"><span>${i}</span><div class="fi-bar"><div class="fi-bar-fill" style="width:${s.dist[i-1]/s.count*100}%"></div></div></div>`).join('')
+    : '';
+
+  // The two scores the restaurant's number is made of, in the menu card's
+  // stars, with the number beside them — Full Fork for the room.
+  const row=(label,v)=>`<div class="fi-row"><span class="fi-row-label">${label}</span>`
+    + forkStarRow(Number.isFinite(v)?v:0)
+    + `<span class="fi-row-num">${shown(v)}</span></div>`;
+  document.getElementById('fi-rows').innerHTML =
+    row('Hospitality', s.hospitality) + row('Atmosphere &amp; Vibe', s.atmosphere);
+}
 
 // ── HERO VIDEO → CHEF'S PICK ──
 // Tapping the hero video used to open a second overlay showing one hardcoded
@@ -904,11 +1027,13 @@ railInit();
 loadSession();
 warpInit();
 
-// The menu lives in Supabase now, so anything reading DISHES or DISH_ID_MAP
-// has to wait for it. Only the rating needs dish data on this page; the rest
-// of the homepage renders immediately, as before.
+// The restaurant's score and the menu load SIDE BY SIDE, not one after the
+// other. The score used to wait for the menu, on the belief that it needed
+// dish data — it never did; it reads reviews by restaurant, not by dish. So a
+// hiccup loading the menu (which throws on purpose rather than show a stale
+// one) also blanked out the stars at the top of the home page, for no reason.
+loadOverallRating();
 loadDishes()
-  .then(loadOverallRating)
   .catch(e => console.error('[index] could not load dishes', e));
 (function(){
   const params=new URLSearchParams(window.location.search);
