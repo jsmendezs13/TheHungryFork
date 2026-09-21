@@ -196,9 +196,23 @@
   .review-reply { margin-top:8px; padding:9px 12px; border-radius:8px; font-size:.8rem; color:var(--text); font-family:var(--sans); }
   .review-reply.from-restaurant { background:rgba(154,51,36,.06); border-left:2px solid var(--red); }
   .review-reply.from-guest { background:#fff; border:1px solid var(--border); margin-left:1.1rem; }
-  .review-reply-who { display:flex; align-items:baseline; gap:.5rem; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--red); margin-bottom:3px; }
-  .review-reply.from-guest .review-reply-who { color:var(--muted); }
-  .review-reply-when { font-weight:400; letter-spacing:0; text-transform:none; color:#B7A99A; font-size:.68rem; }
+  /* Plain text flow, not flex. As a flex row the name, the handle and the date
+     became three separate columns and each one wrapped on its own inside the
+     narrow indented box: "Javiera / Cabezas", then the handle, then "Sep 20, /
+     2026". Inline, the heading wraps as one phrase — and the date and handle
+     are nowrap so neither is ever split in half. */
+  .review-reply-who { display:block; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--red); margin-bottom:3px; line-height:1.4; }
+  /* The guest's name looks exactly as it does at the top of their review —
+     same case, same weight, handle beside it. Capitals are for the restaurant,
+     which is speaking as a brand; the guest is speaking as themselves. */
+  .review-reply.from-guest .review-reply-who { text-transform:none; letter-spacing:0; color:var(--text); font-size:.8rem; }
+  .review-reply-who .reviewer-handle { white-space:nowrap; }
+  .review-reply-when { margin-left:.5rem; white-space:nowrap; font-weight:400; letter-spacing:0; text-transform:none; color:#B7A99A; font-size:.68rem; }
+  /* In the guest's indented box, name + handle + date is wider than the box,
+     and it was the NAME that broke — "Javiera / Cabezas". The review header
+     at the top already solves this by giving the date its own line under the
+     name, so the guest's reply does the same and the two headings match. */
+  .review-reply.from-guest .review-reply-when { display:block; margin-left:0; margin-top:1px; }
   .review-reply-form { margin-top:8px; }
   .reply-textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:.55rem .8rem; font-size:.8rem; font-family:var(--sans); resize:vertical; min-height:50px; margin-bottom:.4rem; background:#fff; }
   .reply-btn { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.5rem 1.1rem; font-size:.72rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
@@ -443,10 +457,12 @@
   .rv-full-bar { flex:1; height:7px; background:var(--off-white); border-radius:4px; overflow:hidden; }
   .rv-full-fill { display:block; height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
   .rv-full-num { flex:0 0 14px; text-align:right; font-size:.72rem; font-weight:600; color:var(--text); }
-  .rv-full-notes { margin-top:.6rem; padding-top:.6rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:.5rem; }
-  .rv-full-note { font-size:.8rem; font-weight:300; color:var(--muted); line-height:1.55; }
-  .rv-full-note-label { display:block; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:2px; }
-  .rv-full-none { font-size:.75rem; color:#B7A99A; font-style:italic; }
+  /* Two halves — the dish, then the restaurant — each heading its own scores
+     and followed by its own comment. A hairline between the halves, not
+     between the scores and the words that go with them. */
+  .rv-full-group + .rv-full-group { margin-top:.75rem; padding-top:.75rem; border-top:1px solid var(--border); }
+  .rv-full-note-label { display:block; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:.45rem; }
+  .rv-full-note { margin-top:.4rem; font-size:.8rem; font-weight:300; color:var(--muted); line-height:1.55; }
   /* Full Fork on the dish itself, above the list. Off-white rather than white
      so it reads as part of the summary, not as one more review. */
   .rv-full-summary { background:var(--off-white); border-color:var(--border); margin:0 0 1rem; }
@@ -1460,52 +1476,59 @@ function nextTurn(r){
   return null;
 }
 
-function replyBlock(text,at,who,cls){
+// `whoHtml` arrives ALREADY ESCAPED. The guest's heading is built by
+// reviewerLabel(), which escapes the name and the handle itself and returns
+// markup (the handle is a <span>), so escaping it a second time here would
+// print the tags as text.
+function replyBlock(text,at,whoHtml,cls){
   if(!filledText(text)) return '';
   let when='';
   try{ when = at ? new Date(at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''; }catch(e){}
   return `<div class="review-reply ${cls}">
-    <div class="review-reply-who">${hfEsc(who)}${when?`<span class="review-reply-when">${when}</span>`:''}</div>
+    <div class="review-reply-who">${whoHtml}${when?`<span class="review-reply-when">${when}</span>`:''}</div>
     ${hfEsc(text)}
   </div>`;
 }
 
-// Turns 2, 3 and 4 in order. The guest's turn is headed with the guest's own
-// name, so a reader can see the two sides taking it in turn rather than a
-// wall of identical grey boxes.
+// Turns 2, 3 and 4 in order.
+//
+// The guest's turn is signed by reviewerLabel() — the SAME function that
+// writes the name at the top of the review. It used to take reviewer_name on
+// its own and the heading style put it in capitals, so "Javiera Cabezas
+// (Javiera_I)" at the top became "JAVIERA CABEZAS" in her reply: no handle,
+// different case, and it read as a second person. One function now, so the
+// two can never drift apart again.
 function replyBlocks(r){
-  const guest = r.reviewer_name
-    || (currentTaster && r.taster_id === currentTaster.id ? currentTaster.first_name : 'The guest');
-  return replyBlock(r.reply_text,        r.reply_created_at,        RESTAURANT_NAME, 'from-restaurant')
-       + replyBlock(r.taster_reply_text, r.taster_reply_created_at, guest,           'from-guest')
-       + replyBlock(r.reply2_text,       r.reply2_created_at,       RESTAURANT_NAME, 'from-restaurant');
+  const restaurant = hfEsc(RESTAURANT_NAME);
+  return replyBlock(r.reply_text,        r.reply_created_at,        restaurant,       'from-restaurant')
+       + replyBlock(r.taster_reply_text, r.taster_reply_created_at, reviewerLabel(r), 'from-guest')
+       + replyBlock(r.reply2_text,       r.reply2_created_at,       restaurant,       'from-restaurant');
 }
 
-// What to put under the thread for the person looking at it. Three cases:
-// their turn (a box), the other side's turn (a quiet line), or finished.
-// Somebody who is neither the restaurant nor the guest gets nothing at all —
-// a passer-by does not need to be told whose turn it is.
+// The reply box, for whoever's turn it is — and nothing at all for anyone
+// else. There used to be status lines here ("Waiting for the guest to reply",
+// "This conversation is finished"). Sebastian took them out: more information
+// than a reader needs. Whose turn it is shows itself — the box is there, or it
+// is not.
+//
+// The one line that stays is the warning INSIDE the box, because it is the
+// last thing somebody reads before doing something they cannot undo.
 function replyTail(r, canReply, isGuest, idPrefix, onclick){
   const turn = nextTurn(r);
   const mine = turn && ((turn==='restaurant' && canReply) || (turn==='guest' && isGuest));
-  if(mine){
-    const hint = turn==='guest'
-      ? 'Answer the restaurant — you get one reply.'
-      : (filledText(r.taster_reply_text)
-          ? 'Your last word. Nothing can be added after this.'
-          : `Answer as ${RESTAURANT_NAME}.`);
-    const label = turn==='guest' ? 'Post reply'
-      : (filledText(r.taster_reply_text) ? 'Post last word' : 'Post reply');
-    return `<div class="review-reply-form">
-      <textarea class="reply-textarea" id="${idPrefix}-${r.id}" placeholder="${hint}"></textarea>
-      <button class="reply-btn" id="${idPrefix}-btn-${r.id}" onclick="${onclick}">${label}</button>
-      <div class="rv-reply-cap">Once posted this cannot be changed or removed.</div>
-    </div>`;
-  }
-  if(!canReply && !isGuest) return '';
-  if(!turn) return `<div class="rv-reply-cap">This conversation is finished.</div>`;
-  return `<div class="rv-reply-cap">Waiting for ${
-    turn==='guest' ? 'the guest' : hfEsc(RESTAURANT_NAME)} to reply.</div>`;
+  if(!mine) return '';
+  const hint = turn==='guest'
+    ? 'Answer the restaurant — you get one reply.'
+    : (filledText(r.taster_reply_text)
+        ? 'Your last word. Nothing can be added after this.'
+        : `Answer as ${RESTAURANT_NAME}.`);
+  const label = turn==='guest' ? 'Post reply'
+    : (filledText(r.taster_reply_text) ? 'Post last word' : 'Post reply');
+  return `<div class="review-reply-form">
+    <textarea class="reply-textarea" id="${idPrefix}-${r.id}" placeholder="${hint}"></textarea>
+    <button class="reply-btn" id="${idPrefix}-btn-${r.id}" onclick="${onclick}">${label}</button>
+    <div class="rv-reply-cap">Once posted this cannot be changed or removed.</div>
+  </div>`;
 }
 
 // ── LOAD REVIEWS ──
@@ -1579,55 +1602,58 @@ let rvData=[],rvSort='new';
 let rvFull=false;
 function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
 
-// The five scores a rating is made of, in the order the rating form asks for
-// them, so what the customer filled in and what the reader sees line up.
-const FULL_FORK_ROWS=[
-  ['flavor','Flavor'],
-  ['worth_every_bite','Worth Every Bite'],
-  ['signature_style','Signature Style'],
-  ['hospitality','Hospitality'],
-  ['atmosphere_vibe','Atmosphere & Vibe'],
+// The five scores a rating is made of, split the way the rating FORM splits
+// them: three about the plate, two about the room. Each half sits with its own
+// comment, so "Fresh food" is read beside the three numbers it explains, and
+// "Excellent vibe" beside the two it explains — instead of five numbers in a
+// row and then two comments that have to be matched back to them.
+const FULL_FORK_GROUPS=[
+  { title:'About the dish',       comment:'dish_comment',
+    rows:[['flavor','Flavor'], ['worth_every_bite','Worth Every Bite'], ['signature_style','Signature Style']] },
+  { title:'About the restaurant', comment:'restaurant_comment',
+    rows:[['hospitality','Hospitality'], ['atmosphere_vibe','Atmosphere & Vibe']] },
 ];
-function rvFullBlock(r){
-  const rows=FULL_FORK_ROWS.map(([key,label])=>{
-    const v=Number(r[key]);
-    const ok=Number.isFinite(v)&&v>0;
-    return `<div class="rv-full-row">
-      <span class="rv-full-label">${label}</span>
-      <span class="rv-full-bar"><span class="rv-full-fill" style="width:${ok?Math.min(100,v/5*100):0}%"></span></span>
-      <span class="rv-full-num">${ok?v:'–'}</span>
-    </div>`;
-  }).join('');
-  // Both comments, each said plainly. restaurant_comment is written at rating
-  // time and has never been shown anywhere until now.
-  const dish=r.dish_comment?`<div class="rv-full-note"><span class="rv-full-note-label">About the dish</span>${hfEsc(r.dish_comment)}</div>`:'';
-  const rest=r.restaurant_comment?`<div class="rv-full-note"><span class="rv-full-note-label">About the restaurant</span>${hfEsc(r.restaurant_comment)}</div>`:'';
-  const notes=(dish||rest)
-    ? `<div class="rv-full-notes">${dish}${rest}</div>`
-    : `<div class="rv-full-notes"><div class="rv-full-none">Scores only — this guest left no comment.</div></div>`;
-  return `<div class="rv-full">${rows}${notes}</div>`;
+
+// One score row. `shown` is what is printed: the raw score for one guest, the
+// average to one decimal for the dish as a whole.
+function rvFullRow(label,value,shown){
+  const ok=Number.isFinite(value)&&value>0;
+  return `<div class="rv-full-row">
+    <span class="rv-full-label">${label}</span>
+    <span class="rv-full-bar"><span class="rv-full-fill" style="width:${ok?Math.min(100,value/5*100):0}%"></span></span>
+    <span class="rv-full-num">${ok?shown:'–'}</span>
+  </div>`;
 }
 
-// The SAME five rows, averaged across every rating on the dish — Full Fork
-// applied to the dish's general rating rather than to one guest's. The 4.2 at
-// the top of the panel is three of the five scores averaged together; this
-// says which of the five is carrying it and which is dragging it down, which
-// is the number a restaurant can actually act on.
+// One guest's rating, opened out. A half with no comment shows its scores and
+// nothing else — no "this guest left no comment" line; an empty space says it.
+function rvFullBlock(r){
+  return `<div class="rv-full">${FULL_FORK_GROUPS.map(g=>{
+    const rows=g.rows.map(([key,label])=>{ const v=Number(r[key]); return rvFullRow(label,v,v); }).join('');
+    const said=filledText(r[g.comment]) ? `<div class="rv-full-note">${hfEsc(r[g.comment])}</div>` : '';
+    return `<div class="rv-full-group"><div class="rv-full-note-label">${g.title}</div>${rows}${said}</div>`;
+  }).join('')}</div>`;
+}
+
+// The same two halves, averaged across every rating on the dish — Full Fork
+// applied to the dish's general rating rather than to one guest's. The big
+// number at the top is the three dish scores averaged together; this says
+// which of the five is carrying it and which is dragging it down, which is the
+// number a restaurant can actually act on.
 function rvFullSummary(rows){
   if(!rows.length) return '';
-  const cells=FULL_FORK_ROWS.map(([key,label])=>{
-    const vals=rows.map(r=>Number(r[key])).filter(v=>Number.isFinite(v)&&v>0);
-    const avg=vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:null;
-    return `<div class="rv-full-row">
-      <span class="rv-full-label">${label}</span>
-      <span class="rv-full-bar"><span class="rv-full-fill" style="width:${avg?Math.min(100,avg/5*100):0}%"></span></span>
-      <span class="rv-full-num">${avg?avg.toFixed(1):'–'}</span>
-    </div>`;
-  }).join('');
   const n=rows.length;
+  const groups=FULL_FORK_GROUPS.map(g=>{
+    const cells=g.rows.map(([key,label])=>{
+      const vals=rows.map(r=>Number(r[key])).filter(v=>Number.isFinite(v)&&v>0);
+      const avg=vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:NaN;
+      return rvFullRow(label,avg,Number.isFinite(avg)?avg.toFixed(1):'');
+    }).join('');
+    return `<div class="rv-full-group"><div class="rv-full-note-label">${g.title}</div>${cells}</div>`;
+  }).join('');
   return `<div class="rv-full rv-full-summary">
     <div class="rv-full-head">This dish, score by score<span class="rv-full-head-n">${n} rating${n===1?'':'s'}</span></div>
-    ${cells}
+    ${groups}
   </div>`;
 }
 // A review shows the name the person typed plus the handle the platform gave
