@@ -58,3 +58,82 @@ function setForkStars(fillId, avg) {
   const usesSvg = !!fill.querySelector('svg');
   fill.style.width = (usesSvg ? starClipPercent(score) : score / 5 * 100) + '%';
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHARED BY BOTH PAGES — the rating period, and a row of stars for a score.
+//
+// These lived in menu.html until the home page needed them too (the "What is
+// Fork's Rating?" box now shows the restaurant's own score). One copy here,
+// so the two pages cannot drift apart.
+//
+// ── ONLY FUNCTIONS, ON PURPOSE ──
+// Every file goes live on its own, one upload at a time. The menu.html that
+// was live when this was written declared its own copies of these values as
+// `const`. If this file declared a `const` with the same name, the browser
+// would refuse to run that page's script at all — the whole menu dead until
+// the next upload landed. A function may share a name with another script's
+// function (the later one simply wins), so this file adds functions and
+// nothing else, and is safe next to any version of either page.
+// Constants live INSIDE the functions. Do not add a top-level const/let here.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── THE PERIOD A SCORE COVERS ──
+//
+// Sebastian's design: a score covers the last twelve months by default, and a
+// reader can widen or narrow it — one month, three, twelve, or all time.
+// ROLLING, not "since January 1st": a calendar year would reset every January.
+// EVERY rating in the period counts, including several from the same guest.
+// It changes the SCORE only — lists of reviews always show everything.
+function ratingDefaultDays() { return 365; }
+
+function ratingInWindow(r, days) {
+  if (!days) return true;                       // 0 = all time
+  const t = new Date(r.created_at).getTime();
+  return Number.isFinite(t) && t >= Date.now() - days * 86400000;
+}
+
+// The same boundary as a timestamp, for asking the database directly.
+function windowStartISO(days) { return new Date(Date.now() - days * 86400000).toISOString(); }
+
+// ── A ROW OF FORK'S RATING STARS ──
+//
+// The same drawing as the stars on the menu card: five stars on a 560-wide
+// canvas, each with its own gradient, darkest on the left climbing to bright
+// red on the right. Pale stars underneath; the coloured ones clipped to the
+// score on top, at the real star positions (starClipPercent, above).
+//
+// EXACTLY the card's colours — Sebastian asked for them to match ("first they
+// are dark and then more red"). A test reads the stops out of the card's own
+// drawing and fails if these ever stop matching.
+function forkStarGradient() {
+  return [['#5A1610','#260805'], ['#7E150D','#3E0B06'], ['#A31108','#5E0A04'],
+          ['#C41508','#750A04'], ['#E02414','#8E0B05']];
+}
+
+// Every row names its own gradients and clip. The card's drawing uses fixed
+// names (fs1…fs5); many copies of those on one page is invalid, and when the
+// first copy is inside something hidden, Chrome can paint every star with it —
+// black, or nothing at all. Returns an <svg class="rv-srow">; each page sizes
+// it with CSS.
+function forkStarRow(score) {
+  const PATH  = 'M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z';
+  const X     = [0, 115, 230, 345, 460];
+  const UNLIT = '#E4D9C9';
+  const s = Math.max(0, Math.min(5, Number(score) || 0));
+  forkStarRow.uid = (forkStarRow.uid || 0) + 1;
+  const u = 'fsr' + forkStarRow.uid;
+  const clip = (starClipPercent(s) / 100 * 560).toFixed(1);
+  const grads = forkStarGradient().map(([top, bottom], i) =>
+    `<linearGradient id="${u}g${i}" x1="0" y1="0" x2="0" y2="1">`
+    + `<stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient>`).join('');
+  const base = X.map((x) => `<path transform="translate(${x},0)" d="${PATH}"/>`).join('');
+  const lit  = X.map((x, i) =>
+    `<path transform="translate(${x},0)" fill="url(#${u}g${i})" d="${PATH}"/>`).join('');
+  const said = s ? (Math.round(s * 10) / 10) + ' out of 5' : 'no score';
+  return `<svg class="rv-srow" viewBox="0 0 560 100" role="img" aria-label="${said}" data-score="${s}">`
+    + `<defs>${grads}<clipPath id="${u}c"><rect x="0" y="0" width="${clip}" height="100"/></clipPath></defs>`
+    + `<g class="rv-srow-base" fill="${UNLIT}">${base}</g>`
+    + `<g clip-path="url(#${u}c)" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round">${lit}</g>`
+    + `</svg>`;
+}
