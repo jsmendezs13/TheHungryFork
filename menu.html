@@ -471,11 +471,17 @@
   .rv-chip-view { display:inline-flex; align-items:center; gap:.35rem; border-style:dashed; margin-left:auto; }
   .rv-chip-view.active { background:var(--ink); border-color:var(--ink); border-style:solid; color:#fff; }
   .rv-full { margin-top:8px; padding:.7rem .85rem; background:#fff; border:1px solid var(--border); border-radius:10px; font-family:var(--sans); }
-  .rv-full-row { display:flex; align-items:center; gap:.55rem; margin-bottom:5px; }
-  .rv-full-label { flex:0 0 120px; font-size:.68rem; line-height:1.2; color:var(--quiet); }
-  .rv-full-bar { flex:1; height:7px; background:var(--off-white); border-radius:4px; overflow:hidden; }
-  .rv-full-fill { display:block; height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
-  .rv-full-num { flex:0 0 14px; text-align:right; font-size:.72rem; font-weight:600; color:var(--text); }
+  /* Label on the left taking the room, then the stars at a fixed size, then
+     the number. Stars must not stretch to fill the row the way the old bar
+     did — a star twice as wide is not a better star. */
+  .rv-full-row { display:flex; align-items:center; gap:.6rem; margin-bottom:6px; }
+  .rv-full-label { flex:1; min-width:0; font-size:.68rem; line-height:1.2; color:var(--quiet); }
+  .rv-full-num { flex:0 0 22px; text-align:right; font-size:.72rem; font-weight:600; color:var(--text); }
+  /* The Fork's Rating stars, the same drawing as the menu card. The unearned
+     part shows as pale stars underneath, so a 3 reads as three of five
+     rather than as three stars and some empty space. */
+  .rv-srow { flex:0 0 auto; width:92px; height:auto; display:block; }
+  .rv-srow-base path { fill:#E4D9C9; }
   /* Two halves — the dish, then the restaurant — each heading its own scores
      and followed by its own comment. A hairline between the halves, not
      between the scores and the words that go with them. */
@@ -1673,13 +1679,58 @@ const FULL_FORK_GROUPS=[
     rows:[['hospitality','Hospitality'], ['atmosphere_vibe','Atmosphere & Vibe']] },
 ];
 
-// One score row. `shown` is what is printed: the raw score for one guest, the
-// average to one decimal for the dish as a whole.
+// ── THE FORK'S RATING STARS, ONE ROW OF THEM ──
+//
+// The same drawing as the stars on the menu card (FORK_STARS): five stars on
+// a 560-wide canvas, each its own vertical gradient, darkest on the left and
+// brightest on the right. Pale stars underneath; the coloured ones clipped to
+// the score on top.
+//
+// WHY NOT JUST PASTE FORK_STARS: its gradients are named fs1…fs5. Forty rows
+// of Full Fork would mean forty elements called fs1, which is invalid, and
+// when the first one sits inside something hidden — the cave, a closed panel —
+// Chrome can resolve every url(#fs1) to that hidden one and draw the stars
+// black or not at all. Every row here names its own gradients.
+//
+// The clip width comes from starClipPercent() in stars.js, which knows the
+// real star positions. A flat score/5 counts the gaps between stars as score
+// and puts 4.5 at 44% of the last star instead of half.
+const FORK_STAR_PATH = 'M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z';
+const FORK_STAR_X    = [0,115,230,345,460];
+// The menu card's gradient runs from #5A1610 to #E02414 — made for a DARK
+// background, where it reads as a glow. On the white Full Fork box the first
+// two stars came out nearly black. Same five-step climb from deep to bright,
+// lifted so every star still reads as red on a light surface.
+const FORK_STAR_GRAD = [['#9A170D','#6B0C06'],['#B0170C','#7A0C06'],['#C4180C','#8A0D06'],
+                        ['#D61D0F','#9C0F07'],['#EA2A18','#B01108']];
+let forkStarUid = 0;
+
+function forkStarRow(score){
+  const s = Math.max(0, Math.min(5, Number(score) || 0));
+  const u = 'fsr' + (++forkStarUid);
+  const clip = (starClipPercent(s) / 100 * 560).toFixed(1);
+  const grads = FORK_STAR_GRAD.map(([top,bottom],i) =>
+    `<linearGradient id="${u}g${i}" x1="0" y1="0" x2="0" y2="1">`
+    + `<stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient>`).join('');
+  const base = FORK_STAR_X.map(x => `<path transform="translate(${x},0)" d="${FORK_STAR_PATH}"/>`).join('');
+  const lit  = FORK_STAR_X.map((x,i) =>
+    `<path transform="translate(${x},0)" fill="url(#${u}g${i})" d="${FORK_STAR_PATH}"/>`).join('');
+  const said = s ? (Math.round(s*10)/10) + ' out of 5' : 'no score';
+  return `<svg class="rv-srow" viewBox="0 0 560 100" role="img" aria-label="${said}" data-score="${s}">`
+    + `<defs>${grads}<clipPath id="${u}c"><rect x="0" y="0" width="${clip}" height="100"/></clipPath></defs>`
+    + `<g class="rv-srow-base">${base}</g>`
+    + `<g clip-path="url(#${u}c)" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round">${lit}</g>`
+    + `</svg>`;
+}
+
+// One score row: the label, the stars, and the number — the raw score for one
+// guest, the average to one decimal for the dish as a whole. The number stays
+// because five stars can say "about four and a half" but only "4.3" says 4.3.
 function rvFullRow(label,value,shown){
   const ok=Number.isFinite(value)&&value>0;
   return `<div class="rv-full-row">
     <span class="rv-full-label">${label}</span>
-    <span class="rv-full-bar"><span class="rv-full-fill" style="width:${ok?Math.min(100,value/5*100):0}%"></span></span>
+    ${forkStarRow(ok ? value : 0)}
     <span class="rv-full-num">${ok?shown:'–'}</span>
   </div>`;
 }
