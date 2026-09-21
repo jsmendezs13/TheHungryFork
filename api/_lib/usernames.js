@@ -41,17 +41,44 @@ export function toRoman(n) {
   return out;
 }
 
-// 'josé maría' → 'JoseMaria'. Accents are stripped rather than kept because
-// the handle ends up in URLs, search boxes and other people's keyboards, and
-// half of them cannot type an accent.
+// The handle is built from the FIRST WORD of the first name:
+//
+//   'Karol'           → 'Karol'
+//   'Johan S'         → 'Johan'      (was 'Johans' — see below)
+//   'Juan Pablo'      → 'Juan'       (was 'Juanpablo')
+//   'María José'      → 'Maria'      (was 'Mariajose')
+//   'Jean-Luc'        → 'Jeanluc'    one word with a hyphen is still one word
+//
+// WHY THE FIRST WORD. This used to take every letter of the whole first name,
+// with the spaces removed and everything after the first letter lowercased.
+// Sebastian's own account has 'Johan S' in the first-name box, so he became
+// 'Johans_I' — a name that is not his. And compound first names, which are
+// everywhere among his clients' customers, came out as one long lowercase
+// word. The comment here even promised 'josé maría' → 'JoseMaria', which the
+// code never did: `.slice(1).toLowerCase()` flattened the second capital.
+//
+// The Roman numeral is what makes a handle unique, not its length — so a short
+// base costs nothing. Juan Pablo becomes Juan_IV, not Juanpablo_I.
+//
+// Accents are stripped rather than kept because the handle ends up in URLs,
+// search boxes and other people's keyboards, and half of them cannot type an
+// accent.
+//
+// Existing handles are NOT recalculated by this. Nothing re-runs this function
+// on an account that already has a handle, and a handle is meant never to
+// change. Sebastian's was moved by hand, at his request, in migration 11.
 export function usernameBase(firstName) {
-  const cleaned = String(firstName || '')
+  const words = String(firstName || '')
     .normalize('NFD')                    // split 'é' into 'e' + accent
     .replace(/[̀-ͯ]/g, '')     // drop the accent
-    .replace(/[^A-Za-z]/g, '');          // letters only: no spaces, digits, emoji
+    .split(/\s+/)
+    .map((w) => w.replace(/[^A-Za-z]/g, ''))   // letters only: no digits, punctuation, emoji
+    .filter(Boolean);
 
-  if (!cleaned) return 'Taster';         // a name written entirely in another script
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+  // The first word that has any letters in it — so '123 Karol' is still Karol.
+  const first = words[0];
+  if (!first) return 'Taster';           // a name written entirely in another script
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
 
 export function formatUsername(base, seq) {
