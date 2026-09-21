@@ -180,16 +180,30 @@
   .review-item { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; border-left:2px solid var(--red); }
   .review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
   .reviewer-name { font-size:.85rem; font-weight:600; color:var(--text); font-family:var(--sans); }
-  .review-stars { color:var(--red); font-size:.85rem; }
+  /* flex:none / nowrap: the header is a flex row, and a long reviewer name was
+     squeezing the stars into a vertical column one per line. */
+  .review-stars { color:var(--red); font-size:.85rem; flex:none; white-space:nowrap; display:inline-flex; gap:1px; align-items:center; }
   .review-text { font-size:.82rem; font-weight:300; color:var(--muted); line-height:1.6; font-family:var(--sans); }
   .review-date { font-size:.7rem; color:#B7A99A; margin-top:3px; font-family:var(--sans); }
   .no-reviews { font-size:.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:var(--sans); }
   .rate-dish-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.9rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s; }
   .rate-dish-btn:hover { background:#463629; }
-  .review-reply { margin-top:8px; padding:9px 12px; background:rgba(154,51,36,.06); border-radius:8px; font-size:.8rem; color:var(--text); font-family:var(--sans); }
+  /* Four turns, and the two sides have to be told apart at a glance. The
+     restaurant sits left with a red edge; the guest is indented and sits on
+     plain paper, the way a conversation looks when it alternates.
+     Each is signed with a NAME — "Restaurant reply:" told a customer nothing,
+     because every reply on the site said the same three words. */
+  .review-reply { margin-top:8px; padding:9px 12px; border-radius:8px; font-size:.8rem; color:var(--text); font-family:var(--sans); }
+  .review-reply.from-restaurant { background:rgba(154,51,36,.06); border-left:2px solid var(--red); }
+  .review-reply.from-guest { background:#fff; border:1px solid var(--border); margin-left:1.1rem; }
+  .review-reply-who { display:flex; align-items:baseline; gap:.5rem; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--red); margin-bottom:3px; }
+  .review-reply.from-guest .review-reply-who { color:var(--muted); }
+  .review-reply-when { font-weight:400; letter-spacing:0; text-transform:none; color:#B7A99A; font-size:.68rem; }
   .review-reply-form { margin-top:8px; }
   .reply-textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:.55rem .8rem; font-size:.8rem; font-family:var(--sans); resize:vertical; min-height:50px; margin-bottom:.4rem; background:#fff; }
   .reply-btn { background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.5rem 1.1rem; font-size:.72rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .reply-btn[disabled] { opacity:.55; cursor:default; }
+  .rv-reply-cap { margin-top:6px; font-size:.68rem; color:#B7A99A; font-family:var(--sans); font-style:italic; }
 
   /* ── LUCKY BITE ── */
   .lucky-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.88); z-index:900; align-items:center; justify-content:center; padding:1rem; }
@@ -412,9 +426,32 @@
   .rv-star { color:#E7DCCB; }
   .rv-star.on { color:#C01108; }
   .rv-star .star-glyph { width:16px; height:16px; }
-  .rv-filters { display:flex; gap:.5rem; margin-bottom:.9rem; }
+  /* Newest / Highest / Lowest are a SORT — choosing one cancels the others.
+     Full Fork is a VIEW — it stays on while any sort is chosen. Putting them
+     shoulder to shoulder in one row would say they are the same kind of thing,
+     so the sorts keep their own group and Full Fork sits apart: pushed to the
+     far end on a wide screen, dropped onto its own line on a narrow one. */
+  .rv-filters { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.9rem; align-items:center; }
+  .rv-sorts { display:flex; gap:.5rem; }
   .rv-chip { background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.45rem 1rem; font-family:var(--sans); font-size:.76rem; color:var(--muted); cursor:pointer; }
   .rv-chip.active { background:var(--red); border-color:var(--red); color:#fff; }
+  .rv-chip-view { display:inline-flex; align-items:center; gap:.35rem; border-style:dashed; margin-left:auto; }
+  .rv-chip-view.active { background:var(--ink); border-color:var(--ink); border-style:solid; color:#fff; }
+  .rv-full { margin-top:8px; padding:.7rem .85rem; background:#fff; border:1px solid var(--border); border-radius:10px; font-family:var(--sans); }
+  .rv-full-row { display:flex; align-items:center; gap:.55rem; margin-bottom:5px; }
+  .rv-full-label { flex:0 0 120px; font-size:.68rem; line-height:1.2; color:var(--muted); }
+  .rv-full-bar { flex:1; height:7px; background:var(--off-white); border-radius:4px; overflow:hidden; }
+  .rv-full-fill { display:block; height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
+  .rv-full-num { flex:0 0 14px; text-align:right; font-size:.72rem; font-weight:600; color:var(--text); }
+  .rv-full-notes { margin-top:.6rem; padding-top:.6rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:.5rem; }
+  .rv-full-note { font-size:.8rem; font-weight:300; color:var(--muted); line-height:1.55; }
+  .rv-full-note-label { display:block; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:2px; }
+  .rv-full-none { font-size:.75rem; color:#B7A99A; font-style:italic; }
+  /* Full Fork on the dish itself, above the list. Off-white rather than white
+     so it reads as part of the summary, not as one more review. */
+  .rv-full-summary { background:var(--off-white); border-color:var(--border); margin:0 0 1rem; }
+  .rv-full-head { display:flex; align-items:baseline; justify-content:space-between; gap:.6rem; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:.55rem; }
+  .rv-full-head-n { font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); font-size:.7rem; }
   .cave-sec { width:100%; padding:1rem .9rem; }
   .cave-sec-media { position:relative; padding-top:2.6rem; border-bottom:1px solid var(--border); }
   .cave-sec-info { display:flex; flex-direction:column; align-items:center; gap:.35rem; border-bottom:1px solid var(--border); }
@@ -728,11 +765,20 @@
         <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-count" id="rv-count"></div></div>
         <div class="rv-bars" id="rv-bars"></div>
       </div>
+      <!-- Full Fork for the dish as a whole. Drawn by rvRenderList, so it
+           appears and disappears with the per-review breakdowns below. -->
+      <div id="rv-full-summary"></div>
       <div id="rv-your"></div>
       <div class="rv-filters">
-        <button class="rv-chip active" onclick="rvSetSort('new',this)">Newest</button>
-        <button class="rv-chip" onclick="rvSetSort('high',this)">Highest</button>
-        <button class="rv-chip" onclick="rvSetSort('low',this)">Lowest</button>
+        <div class="rv-sorts">
+          <button class="rv-chip rv-chip-sort active" onclick="rvSetSort('new',this)">Newest</button>
+          <button class="rv-chip rv-chip-sort" onclick="rvSetSort('high',this)">Highest</button>
+          <button class="rv-chip rv-chip-sort" onclick="rvSetSort('low',this)">Lowest</button>
+        </div>
+        <button class="rv-chip rv-chip-view" id="rv-full-btn" onclick="rvToggleFull(this)" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M7 2v7a3 3 0 0 0 2 2.83V22h2V11.83A3 3 0 0 0 13 9V2h-1.5v6h-1V2h-1v6h-1V2H7zm9 0c-1.1 0-2 1.79-2 4v6h1.5v10H17V2h-1z"/></svg>
+          Full Fork
+        </button>
       </div>
       <div class="reviews-list" id="rv-list" style="max-height:280px;"></div>
     </div>
@@ -835,7 +881,11 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 // ── STATE ──
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
 let currentDishId=null, activeFilter='chefs-pick';
+// These two travel together. Every page here hardcodes the restaurant it
+// belongs to, so when this menu is deployed for another client, both lines
+// change — the id decides what is loaded, the name signs the replies.
 const RESTAURANT_ID=1;
+const RESTAURANT_NAME='The Hungry Fork';
 
 // ── MAY THIS ACCOUNT REPLY? ──
 //
@@ -1381,6 +1431,83 @@ async function submitRating(){
   btn.disabled=false;btn.textContent='Post Review';
 }
 
+// ── A RESTAURANT'S REPLIES ──
+//
+// One conversation about one dish, with exactly four turns:
+//
+//   1. the guest rates and comments
+//   2. the restaurant answers
+//   3. the guest answers back, once
+//   4. the restaurant has the last word, once
+//   ── closed ──
+//
+// Nothing here can be edited or taken down once it is posted. There are no
+// Edit buttons and no way to save an empty reply over one already written —
+// /api/review-reply refuses both, and this screen does not offer either.
+//
+// Both screens draw the thread through these functions, so the rule and the
+// wording can only be changed in one place.
+
+const filledText = (v) => !!(v && String(v).trim());
+
+// Whose turn it is, or null when the conversation is finished. The same rule
+// as nextTurn() in api/review-reply.js — but the server's copy is the one that
+// decides anything; this one only draws boxes.
+function nextTurn(r){
+  if(!filledText(r.reply_text))        return 'restaurant';
+  if(!filledText(r.taster_reply_text)) return 'guest';
+  if(!filledText(r.reply2_text))       return 'restaurant';
+  return null;
+}
+
+function replyBlock(text,at,who,cls){
+  if(!filledText(text)) return '';
+  let when='';
+  try{ when = at ? new Date(at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''; }catch(e){}
+  return `<div class="review-reply ${cls}">
+    <div class="review-reply-who">${hfEsc(who)}${when?`<span class="review-reply-when">${when}</span>`:''}</div>
+    ${hfEsc(text)}
+  </div>`;
+}
+
+// Turns 2, 3 and 4 in order. The guest's turn is headed with the guest's own
+// name, so a reader can see the two sides taking it in turn rather than a
+// wall of identical grey boxes.
+function replyBlocks(r){
+  const guest = r.reviewer_name
+    || (currentTaster && r.taster_id === currentTaster.id ? currentTaster.first_name : 'The guest');
+  return replyBlock(r.reply_text,        r.reply_created_at,        RESTAURANT_NAME, 'from-restaurant')
+       + replyBlock(r.taster_reply_text, r.taster_reply_created_at, guest,           'from-guest')
+       + replyBlock(r.reply2_text,       r.reply2_created_at,       RESTAURANT_NAME, 'from-restaurant');
+}
+
+// What to put under the thread for the person looking at it. Three cases:
+// their turn (a box), the other side's turn (a quiet line), or finished.
+// Somebody who is neither the restaurant nor the guest gets nothing at all —
+// a passer-by does not need to be told whose turn it is.
+function replyTail(r, canReply, isGuest, idPrefix, onclick){
+  const turn = nextTurn(r);
+  const mine = turn && ((turn==='restaurant' && canReply) || (turn==='guest' && isGuest));
+  if(mine){
+    const hint = turn==='guest'
+      ? 'Answer the restaurant — you get one reply.'
+      : (filledText(r.taster_reply_text)
+          ? 'Your last word. Nothing can be added after this.'
+          : `Answer as ${RESTAURANT_NAME}.`);
+    const label = turn==='guest' ? 'Post reply'
+      : (filledText(r.taster_reply_text) ? 'Post last word' : 'Post reply');
+    return `<div class="review-reply-form">
+      <textarea class="reply-textarea" id="${idPrefix}-${r.id}" placeholder="${hint}"></textarea>
+      <button class="reply-btn" id="${idPrefix}-btn-${r.id}" onclick="${onclick}">${label}</button>
+      <div class="rv-reply-cap">Once posted this cannot be changed or removed.</div>
+    </div>`;
+  }
+  if(!canReply && !isGuest) return '';
+  if(!turn) return `<div class="rv-reply-cap">This conversation is finished.</div>`;
+  return `<div class="rv-reply-cap">Waiting for ${
+    turn==='guest' ? 'the guest' : hfEsc(RESTAURANT_NAME)} to reply.</div>`;
+}
+
 // ── LOAD REVIEWS ──
 async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-list',labelId='reviews-label'){
   // Wait for "may I reply?" before drawing, or a deep link straight to a dish
@@ -1405,15 +1532,10 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const name=reviewerLabel(r);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-      let replyHtml='';
-      if(r.reply_text){
-        replyHtml=`<div class="review-reply"><strong>Restaurant reply:</strong> ${hfEsc(r.reply_text)}</div>`;
-      }else if(canReply){
-        replyHtml=`<div class="review-reply-form">
-          <textarea class="reply-textarea" id="reply-input-${r.id}" placeholder="Write a reply as the restaurant…"></textarea>
-          <button class="reply-btn" onclick="postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')">Post Reply</button>
-        </div>`;
-      }
+      const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
+      const replyHtml = replyBlocks(r)
+        + replyTail(r, canReply, isGuest, 'reply-input',
+            `postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')`);
       return`<div class="review-item">
         <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
@@ -1424,14 +1546,15 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
   }catch(e){}
 }
 
-// ── RESTAURANT REPLY ──
+// ── TAKING A TURN ──
 async function postReply(reviewId,dishId,restaurantId,listId,labelId){
   const textarea=document.getElementById('reply-input-'+reviewId);
   const text=textarea.value.trim();
   if(!text)return;
-  // Through the API, never straight at the table. The browser has no privilege
-  // on reply_text any more — migration 9 — so this is the only route, and it
-  // checks the roles table before it writes.
+  // Through the API, never straight at the table. No browser role can write
+  // any column of this conversation — migrations 9 and 10 — so this is the
+  // only route, and it decides from the row whose turn it is before writing.
+  // Nothing tells it which turn to take; there is nothing here to forge.
   try{
     const res = await fetch('/api/review-reply', {
       method:'POST',
@@ -1451,7 +1574,62 @@ async function postReply(reviewId,dishId,restaurantId,listId,labelId){
 
 // ── REVIEWS PANEL ──
 let rvData=[],rvSort='new';
+// Full Fork: the whole rating, opened out. Not a sort — a view. It stays on
+// while the list is re-sorted, which is why it is not in the same group.
+let rvFull=false;
 function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
+
+// The five scores a rating is made of, in the order the rating form asks for
+// them, so what the customer filled in and what the reader sees line up.
+const FULL_FORK_ROWS=[
+  ['flavor','Flavor'],
+  ['worth_every_bite','Worth Every Bite'],
+  ['signature_style','Signature Style'],
+  ['hospitality','Hospitality'],
+  ['atmosphere_vibe','Atmosphere & Vibe'],
+];
+function rvFullBlock(r){
+  const rows=FULL_FORK_ROWS.map(([key,label])=>{
+    const v=Number(r[key]);
+    const ok=Number.isFinite(v)&&v>0;
+    return `<div class="rv-full-row">
+      <span class="rv-full-label">${label}</span>
+      <span class="rv-full-bar"><span class="rv-full-fill" style="width:${ok?Math.min(100,v/5*100):0}%"></span></span>
+      <span class="rv-full-num">${ok?v:'–'}</span>
+    </div>`;
+  }).join('');
+  // Both comments, each said plainly. restaurant_comment is written at rating
+  // time and has never been shown anywhere until now.
+  const dish=r.dish_comment?`<div class="rv-full-note"><span class="rv-full-note-label">About the dish</span>${hfEsc(r.dish_comment)}</div>`:'';
+  const rest=r.restaurant_comment?`<div class="rv-full-note"><span class="rv-full-note-label">About the restaurant</span>${hfEsc(r.restaurant_comment)}</div>`:'';
+  const notes=(dish||rest)
+    ? `<div class="rv-full-notes">${dish}${rest}</div>`
+    : `<div class="rv-full-notes"><div class="rv-full-none">Scores only — this guest left no comment.</div></div>`;
+  return `<div class="rv-full">${rows}${notes}</div>`;
+}
+
+// The SAME five rows, averaged across every rating on the dish — Full Fork
+// applied to the dish's general rating rather than to one guest's. The 4.2 at
+// the top of the panel is three of the five scores averaged together; this
+// says which of the five is carrying it and which is dragging it down, which
+// is the number a restaurant can actually act on.
+function rvFullSummary(rows){
+  if(!rows.length) return '';
+  const cells=FULL_FORK_ROWS.map(([key,label])=>{
+    const vals=rows.map(r=>Number(r[key])).filter(v=>Number.isFinite(v)&&v>0);
+    const avg=vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:null;
+    return `<div class="rv-full-row">
+      <span class="rv-full-label">${label}</span>
+      <span class="rv-full-bar"><span class="rv-full-fill" style="width:${avg?Math.min(100,avg/5*100):0}%"></span></span>
+      <span class="rv-full-num">${avg?avg.toFixed(1):'–'}</span>
+    </div>`;
+  }).join('');
+  const n=rows.length;
+  return `<div class="rv-full rv-full-summary">
+    <div class="rv-full-head">This dish, score by score<span class="rv-full-head-n">${n} rating${n===1?'':'s'}</span></div>
+    ${cells}
+  </div>`;
+}
 // A review shows the name the person typed plus the handle the platform gave
 // them. The name is theirs and repeats; the handle is unique and assigned.
 function reviewerLabel(r){
@@ -1483,7 +1661,15 @@ async function openReviewsPanel(){
   rvRender();
 }
 function closeReviewsPanel(){document.getElementById('reviews-modal').classList.remove('open');}
-function rvSetSort(s,btn){rvSort=s;document.querySelectorAll('.rv-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rvRenderList();}
+// Only the SORT chips are cleared. This used to clear every .rv-chip, which
+// would have switched Full Fork off every time somebody re-sorted.
+function rvSetSort(s,btn){rvSort=s;document.querySelectorAll('.rv-chip-sort').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rvRenderList();}
+function rvToggleFull(btn){
+  rvFull=!rvFull;
+  btn.classList.toggle('active',rvFull);
+  btn.setAttribute('aria-pressed',rvFull?'true':'false');
+  rvRenderList();
+}
 function rvRender(){
   const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
   if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
@@ -1507,6 +1693,11 @@ function rvRender(){
 }
 function rvRenderList(){
   const list=document.getElementById('rv-list');
+  // Full Fork applies to the dish's general rating as well as to each guest's,
+  // so the summary breakdown is drawn and cleared here alongside the rest.
+  const sum=document.getElementById('rv-full-summary');
+  if(sum) sum.innerHTML = rvFull ? rvFullSummary(rvData) : '';
+
   let arr=[...rvData];
   if(rvSort==='high')arr.sort((a,b)=>rvScore(b)-rvScore(a));
   else if(rvSort==='low')arr.sort((a,b)=>rvScore(a)-rvScore(b));
@@ -1520,26 +1711,29 @@ function rvRenderList(){
   list.innerHTML=arr.map(r=>{
     const name=reviewerLabel(r);
     const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+    const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
+
     return`<div class="review-item">
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
-      ${r.dish_comment?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
+      ${(!rvFull&&r.dish_comment)?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
       <div class="review-date">${date}</div>
-      ${r.reply_text?`<div class="review-reply"><strong>Restaurant reply:</strong> ${hfEsc(r.reply_text)}</div>`:''}
-      ${canReply?`<div class="review-reply-form">
-        <textarea class="reply-textarea" id="rv-reply-${r.id}" placeholder="Answer as the restaurant…">${hfEsc(r.reply_text||'')}</textarea>
-        <button class="reply-btn" id="rv-reply-btn-${r.id}" onclick="rvPostReply(${r.id})">${r.reply_text?'Update reply':'Post reply'}</button>
-      </div>`:''}
+      ${rvFull?rvFullBlock(r):''}
+      ${replyBlocks(r)}
+      ${replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
     </div>`;
   }).join('');
 }
 
-// Posting from the panel. Emptying the box and saving removes the reply — a
-// restaurant can take its own words down, and only its own.
+// Taking a turn from the panel. An empty box does nothing — the API refuses an
+// empty reply, because "save nothing over it" would be a way to delete
+// something already said, and nothing here can be taken back.
 async function rvPostReply(reviewId){
   const box=document.getElementById('rv-reply-'+reviewId);
   const btn=document.getElementById('rv-reply-btn-'+reviewId);
   if(!box)return;
   const text=box.value.trim();
+  const label=btn?btn.textContent:'Post reply';
+  if(!text){ showToast('Write something first.'); return; }
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
   try{
     const res=await fetch('/api/review-reply',{
@@ -1551,17 +1745,25 @@ async function rvPostReply(reviewId){
     let data=null; try{ data = raw ? JSON.parse(raw) : null; }catch(e){}
     if(!res.ok){
       showToast((data&&data.error)||('Could not save that reply ('+res.status+').'));
-      if(btn){btn.disabled=false;btn.textContent=text?'Update reply':'Post reply';}
+      if(btn){btn.disabled=false;btn.textContent=label;}
       return;
     }
-    showToast(text?'Reply posted!':'Reply removed.');
-    // Update the row we already have rather than refetching the whole panel.
+    showToast('Posted.');
+    // Update the row we already hold rather than refetching the whole panel.
+    // WHICH column was written comes back from the server, because the server
+    // is the one that decided whose turn it was.
     const row=rvData.find(x=>String(x.id)===String(reviewId));
-    if(row){ row.reply_text=(data&&data.replyText)||null; row.reply_created_at=(data&&data.replyAt)||null; }
+    if(row && data && data.column){
+      row[data.column]=data.replyText;
+      const atCol={ reply_text:'reply_created_at',
+                    taster_reply_text:'taster_reply_created_at',
+                    reply2_text:'reply2_created_at' }[data.column];
+      if(atCol) row[atCol]=data.replyAt;
+    }
     rvRenderList();
   }catch(e){
     showToast('Network error.');
-    if(btn){btn.disabled=false;btn.textContent=text?'Update reply':'Post reply';}
+    if(btn){btn.disabled=false;btn.textContent=label;}
   }
 }
 
