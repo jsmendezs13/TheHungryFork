@@ -477,11 +477,9 @@
   .rv-full-row { display:flex; align-items:center; gap:.6rem; margin-bottom:6px; }
   .rv-full-label { flex:1; min-width:0; font-size:.68rem; line-height:1.2; color:var(--quiet); }
   .rv-full-num { flex:0 0 22px; text-align:right; font-size:.72rem; font-weight:600; color:var(--text); }
-  /* The Fork's Rating stars, the same drawing as the menu card. The unearned
-     part shows as pale stars underneath, so a 3 reads as three of five
-     rather than as three stars and some empty space. */
+  /* The Fork's Rating stars (drawn by forkStarRow in stars.js, pale unearned
+     stars included). This page only decides how big a row is. */
   .rv-srow { flex:0 0 auto; width:92px; height:auto; display:block; }
-  .rv-srow-base path { fill:#E4D9C9; }
   /* Two halves — the dish, then the restaurant — each heading its own scores
      and followed by its own comment. A hairline between the halves, not
      between the scores and the words that go with them. */
@@ -1089,7 +1087,7 @@ function caveImgErr(img,emoji){
 async function caveDishRating(dbId){
   if(caveRatings[dbId])return caveRatings[dbId];
   try{
-    const since=encodeURIComponent(windowStartISO(RATING_DEFAULT_DAYS));
+    const since=encodeURIComponent(windowStartISO(ratingDefaultDays()));
     const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&created_at=gte.${since}&select=flavor,worth_every_bite,signature_style`);
     if(ok&&data.length){
       const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
@@ -1642,30 +1640,15 @@ function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
 
 // ── THE PERIOD A SCORE COVERS ──
 //
-// Sebastian's design: the score a dish shows is its last twelve months, and a
-// reader can widen or narrow that — one month, three, twelve, or all time.
-//
-// ROLLING, not "since January 1st". A calendar year would reset every January
-// and a dish would be judged on its first handful of reviews of the year.
-//
-// EVERY rating in the period counts, including several from the same guest —
-// his decision on 21 September, recorded in the rating-history notes with the
-// numbers that show what it costs.
-//
-// It changes the SCORE only. The list below always shows every comment ever
-// posted, whatever period is chosen: "they don't disappear."
-const RATING_DEFAULT_DAYS = 365;
-let rvWindow = RATING_DEFAULT_DAYS;          // days; 0 means all time
-
-function rvInWindow(r, days){
-  if(!days) return true;
-  const t = new Date(r.created_at).getTime();
-  return Number.isFinite(t) && t >= Date.now() - days*86400000;
-}
-function rvWindowed(){ return rvData.filter(r => rvInWindow(r, rvWindow)); }
-
-// The same boundary as an ISO timestamp, for asking the database directly.
-function windowStartISO(days){ return new Date(Date.now() - days*86400000).toISOString(); }
+// ratingDefaultDays(), ratingInWindow() and windowStartISO() live in stars.js
+// now, shared with the home page. The rules they carry — rolling not calendar,
+// every rating counts, the score changes and the list never does — are written
+// down there.
+// The typeof guard is for one case only: a browser still holding an older
+// stars.js. This line runs as the page loads, and a missing function here
+// would stop the whole menu. Anywhere else it would only affect a panel.
+let rvWindow = (typeof ratingDefaultDays === 'function') ? ratingDefaultDays() : 365;   // days; 0 = all time
+function rvWindowed(){ return rvData.filter(r => ratingInWindow(r, rvWindow)); }
 
 // The five scores a rating is made of, split the way the rating FORM splits
 // them: three about the plate, two about the room. Each half sits with its own
@@ -1681,51 +1664,9 @@ const FULL_FORK_GROUPS=[
 
 // ── THE FORK'S RATING STARS, ONE ROW OF THEM ──
 //
-// The same drawing as the stars on the menu card (FORK_STARS): five stars on
-// a 560-wide canvas, each its own vertical gradient, darkest on the left and
-// brightest on the right. Pale stars underneath; the coloured ones clipped to
-// the score on top.
-//
-// WHY NOT JUST PASTE FORK_STARS: its gradients are named fs1…fs5. Forty rows
-// of Full Fork would mean forty elements called fs1, which is invalid, and
-// when the first one sits inside something hidden — the cave, a closed panel —
-// Chrome can resolve every url(#fs1) to that hidden one and draw the stars
-// black or not at all. Every row here names its own gradients.
-//
-// The clip width comes from starClipPercent() in stars.js, which knows the
-// real star positions. A flat score/5 counts the gaps between stars as score
-// and puts 4.5 at 44% of the last star instead of half.
-const FORK_STAR_PATH = 'M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z';
-const FORK_STAR_X    = [0,115,230,345,460];
-// EXACTLY the menu card's colours — the same five stops as FORK_STARS, dark
-// on the left climbing to bright red on the right. Sebastian asked for them
-// to match: "first they are dark and then more red."
-//
-// (A lighter version was tried on 21 September because the first two stars
-// read as nearly black on the white Full Fork box. He preferred the brand's
-// own colours, and they are the brand. A test reads the stops out of
-// FORK_STARS itself and fails if these ever stop matching.)
-const FORK_STAR_GRAD = [['#5A1610','#260805'],['#7E150D','#3E0B06'],['#A31108','#5E0A04'],
-                        ['#C41508','#750A04'],['#E02414','#8E0B05']];
-let forkStarUid = 0;
-
-function forkStarRow(score){
-  const s = Math.max(0, Math.min(5, Number(score) || 0));
-  const u = 'fsr' + (++forkStarUid);
-  const clip = (starClipPercent(s) / 100 * 560).toFixed(1);
-  const grads = FORK_STAR_GRAD.map(([top,bottom],i) =>
-    `<linearGradient id="${u}g${i}" x1="0" y1="0" x2="0" y2="1">`
-    + `<stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient>`).join('');
-  const base = FORK_STAR_X.map(x => `<path transform="translate(${x},0)" d="${FORK_STAR_PATH}"/>`).join('');
-  const lit  = FORK_STAR_X.map((x,i) =>
-    `<path transform="translate(${x},0)" fill="url(#${u}g${i})" d="${FORK_STAR_PATH}"/>`).join('');
-  const said = s ? (Math.round(s*10)/10) + ' out of 5' : 'no score';
-  return `<svg class="rv-srow" viewBox="0 0 560 100" role="img" aria-label="${said}" data-score="${s}">`
-    + `<defs>${grads}<clipPath id="${u}c"><rect x="0" y="0" width="${clip}" height="100"/></clipPath></defs>`
-    + `<g class="rv-srow-base">${base}</g>`
-    + `<g clip-path="url(#${u}c)" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linejoin="round">${lit}</g>`
-    + `</svg>`;
-}
+// forkStarRow() lives in stars.js now, shared with the home page — same
+// drawing and exact colours as the menu card, a unique name for every row's
+// gradients, and the fill cut at the real star positions.
 
 // One score row: the label, the stars, and the number — the raw score for one
 // guest, the average to one decimal for the dish as a whole. The number stays
