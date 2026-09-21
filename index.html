@@ -241,13 +241,17 @@
   /* Readable, like the reviews: thin --muted text measures under 4.5:1. */
   #fork-info .cs-sub { font-weight:400; color:var(--text); margin-bottom:1.2rem; }
   .fi-name { font-family:var(--sans); font-size:.64rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:.55rem; }
-  .fi-score { display:flex; gap:1rem; align-items:center; margin-bottom:.8rem; text-align:left; }
+  .fi-score { display:flex; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:.8rem; padding:0 calc(.85rem + 1px); text-align:left; }
   .fi-avg { font-family:var(--serif); font-size:2.6rem; font-weight:600; color:var(--text); line-height:1; }
   .fi-count { font-family:var(--sans); font-size:.74rem; color:var(--quiet); margin-top:2px; }
-  .fi-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
-  .fi-bar-row { display:flex; align-items:center; gap:8px; font-family:var(--sans); font-size:.68rem; color:var(--quiet); }
-  .fi-bar { flex:1; height:8px; background:var(--off-white); border-radius:4px; overflow:hidden; }
-  .fi-bar-fill { height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
+  /* The spread: one line per level, drawn the way "About the restaurant" is —
+     the level as stars, then how many ratings gave it. No bars. Sebastian,
+     21 Sep: "only the stars with the numbers at the end, no line system".
+     The side padding lines these numbers up with 4.0 / 4.3 below. */
+  .fi-bars { display:flex; flex-direction:column; gap:7px; }
+  .fi-lvl { display:flex; align-items:center; gap:.6rem; font-family:var(--sans); }
+  .fi-lvl .rv-srow { flex:0 0 auto; width:86px; height:auto; display:block; }
+  .fi-lvl-n { flex:0 0 24px; text-align:right; font-size:.74rem; font-weight:600; color:var(--text); }
   .fi-window { display:flex; background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:3px; margin-bottom:1rem; }
   .fi-win { flex:1; background:none; border:none; border-radius:999px; padding:.42rem .1rem; font-family:var(--sans); font-size:.68rem; color:var(--quiet); cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
   .fi-win.active { background:#fff; color:var(--text); font-weight:600; box-shadow:0 1px 2px rgba(43,33,26,.14); }
@@ -922,9 +926,14 @@ function fiRender(){
 
   document.getElementById('fi-avg').textContent=shown(s.score);
   document.getElementById('fi-count').textContent='('+s.count+')';
-  document.getElementById('fi-bars').innerHTML = s.count
-    ? [5,4,3,2,1].map(i=>`<div class="fi-bar-row"><span>${i}</span><div class="fi-bar"><div class="fi-bar-fill" style="width:${s.dist[i-1]/s.count*100}%"></div></div></div>`).join('')
-    : '';
+  // The spread, one line per level: five stars for the 5s, four for the 4s…
+  // then how many ratings gave it. Zeros when the period has none.
+  document.getElementById('fi-bars').innerHTML = [5,4,3,2,1].map(i=>{
+    const n = s.count ? s.dist[i-1] : 0;
+    return `<div class="fi-lvl" role="img" aria-label="${i} star${i>1?'s':''}: ${n} rating${n===1?'':'s'}">`
+      + forkStarRow(i).replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true"')
+      + `<span class="fi-lvl-n" aria-hidden="true">${n}</span></div>`;
+  }).join('');
 
   // The two scores the restaurant's number is made of, in the menu card's
   // stars, with the number beside them — Full Fork for the room.
