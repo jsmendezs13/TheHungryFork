@@ -445,7 +445,7 @@
   .cave-rec img { max-height:105px; max-width:88%; object-fit:contain; }
   .rec-emoji { font-size:2.8rem; }
   .rec-name { font-family:var(--sans); font-size:.72rem; color:var(--muted); }
-  .rv-summary { display:flex; gap:1.1rem; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
+  .rv-summary { display:flex; gap:1.1rem; align-items:center; margin-bottom:.7rem; }
   /* The period for the score. A single segmented bar rather than separate
      pills: it is a third kind of control on this panel — the sort chips order
      the list, Full Fork opens it out, and this changes the number itself. */
@@ -454,14 +454,15 @@
   .rv-win.active { background:#fff; color:var(--text); font-weight:600; box-shadow:0 1px 2px rgba(43,33,26,.14); }
   .rv-avg { font-family:var(--serif); font-size:2.6rem; font-weight:600; color:var(--text); line-height:1; }
   .rv-count { font-family:var(--sans); font-size:.76rem; color:var(--muted); margin-top:2px; }
-  /* The spread: one line per level, drawn like the home page's Fork's Rating
-     box — the level as stars, then how many ratings gave it. No bars.
-     Sebastian, 21 Sep: "only the stars with the numbers at the end, no line
-     system", and the same here as there. */
-  .rv-bars { display:flex; flex-direction:column; gap:7px; }
-  .rv-lvl { display:flex; align-items:center; gap:.6rem; font-family:var(--sans); }
-  .rv-lvl .rv-srow { flex:0 0 auto; width:86px; }
-  .rv-lvl-n { flex:0 0 24px; text-align:right; font-size:.74rem; font-weight:600; color:var(--text); }
+  /* The score, then its stars — the menu card's, part-filled for 4.3 — then
+     how many ratings it is, centred on each other. The home page's Fork's
+     Rating box is laid out the same way. */
+  .rv-left { flex:none; text-align:center; }
+  .rv-avg-stars .rv-srow { margin:6px auto 3px; }
+  .rv-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .rv-bar-row { display:flex; align-items:center; gap:8px; font-family:var(--sans); font-size:.7rem; color:var(--muted); }
+  .rv-bar { flex:1; height:8px; background:var(--off-white); border-radius:4px; overflow:hidden; }
+  .rv-bar-fill { height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
   .rv-your-box { background:var(--off-white); border:1px solid var(--border); border-radius:12px; padding:.8rem 1rem; margin-bottom:1rem; text-align:center; }
   .rv-your-label { font-family:var(--sans); font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:.4rem; }
   .rv-your-stars { display:flex; gap:5px; justify-content:center; }
@@ -813,7 +814,7 @@
     </div>
     <div class="r-body">
       <div class="rv-summary">
-        <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-count" id="rv-count"></div></div>
+        <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-avg-stars" id="rv-avg-stars"></div><div class="rv-count" id="rv-count"></div></div>
         <div class="rv-bars" id="rv-bars"></div>
       </div>
       <!-- Which period the score above covers. It sits right under the number
@@ -1803,20 +1804,20 @@ function rvSetWindow(days,btn){
 function rvRenderSummary(){
   const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
   const rows=rvWindowed();
-  const dist=[0,0,0,0,0];
-  if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';}
-  else if(!rows.length){avgEl.textContent='–';cntEl.textContent='(0)';}
+  let avg=0;
+  if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
+  else if(!rows.length){avgEl.textContent='–';cntEl.textContent='(0)';bars.innerHTML='';}
   else{
-    const avg=rows.reduce((s,r)=>s+rvScore(r),0)/rows.length;
+    avg=rows.reduce((s,r)=>s+rvScore(r),0)/rows.length;
     avgEl.textContent=avg.toFixed(1);
     cntEl.textContent='('+rows.length+')';
+    const dist=[0,0,0,0,0];
     rows.forEach(r=>{const b=Math.min(5,Math.max(1,Math.round(rvScore(r))));dist[b-1]++;});
+    bars.innerHTML=[5,4,3,2,1].map(i=>`<div class="rv-bar-row"><span>${i}</span><div class="rv-bar"><div class="rv-bar-fill" style="width:${dist[i-1]/rows.length*100}%"></div></div></div>`).join('');
   }
-  // The spread, one line per level: five stars for the 5s, four for the 4s…
-  // then how many ratings gave it. Zeros when there are none.
-  bars.innerHTML=[5,4,3,2,1].map(i=>`<div class="rv-lvl" role="img" aria-label="${i} star${i>1?'s':''}: ${dist[i-1]} rating${dist[i-1]===1?'':'s'}">`
-    + forkStarRow(i).replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true"')
-    + `<span class="rv-lvl-n" aria-hidden="true">${dist[i-1]}</span></div>`).join('');
+  // The same score as stars, under the number. Pale when there is none.
+  const starsEl=document.getElementById('rv-avg-stars');
+  if(starsEl) starsEl.innerHTML=forkStarRow(avg);
   const sum=document.getElementById('rv-full-summary');
   if(sum) sum.innerHTML = rvFull ? rvFullSummary(rows) : '';
 }
