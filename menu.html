@@ -14,6 +14,11 @@
     --red: #B01015; --red-dark: #7E0A0E; --red-light: #F7E3E1;
     --white: #FCF9F4; --off-white: #F5EEE3; --text: #2B211A;
     --muted: #8A7B6E; --border: #E9E0D3; --star-on: #D9A441;
+    /* Secondary text that is still comfortably readable: dates, handles,
+       score labels. --muted measures 3.55:1 on a review card, under the 4.5:1
+       that small text needs; this is the lightest brown that clears 4.5 on the
+       card AND inside the tinted reply box (5.13 and 4.69). */
+    --quiet: #6F6255;
     --star-off: #DCD2C4; --green: #4C7A4C; --ink: #2B211A;
     --serif: 'Cormorant Garamond', Georgia, serif;
     --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
@@ -183,8 +188,12 @@
   /* flex:none / nowrap: the header is a flex row, and a long reviewer name was
      squeezing the stars into a vertical column one per line. */
   .review-stars { color:var(--red); font-size:.85rem; flex:none; white-space:nowrap; display:inline-flex; gap:1px; align-items:center; }
-  .review-text { font-size:.82rem; font-weight:300; color:var(--muted); line-height:1.6; font-family:var(--sans); }
-  .review-date { font-size:.7rem; color:#B7A99A; margin-top:3px; font-family:var(--sans); }
+  /* The guest's own words. They were thin (300) and --muted — 3.55:1, below
+     what small text needs — which made the review fainter than the
+     restaurant's reply to it. Now the same dark, normal weight, as the reply. */
+  .review-text { font-size:.82rem; font-weight:400; color:var(--text); line-height:1.6; font-family:var(--sans); }
+  /* Was #B7A99A — 1.99:1, the hardest thing on the page to read. */
+  .review-date { font-size:.7rem; color:var(--quiet); margin-top:3px; font-family:var(--sans); }
   .no-reviews { font-size:.85rem; color:var(--muted); text-align:center; padding:1rem 0; font-family:var(--sans); }
   .rate-dish-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.9rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s; }
   .rate-dish-btn:hover { background:#463629; }
@@ -207,7 +216,7 @@
      which is speaking as a brand; the guest is speaking as themselves. */
   .review-reply.from-guest .review-reply-who { text-transform:none; letter-spacing:0; color:var(--text); font-size:.8rem; }
   .review-reply-who .reviewer-handle { white-space:nowrap; }
-  .review-reply-when { margin-left:.5rem; white-space:nowrap; font-weight:400; letter-spacing:0; text-transform:none; color:#B7A99A; font-size:.68rem; }
+  .review-reply-when { margin-left:.5rem; white-space:nowrap; font-weight:400; letter-spacing:0; text-transform:none; color:var(--quiet); font-size:.68rem; }
   /* In the guest's indented box, name + handle + date is wider than the box,
      and it was the NAME that broke — "Javiera / Cabezas". The review header
      at the top already solves this by giving the date its own line under the
@@ -418,7 +427,11 @@
 
   /* The handle beside a reviewer's name. Several people are called Karol; the
      phone number that tells them apart must never appear, so this does. */
-  .reviewer-handle { font-family:var(--sans); font-size:.68rem; font-weight:400; color:var(--muted); margin-left:.35rem; letter-spacing:.02em; }
+  /* The handle's base style lives in taster.css, which loads AFTER this block
+     and so wins any tie. A plain `.reviewer-handle` rule here was silently
+     overridden — two classes deep, this one wins regardless of load order.
+     Scoped to review cards because --quiet is only defined on this page. */
+  .review-item .reviewer-handle { color:var(--quiet); }
   .cave-side { display:flex; align-items:center; gap:4px; cursor:pointer; min-width:44px; justify-content:center; -webkit-tap-highlight-color:transparent; }
   .side-emoji { font-size:1.45rem; }
   .cave-recs { display:flex; gap:1rem; width:100%; justify-content:space-around; margin-top:1rem; padding-top:.9rem; border-top:1px solid var(--border); }
@@ -427,7 +440,13 @@
   .cave-rec img { max-height:105px; max-width:88%; object-fit:contain; }
   .rec-emoji { font-size:2.8rem; }
   .rec-name { font-family:var(--sans); font-size:.72rem; color:var(--muted); }
-  .rv-summary { display:flex; gap:1.1rem; align-items:center; margin-bottom:1rem; }
+  .rv-summary { display:flex; gap:1.1rem; align-items:center; margin-bottom:.7rem; }
+  /* The period for the score. A single segmented bar rather than separate
+     pills: it is a third kind of control on this panel — the sort chips order
+     the list, Full Fork opens it out, and this changes the number itself. */
+  .rv-window { display:flex; background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:3px; margin-bottom:1rem; }
+  .rv-win { flex:1; background:none; border:none; border-radius:999px; padding:.42rem .2rem; font-family:var(--sans); font-size:.72rem; color:var(--quiet); cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
+  .rv-win.active { background:#fff; color:var(--text); font-weight:600; box-shadow:0 1px 2px rgba(43,33,26,.14); }
   .rv-avg { font-family:var(--serif); font-size:2.6rem; font-weight:600; color:var(--text); line-height:1; }
   .rv-count { font-family:var(--sans); font-size:.76rem; color:var(--muted); margin-top:2px; }
   .rv-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
@@ -453,7 +472,7 @@
   .rv-chip-view.active { background:var(--ink); border-color:var(--ink); border-style:solid; color:#fff; }
   .rv-full { margin-top:8px; padding:.7rem .85rem; background:#fff; border:1px solid var(--border); border-radius:10px; font-family:var(--sans); }
   .rv-full-row { display:flex; align-items:center; gap:.55rem; margin-bottom:5px; }
-  .rv-full-label { flex:0 0 120px; font-size:.68rem; line-height:1.2; color:var(--muted); }
+  .rv-full-label { flex:0 0 120px; font-size:.68rem; line-height:1.2; color:var(--quiet); }
   .rv-full-bar { flex:1; height:7px; background:var(--off-white); border-radius:4px; overflow:hidden; }
   .rv-full-fill { display:block; height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
   .rv-full-num { flex:0 0 14px; text-align:right; font-size:.72rem; font-weight:600; color:var(--text); }
@@ -462,7 +481,8 @@
      between the scores and the words that go with them. */
   .rv-full-group + .rv-full-group { margin-top:.75rem; padding-top:.75rem; border-top:1px solid var(--border); }
   .rv-full-note-label { display:block; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:.45rem; }
-  .rv-full-note { margin-top:.4rem; font-size:.8rem; font-weight:300; color:var(--muted); line-height:1.55; }
+  /* The guest's comment inside Full Fork — same treatment as in the list. */
+  .rv-full-note { margin-top:.4rem; font-size:.8rem; font-weight:400; color:var(--text); line-height:1.55; }
   /* Full Fork on the dish itself, above the list. Off-white rather than white
      so it reads as part of the summary, not as one more review. */
   .rv-full-summary { background:var(--off-white); border-color:var(--border); margin:0 0 1rem; }
@@ -781,8 +801,16 @@
         <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-count" id="rv-count"></div></div>
         <div class="rv-bars" id="rv-bars"></div>
       </div>
-      <!-- Full Fork for the dish as a whole. Drawn by rvRenderList, so it
-           appears and disappears with the per-review breakdowns below. -->
+      <!-- Which period the score above covers. It sits right under the number
+           because it changes the NUMBER — not the list of reviews below, which
+           always shows every comment ever posted. -->
+      <div class="rv-window" role="group" aria-label="Rating period">
+        <button class="rv-win" data-days="30"  onclick="rvSetWindow(30,this)">1 month</button>
+        <button class="rv-win" data-days="90"  onclick="rvSetWindow(90,this)">3 months</button>
+        <button class="rv-win active" data-days="365" onclick="rvSetWindow(365,this)">12 months</button>
+        <button class="rv-win" data-days="0"   onclick="rvSetWindow(0,this)">All time</button>
+      </div>
+      <!-- Full Fork for the dish as a whole. Follows the period above. -->
       <div id="rv-full-summary"></div>
       <div id="rv-your"></div>
       <div class="rv-filters">
@@ -1049,10 +1077,14 @@ function caveImgErr(img,emoji){
   div.textContent=emoji;
   img.replaceWith(div);
 }
+// The score on a dish's card: the same twelve months the reviews panel opens
+// on, so a card that says 4.3 opens a panel that says 4.3. Asked of the
+// database directly — the card never needs the old reviews, only the number.
 async function caveDishRating(dbId){
   if(caveRatings[dbId])return caveRatings[dbId];
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);
+    const since=encodeURIComponent(windowStartISO(RATING_DEFAULT_DAYS));
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&created_at=gte.${since}&select=flavor,worth_every_bite,signature_style`);
     if(ok&&data.length){
       const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
       caveRatings[dbId]={avg,count:data.length};
@@ -1602,6 +1634,33 @@ let rvData=[],rvSort='new';
 let rvFull=false;
 function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
 
+// ── THE PERIOD A SCORE COVERS ──
+//
+// Sebastian's design: the score a dish shows is its last twelve months, and a
+// reader can widen or narrow that — one month, three, twelve, or all time.
+//
+// ROLLING, not "since January 1st". A calendar year would reset every January
+// and a dish would be judged on its first handful of reviews of the year.
+//
+// EVERY rating in the period counts, including several from the same guest —
+// his decision on 21 September, recorded in the rating-history notes with the
+// numbers that show what it costs.
+//
+// It changes the SCORE only. The list below always shows every comment ever
+// posted, whatever period is chosen: "they don't disappear."
+const RATING_DEFAULT_DAYS = 365;
+let rvWindow = RATING_DEFAULT_DAYS;          // days; 0 means all time
+
+function rvInWindow(r, days){
+  if(!days) return true;
+  const t = new Date(r.created_at).getTime();
+  return Number.isFinite(t) && t >= Date.now() - days*86400000;
+}
+function rvWindowed(){ return rvData.filter(r => rvInWindow(r, rvWindow)); }
+
+// The same boundary as an ISO timestamp, for asking the database directly.
+function windowStartISO(days){ return new Date(Date.now() - days*86400000).toISOString(); }
+
 // The five scores a rating is made of, split the way the rating FORM splits
 // them: three about the plate, two about the room. Each half sits with its own
 // comment, so "Fresh food" is read beside the three numbers it explains, and
@@ -1694,19 +1753,39 @@ function rvToggleFull(btn){
   rvFull=!rvFull;
   btn.classList.toggle('active',rvFull);
   btn.setAttribute('aria-pressed',rvFull?'true':'false');
+  rvRenderSummary();
   rvRenderList();
 }
-function rvRender(){
+
+// Choosing a period redraws the SCORE and nothing else. Redrawing the list
+// would throw away any reply a manager or guest was halfway through typing.
+function rvSetWindow(days,btn){
+  rvWindow=days;
+  document.querySelectorAll('.rv-win').forEach(b=>b.classList.toggle('active',b===btn));
+  rvRenderSummary();
+}
+
+// The number, its count, the five bars, and — with Full Fork on — the dish's
+// score-by-score breakdown. All of it from the chosen period only.
+function rvRenderSummary(){
   const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
+  const rows=rvWindowed();
   if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
+  else if(!rows.length){avgEl.textContent='–';cntEl.textContent='(0)';bars.innerHTML='';}
   else{
-    const avg=rvData.reduce((s,r)=>s+rvScore(r),0)/rvData.length;
+    const avg=rows.reduce((s,r)=>s+rvScore(r),0)/rows.length;
     avgEl.textContent=avg.toFixed(1);
-    cntEl.textContent='('+rvData.length+')';
+    cntEl.textContent='('+rows.length+')';
     const dist=[0,0,0,0,0];
-    rvData.forEach(r=>{const b=Math.min(5,Math.max(1,Math.round(rvScore(r))));dist[b-1]++;});
-    bars.innerHTML=[5,4,3,2,1].map(i=>`<div class="rv-bar-row"><span>${i}</span><div class="rv-bar"><div class="rv-bar-fill" style="width:${dist[i-1]/rvData.length*100}%"></div></div></div>`).join('');
+    rows.forEach(r=>{const b=Math.min(5,Math.max(1,Math.round(rvScore(r))));dist[b-1]++;});
+    bars.innerHTML=[5,4,3,2,1].map(i=>`<div class="rv-bar-row"><span>${i}</span><div class="rv-bar"><div class="rv-bar-fill" style="width:${dist[i-1]/rows.length*100}%"></div></div></div>`).join('');
   }
+  const sum=document.getElementById('rv-full-summary');
+  if(sum) sum.innerHTML = rvFull ? rvFullSummary(rows) : '';
+}
+
+function rvRender(){
+  rvRenderSummary();
   const yr=document.getElementById('rv-your');
   const mine=currentTaster?rvData.find(r=>r.taster_id===currentTaster.id):null;
   if(mine){
@@ -1717,13 +1796,10 @@ function rvRender(){
   }
   rvRenderList();
 }
+// Every review, whatever period the score is showing. Nothing here is filtered
+// by date — comments never disappear from the page.
 function rvRenderList(){
   const list=document.getElementById('rv-list');
-  // Full Fork applies to the dish's general rating as well as to each guest's,
-  // so the summary breakdown is drawn and cleared here alongside the rest.
-  const sum=document.getElementById('rv-full-summary');
-  if(sum) sum.innerHTML = rvFull ? rvFullSummary(rvData) : '';
-
   let arr=[...rvData];
   if(rvSort==='high')arr.sort((a,b)=>rvScore(b)-rvScore(a));
   else if(rvSort==='low')arr.sort((a,b)=>rvScore(a)-rvScore(b));
