@@ -387,8 +387,10 @@
   /* The ☰ corner menu's place ON THE HOME PAGE ONLY (taster.css keeps the
      menu page's). #hf-corner outranks taster.css's .hf-corner, so it wins
      even though taster.css loads after this. Change these two numbers to
-     move it: the first moves it down, the second moves it left. */
-  #hf-corner { top:calc(env(safe-area-inset-top,0px) + 32px); right:28px; }
+     move it: the first moves it down, the second moves it left.
+     position:absolute (Sebastian, 22 Sep): the ☰ stays at the top of the page
+     and scrolls away with the video, instead of following you down the page. */
+  #hf-corner { position:absolute; top:calc(env(safe-area-inset-top,0px) + 32px); right:28px; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
