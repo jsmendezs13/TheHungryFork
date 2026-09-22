@@ -823,6 +823,31 @@
   #cave .cave-scroll::-webkit-scrollbar { display:none; width:0; height:0; }
   #cave .cave-sbar { position:absolute; width:4px; border-radius:3px; background:rgba(252,249,244,.13); z-index:8; pointer-events:none; display:none; }
   #cave .cave-sbar span { display:block; width:100%; border-radius:3px; background:rgba(252,249,244,.55); }
+
+  /* ═══ ROUND 3 — Sebastian, 22 Sep: "The Menu" on top; outlines and dots ═══ */
+
+  /* "The Menu" in a black band, in the empty space between the back arrow and
+     the corner menu — the same words, font and white as the page's own title.
+     It sits in a row that was empty, so nothing below it moves. On a laptop it
+     is a centred band over the cave names, which move down to make room. */
+  #cave .cave-title { position:absolute; top:calc(env(safe-area-inset-top,0px) + 7px); left:58px; right:64px; height:44px;
+    display:flex; align-items:center; justify-content:center; background:#140D0A; border-radius:2px;
+    font-family:var(--serif); font-weight:600; font-size:1.75rem; line-height:1; color:var(--white); letter-spacing:.01em;
+    white-space:nowrap; box-shadow:0 2px 10px rgba(0,0,0,.35); z-index:19; pointer-events:none; }
+  @media (min-width:760px){
+    #cave .cave-title { left:50%; right:auto; width:min(480px, 60%); transform:translateX(-50%); }
+    .cave-catbar { margin-top:62px; }
+  }
+
+  /* The side names: no grey box any more, a thin rounded outline instead (the
+     one in the middle has none). Every name carries the same border — clear in
+     the middle — so its measured width never changes as it slides. */
+  .cave-cat-name { background:none !important; border:1.6px solid transparent; border-radius:999px; padding:.08rem .8rem .14rem; transition:none; }
+  .cave-cat-name:not(.is-center) { border-color:rgba(252,249,244,.38); }   /* caveCatRender fades it smoothly as a name slides into the middle */
+
+  /* …and a small red dot between each pair of names, travelling with them. */
+  .cave-cat-dot { position:absolute; top:50%; left:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%;
+    background:#E23B2E; box-shadow:0 0 6px rgba(226,59,46,.9); pointer-events:none; will-change:transform,opacity; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -856,6 +881,7 @@
   <div class="cave-inner">
     <button class="cave-back" onclick="exitCave()" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <!-- The cave's name, for screen readers; what you SEE is the bar below. -->
+    <div class="cave-title">The Menu</div>
     <div class="cave-cat cave-sr" id="cave-cat" aria-live="polite"></div>
     <div class="cave-catbar" id="cave-catbar">
       <button type="button" class="cave-cat-arrow" onclick="caveCatGo(-1)" aria-label="Previous category"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 L6 12 L12 18 M18 6 L12 12 L18 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
@@ -1467,7 +1493,8 @@ let caveCatPos=0, caveCatTarget=0, caveCatRAF=null, caveCatW=[], caveCatHalf=145
 function caveCatBuild(){
   const tr=document.getElementById('cave-cat-track');
   if(!tr)return;
-  tr.innerHTML=CATEGORY_ORDER.map((k,i)=>`<button type="button" class="cave-cat-name" data-i="${i}" tabindex="-1"><span>${WARP_META[k].label}</span></button>`).join('');
+  tr.innerHTML=CATEGORY_ORDER.map((k,i)=>`<button type="button" class="cave-cat-name" data-i="${i}" tabindex="-1"><span>${WARP_META[k].label}</span></button>`).join('')
+    + CATEGORY_ORDER.map((k,i)=>`<span class="cave-cat-dot" data-d="${i}" aria-hidden="true"></span>`).join('');   // dot i sits between name i and name i+1
   tr.querySelectorAll('.cave-cat-name').forEach(b=>b.addEventListener('click',()=>{
     if(Date.now()-caveCatDragAt<300)return;          // the end of a drag, not a tap
     const i=+b.dataset.i;
@@ -1483,7 +1510,7 @@ function caveCatMeasure(){
 }
 // Where every name rests when cave k is in the middle: x from the centre, s scale.
 function caveCatLayout(k){
-  const n=CATEGORY_ORDER.length, SIDE=0.6, GAP=12, x=new Array(n).fill(0), s=new Array(n).fill(SIDE);
+  const n=CATEGORY_ORDER.length, SIDE=0.6, GAP=18, x=new Array(n).fill(0), s=new Array(n).fill(SIDE);   // GAP holds the red dot
   const w=i=>caveCatW[i]||90;
   x[k]=0; s[k]=1;
   let r=w(k)/2, l=-w(k)/2, edge=0;
@@ -1500,16 +1527,33 @@ function caveCatLayout(k){
 }
 function caveCatRender(){
   if(!caveCatW.length)caveCatMeasure();
-  const k0=Math.floor(caveCatPos), t=caveCatPos-k0;
+  const n=CATEGORY_ORDER.length, k0=Math.floor(caveCatPos), t=caveCatPos-k0;
   const A=caveCatLayout(warpNorm(k0)), B=caveCatLayout(warpNorm(k0+1));
+  const X=[], S=[], O=[];
   document.querySelectorAll('.cave-cat-name').forEach(b=>{
     const i=+b.dataset.i, ad=Math.abs(warpWrap(i-caveCatPos));
     const x=A.x[i]+(B.x[i]-A.x[i])*t, s=A.s[i]+(B.s[i]-A.s[i])*t;
     const op=ad<=1?1:(ad>=1.6?0:1-(ad-1)/0.6);
+    X[i]=x; S[i]=s; O[i]=op;
+    // The outline fades out as a name reaches the middle, instead of blinking off.
+    b.style.borderColor=`rgba(252,249,244,${(0.38*Math.min(1,ad*2)).toFixed(3)})`;
     b.style.transform=`translate(-50%,-50%) translateX(${x.toFixed(1)}px) scale(${s.toFixed(3)})`;
     b.style.opacity=op.toFixed(3);
     b.style.visibility=op<0.02?'hidden':'visible';
     b.classList.toggle('is-center',ad<0.5);
+  });
+  // Each red dot sits halfway across the gap between its two names, and is as
+  // visible as the fainter of them, so the dots slide and fade with the names.
+  const w=k=>caveCatW[k]||90;
+  document.querySelectorAll('.cave-cat-dot').forEach(d=>{
+    const i=+d.dataset.d, j=(i+1)%n;
+    if(X[i]===undefined||X[j]===undefined)return;
+    const L=X[i]<X[j]?i:j, R=L===i?j:i;
+    const mid=((X[L]+w(L)*S[L]/2)+(X[R]-w(R)*S[R]/2))/2;
+    const op=Math.min(O[i],O[j]);
+    d.style.transform=`translateX(${mid.toFixed(1)}px)`;
+    d.style.opacity=op.toFixed(3);
+    d.style.visibility=op<0.02?'hidden':'visible';
   });
 }
 // Straight to the cave we are in — used when the cave opens.
