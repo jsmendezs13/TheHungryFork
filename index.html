@@ -423,7 +423,7 @@
       <div class="vh-btn" data-idx="2" data-name="Career"><img src="menu-button-blank.png" alt=""><span>Career</span></div>
       <div class="vh-btn" data-idx="3" data-name="Menu" data-menu="1"><img src="menu-button-blank.png" alt=""><span>Menu</span></div>
       <div class="vh-btn" data-idx="4" data-name="Events"><img src="menu-button-blank.png" alt=""><span>Events</span></div>
-      <div class="vh-btn" data-idx="5" data-name="Reservations"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
+      <div class="vh-btn" data-idx="5" data-name="Reservations" data-book="1"><img src="menu-button-blank.png" alt=""><span>Reservations</span></div>
       <div class="vh-btn" data-idx="6" data-name="Help"><img src="menu-button-blank.png" alt=""><span>Help</span></div>
     </div>
   </div>
@@ -1013,6 +1013,7 @@ function railInit(){
       const i=parseInt(b.dataset.idx);
       if(Math.abs(railWrap(i-railPos))>0.3){railTo(i);return;}
       if(b.dataset.menu)menuEnter();
+      else if(b.dataset.book)window.location.href='reservations.html';   // the booking screen
       else openComingSoon(b.dataset.name);
     });
   });
