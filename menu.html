@@ -423,7 +423,9 @@
   .cave-sold-note { font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.2em;
     text-transform:uppercase; color:var(--red); margin-top:.3rem; }
 
-  /* Shown on every dish, always, whether or not the restaurant has declared
+  /* (22 Sep: the line now lives in the dish's description — .cave-ask-staff —
+     and this rule is no longer used.)
+     Shown on every dish, always, whether or not the restaurant has declared
      anything. A line that only appeared sometimes would turn its absence into
      a statement that the dish is safe, which is not something this site can
      ever promise. */
@@ -770,6 +772,57 @@
     #cave .cave-sec-media { padding-top:44px !important; }
     #cave .cave-swipe-up { top:2px; }
   }
+
+  /* ═══ ROUND 2 — Sebastian, 22 Sep, after the arrows went live ═══ */
+
+  /* The cave names in the bar use the font of "The Menu" at the top of the page
+     (Cormorant Garamond, 600, in white), written the same way: "Entrées", not
+     "ENTRÉES". The one in the middle is the white of "The Menu"; the two beside
+     it are a little softer. */
+  .cave-cat-name { font-family:var(--serif); font-size:1.6rem; font-weight:600; letter-spacing:.01em; text-transform:none; line-height:1.15; padding:.08rem .55rem .14rem; color:rgba(252,249,244,.8); }
+  .cave-cat-name.is-center span { background:none; -webkit-background-clip:border-box; background-clip:border-box; color:var(--white); }
+
+  /* The price is as big as the dish's name (and on a laptop too). Lining
+     figures: this font's usual numbers are small "old-style" ones, which made
+     $26 look a size smaller than the name even at the same size. */
+  #cave .cave-dish-price { font-size:clamp(1.15rem, 5vw, 1.7rem); line-height:1.15; margin-top:0; font-variant-numeric:lining-nums; }
+  @media (min-width:760px){ #cave .cave-dish-price { font-size:2.5rem !important; } }
+  @media (min-width:1280px){ #cave .cave-dish-price { font-size:2.9rem !important; } }
+  /* Laptop: the right-hand column has no side padding, so the ‹ › rings must
+     not reach past it (they were cut in half at its edges). */
+  @media (min-width:760px){ #cave .cave-name-row { width:100%; margin:.5rem 0 0; } }
+
+  /* "Always ask staff about allergens." moved from under the price into the
+     dish's description, beside the allergen list. It is still on EVERY dish's
+     description, listed allergens or not — its absence must never read as
+     "this dish is safe". */
+  #cave .cave-ask-staff { font-style:italic; color:rgba(252,249,244,.88); margin-top:.15rem; }
+  /* One more line in the description: give it room so every line still shows
+     (on phones its row grows to fit, up to 58% of the screen). */
+  @media (max-width:759px){ #cave .cave-sec-media .cave-text-view { max-height:58vh !important; } }
+
+  /* The corner menu (☰). Closed, its list is invisible — but its box still took
+     every tap in a strip down the right-hand side: over the heart, the » and
+     the right-hand cave name (for a signed-in guest the strip is ~200px long).
+     Closed, only the round button catches taps now; open, the list does too. */
+  #hf-corner:not(.open), #hf-corner:not(.open) .hf-corner-items { pointer-events:none; }
+  #hf-corner .hf-corner-toggle { pointer-events:auto; }
+
+  /* Less empty space between the photo and the drinks, so the drink titles
+     peek in at the bottom of a phone screen (Sebastian's red marks). */
+  #cave .cave-sec-media { padding-bottom:.3rem; }
+  #cave .cave-sec-info { padding-top:.55rem; padding-bottom:.75rem; }
+  #cave .cave-stars-wrap { margin-top:.1rem; }
+  #cave .cave-sec-recs { padding-top:.6rem; }
+
+  /* The scroll line. A phone hides its scroll bar until you touch the page,
+     so nothing said there was more under the dish. This faint track with a
+     brighter piece is always there while that part can scroll (caveScrollBar);
+     the phone's own bar is switched off so the two never show together. */
+  #cave .cave-scroll { scrollbar-width:none; }
+  #cave .cave-scroll::-webkit-scrollbar { display:none; width:0; height:0; }
+  #cave .cave-sbar { position:absolute; width:4px; border-radius:3px; background:rgba(252,249,244,.13); z-index:8; pointer-events:none; display:none; }
+  #cave .cave-sbar span { display:block; width:100%; border-radius:3px; background:rgba(252,249,244,.55); }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -1203,6 +1256,7 @@ function renderCave(animClass,mediaOnly){
     card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
+    caveScrollBar();
     return;
   }
   const d=caveDishes[caveDishIdx];
@@ -1220,6 +1274,7 @@ function renderCave(animClass,mediaOnly){
     media=`<div class="cave-text-view">
       <p class="cave-about">${d.about||d.desc}</p>
       ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
+      <p class="cave-meta-line cave-ask-staff">Always ask staff about allergens.</p>
       ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
       ${d.choices&&d.choices.length?`<p class="cave-meta-line" style="margin-top:.5rem;"><strong>Choice of the following:</strong></p>`+d.choices.map(x=>`<p class="cave-meta-line">${x}</p>`).join(''):''}
     </div>`;
@@ -1262,7 +1317,6 @@ function renderCave(animClass,mediaOnly){
       ${caveNameRow(d,multi)}
       <div class="cave-dish-price">$${d.price}</div>
       ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
-      <div class="cave-allergen-ask">Always ask staff about allergens.</div>
       <button class="cave-share-btn" onclick="caveShare()">Share</button>
     </section>
     <section class="cave-sec cave-sec-recs">
@@ -1276,6 +1330,7 @@ function renderCave(animClass,mediaOnly){
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
   loadZoneStars(d);
+  caveScrollBar();
 }
 function loadZoneStars(d){
   const dbId=DISH_ID_MAP[d.id]||1;
@@ -1528,6 +1583,51 @@ function caveCatInit(){
   // The web font changes every name's width when it arrives.
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{caveCatMeasure();caveCatRender();});
 }
+// ── THE SCROLL LINE (Sebastian, 22 Sep) ──
+// The part under the photo scrolls (the drinks, the footer), but a phone only
+// shows its scroll bar while you are touching it. This draws a line down the
+// right-hand side that is always there while that part can scroll: a faint
+// track, and a brighter piece showing how much there is and where you are.
+// Positioned from layout offsets, not screen rectangles, so the cave's zoom-in
+// animation cannot throw it off.
+let caveSbarRO=null;
+function caveScrollBar(){
+  const card=document.getElementById('cave-card');
+  if(!card)return;
+  const sc=card.querySelector('.cave-scroll');
+  let bar=card.querySelector('.cave-sbar');
+  if(!sc){ if(bar)bar.remove(); return; }
+  if(!bar){
+    bar=document.createElement('div');
+    bar.className='cave-sbar';
+    bar.setAttribute('aria-hidden','true');
+    bar.innerHTML='<span></span>';
+    card.appendChild(bar);
+  }
+  if(!sc.dataset.sbar){                       // a new card: listen to this one
+    sc.dataset.sbar='1';
+    sc.addEventListener('scroll',caveScrollBar,{passive:true});
+    sc.querySelectorAll('img').forEach(i=>i.addEventListener('load',caveScrollBar));
+    if(window.ResizeObserver){
+      if(caveSbarRO)caveSbarRO.disconnect();
+      caveSbarRO=new ResizeObserver(()=>caveScrollBar());
+      caveSbarRO.observe(sc);
+      [...sc.children].forEach(c=>caveSbarRO.observe(c));
+    }
+  }
+  const H=sc.clientHeight, S=sc.scrollHeight;
+  if(!H||S<=H+2){ bar.style.display='none'; return; }
+  bar.style.display='block';
+  bar.style.top=sc.offsetTop+'px';
+  bar.style.height=H+'px';
+  bar.style.right=Math.max(2,card.clientWidth-(sc.offsetLeft+sc.offsetWidth)+2)+'px';
+  const th=Math.max(24,Math.round(H*H/S));
+  const y=Math.round((H-th)*Math.min(1,Math.max(0,sc.scrollTop/(S-H))));
+  const t=bar.firstChild;
+  t.style.height=th+'px';
+  t.style.transform='translateY('+y+'px)';
+}
+window.addEventListener('resize',()=>caveScrollBar());
 function scrollToMenu(){
   const room=document.getElementById('warp-room');
   if(room)room.scrollIntoView({behavior:'smooth',block:'start'});
