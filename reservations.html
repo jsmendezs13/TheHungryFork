@@ -117,6 +117,24 @@
   .rv-when { font-family:var(--serif); font-size:1.6rem; font-weight:600; margin-top:.8rem; }
   .rv-where { font-size:.82rem; color:rgba(252,249,244,.7); line-height:1.6; margin-top:.5rem; }
 
+  /* ── my tables ── */
+  .rv-card { border:1px solid rgba(252,249,244,.18); border-radius:14px; padding:.9rem 1rem 1rem; margin-bottom:.8rem;
+    background:rgba(252,249,244,.05); }
+  .rv-card.gone { opacity:.55; }
+  .rv-card-when { font-family:var(--serif); font-size:1.45rem; font-weight:600; line-height:1.25; }
+  .rv-card-what { font-size:.82rem; color:rgba(252,249,244,.72); margin-top:.2rem; line-height:1.5; }
+  .rv-card-code { font-size:.72rem; letter-spacing:.14em; color:rgba(252,249,244,.55); margin-top:.45rem; }
+  .rv-chip { display:inline-block; font-size:.6rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; margin-bottom:.45rem; }
+  .rv-chip.booked { background:rgba(226,59,46,.18); color:#FF9C92; border:1px solid rgba(226,59,46,.5); }
+  .rv-chip.done   { background:rgba(252,249,244,.10); color:rgba(252,249,244,.7); border:1px solid rgba(252,249,244,.22); }
+  .rv-chip.off    { background:rgba(252,249,244,.06); color:rgba(252,249,244,.5); border:1px solid rgba(252,249,244,.16); }
+  .rv-cancel { margin-top:.7rem; background:none; border:1px solid rgba(255,155,146,.5); color:#FF9C92; border-radius:999px;
+    padding:.5rem 1rem; font-family:inherit; font-size:.68rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
+  .rv-cancel.sure { background:var(--red-bright); border-color:var(--red-bright); color:#fff; }
+  .rv-mine-head { font-size:.62rem; font-weight:600; letter-spacing:.26em; text-transform:uppercase;
+    color:rgba(252,249,244,.55); margin:.2rem 0 .6rem; }
+
   @media (min-width:760px) {
     .rv-times { grid-template-columns:repeat(4,1fr); }
     .rv-day { flex-basis:92px; }
@@ -238,7 +256,17 @@
     <div class="rv-foot"><button class="rv-ghost" id="sent-back">Back to the tables</button></div>
   </section>
 
-  <!-- 6 · booking is not switched on -->
+  <!-- 6 · the guest's own tables -->
+  <section class="rv-step" id="step-mine">
+    <div class="rv-scroll" id="mine-body">
+      <p class="rv-sub">Looking for your tables…</p>
+    </div>
+    <div class="rv-foot">
+      <button class="rv-btn" id="mine-book">Book a table</button>
+    </div>
+  </section>
+
+  <!-- 7 · booking is not switched on -->
   <section class="rv-step" id="step-off">
     <div class="rv-scroll rv-done">
       <h2 style="font-family:var(--serif); font-size:1.9rem; font-weight:600;">Booking by phone for now</h2>
@@ -538,6 +566,81 @@ async function sendRequest() {
   }
 }
 
+// ── the tables this guest already has ────────────────────────────────────────
+// Reached from "My Reservations" in the corner menu, which is a link to
+// reservations.html#mine, so there is one screen rather than a copy of this
+// list on every page of the site.
+function statusChip(r) {
+  if (r.status === 'cancelled') return '<span class="rv-chip off">Cancelled</span>';
+  if (r.status === 'no_show')   return '<span class="rv-chip off">Not used</span>';
+  if (r.status === 'seated' || r.status === 'done') return '<span class="rv-chip done">You came</span>';
+  return '<span class="rv-chip booked">Booked</span>';
+}
+
+function mineCard(r, upcoming) {
+  const bits = [r.party + (r.party === 1 ? ' person' : ' people')];
+  if (r.areaName) bits.push(r.areaName);
+  bits.push(r.restaurant);
+  return '<div class="rv-card' + (upcoming ? '' : ' gone') + '">'
+    + statusChip(r)
+    + '<div class="rv-card-when">' + dayLabels(r.date).long + ' · ' + r.label + '</div>'
+    + '<div class="rv-card-what">' + bits.join(' · ') + '</div>'
+    + '<div class="rv-card-code">' + r.code + '</div>'
+    + (r.canCancel ? '<button type="button" class="rv-cancel" data-id="' + r.id + '">Cancel this table</button>' : '')
+    + '</div>';
+}
+
+async function openMine() {
+  show('mine');
+  const box = el('mine-body');
+  if (typeof currentSession === 'undefined' || !currentSession) {
+    box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">Your tables</h2>'
+      + '<p class="rv-sub" style="margin-top:.6rem;">Log in with your phone number and your tables appear here.</p>'
+      + '<p class="rv-sub" style="margin-top:.4rem;">A table you booked without logging in is still yours — '
+      + 'log in with the same number and you will find it.</p></div>';
+    return;
+  }
+  box.innerHTML = '<p class="rv-sub">Looking for your tables…</p>';
+  try {
+    const data = await api({ action: 'mine', restaurantId: RESTAURANT_ID });
+    const up = data.upcoming || [], past = data.past || [];
+    if (!up.length && !past.length) {
+      box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">No tables yet</h2>'
+        + '<p class="rv-sub" style="margin-top:.6rem;">When you book one, it will be here with its code.</p></div>';
+      return;
+    }
+    box.innerHTML =
+      (up.length ? '<p class="rv-mine-head">Coming up</p>' + up.map((r) => mineCard(r, true)).join('') : '')
+      + (past.length ? '<p class="rv-mine-head">Before</p>' + past.map((r) => mineCard(r, false)).join('') : '');
+  } catch (e) {
+    box.innerHTML = '<p class="rv-sub">' + e.message + '</p>';
+  }
+}
+
+// Two taps to cancel, because one tap on a phone is too easy to do by accident
+// and this gives the table away.
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('.rv-cancel');
+  if (!button) {
+    document.querySelectorAll('.rv-cancel.sure').forEach((b) => { b.classList.remove('sure'); b.textContent = 'Cancel this table'; });
+    return;
+  }
+  if (!button.classList.contains('sure')) {
+    button.classList.add('sure');
+    button.textContent = 'Tap again to cancel';
+    return;
+  }
+  button.disabled = true; button.textContent = 'Cancelling…';
+  try {
+    await api({ action: 'cancel', id: Number(button.dataset.id) });
+    showToast('Your table is cancelled. Thank you for telling us.');
+    openMine();
+  } catch (e) {
+    button.disabled = false; button.classList.remove('sure'); button.textContent = 'Cancel this table';
+    showToast(e.message);
+  }
+});
+
 // ── start ────────────────────────────────────────────────────────────────────
 el('rv-go-request').addEventListener('click', openRequest);
 el('who-go').addEventListener('click', confirmTable);
@@ -547,6 +650,8 @@ el('done-again').addEventListener('click', () => { state.chosen = null; show('pi
 el('req-go').addEventListener('click', sendRequest);
 el('req-back').addEventListener('click', () => show('pick'));
 el('sent-back').addEventListener('click', () => { show('pick'); loadSlots(); });
+el('mine-book').addEventListener('click', () => { window.location.hash = ''; show('pick'); loadSlots(); });
+window.addEventListener('hashchange', () => { if (window.location.hash === '#mine') openMine(); });
 
 (async function start() {
   if (typeof loadSession === 'function') loadSession();
@@ -562,6 +667,7 @@ el('sent-back').addEventListener('click', () => { show('pick'); loadSlots(); });
       el('off-phone').textContent = data.restaurant.phone
         ? 'Call ' + data.restaurant.phone + ' and they will keep a table for you.'
         : 'Please call the restaurant and they will keep a table for you.';
+      if (window.location.hash === '#mine') { openMine(); return; }
       show('off');
       return;
     }
@@ -570,6 +676,7 @@ el('sent-back').addEventListener('click', () => { show('pick'); loadSlots(); });
     state.slots = data.slots || [];
     state.closed = !!data.closed;
     renderTimes();
+    if (window.location.hash === '#mine') openMine();
   } catch (e) {
     el('off-text').textContent = e.message;
     el('off-phone').textContent = 'Please try again in a moment.';
