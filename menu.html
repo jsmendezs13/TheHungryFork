@@ -693,6 +693,83 @@
     #cave .cave-pin { right:84px !important; top:24px !important; }
     #cave .cave-text-view { max-width:min(760px, 82%) !important; }
   }
+
+  /* ═══ CAVE NAVIGATION — Sebastian's picture, 22 Sep ═══
+     Three things a guest could not see before.
+     1. The other caves. « STARTERS · ENTRÉES · SALADS » along the top. The
+        DOUBLE arrow moves a whole category; the single ‹ › beside the dish's
+        name moves one dish. The names slide like the caves in the warp room.
+     2. That the photo swipes up and down (plate → ingredients → description).
+        The blue arrows above and below it say so, and they can be tapped too.
+     3. The way back: a curved return arrow in place of the small ‹. */
+  #cave .cave-sr { position:absolute !important; width:1px; height:1px; padding:0 !important; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  /* The way back. No disc any more — the arrow on its own, in the page's red. */
+  #cave .cave-back { top:calc(env(safe-area-inset-top,0px) + 6px); left:6px; width:46px; height:46px; background:none; border:none; border-radius:50%; color:#FF4B3E; padding:0; -webkit-tap-highlight-color:transparent; }
+  #cave .cave-back svg { width:32px; height:32px; display:block; filter:drop-shadow(0 0 5px rgba(255,60,45,.55)) drop-shadow(0 1px 2px rgba(0,0,0,.6)); transition:transform .12s; }
+  #cave .cave-back:active svg { transform:scale(.88); }
+
+  /* The category bar sits UNDER the row that holds the back arrow and the
+     corner menu (44px each), so neither of them ever covers a name. */
+  .cave-catbar { position:relative; display:flex; align-items:center; gap:2px; height:44px; margin:42px 4px 4px; }
+  .cave-cat-arrow { flex:0 0 42px; height:44px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .cave-cat-arrow span { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:5px; background:linear-gradient(180deg,#6A0F0A,#3A0705); border:1px solid rgba(255,75,62,.55); box-shadow:0 0 10px rgba(226,40,30,.45), inset 0 0 6px rgba(255,60,45,.25); color:#FF4B3E; transition:transform .12s; }
+  .cave-cat-arrow svg { width:18px; height:18px; display:block; }
+  .cave-cat-arrow:active span { transform:scale(.88); }
+  .cave-cat-track { position:relative; flex:1; min-width:0; height:100%; overflow:hidden; touch-action:pan-y; user-select:none; -webkit-user-select:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%); }
+  /* One label per cave, all the same size; caveCatRender() places and scales
+     them. The one in the middle is carved in the same stone as the arches. */
+  .cave-cat-name { position:absolute; top:50%; left:50%; margin:0; background:rgba(252,249,244,.08); border:none; border-radius:4px; padding:.34rem .5rem .34rem calc(.5rem + .18em); font-family:var(--sans); font-size:1.12rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:rgba(252,249,244,.9); white-space:nowrap; line-height:1.1; cursor:pointer; transform:translate(-50%,-50%); transform-origin:50% 50%; will-change:transform,opacity; -webkit-tap-highlight-color:transparent; transition:background-color .2s; }
+  .cave-cat-name.is-center { background:transparent; cursor:default; filter:drop-shadow(0 2px 1px rgba(0,0,0,.8)); }
+  .cave-cat-name.is-center span { background:linear-gradient(180deg,#F7F0E3 0%,#DCD2C2 48%,#A3988A 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+  /* Swipe hints: the blue arrows. Their three strokes stay the weight they were
+     drawn at however wide the arrow is stretched (non-scaling-stroke). */
+  #cave .cave-swipe { display:block; width:96px; height:30px; margin:0 auto; padding:4px 0; background:none; border:none; color:#1A73E8; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  #cave .cave-swipe svg { width:100%; height:100%; display:block; overflow:visible; filter:drop-shadow(0 0 4px rgba(26,115,232,.55)); }
+  #cave .cave-swipe-up { position:absolute; top:6px; left:50%; margin-left:-48px; z-index:5; }
+  #cave .cave-swipe-up svg { transform:scaleY(-1); animation:caveNudgeUp 2.4s ease-in-out infinite; }
+  #cave .cave-swipe-down { flex:none; margin-top:2px; }
+  /* Phones: the photo keeps the size it has today, and the arrows hug it.
+     The photo row used to be 44% of the screen tall and then squeezed by the
+     layout; on a short phone it was squeezed less than the section around
+     it and spilled over the line below — an arrow under it would have landed
+     on the stars. Now the row is as tall as a plate photo at full width
+     (64% of the width; the plates are about 1.6 : 1), never taller than the
+     44% it was, and the section is not squeezed at all. The scrolling part
+     underneath gives up the room instead. */
+  @media (max-width:759px){
+    #cave .cave-sec-media { flex-shrink:0; }
+    #cave .cave-sec-media .cave-photo-row { height:min(clamp(200px, 44vh, 520px), 64vw) !important; }
+    /* The description is words, not a plate: its row grows to fit them (up to
+       the 44% of the screen it always had), and they start below the grade
+       seal instead of on top of it. */
+    #cave .cave-sec-media .cave-photo-row:has(.cave-text-view) { height:auto !important; min-height:min(clamp(200px, 44vh, 520px), 64vw); }
+    #cave .cave-sec-media .cave-text-view { height:auto !important; max-height:44vh !important; padding-top:36px !important; }
+  }
+  #cave .cave-swipe-down svg { animation:caveNudgeDown 2.4s ease-in-out infinite; }
+  @keyframes caveNudgeUp { 0%,100% { transform:scaleY(-1) translateY(0); } 50% { transform:scaleY(-1) translateY(3px); } }
+  @keyframes caveNudgeDown { 0%,100% { transform:translateY(0); } 50% { transform:translateY(3px); } }
+  @media (prefers-reduced-motion: reduce) { #cave .cave-swipe svg { animation:none; } }
+
+  /* ‹ dish name › — the red glowing rings from the arrow options (number 3). */
+  /* The row reaches past the section's side padding so a long name like
+     "Sliced Steak with Red Wine Reduction" still fits on one line between them. */
+  #cave .cave-name-row { display:flex; align-items:center; justify-content:center; gap:4px; width:calc(100% + 1.3rem); margin:.5rem -.65rem 0; }
+  #cave .cave-name-row .cave-dish-name { flex:1 1 auto; min-width:0; margin-top:0; }
+  .cave-dish-arrow { flex:0 0 34px; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0; background:rgba(30,10,8,.8); border:2px solid #E23B2E; color:#fff; cursor:pointer; box-shadow:0 0 12px rgba(226,59,46,.6), inset 0 0 8px rgba(226,59,46,.35); -webkit-tap-highlight-color:transparent; transition:transform .12s; }
+  .cave-dish-arrow svg { width:16px; height:16px; display:block; }
+  .cave-dish-arrow:active { transform:scale(.9); }
+  .cave-dish-arrow.is-empty { visibility:hidden; }
+
+  /* Laptop: the bar is a centred strip, and the photo column gets room at the
+     top for its up arrow. */
+  @media (min-width:760px){
+    .cave-catbar { width:100%; max-width:480px; margin:12px auto 8px; }
+    #cave .cave-sec-media { padding-top:44px !important; }
+    #cave .cave-swipe-up { top:2px; }
+  }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -724,8 +801,14 @@
 <!-- CAVE INTERIOR -->
 <div id="cave" class="cave-overlay">
   <div class="cave-inner">
-    <button class="cave-back" onclick="exitCave()" aria-label="Back">&#8249;</button>
-    <div class="cave-cat" id="cave-cat"></div>
+    <button class="cave-back" onclick="exitCave()" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <!-- The cave's name, for screen readers; what you SEE is the bar below. -->
+    <div class="cave-cat cave-sr" id="cave-cat" aria-live="polite"></div>
+    <div class="cave-catbar" id="cave-catbar">
+      <button type="button" class="cave-cat-arrow" onclick="caveCatGo(-1)" aria-label="Previous category"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 L6 12 L12 18 M18 6 L12 12 L18 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+      <div class="cave-cat-track" id="cave-cat-track"></div>
+      <button type="button" class="cave-cat-arrow" onclick="caveCatGo(1)" aria-label="Next category"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L12 12 L6 18 M12 6 L18 12 L12 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+    </div>
     <div class="cave-card-zone" id="cave-card-zone">
       <div class="cave-card" id="cave-card"></div>
     </div>
@@ -1076,6 +1159,7 @@ function enterCave(startId){
   setTimeout(()=>{
     document.getElementById('cave').classList.add('open');
     document.body.style.overflow='hidden';
+    caveCatJump();
     renderCave();
     setTimeout(()=>stage.classList.remove('warp-zoom'),200);
   },380);
@@ -1159,11 +1243,13 @@ function renderCave(animClass,mediaOnly){
     <section class="cave-sec cave-sec-media">
       <div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
       <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
+      ${caveSwipeHint('up')}
       <div class="cave-photo-row">
         ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
         <div class="cave-media${soldOut?' is-sold':''}">${media}${soldTag}</div>
         ${multi?`<button class="cave-side" onclick="caveDish(1)" aria-label="Next dish"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></button>`:'<span class="cave-side"></span>'}
       </div>
+      ${caveSwipeHint('down')}
       <div class="cave-vdots-h">
         <span class="cave-vdot${caveViewIdx===0?' active':''}" onclick="caveSetView(0)" title="Plate"></span>
         <span class="cave-vdot${caveViewIdx===1?' active':''}" onclick="caveSetView(1)" title="Ingredients"></span>
@@ -1173,7 +1259,7 @@ function renderCave(animClass,mediaOnly){
     <div class="cave-scroll">
     <section class="cave-sec cave-sec-info">
       <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
-      <div class="cave-dish-name">${d.name}</div>
+      ${caveNameRow(d,multi)}
       <div class="cave-dish-price">$${d.price}</div>
       ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
       <div class="cave-allergen-ask">Always ask staff about allergens.</div>
@@ -1282,6 +1368,166 @@ function caveGesture(dx,dy,inMedia){
   if(adx>ady){ if(adx>36)caveDish(dx>0?1:-1); return; }
   if(inMedia&&ady>36)caveView(dy>0?1:-1);
 }
+// ── CAVE NAVIGATION (Sebastian's picture, 22 Sep) ──
+// Inside a cave the guest could only swipe, and nothing on screen said so.
+// Now: « STARTERS · ENTRÉES · SALADS » along the top moves between caves,
+// ‹ › beside the dish's name moves between dishes, and blue arrows above and
+// below the photo show it swipes up and down. Everything below is new; the
+// cave itself (renderCave, caveDish, caveView) works exactly as before.
+
+// The small drawings, as functions so nothing here is a top-level constant
+// (a const with the same name in another file would stop this whole script).
+function caveChevron(dir){
+  const d=dir<0?'M15 5 L8 12 L15 19':'M9 5 L16 12 L9 19';
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+// The three stacked arrows Sebastian chose, in blue: small and thin nearest
+// the photo, wide and heavy furthest from it. Drawn pointing down; the top
+// one is the same drawing flipped (CSS).
+function caveSwipeHint(dir){
+  const up=dir==='up';
+  const p='fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"';
+  return `<button type="button" class="cave-swipe cave-swipe-${up?'up':'down'}" onclick="caveView(${up?-1:1})" aria-label="${up?'Previous view of this dish':'Next view of this dish'}">`
+    + `<svg viewBox="0 0 90 72" preserveAspectRatio="none" aria-hidden="true"><g stroke="currentColor">`
+    + `<path ${p} stroke-width="2" d="M27.5 7.5 L41 21 Q45 25 49 21 L62.5 7.5"/>`
+    + `<path ${p} stroke-width="2.6" d="M21 22.5 L39.5 41.5 Q45 47 50.5 41.5 L69 22.5"/>`
+    + `<path ${p} stroke-width="3.2" d="M14 37 L38 61 Q45 68 52 61 L76 37"/>`
+    + `</g></svg></button>`;
+}
+function caveNameRow(d,multi){
+  const arrow=dir=>multi
+    ?`<button type="button" class="cave-dish-arrow" onclick="caveDish(${dir})" aria-label="${dir<0?'Previous dish':'Next dish'}">${caveChevron(dir)}</button>`
+    :'<span class="cave-dish-arrow is-empty" aria-hidden="true"></span>';
+  return `<div class="cave-name-row">${arrow(-1)}<div class="cave-dish-name">${d.name}</div>${arrow(1)}</div>`;
+}
+
+// ── THE CATEGORY BAR ──
+// Same ring of caves as the warp room (CATEGORY_ORDER, wrapping round), and the
+// same idea: one continuous position, eased towards its target, with each name
+// drawn from its distance to that position. The names are different lengths
+// ("SIDES", "CHEF'S PICK"), so the resting layout is worked out from their real
+// widths — the neighbours sit beside the middle name, never on top of it — and
+// the whole row is shrunk to fit if it has to be.
+let caveCatPos=0, caveCatTarget=0, caveCatRAF=null, caveCatW=[], caveCatHalf=145, caveCatDragAt=0;
+function caveCatBuild(){
+  const tr=document.getElementById('cave-cat-track');
+  if(!tr)return;
+  tr.innerHTML=CATEGORY_ORDER.map((k,i)=>`<button type="button" class="cave-cat-name" data-i="${i}" tabindex="-1"><span>${WARP_META[k].label}</span></button>`).join('');
+  tr.querySelectorAll('.cave-cat-name').forEach(b=>b.addEventListener('click',()=>{
+    if(Date.now()-caveCatDragAt<300)return;          // the end of a drag, not a tap
+    const i=+b.dataset.i;
+    if(i!==warpNorm(caveCatTarget))caveCatTo(caveCatTarget+warpWrap(i-caveCatTarget));
+  }));
+}
+function caveCatMeasure(){
+  const tr=document.getElementById('cave-cat-track');
+  if(!tr)return;
+  const w=[...tr.querySelectorAll('.cave-cat-name')].map(b=>b.offsetWidth);
+  if(w.some(x=>x>0))caveCatW=w;                      // 0 while the cave is closed
+  if(tr.clientWidth)caveCatHalf=tr.clientWidth/2;
+}
+// Where every name rests when cave k is in the middle: x from the centre, s scale.
+function caveCatLayout(k){
+  const n=CATEGORY_ORDER.length, SIDE=0.6, GAP=12, x=new Array(n).fill(0), s=new Array(n).fill(SIDE);
+  const w=i=>caveCatW[i]||90;
+  x[k]=0; s[k]=1;
+  let r=w(k)/2, l=-w(k)/2, edge=0;
+  for(let j=1;j<=Math.floor((n-1)/2);j++){
+    const ri=(k+j)%n, li=((k-j)%n+n)%n;
+    x[ri]=r+GAP+w(ri)*SIDE/2; r=x[ri]+w(ri)*SIDE/2;
+    x[li]=l-GAP-w(li)*SIDE/2; l=x[li]-w(li)*SIDE/2;
+    if(j===1)edge=Math.max(r,-l);                    // the two names you can see
+  }
+  if(n%2===0){const oi=(k+n/2)%n; x[oi]=r+GAP+w(oi)*SIDE/2;}
+  const room=caveCatHalf-14;                           // clear of the faded edges
+  const f=edge>room?room/edge:1;
+  return{x:x.map(v=>v*f),s:s.map(v=>v*f)};
+}
+function caveCatRender(){
+  if(!caveCatW.length)caveCatMeasure();
+  const k0=Math.floor(caveCatPos), t=caveCatPos-k0;
+  const A=caveCatLayout(warpNorm(k0)), B=caveCatLayout(warpNorm(k0+1));
+  document.querySelectorAll('.cave-cat-name').forEach(b=>{
+    const i=+b.dataset.i, ad=Math.abs(warpWrap(i-caveCatPos));
+    const x=A.x[i]+(B.x[i]-A.x[i])*t, s=A.s[i]+(B.s[i]-A.s[i])*t;
+    const op=ad<=1?1:(ad>=1.6?0:1-(ad-1)/0.6);
+    b.style.transform=`translate(-50%,-50%) translateX(${x.toFixed(1)}px) scale(${s.toFixed(3)})`;
+    b.style.opacity=op.toFixed(3);
+    b.style.visibility=op<0.02?'hidden':'visible';
+    b.classList.toggle('is-center',ad<0.5);
+  });
+}
+// Straight to the cave we are in — used when the cave opens.
+function caveCatJump(){
+  if(caveCatRAF){cancelAnimationFrame(caveCatRAF);caveCatRAF=null;}
+  caveCatMeasure();
+  caveCatPos=caveCatTarget=warpIdx;
+  caveCatRender();
+}
+// Glide to position p (any whole number; it wraps), and open that cave.
+function caveCatTo(p){
+  const idx=warpNorm(p);
+  if(idx!==warpIdx)caveCatEnter(idx,warpWrap(idx-warpIdx)>0?1:-1);
+  caveCatTarget=p;
+  if(caveCatRAF)cancelAnimationFrame(caveCatRAF);
+  const step=()=>{
+    const diff=caveCatTarget-caveCatPos;
+    if(Math.abs(diff)<0.004){caveCatPos=caveCatTarget;caveCatRender();caveCatRAF=null;return;}
+    caveCatPos+=diff*0.2;
+    caveCatRender();
+    caveCatRAF=requestAnimationFrame(step);
+  };
+  caveCatRAF=requestAnimationFrame(step);
+}
+function caveCatGo(dir){caveCatTo(caveCatTarget+dir);}
+// Another cave, from inside one: its first dish, on the plate view. The warp
+// room behind follows along, so Back lands in front of the cave you were in.
+function caveCatEnter(idx,dir){
+  if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}
+  warpPos=warpPos+warpWrap(idx-warpPos);
+  warpIdx=idx;
+  activeFilter=CATEGORY_ORDER[idx];
+  updateWarpCatName();
+  warpRender();
+  const key=CATEGORY_ORDER[idx];
+  caveDishes=caveListFor(key);
+  caveDishIdx=0;
+  caveViewIdx=0;
+  document.getElementById('cave-cat').textContent=WARP_META[key].label;
+  renderCave(dir>0?'anim-l':'anim-r');
+}
+// Drag the names like the caves: a short flick moves one, a long drag several.
+function caveCatInit(){
+  caveCatBuild();
+  const tr=document.getElementById('cave-cat-track');
+  if(!tr)return;
+  let sx=0,sy=0,p0=0,dragging=false,moved=false;
+  const stepPx=()=>{const k=warpNorm(Math.round(p0)),L=caveCatLayout(k);return Math.max(60,L.x[(k+1)%CATEGORY_ORDER.length]);};
+  const down=(x,y)=>{dragging=true;moved=false;sx=x;sy=y;p0=caveCatPos;if(caveCatRAF){cancelAnimationFrame(caveCatRAF);caveCatRAF=null;}};
+  const move=x=>{if(!dragging)return;if(Math.abs(sx-x)>6)moved=true;if(!moved)return;caveCatPos=p0+(sx-x)/stepPx();caveCatRender();};
+  const up=x=>{
+    if(!dragging)return;dragging=false;
+    if(!moved){caveCatTo(caveCatTarget);return;}     // a tap: the name's own click decides
+    caveCatDragAt=Date.now();
+    const s=Math.round(p0);let t=Math.round(caveCatPos);
+    if(Math.abs(sx-x)>40&&t===s)t=s+(sx-x>0?1:-1);
+    caveCatTo(t);
+  };
+  tr.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  tr.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const dx=Math.abs(sx-e.touches[0].clientX),dy=Math.abs(sy-e.touches[0].clientY);
+    if(dx>dy)e.preventDefault();
+    move(e.touches[0].clientX);
+  },{passive:false});
+  tr.addEventListener('touchend',e=>up(e.changedTouches[0].clientX),{passive:true});
+  tr.addEventListener('mousedown',e=>{e.preventDefault();down(e.clientX,e.clientY);});
+  window.addEventListener('mousemove',e=>move(e.clientX));
+  window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
+  window.addEventListener('resize',()=>{caveCatMeasure();caveCatRender();});
+  // The web font changes every name's width when it arrives.
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{caveCatMeasure();caveCatRender();});
+}
 function scrollToMenu(){
   const room=document.getElementById('warp-room');
   if(room)room.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1315,6 +1561,7 @@ function warpInit(){
   window.addEventListener('mouseup',e=>{if(dragging)up(e.clientX);});
   window.addEventListener('resize',warpRender);
   caveInitTouch();
+  caveCatInit();
 }
 
 // ── DISH MODAL ──
