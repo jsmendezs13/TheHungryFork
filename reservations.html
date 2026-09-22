@@ -280,10 +280,13 @@ function say(node, message) {
   node.classList.toggle('on', !!message);
 }
 
-async function api(path, body) {
+// Everything goes to /api/reservations with an action: the three jobs share
+// one serverless function, because the free Vercel plan allows twelve and the
+// site already had twelve.
+async function api(body) {
   const headers = { 'Content-Type': 'application/json' };
   if (typeof currentSession !== 'undefined' && currentSession) headers['Authorization'] = 'Bearer ' + currentSession;
-  const res = await fetch(path, { method:'POST', headers, body: JSON.stringify(body) });
+  const res = await fetch('/api/reservations', { method:'POST', headers, body: JSON.stringify(body) });
   let data = {};
   try { data = await res.json(); } catch (e) { /* a proxy page, or nothing at all */ }
   if (!res.ok) { const err = new Error(data.error || 'Something went wrong. Please try again.'); err.reason = data.reason; throw err; }
@@ -372,7 +375,7 @@ async function loadSlots() {
   el('rv-empty').hidden = true;
   box.hidden = false;
   try {
-    const data = await api('/api/reservation-slots', { restaurantId: RESTAURANT_ID, date: state.date, party: state.party });
+    const data = await api({ action: 'slots', restaurantId: RESTAURANT_ID, date: state.date, party: state.party });
     state.booking = { ...state.booking, ...data.booking };
     state.restaurant = data.restaurant;
     state.slots = data.slots || [];
@@ -415,7 +418,8 @@ async function confirmTable() {
   button.disabled = true; button.textContent = 'Taking the table…';
   say(el('who-err'), '');
   try {
-    const data = await api('/api/reservation-book', {
+    const data = await api({
+      action: 'book',
       restaurantId: RESTAURANT_ID,
       at:    state.chosen.at,
       party: state.party,
@@ -515,7 +519,8 @@ async function sendRequest() {
   button.disabled = true; button.textContent = 'Sending…';
   say(el('req-err'), '');
   try {
-    await api('/api/reservation-request', {
+    await api({
+      action: 'request',
       restaurantId: RESTAURANT_ID,
       name, phone, party, date,
       time:     el('req-time').value,
@@ -546,7 +551,7 @@ el('sent-back').addEventListener('click', () => { show('pick'); loadSlots(); });
 (async function start() {
   if (typeof loadSession === 'function') loadSession();
   try {
-    const data = await api('/api/reservation-slots', { restaurantId: RESTAURANT_ID });
+    const data = await api({ action: 'slots', restaurantId: RESTAURANT_ID });
     state.booking = data.booking;
     state.restaurant = data.restaurant;
     state.date = data.date || data.booking.today;
