@@ -37,6 +37,8 @@ export default async function handler(req, res) {
   if (action === 'slots')   return slots(req, res, body);
   if (action === 'book')    return book(req, res, body);
   if (action === 'request') return request(req, res, body);
+  if (action === 'mine')    return mine(req, res, body);
+  if (action === 'cancel')  return cancel(req, res, body);
   return res.status(400).json({ error: 'Unknown action.' });
 }
 
@@ -331,4 +333,128 @@ async function request(req, res, body) {
     time,
     party,
   });
+}
+
+// ── THE TABLES THIS GUEST HAS ─────────────────────────────────────────────────
+// "My Reservations" in the corner menu. A signed-in taster sees their own
+// bookings and nothing else.
+//
+// Matched two ways on purpose: by account, and by the phone number on the
+// account. Most guests book without logging in — they type their number into
+// the form — and it would be strange for the site to know about a table and
+// then pretend it does not. The phone number comes from the tasters row, never
+// from the request, so nobody can ask about somebody else's number.
+async function mine(req, res, body) {
+  const tasterId = tasterIdFromRequest(req);
+  if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
+
+  const who = await sb(`/tasters?id=eq.${tasterId}&select=id,phone_number`);
+  if (!who.ok || !Array.isArray(who.data) || !who.data.length) {
+    return res.status(401).json({ error: 'Please log in again.' });
+  }
+  const phone = who.data[0].phone_number || null;
+
+  const match = phone
+    ? `or=(taster_id.eq.${tasterId},guest_phone.eq.${encodeURIComponent(phone)})`
+    : `taster_id=eq.${tasterId}`;
+  const rows = await sb(
+    `/reservations?${match}&select=id,code,restaurant_id,area_id,party_size,reserved_at,local_date,` +
+    `local_time,status,notes,hold_minutes&order=reserved_at.desc&limit=60`
+  );
+  if (!rows.ok || !Array.isArray(rows.data)) {
+    console.error('[reservations:mine] read failed', rows.status);
+    return res.status(502).json({ error: 'Could not read your tables. Please try again in a moment.' });
+  }
+
+  // The names, in two small reads rather than one clever join.
+  const restaurantIds = [...new Set(rows.data.map((r) => r.restaurant_id))];
+  const areaIds = [...new Set(rows.data.map((r) => r.area_id).filter(Boolean))];
+  const [places, areas] = await Promise.all([
+    restaurantIds.length ? sb(`/restaurants?id=in.(${restaurantIds.join(',')})&select=id,name,restaurant_phone`) : { data: [] },
+    areaIds.length ? sb(`/restaurant_areas?id=in.(${areaIds.join(',')})&select=id,name`) : { data: [] },
+  ]);
+  const placeName = {}, placePhone = {}, areaName = {};
+  (Array.isArray(places.data) ? places.data : []).forEach((p) => { placeName[p.id] = p.name; placePhone[p.id] = p.restaurant_phone; });
+  (Array.isArray(areas.data) ? areas.data : []).forEach((a) => { areaName[a.id] = a.name; });
+
+  const settings = await loadBooking(restaurantIds[0] || DEFAULT_RESTAURANT_ID);
+  const timezone = (settings && settings.settings && settings.settings.timezone) || 'America/New_York';
+  const now = Date.now();
+
+  const dressed = rows.data.map((r) => ({
+    id:         r.id,
+    code:       r.code,
+    at:         new Date(r.reserved_at).toISOString(),
+    date:       r.local_date,
+    party:      r.party_size,
+    status:     r.status,
+    notes:      r.notes,
+    areaName:   r.area_id ? areaName[r.area_id] || null : null,
+    restaurant: placeName[r.restaurant_id] || 'Restaurant',
+    phone:      placePhone[r.restaurant_id] || null,
+    // A table can be called off right up to the moment it starts. Sebastian's
+    // decision: a guest who cancels late is still better than one who never
+    // arrives and says nothing.
+    canCancel:  r.status === 'booked' && new Date(r.reserved_at).getTime() > now,
+    ...clockIn(timezone, r.reserved_at),
+  }));
+
+  return res.status(200).json({
+    success:  true,
+    today:    todayIn(timezone),
+    upcoming: dressed.filter((r) => new Date(r.at).getTime() >= now && r.status !== 'cancelled')
+                     .sort((a, b) => new Date(a.at) - new Date(b.at)),
+    past:     dressed.filter((r) => new Date(r.at).getTime() < now || r.status === 'cancelled'),
+  });
+}
+
+// ── GIVING THE TABLE BACK ─────────────────────────────────────────────────────
+// The row is never deleted: a cancelled booking is part of how the restaurant
+// reads its own week, and hf_free_slots already ignores it, so the seats and the
+// table are free again the moment this returns.
+async function cancel(req, res, body) {
+  const tasterId = tasterIdFromRequest(req);
+  if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
+
+  const id = Number(body.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Which table?' });
+
+  const who = await sb(`/tasters?id=eq.${tasterId}&select=id,phone_number`);
+  const phone = who.ok && Array.isArray(who.data) && who.data.length ? who.data[0].phone_number : null;
+
+  const found = await sb(`/reservations?id=eq.${id}&select=id,taster_id,guest_phone,status,reserved_at,code`);
+  if (!found.ok || !Array.isArray(found.data) || !found.data.length) {
+    return res.status(404).json({ error: 'That table is not there any more.' });
+  }
+  const row = found.data[0];
+
+  // Theirs, or booked with their phone number. Anything else is somebody
+  // else's table, and the answer is the same as if it did not exist.
+  const isTheirs = row.taster_id === tasterId || (phone && row.guest_phone === phone);
+  if (!isTheirs) return res.status(404).json({ error: 'That table is not there any more.' });
+
+  if (row.status === 'cancelled') return res.status(200).json({ success: true, already: true });
+  if (row.status !== 'booked') {
+    return res.status(409).json({ error: 'That table cannot be cancelled online any more. Please call the restaurant.' });
+  }
+  if (new Date(row.reserved_at).getTime() <= Date.now()) {
+    return res.status(409).json({ error: 'That time has already started. Please call the restaurant.' });
+  }
+
+  const done = await sb(`/reservations?id=eq.${id}&status=eq.booked`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancelled_by: tasterId,
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  if (!done.ok || !Array.isArray(done.data) || !done.data.length) {
+    console.error('[reservations:cancel] update failed', done.status, done.data?.message);
+    return res.status(502).json({ error: 'Could not cancel the table. Please call the restaurant.' });
+  }
+
+  return res.status(200).json({ success: true, code: row.code });
 }
