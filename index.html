@@ -252,6 +252,9 @@
   .fi-bar-row { display:flex; align-items:center; gap:8px; font-family:var(--sans); font-size:.68rem; color:var(--quiet); }
   .fi-bar { flex:1; height:8px; background:var(--off-white); border-radius:4px; overflow:hidden; }
   .fi-bar-fill { height:100%; background:linear-gradient(90deg,#C01108,#E02414); border-radius:4px; }
+  /* How many ratings each bar stands for, at its end — the same type as the
+     4.0 / 4.3 in About the restaurant. Sebastian, 22 Sep. */
+  .fi-bar-n { flex:0 0 22px; text-align:right; font-size:.74rem; font-weight:600; color:var(--text); }
   .fi-window { display:flex; background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:3px; margin-bottom:1rem; }
   .fi-win { flex:1; background:none; border:none; border-radius:999px; padding:.42rem .1rem; font-family:var(--sans); font-size:.68rem; color:var(--quiet); cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
   .fi-win.active { background:#fff; color:var(--text); font-weight:600; box-shadow:0 1px 2px rgba(43,33,26,.14); }
@@ -927,9 +930,11 @@ function fiRender(){
   document.getElementById('fi-avg').textContent=shown(s.score);
   // The same score as stars. Pale when the period has no ratings.
   document.getElementById('fi-stars').innerHTML=forkStarRow(s.count?s.score:0);
-  document.getElementById('fi-count').textContent='('+s.count+')';
+  // "(17 ratings)", not "(17)" — Sebastian, 21 Sep. The same words as the
+  // score beside the stars at the top of the page.
+  document.getElementById('fi-count').textContent='('+s.count+' rating'+(s.count===1?'':'s')+')';
   document.getElementById('fi-bars').innerHTML = s.count
-    ? [5,4,3,2,1].map(i=>`<div class="fi-bar-row"><span>${i}</span><div class="fi-bar"><div class="fi-bar-fill" style="width:${s.dist[i-1]/s.count*100}%"></div></div></div>`).join('')
+    ? [5,4,3,2,1].map(i=>`<div class="fi-bar-row"><span>${i}</span><div class="fi-bar"><div class="fi-bar-fill" style="width:${s.dist[i-1]/s.count*100}%"></div></div><span class="fi-bar-n">${s.dist[i-1]}</span></div>`).join('')
     : '';
 
   // The two scores the restaurant's number is made of, in the menu card's
