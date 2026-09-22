@@ -739,7 +739,7 @@ function hfvRequestCode(){
   const box=document.getElementById('hf-v-checkin');
   if(!box)return;
   box.innerHTML='<div class="hf-v-qr-msg">Making your code…</div>';
-  hfvApi('/api/checkin-token').then(function(d){
+  hfvApi('/api/checkins',{action:'token'}).then(function(d){
     // The SVG comes from our own server, but it goes into innerHTML, so it is
     // still checked for being what it claims to be before it gets there.
     const svg=(typeof d.svg==='string'&&d.svg.trim().slice(0,4)==='<svg')?d.svg:'';
@@ -789,7 +789,7 @@ function hfvLoadCalendar(){
   const box=document.getElementById('hf-v-calendar');
   if(!box)return;
   if(!HFV.loaded)box.innerHTML='<div class="hf-v-empty">Loading your visits…</div>';
-  hfvApi('/api/my-checkins').then(function(d){
+  hfvApi('/api/checkins',{action:'list'}).then(function(d){
     HFV.visits=Array.isArray(d.visits)?d.visits:[];
     HFV.places=Array.isArray(d.restaurants)?d.restaurants:[];
     // The restaurant's clock, not the phone's. Someone opening this from
