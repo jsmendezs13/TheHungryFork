@@ -846,6 +846,33 @@
   .cave-cat-name { background:none !important; }
   .cave-cat-name::after { content:''; position:absolute; left:22%; right:22%; bottom:-3px; height:2px; border-radius:2px;
     background:#E23B2E; box-shadow:0 0 8px rgba(226,59,46,.9); opacity:var(--u,0); pointer-events:none; }
+
+  /* ═══ ROUND 4 — Sebastian, 22 Sep: ONE header on both screens ═══
+     The menu page and the inside of a cave now wear the same header: one black
+     bar across the whole top (his pick, option 2: a thin glowing red line under
+     it), "The Menu" in the big size, the red curved arrow on the left and ☰ on
+     the right. On the menu page the arrow goes Home; in a cave it goes back to
+     the caves. The two bars share every number below, so they cannot drift. */
+  .menu-topbar, #cave .cave-topbar { height:calc(env(safe-area-inset-top,0px) + 58px); background:#140D0A;
+    border-bottom:1.5px solid #E23B2E; box-shadow:0 2px 10px rgba(226,59,46,.35); }
+  .menu-topbar { padding:env(safe-area-inset-top,0px) 0 0; justify-content:center; -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .menu-topbar-title { font-size:1.75rem; line-height:1; letter-spacing:.01em; }
+  .menu-topbar-spacer { display:none; }
+  /* The arrow, drawn and placed exactly like the cave's. */
+  .menu-home { position:absolute; left:6px; top:calc(env(safe-area-inset-top,0px) + 6px); width:46px; height:46px;
+    display:flex; align-items:center; justify-content:center; color:#FF4B3E; -webkit-tap-highlight-color:transparent; }
+  .menu-home svg { width:32px; height:32px; display:block; filter:drop-shadow(0 0 5px rgba(255,60,45,.55)) drop-shadow(0 1px 2px rgba(0,0,0,.6)); transition:transform .12s; }
+  .menu-home:active svg { transform:scale(.88); }
+  /* In a cave: the bar spans the whole screen (it hangs off the overlay, not
+     the centred column), and "The Menu" sits on it without a box of its own. */
+  #cave .cave-topbar { position:absolute; top:0; left:0; right:0; z-index:18; pointer-events:none; }
+  #cave .cave-title { background:none; box-shadow:none; }
+  /* Phones: the same space on both sides, so the words sit dead centre, as on the menu page. */
+  @media (max-width:759px){ #cave .cave-title { left:64px; right:64px; } }
+  #cave .cave-back { position:fixed; }
+  /* The cave names start just under the red line (phone and laptop). */
+  .cave-catbar { margin-top:50px; }
+  @media (min-width:760px){ .cave-catbar { margin-top:48px; } }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -855,9 +882,9 @@
 
 <!-- TOP BAR -->
 <div class="menu-topbar">
-  <a href="index.html" class="menu-home">&#8249; Home</a>
+  <a href="index.html" class="menu-home" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   <div class="menu-topbar-title">The Menu</div>
-  <span style="width:58px;"></span>
+  <span class="menu-topbar-spacer" style="width:58px;"></span>
 </div>
 
 <!-- 3D WARP MENU -->
@@ -876,6 +903,7 @@
 </div>
 <!-- CAVE INTERIOR -->
 <div id="cave" class="cave-overlay">
+  <div class="cave-topbar" aria-hidden="true"></div>
   <div class="cave-inner">
     <button class="cave-back" onclick="exitCave()" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <!-- The cave's name, for screen readers; what you SEE is the bar below. -->
