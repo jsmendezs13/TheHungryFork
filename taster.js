@@ -365,6 +365,9 @@ function updateNavBtn(){
     items.push({label:'Hi, '+(currentTaster.first_name||'there'), kind:'label', cls:'hf-corner-name'});
     items.push({label:'My Tastings', act:'tastings'});
     items.push({label:'My Visits', act:'visits'});
+    // Straight to the booking page's own list rather than a fourth overlay
+    // copied onto every page.
+    items.push({label:'My Reservations', href:'/reservations.html#mine'});
     // Two different flags, because there are two different kinds of access:
     // is_platform_admin is Sebastian, who is above every restaurant, and
     // is_restaurant_admin marks an account that holds a role at one — the
