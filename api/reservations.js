@@ -11,13 +11,27 @@
 //
 // The decision about whether a table is free is not made here. It lives in the
 // database (migrations 14 and 15), where the lock is.
+//
+// The emails (migration 16, api/_lib/email.js) live here too: the confirmation
+// goes out with the booking, the link inside it cancels without an account
+// (action "link" / "cancel_link"), and Vercel's daily cron calls this same
+// address with GET for the reminders — no thirteenth function.
 
+import crypto from 'node:crypto';
 import { makeLimiter, allow, keyFor, clientIp, normalizeUsPhone, validateName } from './_lib/auth.js';
 import { sb, tasterIdFromRequest } from './_lib/roles.js';
 import {
   DEFAULT_RESTAURANT_ID, loadBooking, publicSettings, todayIn, clockIn,
   freeSlots, isOpenOn, cleanDate, cleanParty, cleanPhone, cleanText, cleanEmail, BOOK_MESSAGES,
 } from './_lib/booking.js';
+import {
+  emailReady, senderFor, newLinkToken, saveLink, cancelUrl, cleanToken, hashToken,
+  sendEmail, confirmationEmail, reminderEmail, hostOf, sendableAddress, mailboxKey,
+} from './_lib/email.js';
+
+// The daily reminder can take a while on a busy day; 30 seconds is inside every
+// Vercel plan's limit, so the run is never cut off halfway through a batch.
+export const config = { maxDuration: 30 };
 
 // Reading is generous — the screen asks again on every tap. Writing is not, and
 // it refuses rather than failing open: an unlimited booking endpoint is a
@@ -27,19 +41,45 @@ const bookIpLimiter   = makeLimiter({ requests: 10,  window: '1 h',  prefix: 're
 const bookPhoneLimit  = makeLimiter({ requests: 4,   window: '24 h', prefix: 'resv:book:phone' });
 const reqIpLimiter    = makeLimiter({ requests: 6,   window: '1 h',  prefix: 'resv:req:ip' });
 const reqPhoneLimiter = makeLimiter({ requests: 4,   window: '24 h', prefix: 'resv:req:phone' });
+// The lesson from Twilio: anything that sends a message on our behalf is capped.
+// A guest's address gets a handful of emails a day at most, whatever anybody
+// types into the booking form, and the cancel links cannot be tried at speed.
+const emailAddrLimiter = makeLimiter({ requests: 6,  window: '24 h', prefix: 'resv:email:addr' });
+// And a ceiling for everything together: Resend's free plan sends 100 a day, so
+// no mistake and no attack can ever run past it or into a bill.
+const emailDayLimiter  = makeLimiter({ requests: 95, window: '24 h', prefix: 'resv:email:all' });
+const linkLimiter      = makeLimiter({ requests: 30, window: '10 m', prefix: 'resv:link' });
+
+const LINK_GONE = 'This link does not open a table any more. Please call the restaurant.';
 
 export default async function handler(req, res) {
+  // The one GET: Vercel's daily cron, carrying CRON_SECRET. Everybody else who
+  // asks with GET gets the same 405 as before.
+  if (req.method === 'GET' && isCron(req)) return remind(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const action = String(body.action || 'slots');
 
-  if (action === 'slots')   return slots(req, res, body);
-  if (action === 'book')    return book(req, res, body);
-  if (action === 'request') return request(req, res, body);
-  if (action === 'mine')    return mine(req, res, body);
-  if (action === 'cancel')  return cancel(req, res, body);
+  if (action === 'slots')       return slots(req, res, body);
+  if (action === 'book')        return book(req, res, body);
+  if (action === 'request')     return request(req, res, body);
+  if (action === 'mine')        return mine(req, res, body);
+  if (action === 'cancel')      return cancel(req, res, body);
+  if (action === 'link')        return byLink(req, res, body);
+  if (action === 'cancel_link') return cancelByLink(req, res, body);
   return res.status(400).json({ error: 'Unknown action.' });
+}
+
+// Vercel sends "Authorization: Bearer <CRON_SECRET>" when it runs the cron. A
+// secret shorter than 16 characters is treated as no secret at all, so an empty
+// or half-typed variable can never open the door.
+function isCron(req) {
+  const secret = process.env.CRON_SECRET || '';
+  if (secret.length < 16) return false;
+  const got = Buffer.from(String((req.headers && req.headers.authorization) || ''));
+  const want = Buffer.from(`Bearer ${secret}`);
+  return got.length === want.length && crypto.timingSafeEqual(got, want);
 }
 
 // ── WHAT TIMES ARE FREE ───────────────────────────────────────────────────────
@@ -175,11 +215,18 @@ async function book(req, res, body) {
 
   const existing = await sb(
     `/reservations?restaurant_id=eq.${restaurantId}&guest_phone=eq.${encodeURIComponent(phone)}` +
-    `&local_date=eq.${localDate}&status=in.(booked,seated)&select=id,code,reserved_at,party_size&limit=1`
+    `&local_date=eq.${localDate}&status=in.(booked,seated)&select=id,code,reserved_at,party_size,guest_name&limit=1`
   );
   if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
     const row = existing.data[0];
-    return res.status(200).json({
+    // Given back only to the same guest tapping twice — same number AND same
+    // name. A different name is simply another party (a family booking lunch and
+    // dinner from one phone), so it books like anyone else, and the answer is the
+    // same whether or not that number already had a table: typing somebody's
+    // phone number tells you nothing about their evening (review, 22 Sep).
+    const sameGuest = String(row.guest_name || '').trim().toLowerCase().replace(/\s+/g, ' ')
+                   === name.value.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (sameGuest) return res.status(200).json({
       success: true,
       already: true,
       code: row.code,
@@ -231,8 +278,28 @@ async function book(req, res, body) {
   // evening from "Dining room"), so it goes back to the screen as well.
   let areaName = null;
   if (result.area_id) {
-    const area = await sb(`/restaurant_areas?id=eq.${result.area_id}&select=name`);
-    if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
+    try {
+      const area = await sb(`/restaurant_areas?id=eq.${result.area_id}&select=name`);
+      if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
+    } catch (err) {
+      console.error('[reservations:book] area name failed', err && err.message);   // the table is booked; the name is decoration
+    }
+  }
+
+  // The email is sent before answering, because a Vercel function can be frozen
+  // the moment it answers. It is capped at a few seconds and can only ever turn
+  // into "emailSent: false" — the table is already the guest's.
+  // The try matters: by this line the table is the guest's. If anything in the
+  // email throws, they must still see their code, not "something went wrong" —
+  // which would send them straight back to book a second table.
+  let emailSent = false;
+  try {
+    emailSent = await confirmByEmail({
+      reservationId: result.reservation_id, email, loaded, timezone,
+      at: at.toISOString(), party, areaName, code: result.code, guestName: name.value,
+    });
+  } catch (err) {
+    console.error('[reservations:email] confirmation threw', result.reservation_id, err && err.message);
   }
 
   return res.status(200).json({
@@ -244,8 +311,72 @@ async function book(req, res, body) {
     areaName,
     holdMinutes: booking.holdMinutes,
     restaurant:  loaded.restaurant,
+    emailSent,
     ...clockIn(timezone, at),
   });
+}
+
+// ── THE CONFIRMATION EMAIL ────────────────────────────────────────────────────
+// Returns true only when Resend took the email. Every other outcome is written
+// on the booking (email_error), so "why didn't I get an email?" has an answer.
+async function confirmByEmail({ reservationId, email, loaded, timezone, at, party, areaName, code, guestName }) {
+  const settings = loaded && loaded.settings;
+  if (!email || !reservationId || !emailReady(settings)) return false;
+
+  const to = sendableAddress(email);
+  if (!to) {
+    await noteEmail(reservationId, { email_error: 'Not sent: the address is not a plain email address' });
+    return false;
+  }
+  if (!(await allow(emailAddrLimiter, keyFor(mailboxKey(to)), { failOpen: false }))) {
+    await noteEmail(reservationId, { email_error: 'Not sent: this address has had too many emails today' });
+    return false;
+  }
+  if (!(await allow(emailDayLimiter, keyFor('all'), { failOpen: false }))) {
+    await noteEmail(reservationId, { email_error: 'Not sent: the daily email limit is reached' });
+    return false;
+  }
+
+  const { token, hash } = newLinkToken();
+  const linkSaved = await saveLink(reservationId, hash, 'confirmation');
+  const sender = senderFor(settings, loaded.restaurant);
+  const mail = confirmationEmail({
+    restaurant: loaded.restaurant, timezone, at, party, areaName, code, guestName,
+    // Only promise "after 30 minutes the table goes" if the restaurant does that.
+    graceMinutes: settings.auto_release_late ? settings.grace_minutes : null,
+    holdMinutes:  settings.hold_minutes,
+    link:         linkSaved ? cancelUrl(settings, token) : null,
+    siteHost:     hostOf(settings),
+  });
+
+  const sent = await sendEmail({
+    from: sender.from, replyTo: sender.replyTo, to,
+    subject: mail.subject, html: mail.html, text: mail.text, attachments: mail.attachments,
+    idempotencyKey: `confirm-${code}`,
+    tags: [{ name: 'kind', value: 'confirmation' }],
+    timeoutMs: 4000,          // the guest is looking at a spinner
+  });
+
+  if (sent.ok) {
+    const fields = { confirmation_sent_at: new Date().toISOString(), email_error: null };
+    if (sent.id) fields.confirmation_email_id = sent.id;
+    await noteEmail(reservationId, fields);
+    return true;
+  }
+  console.error('[reservations:email] confirmation not sent', reservationId, sent.error);
+  await noteEmail(reservationId, { email_error: sent.error });
+  return false;
+}
+
+// A note on the booking about its emails. Never allowed to break anything.
+async function noteEmail(reservationId, fields) {
+  const done = await sb(`/reservations?id=eq.${Number(reservationId)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(fields),
+  });
+  if (!done.ok) console.error('[reservations:email] could not note on booking', reservationId, done.status);
+  return done.ok;
 }
 
 // ── NINE OR MORE, AND PRIVATE EVENTS ──────────────────────────────────────────
@@ -441,20 +572,234 @@ async function cancel(req, res, body) {
     return res.status(409).json({ error: 'That time has already started. Please call the restaurant.' });
   }
 
-  const done = await sb(`/reservations?id=eq.${id}&status=eq.booked`, {
-    method: 'PATCH',
-    headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
-      cancelled_by: tasterId,
-      updated_at: new Date().toISOString(),
-    }),
-  });
-  if (!done.ok || !Array.isArray(done.data) || !done.data.length) {
-    console.error('[reservations:cancel] update failed', done.status, done.data?.message);
+  if (!(await releaseTable(id, tasterId))) {
     return res.status(502).json({ error: 'Could not cancel the table. Please call the restaurant.' });
   }
 
   return res.status(200).json({ success: true, code: row.code });
+}
+
+// The one place a table is given back, for the signed-in guest and for the link
+// in an email alike. "&status=eq.booked" is the guard: if the staff seated the
+// guest a second ago, nothing changes and the answer is false.
+async function releaseTable(id, cancelledBy) {
+  const now = new Date().toISOString();
+  const done = await sb(`/reservations?id=eq.${Number(id)}&status=eq.booked`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ status: 'cancelled', cancelled_at: now, cancelled_by: cancelledBy || null, updated_at: now }),
+  });
+  if (!done.ok || !Array.isArray(done.data) || !done.data.length) {
+    console.error('[reservations:cancel] update failed', id, done.status, done.data?.message);
+    return false;
+  }
+  return true;
+}
+
+// ── THE LINK IN THE EMAIL ─────────────────────────────────────────────────────
+// No account, no password: whoever holds the link holds the table, which is how
+// a paper reservation card works too. The token is 192 random bits and only its
+// SHA-256 is stored, so it cannot be guessed and cannot be read out of the
+// database.
+async function findByLink(token) {
+  const link = await sb(`/reservation_links?token_hash=eq.${hashToken(token)}&select=reservation_id&limit=1`);
+  if (!link.ok || !Array.isArray(link.data) || !link.data.length) return null;
+  const row = await sb(
+    `/reservations?id=eq.${Number(link.data[0].reservation_id)}` +
+    `&select=id,code,restaurant_id,area_id,party_size,reserved_at,local_date,status,guest_name&limit=1`
+  );
+  if (!row.ok || !Array.isArray(row.data) || !row.data.length) return null;
+  // A week after the table, the link is only an old email: it stops opening
+  // anything, so a forwarded message does not show a name and a date forever.
+  if (new Date(row.data[0].reserved_at).getTime() < Date.now() - LINK_LIFE_MS) return null;
+  return row.data[0];
+}
+const LINK_LIFE_MS = 7 * 24 * 3600 * 1000;
+
+async function byLink(req, res, body) {
+  if (!(await allow(linkLimiter, keyFor(clientIp(req)), { failOpen: true }))) {
+    return res.status(429).json({ error: 'Too many tries from here. Wait a moment, or call the restaurant.' });
+  }
+  const token = cleanToken(body.token);
+  const row = token ? await findByLink(token) : null;
+  if (!row) return res.status(404).json({ error: LINK_GONE });
+
+  const loaded = await loadBooking(row.restaurant_id);
+  const restaurant = loaded && !loaded.error ? loaded.restaurant : { name: 'The restaurant', phone: null };
+  const timezone = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
+
+  let areaName = null;
+  if (row.area_id) {
+    const area = await sb(`/restaurant_areas?id=eq.${Number(row.area_id)}&select=name`);
+    if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
+  }
+
+  return res.status(200).json({
+    success: true,
+    booking: {
+      code:       row.code,
+      at:         new Date(row.reserved_at).toISOString(),
+      date:       row.local_date,
+      party:      row.party_size,
+      status:     row.status,
+      areaName,
+      restaurant: restaurant.name,
+      phone:      restaurant.phone || null,
+      // First name only: a forwarded email should not hand a stranger the rest.
+      firstName:  String(row.guest_name || '').trim().split(/\s+/)[0] || null,
+      canCancel:  row.status === 'booked' && new Date(row.reserved_at).getTime() > Date.now(),
+      ...clockIn(timezone, row.reserved_at),
+    },
+  });
+}
+
+async function cancelByLink(req, res, body) {
+  // failOpen: false — this one writes.
+  if (!(await allow(linkLimiter, keyFor(clientIp(req)), { failOpen: false }))) {
+    return res.status(429).json({ error: 'Too many tries from here. Wait a moment, or call the restaurant.' });
+  }
+  const token = cleanToken(body.token);
+  const row = token ? await findByLink(token) : null;
+  if (!row) return res.status(404).json({ error: LINK_GONE });
+
+  if (row.status === 'cancelled') return res.status(200).json({ success: true, already: true, code: row.code });
+  if (row.status !== 'booked') {
+    return res.status(409).json({ error: 'That table cannot be cancelled online any more. Please call the restaurant.' });
+  }
+  if (new Date(row.reserved_at).getTime() <= Date.now()) {
+    return res.status(409).json({ error: 'That time has already started. Please call the restaurant.' });
+  }
+  if (!(await releaseTable(row.id, null))) {
+    return res.status(502).json({ error: 'Could not cancel the table. Please call the restaurant.' });
+  }
+  return res.status(200).json({ success: true, code: row.code });
+}
+
+// ── THE REMINDER, ONCE A DAY ──────────────────────────────────────────────────
+// vercel.json runs this at 14:00 UTC — 10 in the morning in New York, give or
+// take the hour Vercel's free plan allows. hf_claim_reminders picks the tables
+// that are due and marks them in the same step, so a doubled run sends nothing
+// twice. A send that fails is handed back to the next run, unless Resend says
+// the address itself is bad, which would only fail again.
+const REMIND_BUDGET_MS = 15000;          // of the 30 seconds this function may run
+
+async function remind(req, res) {
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(200).json({ success: true, skipped: 'RESEND_API_KEY is not set in Vercel' });
+  }
+  const started = Date.now();
+
+  // 40 at most: the daily ceiling is 95, and the confirmations of the next 24
+  // hours need most of it (a confirmation refused means no reminder later).
+  const claimed = await sb('/rpc/hf_claim_reminders', { method: 'POST', body: JSON.stringify({ p_limit: 40 }) });
+  if (!claimed.ok || !Array.isArray(claimed.data)) {
+    console.error('[reservations:remind] claim failed', claimed.status, claimed.data?.message);
+    return res.status(502).json({
+      error: 'Could not pick the reminders (the database answered ' + claimed.status + '). '
+           + 'If that is a 404, migration 16 has not been run.',
+    });
+  }
+  const rows = claimed.data;
+  if (!rows.length) return res.status(200).json({ success: true, claimed: 0, sent: 0, failed: 0, later: 0 });
+
+  // From here on the rows are marked as taken. Whatever happens — a database
+  // error, a crash — every row this run did not finish goes back, in one write,
+  // so tomorrow's run can try again (found in review, 22 Sep).
+  const handled = new Set();
+  let sent = 0, failed = 0, later = 0, crashed = false;
+  try {
+    const places = {};
+    for (const id of new Set(rows.map((r) => r.restaurant_id))) places[id] = await loadBooking(id);
+
+    const areaIds = [...new Set(rows.map((r) => r.area_id).filter(Boolean))];
+    const areas = areaIds.length ? await sb(`/restaurant_areas?id=in.(${areaIds.join(',')})&select=id,name`) : { data: [] };
+    const areaName = {};
+    (Array.isArray(areas.data) ? areas.data : []).forEach((a) => { areaName[a.id] = a.name; });
+
+    // Four at a time: Resend accepts ten requests a second.
+    for (let i = 0; i < rows.length; i += 4) {
+      const batch = rows.slice(i, i + 4);
+      if (Date.now() - started > REMIND_BUDGET_MS) { later += batch.length; continue; }   // handed back below
+      const outcomes = await Promise.all(batch.map((r) => remindSafely(r, places[r.restaurant_id], areaName[r.area_id] || null)));
+      outcomes.forEach((ok, k) => { handled.add(batch[k].id); if (ok) sent += 1; else failed += 1; });
+    }
+  } catch (err) {
+    crashed = true;
+    console.error('[reservations:remind] run failed', err && err.message);
+  } finally {
+    const back = rows.map((r) => r.id).filter((id) => !handled.has(id));
+    if (back.length) {
+      try {
+        await sb(`/reservations?id=in.(${back.map(Number).join(',')})&reminder_email_id=is.null`, {
+          method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ reminder_sent_at: null }),
+        });
+      } catch (err) {
+        console.error('[reservations:remind] could not hand back', back, err && err.message);
+      }
+    }
+  }
+  // A crashed run must look like one in Vercel's cron log, not like a quiet day.
+  if (crashed) return res.status(500).json({ error: 'The reminder run failed; every table it had not finished was handed back.', claimed: rows.length, sent, failed });
+  return res.status(200).json({ success: true, claimed: rows.length, sent, failed, later });
+}
+
+// One guest's reminder going wrong must not stop the others'. If it throws,
+// the booking is handed back so tomorrow's run can try again.
+async function remindSafely(row, loaded, areaName) {
+  try {
+    return await remindOne(row, loaded, areaName);
+  } catch (err) {
+    console.error('[reservations:remind] threw', row.id, err && err.message);
+    try { await noteEmail(row.id, { reminder_sent_at: null, email_error: 'Reminder not sent: an error in the sending code' }); } catch { /* the next run will see it unclaimed or not at all */ }
+    return false;
+  }
+}
+
+async function remindOne(row, loaded, areaName) {
+  const settings = loaded && !loaded.error ? loaded.settings : null;
+  if (!loaded || loaded.error || !emailReady(settings)) {
+    await noteEmail(row.id, { reminder_sent_at: null, email_error: 'Reminder not sent: email is not set up for this restaurant' });
+    return false;
+  }
+  const to = sendableAddress(row.guest_email);
+  if (!to) {                                   // final: it would fail the same way every day
+    await noteEmail(row.id, { email_error: 'Reminder not sent: the address is not a plain email address' });
+    return false;
+  }
+  if (!(await allow(emailDayLimiter, keyFor('all'), { failOpen: false }))) {
+    await noteEmail(row.id, { reminder_sent_at: null, email_error: 'Reminder not sent yet: the daily email limit is reached' });
+    return false;
+  }
+  const { token, hash } = newLinkToken();
+  const linkSaved = await saveLink(row.id, hash, 'reminder');
+  const sender = senderFor(settings, loaded.restaurant);
+  const mail = reminderEmail({
+    restaurant: loaded.restaurant, timezone: settings.timezone || 'America/New_York',
+    at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName, code: row.code,
+    guestName: row.guest_name, link: linkSaved ? cancelUrl(settings, token) : null, siteHost: hostOf(settings),
+  });
+  const sent = await sendEmail({
+    from: sender.from, replyTo: sender.replyTo, to,
+    subject: mail.subject, html: mail.html, text: mail.text,
+    // One key per table per day: a doubled cron run the same morning sends one
+    // email; a retry tomorrow, after a real failure, is a new attempt.
+    idempotencyKey: `remind-${row.code}-${todayIn(settings.timezone || 'America/New_York')}`,
+    tags: [{ name: 'kind', value: 'reminder' }],
+  });
+  if (sent.ok) {
+    await noteEmail(row.id, { reminder_email_id: sent.id, email_error: null });
+    return true;
+  }
+  if (sent.duplicate) {
+    // Another run this same morning is sending (or sent) this very reminder.
+    await noteEmail(row.id, { email_error: 'Sent by another run of the reminder job this morning' });
+    return true;
+  }
+  console.error('[reservations:remind] not sent', row.id, sent.error);
+  // Tried again tomorrow only when trying again can help. A bad address (422)
+  // fails forever, and a timeout may already have reached the guest — sending
+  // it again tomorrow would be a second reminder with a second link.
+  const final = sent.status === 422 || sent.timedOut;
+  await noteEmail(row.id, final ? { email_error: sent.error } : { reminder_sent_at: null, email_error: sent.error });
+  return false;
 }
