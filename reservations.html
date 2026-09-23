@@ -204,6 +204,7 @@
       <div class="rv-code" id="done-code">—</div>
       <p class="rv-where" id="done-where">—</p>
       <p class="rv-where" id="done-hold">—</p>
+      <p class="rv-where" id="done-mail" hidden></p>
     </div>
     <div class="rv-foot">
       <button class="rv-btn" id="done-cal">Add it to my calendar</button>
@@ -266,7 +267,17 @@
     </div>
   </section>
 
-  <!-- 7 · booking is not switched on -->
+  <!-- 7 · the link in an email: one table, no account needed -->
+  <section class="rv-step" id="step-link">
+    <div class="rv-scroll" id="link-body">
+      <p class="rv-sub">Looking for your table…</p>
+    </div>
+    <div class="rv-foot">
+      <button class="rv-ghost" id="link-book">Book a table</button>
+    </div>
+  </section>
+
+  <!-- 8 · booking is not switched on -->
   <section class="rv-step" id="step-off">
     <div class="rv-scroll rv-done">
       <h2 style="font-family:var(--serif); font-size:1.9rem; font-weight:600;">Booking by phone for now</h2>
@@ -465,6 +476,12 @@ async function confirmTable() {
     el('done-hold').textContent = 'The table is held for ' + (data.holdMinutes || state.booking.holdMinutes || 90)
       + ' minutes. If you are running late, call '
       + (state.restaurant.phone || 'the restaurant') + '.';
+    // Only say "emailed" when the server says Resend took it — never a guess.
+    const typed = el('who-email').value.trim();
+    el('done-mail').hidden = !(data.emailSent && typed);
+    el('done-mail').textContent = data.emailSent && typed
+      ? 'We have emailed the confirmation to ' + typed + ', with a link to cancel if your plans change.'
+      : '';
     show('done');
   } catch (e) {
     // "taken" is the one error worth acting on: the times have moved on, so
@@ -632,14 +649,74 @@ document.addEventListener('click', async (event) => {
   }
   button.disabled = true; button.textContent = 'Cancelling…';
   try {
-    await api({ action: 'cancel', id: Number(button.dataset.id) });
-    showToast('Your table is cancelled. Thank you for telling us.');
-    openMine();
+    // Two kinds of Cancel button, one listener: a table on the guest's own list
+    // (by its number, needs the session) or the one an email link opened (by the
+    // token in the link, needs nothing else).
+    if (button.dataset.link) {
+      await api({ action: 'cancel_link', token: button.dataset.link });
+      showToast('Your table is cancelled. Thank you for telling us.');
+      openLink(button.dataset.link);
+    } else {
+      await api({ action: 'cancel', id: Number(button.dataset.id) });
+      showToast('Your table is cancelled. Thank you for telling us.');
+      openMine();
+    }
   } catch (e) {
     button.disabled = false; button.classList.remove('sure'); button.textContent = 'Cancel this table';
     showToast(e.message);
   }
 });
+
+// ── the link in a confirmation or reminder email ─────────────────────────────
+// reservations.html#cancel=<token>. The token stays after the #, so the browser
+// never sends it to a server log; the page posts it to the API itself. Whoever
+// holds the email holds the table — no account, no password, like a paper card.
+function linkToken() {
+  const m = /^#cancel=([A-Za-z0-9_-]{32})$/.exec(window.location.hash || '');
+  return m ? m[1] : null;
+}
+
+async function openLink(token) {
+  // Out of the address bar and the history once read: on a shared phone or a
+  // family computer, the next person should not find the link sitting there.
+  if (/^#cancel=/.test(window.location.hash || '')) {
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) { /* old browser: harmless */ }
+  }
+  show('link');
+  const box = el('link-body');
+  box.innerHTML = '<p class="rv-sub">Looking for your table…</p>';
+  try {
+    const data = await api({ action: 'link', token });
+    const b = data.booking;
+    const rows = [b.party + (b.party === 1 ? ' person' : ' people')];
+    if (b.areaName) rows.push(b.areaName);
+    rows.push(b.restaurant);
+    const title = b.status === 'cancelled' ? 'This table is cancelled'
+                : b.canCancel ? (b.firstName ? b.firstName + ', your table' : 'Your table')
+                : 'Your table';
+    box.innerHTML = '<div class="rv-done" style="text-align:left;">'
+      + '<h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">' + esc(title) + '</h2></div>'
+      + '<div class="rv-card' + (b.canCancel ? '' : ' gone') + '">'
+      + statusChip(b)
+      + '<div class="rv-card-when">' + dayLabels(b.date).long + ' · ' + esc(b.label) + '</div>'
+      + '<div class="rv-card-what">' + rows.map(esc).join(' · ') + '</div>'
+      + '<div class="rv-card-code">' + esc(b.code) + '</div>'
+      + (b.canCancel ? '<button type="button" class="rv-cancel" data-link="' + esc(token) + '">Cancel this table</button>' : '')
+      + '</div>'
+      + (b.canCancel ? '' : '<p class="rv-sub" style="margin-top:.4rem;">'
+          + (b.status === 'cancelled' ? 'Nothing more to do — the table has gone back to the restaurant.'
+             : 'This table can no longer be changed online. ' + (b.phone ? 'Call ' + esc(b.phone) + '.' : 'Please call the restaurant.'))
+          + '</p>');
+  } catch (e) {
+    box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">This link has expired</h2>'
+      + '<p class="rv-sub" style="margin-top:.6rem;">' + esc(e.message) + '</p></div>';
+  }
+}
+
+function esc(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 
 // ── start ────────────────────────────────────────────────────────────────────
 el('rv-go-request').addEventListener('click', openRequest);
@@ -650,11 +727,28 @@ el('done-again').addEventListener('click', () => { state.chosen = null; show('pi
 el('req-go').addEventListener('click', sendRequest);
 el('req-back').addEventListener('click', () => show('pick'));
 el('sent-back').addEventListener('click', () => { show('pick'); loadSlots(); });
-el('mine-book').addEventListener('click', () => { window.location.hash = ''; show('pick'); loadSlots(); });
-window.addEventListener('hashchange', () => { if (window.location.hash === '#mine') openMine(); });
+// "Book a table" from the guest's list or from an email's table. It goes where
+// the start of the page would have gone: the free times, or "book by phone"
+// when booking is off — never an empty picker.
+function goBook() {
+  if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
+  if (!state.booking) { window.location.href = 'reservations.html'; return; }   // the first load never finished
+  if (!state.booking.enabled) { show('off'); return; }
+  show('pick'); loadSlots();
+}
+el('mine-book').addEventListener('click', goBook);
+el('link-book').addEventListener('click', goBook);
+window.addEventListener('hashchange', () => {
+  if (window.location.hash === '#mine') openMine();
+  else if (linkToken()) openLink(linkToken());
+});
 
 (async function start() {
   if (typeof loadSession === 'function') loadSession();
+  // A link from an email opens that table straight away — before, and whatever,
+  // the booking settings say. A guest cancelling does not need free times.
+  const fromEmail = linkToken();
+  if (fromEmail) openLink(fromEmail);
   try {
     const data = await api({ action: 'slots', restaurantId: RESTAURANT_ID });
     state.booking = data.booking;
@@ -668,6 +762,7 @@ window.addEventListener('hashchange', () => { if (window.location.hash === '#min
         ? 'Call ' + data.restaurant.phone + ' and they will keep a table for you.'
         : 'Please call the restaurant and they will keep a table for you.';
       if (window.location.hash === '#mine') { openMine(); return; }
+      if (fromEmail) return;                    // the email's table stays on screen
       show('off');
       return;
     }
@@ -680,7 +775,7 @@ window.addEventListener('hashchange', () => { if (window.location.hash === '#min
   } catch (e) {
     el('off-text').textContent = e.message;
     el('off-phone').textContent = 'Please try again in a moment.';
-    show('off');
+    if (!fromEmail) show('off');
   }
 })();
 </script>
