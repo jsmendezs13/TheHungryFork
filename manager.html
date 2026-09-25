@@ -134,6 +134,144 @@
 
   .m-skel { height:74px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:14px; margin-bottom:.7rem; border:1px solid var(--border); }
   @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ── HEADER, TABS ── */
+  body.rv-mode { padding-bottom:0; }
+  .m-head-card { padding:1rem 1.1rem; }
+  .m-head-row { display:flex; align-items:center; justify-content:space-between; gap:.6rem; }
+  .m-head-row .m-h { margin:0; font-size:1.35rem; }
+  .m-head-row .m-eyebrow { margin-bottom:.2rem; }
+  .m-tabs { display:flex; align-items:center; gap:.4rem; margin:0 0 .9rem; }
+  .m-tabbar { flex:1; display:flex; background:#fff; border:1px solid var(--border); border-radius:999px; padding:4px; }
+  .m-tab { flex:1 1 auto; text-align:center; border:none; background:none; font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; padding:.6rem .55rem; border-radius:999px; color:var(--muted); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-tab.on { background:var(--ink); color:var(--white); }
+  .m-gear { flex:none; width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:#fff; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; -webkit-tap-highlight-color:transparent; }
+  .m-gear.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
+
+  /* The corner menu's list is invisible while it is closed, but it is still a
+     tall box in the top-right corner, and it swallowed taps on the gear and the
+     › arrow under it. menu.html has the same two lines. */
+  #hf-corner:not(.open), #hf-corner:not(.open) .hf-corner-items { pointer-events:none; }
+  #hf-corner .hf-corner-toggle { pointer-events:auto; }
+
+  /* ── RESERVATIONS: THE DAYS ── */
+  :root { --blue:#2F5DA8; --blue-light:#E4ECF8; --amber:#8A5A0B; --amber-light:#F6EBD6; }
+  .rv-car { display:flex; align-items:center; gap:.35rem; margin-bottom:.35rem; }
+  .rv-arrow { flex:none; width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:#fff; font-size:1.05rem; line-height:1; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0 0 2px; font-family:var(--sans); }
+  .rv-arrow:disabled { opacity:.3; cursor:default; }
+  .rv-strip { flex:1; display:flex; align-items:center; justify-content:center; gap:.35rem; overflow:hidden; padding:.35rem 0; min-width:0; }
+  .rv-cday { flex:none; width:50px; text-align:center; background:#fff; border:1px solid var(--border); border-radius:12px; padding:.4rem 0; opacity:.82; font-family:var(--sans); color:var(--text); cursor:pointer; transition:transform .2s, opacity .2s; -webkit-tap-highlight-color:transparent; }
+  .rv-cday.far { opacity:.45; transform:scale(.92); }
+  .rv-cday.blank { visibility:hidden; }
+  .rv-cday b { display:block; font-family:var(--serif); font-size:1.2rem; font-weight:600; line-height:1.1; font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; }
+  .rv-cday span { font-size:.56rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .rv-cday i { display:block; font-style:normal; font-size:.56rem; color:var(--red); font-weight:600; margin-top:.1rem; white-space:nowrap; }
+  .rv-cday i.shut { color:var(--muted); font-weight:500; }
+  .rv-cday.on { width:66px; opacity:1; transform:none; background:var(--ink); border-color:var(--ink); color:var(--white); padding:.6rem 0; box-shadow:0 8px 20px rgba(43,33,26,.25); }
+  .rv-cday.on b { font-size:1.55rem; }
+  .rv-cday.on span { color:rgba(252,249,244,.75); } .rv-cday.on i { color:#FF9C92; } .rv-cday.on i.shut { color:rgba(252,249,244,.6); }
+  .rv-dateline { text-align:center; font-size:.64rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.7rem; }
+
+  .rv-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; margin-bottom:.8rem; }
+  .rv-tile { background:#fff; border:1px solid var(--border); border-radius:12px; padding:.55rem .3rem; text-align:center; font-family:var(--sans); color:var(--text); }
+  button.rv-tile { cursor:pointer; }
+  .rv-tile b { display:block; font-family:var(--serif); font-size:1.45rem; font-weight:600; line-height:1.1; font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; }
+  .rv-tile span { font-size:.56rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .rv-tile.red b { color:var(--red); }
+  .rv-banner { display:flex; align-items:center; justify-content:space-between; gap:.6rem; background:var(--red-light); border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:12px; padding:.6rem .85rem; font-size:.8rem; margin-bottom:.8rem; line-height:1.45; }
+  .rv-banner b { font-weight:600; }
+  .rv-off { background:var(--off-white); border:1px dashed var(--border); color:var(--muted); border-radius:12px; padding:.55rem .85rem; font-size:.76rem; margin-bottom:.8rem; line-height:1.5; }
+
+  /* ── RESERVATIONS: THE EVENING, AS A WATCH ── */
+  .rv-evening { position:relative; margin:0 -1rem; transition:opacity .2s; }
+  .rv-evening.busy { opacity:.45; }
+  .rv-scroll { height:var(--eh, 360px); overflow-y:auto; scroll-snap-type:y mandatory; padding:0 1rem 0 calc(1rem + 62px);
+               -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 42px), transparent 100%);
+                       mask-image:linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 42px), transparent 100%);
+               scrollbar-width:none; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  .rv-scroll::-webkit-scrollbar { display:none; }
+  .rv-pad { height:calc(var(--eh, 360px) / 2 - 40px); }
+  .rv-w { scroll-snap-align:center; background:#fff; border:1px solid var(--border); border-radius:14px; padding:.75rem .9rem .8rem;
+          margin-bottom:.55rem; box-shadow:var(--shadow-sm); transform-origin:50% 50%; will-change:transform, opacity; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .rv-w.mid { box-shadow:0 10px 26px rgba(43,33,26,.14); border-color:#DCCFBE; cursor:default; }
+  .rv-w.faded .rv-w-in { opacity:.6; }
+  .rv-when { display:flex; justify-content:space-between; gap:.5rem; font-size:.6rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-variant-numeric:lining-nums; }
+  .rv-when em { font-style:normal; letter-spacing:.08em; opacity:.8; }
+  .rv-name { font-weight:600; font-size:.98rem; margin-top:.05rem; line-height:1.35; overflow-wrap:anywhere; }
+  .rv-meta { font-size:.76rem; color:var(--muted); margin-top:.05rem; }
+  .rv-tel { color:var(--red); text-decoration:none; font-weight:500; white-space:nowrap; }
+  .rv-note { font-size:.74rem; color:var(--text); background:var(--off-white); border-radius:8px; padding:.3rem .5rem; margin-top:.35rem; overflow-wrap:anywhere; }
+  .rv-chip { display:inline-block; font-size:.56rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; margin-left:.3rem; vertical-align:2px; white-space:nowrap; }
+  .rv-chip.in { background:var(--blue-light); color:var(--blue); }
+  .rv-chip.ns { background:#F6E2E1; color:var(--red-dark); }
+  .rv-chip.cx { background:var(--off-white); color:var(--muted); border:1px solid var(--border); }
+  .rv-chip.late { background:var(--amber-light); color:var(--amber); }
+  .rv-chip.big { background:#EDE3C9; color:#7A5B12; }
+  .rv-acts { display:flex; gap:.35rem; margin-top:.55rem; flex-wrap:wrap; }
+  .rv-act { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; border-radius:999px; padding:.5rem .75rem; border:1px solid var(--border); background:#fff; color:var(--text); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .rv-act.go { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .rv-act.no { color:var(--red-dark); border-color:rgba(176,16,21,.35); }
+  .rv-act.armed { background:var(--red); border-color:var(--red); color:#fff; }
+  .rv-act:disabled { opacity:.5; cursor:wait; }
+  .rv-empty { margin:1.5rem 0 0; text-align:center; color:var(--muted); font-size:.88rem; line-height:1.6; padding:2rem 1rem; background:var(--white); border:1px dashed var(--border); border-radius:14px; }
+  .rv-rail { position:absolute; left:1rem; top:0; width:54px; height:var(--eh, 360px); pointer-events:none; overflow:hidden;
+             -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%);
+                     mask-image:linear-gradient(to bottom, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%); }
+  .rv-pill { position:absolute; left:0; width:54px; height:52px; top:calc(var(--eh, 360px) / 2 - 26px); border-radius:14px; background:var(--ink); box-shadow:0 8px 20px rgba(43,33,26,.25); overflow:hidden; }
+  .rv-wheel { position:absolute; left:0; top:0; width:54px; }
+  .rv-tick { position:absolute; left:0; width:54px; height:44px; margin-top:-22px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+             font-family:var(--serif); font-weight:600; line-height:1; font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; color:var(--text); }
+  .rv-tick small { font-family:var(--sans); font-size:.5rem; letter-spacing:.14em; font-weight:600; color:var(--muted); margin-top:.18rem; }
+  .rv-tick.gap { font-family:var(--sans); letter-spacing:.2em; color:var(--muted); }
+  .rv-pill .rv-tick { color:var(--white); }
+  .rv-pill .rv-tick small { color:rgba(252,249,244,.7); }
+  .rv-tick i { position:absolute; right:3px; top:7px; width:5px; height:5px; border-radius:50%; background:var(--red); }
+  .rv-pill .rv-tick i { background:#FF9C92; }
+  .rv-hand { position:absolute; left:calc(1rem + 54px); width:8px; top:calc(var(--eh, 360px) / 2 - 1px); height:2px; background:var(--ink); border-radius:2px; pointer-events:none; }
+  @media (prefers-reduced-motion: reduce) { .rv-w { will-change:auto; } }
+
+  /* ── SHEET (big-party requests) ── */
+  .rv-scrim { position:fixed; inset:0; background:rgba(21,13,9,.45); z-index:300; }
+  .rv-sheet { position:fixed; left:0; right:0; bottom:0; z-index:301; max-height:88vh; overflow-y:auto; background:var(--white); border-radius:20px 20px 0 0; padding:.6rem 1.1rem calc(env(safe-area-inset-bottom,0px) + 1.4rem); box-shadow:var(--shadow-lg); max-width:720px; margin:0 auto; }
+  .rv-grab { width:44px; height:5px; border-radius:999px; background:var(--border); margin:0 auto .8rem; }
+  .rv-sheet-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.6rem; }
+  .rv-sheet-head .m-h { font-size:1.35rem; margin:0; }
+  .rv-x { border:none; background:none; font-size:1.5rem; line-height:1; color:var(--muted); cursor:pointer; padding:.2rem .4rem; }
+  .rv-rq { border:1px solid var(--border); border-radius:14px; padding:.85rem .9rem; margin-bottom:.7rem; background:#fff; }
+  .rv-rq-when { font-size:.8rem; margin-top:.2rem; }
+  .rv-rq-form { margin-top:.7rem; padding-top:.7rem; border-top:1px solid var(--border); }
+  .rv-form-row { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+  .rv-form-row .m-field { margin-top:.6rem; }
+
+  /* ── SETTINGS AND NUMBERS ── */
+  .rv-back { border:none; background:none; color:var(--red); font-family:var(--sans); font-size:.74rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; padding:.2rem 0 .8rem; }
+  .rv-nums { width:100%; border-collapse:collapse; font-size:.8rem; margin-top:.3rem; }
+  .rv-nums th { font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-align:right; padding:.3rem .2rem; }
+  .rv-nums th:first-child, .rv-nums td:first-child { text-align:left; white-space:nowrap; }
+  .rv-nums td { padding:.45rem .2rem; border-top:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; }
+  .rv-nums td b { font-weight:600; }
+  .rv-rule { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.6rem 0; border-bottom:1px solid var(--border); }
+  .rv-rule:last-of-type { border-bottom:none; }
+  .rv-rule label { font-size:.84rem; line-height:1.4; }
+  .rv-rule small { display:block; font-size:.7rem; color:var(--muted); }
+  .rv-rule .m-input, .rv-rule .m-select { width:88px; flex:none; text-align:center; padding:.5rem .4rem; }
+  .rv-day { padding:.6rem 0; border-bottom:1px solid var(--border); }
+  .rv-day:last-of-type { border-bottom:none; }
+  .rv-day-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; font-size:.86rem; font-weight:500; }
+  .rv-svc { display:flex; align-items:center; gap:.35rem; margin-top:.4rem; font-size:.8rem; color:var(--muted); }
+  .rv-svc .m-input { width:auto; flex:1; min-width:0; padding:.45rem .5rem; font-size:.84rem; }
+  .rv-mini { border:1px solid var(--border); background:#fff; color:var(--muted); border-radius:999px; padding:.28rem .7rem; font-size:.64rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); flex:none; }
+  .rv-mini.red { color:var(--red-dark); border-color:rgba(176,16,21,.35); }
+  .rv-mini.armed { background:var(--red); color:#fff; border-color:var(--red); }
+  .rv-closed { color:var(--muted); font-style:italic; font-size:.8rem; }
+  .rv-hol { display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.6rem 0; border-bottom:1px solid var(--border); font-size:.84rem; }
+  .rv-hol small { display:block; color:var(--muted); font-size:.72rem; }
+  .rv-hol small.warn { color:var(--red-dark); font-weight:500; }
+  .rv-room { padding:.7rem 0; border-bottom:1px solid var(--border); }
+  .rv-room-grid { display:grid; grid-template-columns:1fr 70px 70px; gap:.4rem; align-items:end; }
+  .rv-room-grid .m-field { margin-top:0; }
+  .rv-room-foot { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.5rem; font-size:.78rem; color:var(--muted); }
+  .rv-readonly { font-size:.74rem; color:var(--muted); background:var(--off-white); border-radius:10px; padding:.6rem .8rem; margin-bottom:1rem; line-height:1.55; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -159,8 +297,11 @@
 <script>
 // ── manager.html ──
 //
-// The dashboard a restaurant uses to run its own menu without calling
-// Sebastian: sold out, hidden, Chef's Pick, price and the written details.
+// The dashboard a restaurant uses to run itself without calling Sebastian, in
+// three tabs: Reservations (the day, arrived / no-show, big-party requests,
+// hours, holidays, rooms and rules), Menu (sold out, hidden, Chef's Pick, price
+// and the written details) and Team (who can manage the restaurant).
+// Crew see only Reservations, with no buttons.
 //
 // Nothing on this page is a security boundary. It hides buttons the account
 // may not use, but every save goes to /api/manager-dish, which re-checks the
@@ -176,6 +317,14 @@ let ACCESS = null;         // what this account may do, straight from the server
 let RESTAURANT = null;     // the one being managed right now
 let DISHES_ROWS = [];      // raw dish rows for that restaurant
 let openDishId = null;
+let DISHES_LOADED = false; // the menu is loaded when the Menu tab is first opened
+let DISHES_ERROR = null;
+
+// Which tab is showing. The address remembers it (#reservations, #menu, #team),
+// so the corner menu's "Manage Reservations" and a refresh land in the right place.
+const TABS = { reservations:'Reservations', menu:'Menu', team:'Team' };
+let TAB = tabFromHash() || 'reservations';
+function tabFromHash(){ const t = (location.hash||'').replace('#',''); return TABS[t] ? t : null; }
 
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function wrap(){return document.getElementById('m-wrap');}
@@ -228,7 +377,7 @@ async function boot(){
     w.innerHTML =
       '<div class="m-card">'
     + '<div class="m-eyebrow">Restaurant access</div>'
-    + '<div class="m-h">Log in to manage your menu</div>'
+    + '<div class="m-h">Log in to manage your restaurant</div>'
     + '<div class="m-sub">Use the same phone number and PIN you use on the site. If your account has not been given access yet, ask Seb\'s Analytics to add it.</div>'
     + '<div style="margin-top:1.2rem;"><button class="m-btn" onclick="openTasterModal()">Log In</button></div>'
     + '</div>';
@@ -264,18 +413,43 @@ async function boot(){
         + '<div class="m-sub">You are the platform admin, so you see every restaurant — and right now the <strong>restaurants</strong> table has no rows in it. Add the restaurant, then reload.</div>'
       : '<div class="m-eyebrow">No access yet</div>'
         + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
-        + '<div class="m-sub">This account is not a manager or owner of any restaurant yet. Ask Seb\'s Analytics to add it, then reload this page.</div>';
+        + '<div class="m-sub">This account has no role at any restaurant yet. Ask your manager or Seb\'s Analytics to add it, then reload this page.</div>';
     w.innerHTML = '<div class="m-card">' + reason + '</div>';
     return;
   }
 
   RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
-  await loadDishes();
+  mountPage();
 }
 
+// Draws the page for the current tab and loads what that tab needs.
+function mountPage(){
+  render();
+  if(TAB==='reservations') rvStart();
+  else if(TAB==='menu' && !DISHES_LOADED) loadDishes();
+  else if(TAB==='team') loadPeople();
+}
+
+function levelHere(){ return RESTAURANT ? Number(RESTAURANT.level)||0 : 0; }
+// Crew (1) see Reservations only; everyone above sees all three.
+function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team'] : ['reservations']; }
+
+function switchTab(t){
+  if(!allowedTabs().includes(t) || t===TAB) return;
+  TAB = t;
+  if(history.replaceState) history.replaceState(null, '', '#'+t);
+  if(t!=='reservations'){ RV.view = 'day'; document.body.classList.remove('rv-mode'); rvPaintSheet(); }
+  window.scrollTo(0, 0);
+  mountPage();
+}
+
+window.addEventListener('hashchange', function(){
+  const t = tabFromHash();
+  if(t && ACCESS && RESTAURANT && t!==TAB) switchTab(t);
+});
+
 async function loadDishes(){
-  const w = wrap();
-  w.innerHTML = header() + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>';
+  DISHES_ERROR = null;
   try{
     // Hidden dishes must appear here — hiding one on the public menu is not the
     // same as losing the switch that brings it back.
@@ -285,12 +459,11 @@ async function loadDishes(){
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     if(!res.ok) throw new Error('Could not load the menu ('+res.status+').');
     DISHES_ROWS = await res.json();
+    DISHES_LOADED = true;
   }catch(e){
-    w.innerHTML = header() + '<div class="m-err">'+esc(e.message)+'</div>';
-    return;
+    DISHES_ERROR = e.message;
   }
-  render();
-  loadPeople();   // fills in the People card once the dishes are on screen
+  if(TAB==='menu') render();
 }
 
 // ── RENDER ──
@@ -304,21 +477,45 @@ function header(){
     : '';
   const roleClass = RESTAURANT.role==='platform'?'platform':(RESTAURANT.role==='owner'?'owner':'');
   const roleLabel = RESTAURANT.role==='platform'?'Platform admin':RESTAURANT.role;
-  return '<div class="m-card">'
-    + '<div class="m-eyebrow">Signed in as '+esc(ACCESS.firstName||'')+'</div>'
-    + '<div class="m-h">'+esc(RESTAURANT.name||'Restaurant')+'</div>'
-    + '<div style="margin-top:.4rem;"><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span></div>'
+  return '<div class="m-card m-head-card">'
+    + '<div class="m-head-row"><div>'
+    +   '<div class="m-eyebrow">Signed in as '+esc(ACCESS.firstName||'')+'</div>'
+    +   '<div class="m-h">'+esc(RESTAURANT.name||'Restaurant')+'</div>'
+    + '</div><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span></div>'
     + picker
     + '</div>';
 }
 
+function tabsBar(){
+  const tabs = allowedTabs();
+  const gear = TAB==='reservations'
+    ? '<button type="button" class="m-gear'+(RV.view==='settings'?' on':'')+'" aria-label="Numbers and settings" title="Numbers and settings" onclick="rvOpenSettings()">'
+      + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+      + '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>'
+    : '';
+  if(tabs.length < 2) return gear ? '<div class="m-tabs"><div class="m-tabbar"><span class="m-tab on">Reservations</span></div>'+gear+'</div>' : '';
+  return '<div class="m-tabs"><div class="m-tabbar" role="tablist">'
+    + tabs.map(t => '<button type="button" role="tab" class="m-tab'+(t===TAB?' on':'')+'" aria-selected="'+(t===TAB)+'" onclick="switchTab(\''+t+'\')">'+TABS[t]+'</button>').join('')
+    + '</div>'+gear+'</div>';
+}
+
 function render(){
-  const people = peopleSection();
-  if(!DISHES_ROWS.length){
-    wrap().innerHTML = header() + people + '<div class="m-empty">This restaurant has no dishes yet.</div>';
+  if(!allowedTabs().includes(TAB)) TAB = 'reservations';
+  document.body.classList.toggle('rv-mode', TAB==='reservations' && RV.view==='day');
+  const top = header() + tabsBar();
+  if(TAB==='team'){
+    wrap().innerHTML = top + peopleSection();
     return;
   }
-  wrap().innerHTML = header() + people + DISHES_ROWS.map(dishCard).join('');
+  if(TAB==='menu'){
+    if(DISHES_ERROR){ wrap().innerHTML = top + '<div class="m-err">'+esc(DISHES_ERROR)+'</div>'; return; }
+    if(!DISHES_LOADED){ wrap().innerHTML = top + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
+    wrap().innerHTML = top + (DISHES_ROWS.length ? DISHES_ROWS.map(dishCard).join('')
+                                                 : '<div class="m-empty">This restaurant has no dishes yet.</div>');
+    return;
+  }
+  wrap().innerHTML = top + '<div id="rv-root"></div>';
+  rvRender();
 }
 
 function dishCard(d){
@@ -520,7 +717,7 @@ async function loadPeople(){
   }catch(e){
     PEOPLE = {error:e.message};
   }
-  render();
+  if(TAB==='team') render();
 }
 
 function peopleSection(){
@@ -544,7 +741,7 @@ function peopleSection(){
               + '<span style="opacity:.7;">(not active yet)</span></label>'
             : '')
       + '</div>'
-      + '<button class="m-person-x" onclick="removePerson('+p.id+',\''+esc(p.name).replace(/'/g,"\\'")+'\')"'
+      + '<button class="m-person-x" onclick="removePerson('+Number(p.id)+')"'
       +   (p.canRemove?'':' disabled title="Your role cannot remove this person"')+'>Remove</button>'
       + '</div>').join('')
     : '<div class="m-sub" style="padding:.5rem 0;">Nobody has a role here yet.</div>';
@@ -594,8 +791,9 @@ async function addPerson(){
   btn.disabled = false; btn.textContent = 'Add';
 }
 
-async function removePerson(roleId, name){
-  if(!confirm('Remove '+name+'?')) return;
+async function removePerson(roleId){
+  const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
+  if(!confirm('Remove '+(who ? who.name : 'this person')+'?')) return;
   try{
     const {res, data} = await callApi('/api/roles', {
       method:'POST',
@@ -630,7 +828,9 @@ function switchRestaurant(id){
   RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(id)) || RESTAURANT;
   openDishId = null;
   PEOPLE = null;          // the previous restaurant's people are not this one's
-  loadDishes();
+  DISHES_ROWS = []; DISHES_LOADED = false; DISHES_ERROR = null;
+  rvReset(); rvPaintSheet();
+  mountPage();
 }
 
 function rowFor(id){ return DISHES_ROWS.find(d=>String(d.id)===String(id)); }
@@ -728,6 +928,963 @@ async function save(id, changes){
     return false;
   }
 }
+
+
+// ── RESERVATIONS ──
+//
+// The Reservations tab. Everything on it comes from /api/reservations, the
+// actions whose names start with "staff_", and the server checks this
+// account's role on every one of them. The buttons drawn here are only the
+// ones the server has already said this account may press: crew get the same
+// screen with none at all.
+//
+// The day is a watch (Sebastian's idea, 23 Sep): the bookings roll past like a
+// watch's list, the one in the middle is full size with its buttons, and the
+// clock on the left rolls with them — more slowly, by the time between one
+// booking and the next. Two tables at 7:00 and the clock waits.
+
+const RV = {
+  rid: null, view: 'day',
+  days: [], daysFrom: null, daysTo: null, today: null, date: null,
+  day: null, fetchedAt: 0, error: null, seq: 0,
+  centerId: null, armed: null, armTimer: null, busy: false,
+  stops: [], cardIdx: [], cardEls: [], cardGeo: [], tickEls: [[], []], raf: 0, sizeWatch: null,
+  sheet: null, sheetResult: {},
+  settings: null, settingsError: null, hoursDraft: null, settingsNote: '',
+  timer: null, lastScroll: 0, typed: {}, forget: [], hoursBase: null,
+  // Goes up every time the restaurant changes or the session ends. An answer
+  // that comes back for an older generation is dropped, so a slow reply about
+  // the last restaurant can never be drawn over (or saved into) this one.
+  gen: 0,
+};
+const RV_ROW = 44;            // pixels between two marks on the clock
+
+function rvReset(){
+  Object.assign(RV, { gen: RV.gen + 1, rid: RESTAURANT ? RESTAURANT.id : null, view: 'day', days: [], daysFrom: null, daysTo: null,
+    today: null, date: null, day: null, error: null, centerId: null, armed: null, sheet: null, sheetResult: {},
+    settings: null, settingsError: null, hoursDraft: null, hoursBase: null, settingsNote: '', typed: {}, forget: [] });
+}
+
+async function rvApi(body){
+  const token = currentSession;
+  const {res, data} = await callApi('/api/reservations', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify(Object.assign({restaurantId: RESTAURANT.id}, body))
+  });
+  if(res.status===401){
+    // Only if it is still the session this request was sent with: a reply
+    // that arrives after a fresh log-in must not throw the new one away.
+    if(currentSession && currentSession===token){
+      logout();                            // clears the list off the screen too (below)
+      showToast('Your session expired. Please log in again.');
+    }
+    throw new Error('Please log in again.');
+  }
+  if(!res.ok){ const e = new Error(data.error||'Something went wrong. Please try again.'); e.status = res.status; e.data = data; throw e; }
+  return data;
+}
+
+// ── DATES AND CLOCKS ──
+function rvD(date){ return new Date(date+'T12:00:00Z'); }
+function rvAddDays(date, n){ const d = rvD(date); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function rvFmt(date, opts){ return new Intl.DateTimeFormat('en-US', Object.assign({timeZone:'UTC'}, opts)).format(rvD(date)); }
+function rvLong(date){ return rvFmt(date, {weekday:'long', month:'long', day:'numeric'}); }
+function rvShort(date){ return rvFmt(date, {weekday:'short', month:'short', day:'numeric'}); }
+function rvClock(m){
+  const mm = ((m % 1440) + 1440) % 1440, h = Math.floor(mm/60);
+  return { t: (h % 12 || 12) + ':' + String(mm % 60).padStart(2,'0'), ap: h < 12 ? 'AM' : 'PM' };
+}
+function rvHm(hhmm){ const c = rvClock(Number(hhmm.slice(0,2))*60 + Number(hhmm.slice(3,5))); return c.t+' '+c.ap; }
+// Now, by the server's clock (the phone's may be wrong), in milliseconds.
+function rvNowMs(){ return RV.day ? Date.parse(RV.day.now) + (Date.now() - RV.fetchedAt) : Date.now(); }
+function rvNowMinutes(){
+  const p = {};
+  new Intl.DateTimeFormat('en-US', {timeZone: RV.day.timezone, hourCycle:'h23', hour:'2-digit', minute:'2-digit'})
+    .formatToParts(new Date(rvNowMs())).forEach(x => { p[x.type] = x.value; });
+  const m = Number(p.hour)*60 + Number(p.minute);
+  return m < 300 ? m + 1440 : m;      // before 5 AM it is still last night's service
+}
+function rvTel(phone){
+  const raw = String(phone||''), dial = raw.replace(/[^\d+]/g,'');
+  const us = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(dial);
+  const shown = us ? '('+us[1]+') '+us[2]+'-'+us[3] : raw;
+  return '<a class="rv-tel" href="tel:'+esc(dial)+'">'+esc(shown)+'</a>';
+}
+function rvPeople(n){ return n+(n===1?' person':' people'); }
+
+// ── LOADING ──
+async function rvStart(){
+  if(!RESTAURANT) return;
+  if(RV.rid !== RESTAURANT.id) rvReset();
+  rvRender();
+  if(RV.view === 'settings'){ rvLoadSettings(true); return; }
+  await Promise.all([ rvLoadDays(RV.date), rvLoadDay(RV.date, {quiet: !!RV.day}) ]);
+  rvKeepFresh();
+}
+
+// A page left open all service still shows new bookings: every minute, while
+// it is on screen and nobody is in the middle of a tap.
+function rvKeepFresh(){
+  if(RV.timer) return;
+  RV.timer = setInterval(function(){
+    if(!currentSession || TAB!=='reservations' || RV.view!=='day' || document.visibilityState!=='visible') return;
+    if(RV.sheet || RV.armed || RV.busy || !RV.day) return;
+    if(Date.now() - RV.lastScroll < 4000) return;      // a finger is on the evening: next minute
+    rvLoadDay(RV.date, {quiet:true});
+    rvLoadDays(RV.date, true);
+  }, 60000);
+}
+
+async function rvLoadDays(around, force){
+  const center = around || RV.today;
+  if(!force && center && RV.daysFrom && center >= rvAddDays(RV.daysFrom, 3) && center <= rvAddDays(RV.daysTo, -3)) return;
+  try{
+    const body = {action:'staff_days'};
+    if(center){ body.from = rvAddDays(center, -30); body.to = rvAddDays(center, 60); }
+    const gen = RV.gen;
+    const data = await rvApi(body);
+    if(gen !== RV.gen) return;
+    RV.days = data.days; RV.daysFrom = data.from; RV.daysTo = data.to; RV.today = data.today;
+    if(!RV.date) RV.date = data.today;
+    rvPaintDays();
+  }catch(e){ /* the carousel just shows no numbers; the day itself still loads */ }
+}
+
+async function rvLoadDay(date, opts){
+  const quiet = opts && opts.quiet;
+  const seq = ++RV.seq, gen = RV.gen;
+  const ev = document.getElementById('rv-evening');
+  if(!quiet && ev) ev.classList.add('busy');
+  try{
+    const body = {action:'staff_day'};
+    if(date) body.date = date;
+    const data = await rvApi(body);
+    if(seq !== RV.seq || gen !== RV.gen) return;       // a newer day, or another restaurant, was asked for
+    const dayChanged = !RV.day || RV.day.date !== data.date;
+    const listChanged = dayChanged || JSON.stringify(RV.day.bookings) !== JSON.stringify(data.bookings);
+    RV.day = data; RV.fetchedAt = Date.now(); RV.error = null;
+    RV.date = data.date; RV.today = data.today;
+    if(dayChanged){ RV.centerId = rvDefaultCenter(); RV.armed = null; }
+    if(!document.getElementById('rv-evening')){ rvRender(); return; }
+    rvPaintDays(); rvPaintTop();
+    if(listChanged) rvPaintEvening();
+    else { document.getElementById('rv-evening').classList.remove('busy'); rvRefreshLate(); }
+    if(RV.sheet) rvPaintSheet();
+  }catch(e){
+    if(seq !== RV.seq || gen !== RV.gen) return;
+    if(!quiet || !RV.day){ RV.error = e.message; rvRender(); }
+  }
+}
+
+// Which booking sits in the middle when a day opens. Today: the first guest
+// still expected (a late one before the next one due), or failing that the
+// table just gone by. Any other day: the first of the day.
+function rvDefaultCenter(){
+  const list = RV.day ? RV.day.bookings : [];
+  if(!list.length) return null;
+  if(RV.day.date === RV.day.today){
+    const now = rvNowMinutes();
+    const waiting = list.find(b => b.status==='booked' && b.minutes >= now - 120);
+    const next = waiting || list.find(b => b.status!=='cancelled' && b.minutes >= now - 45);
+    return (next || list[list.length-1]).id;
+  }
+  return (list.find(b => b.status!=='cancelled') || list[0]).id;
+}
+
+// ── DRAWING ──
+function rvRender(){
+  if(TAB!=='reservations') return;
+  const root = document.getElementById('rv-root');
+  if(!root) return;
+  document.body.classList.toggle('rv-mode', RV.view==='day');
+  if(RV.view==='settings'){
+    const kept = rvKeptInputs();
+    root.innerHTML = rvSettingsHtml();
+    rvPutBack(kept);
+    return;
+  }
+  if(RV.error && !RV.day){
+    root.innerHTML = '<div class="m-err">'+esc(RV.error)+'</div>'
+      + '<button class="m-btn" onclick="RV.error=null;rvStart()">Try again</button>';
+    return;
+  }
+  if(!RV.day){ root.innerHTML = '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
+  root.innerHTML = '<div class="rv-car" id="rv-car"></div><div class="rv-dateline" id="rv-dateline"></div>'
+    + '<div id="rv-top"></div><div class="rv-evening" id="rv-evening"></div>';
+  rvPaintDays(); rvPaintTop(); rvPaintEvening(); rvPaintSheet();
+}
+
+function rvPaintDays(){
+  const car = document.getElementById('rv-car');
+  if(!car || !RV.date) return;
+  const info = {};
+  RV.days.forEach(d => { info[d.date] = d; });
+  const cells = [];
+  for(let k=-2; k<=2; k++){
+    const date = rvAddDays(RV.date, k), d = info[date];
+    const label = date===RV.today ? 'Today' : rvFmt(date, {weekday:'short'});
+    let line = '&nbsp;', cls = '';
+    if(d){
+      if(d.tables) line = d.tables+(d.tables===1?' table':' tables');
+      else if(d.open===false){ line = 'Closed'; cls = ' class="shut"'; }
+      else { line = 'none'; cls = ' class="shut"'; }
+    }
+    cells.push('<button type="button" class="rv-cday'+(k===0?' on':'')+(Math.abs(k)===2?' far':'')+'"'
+      + (k===0 ? ' aria-current="date"' : ' onclick="rvPick(\''+date+'\')"')
+      + ' aria-label="'+esc(rvLong(date))+'">'
+      + '<span>'+esc(label)+'</span><b>'+Number(date.slice(8))+'</b><i'+cls+'>'+line+'</i></button>');
+  }
+  car.innerHTML = '<button type="button" class="rv-arrow" aria-label="Previous day" onclick="rvStep(-1)">&#8249;</button>'
+    + '<div class="rv-strip">'+cells.join('')+'</div>'
+    + '<button type="button" class="rv-arrow" aria-label="Next day" onclick="rvStep(1)">&#8250;</button>';
+  const line = document.getElementById('rv-dateline');
+  if(line) line.textContent = rvLong(RV.date) + (RV.date===RV.today ? ' · today' : '');
+}
+
+function rvStep(n){ rvPick(rvAddDays(RV.date, n)); }
+function rvPick(date){
+  if(!date || date===RV.date) return;
+  // A year back and a year ahead is more than any restaurant needs from here.
+  if(RV.today && (date < rvAddDays(RV.today, -365) || date > rvAddDays(RV.today, 365))) return;
+  RV.date = date; RV.armed = null;
+  rvPaintDays();
+  rvLoadDay(date);
+  rvLoadDays(date);
+}
+
+function rvPaintTop(){
+  const top = document.getElementById('rv-top');
+  if(!top || !RV.day) return;
+  const d = RV.day, same = d.date === RV.date;
+  const c = same ? d.counts : null;
+  const tile = (n, label, red) => '<div class="rv-tile'+(red?' red':'')+'"><b>'+(c ? n : '·')+'</b><span>'+label+'</span></div>';
+  const q = d.requests || [];
+  let html = '<div class="rv-tiles">'
+    + tile(c && c.tables, 'Tables') + tile(c && c.people, 'People') + tile(c && c.arrived, 'Arrived')
+    + '<button type="button" class="rv-tile'+(q.length?' red':'')+'" onclick="rvOpenRequests()"><b>'+q.length+'</b><span>'+(q.length===1?'Request':'Requests')+'</span></button>'
+    + '</div>';
+  if(q.length){
+    const r = q[0];
+    html += '<div class="rv-banner"><span><b>'+esc(r.name)+'</b> asks for <b>'+rvPeople(r.party)+'</b> · '+esc(rvShort(r.date))
+      + (q.length>1 ? ' · +'+(q.length-1)+' more' : '')+'</span>'
+      + '<button type="button" class="rv-act no" style="background:#fff;flex:none;" onclick="rvOpenRequests()">'+(d.canEdit?'Answer':'See')+'</button></div>';
+  }
+  if(!d.settings.enabled){
+    html += '<div class="rv-off">Online booking is switched off. The booking page tells guests to call.'
+      + (d.canEdit ? ' Switch it on in <a href="#" onclick="rvOpenSettings();return false;">settings</a>.' : '')+'</div>';
+  }
+  top.innerHTML = html;
+}
+
+function rvLateMinutes(b){
+  if(b.status!=='booked' || !RV.day || RV.day.date!==RV.day.today) return 0;
+  const late = Math.floor((rvNowMs() - Date.parse(b.at)) / 60000);
+  return late >= 5 ? late : 0;
+}
+
+function rvCard(b){
+  const late = rvLateMinutes(b);
+  const chips = (b.status==='seated' ? '<span class="rv-chip in">Arrived'+(b.seatedLabel?' '+esc(b.seatedLabel):'')+'</span>' : '')
+    + (b.status==='no_show' ? '<span class="rv-chip ns">No-show</span>' : '')
+    + (b.status==='cancelled' ? '<span class="rv-chip cx">Cancelled</span>' : '')
+    + (late ? '<span class="rv-chip late">Late · '+late+' min</span>' : '')
+    + (b.source==='request' ? '<span class="rv-chip big">Big party</span>' : '');
+  const armed = RV.armed && RV.armed.id===b.id ? RV.armed.act : null;
+  const btn = (act, cls, text, sure) => '<button type="button" class="rv-act '+cls+(armed===act?' armed':'')+'" data-act="'+act+'">'
+    + (armed===act ? sure : text)+'</button>';
+  // The armed button turns red and says "Sure?": short, so the row never wraps
+  // and the card does not jump under the finger that is about to tap again.
+  const acts = (b.canArrive ? btn('seated','go','Arrived') : '')
+    + (b.canNoShow ? btn('no_show','no','No-show','Sure?') : '')
+    + (b.canUndo ? btn('booked','','Undo') : '')
+    + (b.canCancel ? btn('cancelled','','Cancel','Sure?') : '');
+  return '<div class="rv-w'+(['seated','no_show','cancelled'].includes(b.status)?' faded':'')+'" data-id="'+b.id+'" data-late="'+late+'">'
+    + '<div class="rv-w-in">'
+    +   '<div class="rv-when"><span>'+esc(b.label)+'</span><em>'+esc(b.code)+'</em></div>'
+    +   '<div class="rv-name">'+esc(b.name)+chips+'</div>'
+    +   '<div class="rv-meta">'+rvPeople(b.party)+(b.areaName?' · '+esc(b.areaName):'')+' · '+rvTel(b.phone)+'</div>'
+    +   (b.notes ? '<div class="rv-note">&ldquo;'+esc(b.notes)+'&rdquo;</div>' : '')
+    + '</div>'
+    + (acts ? '<div class="rv-acts">'+acts+'</div>' : '')
+    + '</div>';
+}
+
+function rvPaintEvening(){
+  const ev = document.getElementById('rv-evening');
+  if(!ev || !RV.day) return;
+  ev.classList.remove('busy');
+  const list = RV.day.bookings;
+  if(!list.length){
+    const d = RV.days.find(x => x.date===RV.day.date);
+    ev.innerHTML = '<div class="rv-empty">'+(d && d.open===false ? '<b>Closed this day.</b><br>' : '')
+      + 'No tables booked for '+esc(rvLong(RV.day.date))+'.</div>';
+    RV.stops = []; RV.cardEls = [];
+    return;
+  }
+  ev.innerHTML = '<div class="rv-scroll" id="rv-scroll"><div class="rv-pad"></div>'+list.map(rvCard).join('')+'<div class="rv-pad"></div></div>'
+    + '<div class="rv-rail" aria-hidden="true"><div class="rv-wheel"></div><div class="rv-pill"><div class="rv-wheel"></div></div></div>'
+    + '<div class="rv-hand"></div>';
+  rvFit();
+  rvBuildWheel();
+  rvMeasure();
+  // A card that changes height (the fonts arrive after the first paint, a name
+  // wraps differently) moves every card below it. Measure again whenever that
+  // happens, or the clock would drift a few pixels off its marks.
+  if(RV.sizeWatch) RV.sizeWatch.disconnect();
+  if(window.ResizeObserver){
+    RV.sizeWatch = new ResizeObserver(function(){ rvMeasure(); rvPaint(); });
+    RV.cardEls.forEach(c => RV.sizeWatch.observe(c));
+  }
+  const sc = document.getElementById('rv-scroll');
+  sc.addEventListener('scroll', function(){
+    RV.lastScroll = Date.now();
+    if(!RV.raf) RV.raf = requestAnimationFrame(function(){ RV.raf = 0; rvPaint(); });
+  }, {passive:true});
+  sc.addEventListener('click', rvEveningClick);
+  rvCenterOn(RV.centerId, false);
+  rvPaint();
+}
+
+// The evening fills what is left of the screen, so the page itself does not
+// scroll: only the bookings do.
+function rvFit(){
+  const ev = document.getElementById('rv-evening');
+  if(!ev) return;
+  const top = ev.getBoundingClientRect().top + window.scrollY;
+  const h = Math.max(320, Math.round(window.innerHeight - top - 10));
+  document.documentElement.style.setProperty('--eh', h+'px');
+}
+
+// The clock: a mark every half hour (or every slot, for a restaurant that books
+// every 15 or 20 minutes), from an hour before the first table to an hour after
+// the last. A long quiet stretch between two tables — lunch and dinner — is
+// folded into "···", so the clock never spins through empty hours.
+function rvBuildWheel(){
+  const list = RV.day.bookings;
+  const slot = RV.day.settings.slotMinutes;
+  const step = (slot===15 || slot===20) ? slot : 30;
+  const times = [...new Set(list.map(b => b.minutes))].sort((a,b) => a-b);
+  const first = Math.max(0, Math.floor(times[0]/step)*step - 60);
+  const last = Math.ceil(times[times.length-1]/step)*step + 60;
+  const folded = x => times.some((t, i) => i < times.length-1 && times[i+1]-t > 120 && x > t+step && x < times[i+1]-step);
+  const ticks = [];
+  for(let m = first; m <= last; m += step){
+    if(folded(m)){ if(!ticks.length || !ticks[ticks.length-1].gap) ticks.push({gap:true}); continue; }
+    ticks.push({m: m});
+  }
+  // Where a time sits on the wheel, as a (fractional) mark number.
+  const idxOf = t => {
+    let k = -1;
+    ticks.forEach((x, i) => { if(!x.gap && x.m <= t) k = i; });
+    if(k < 0) return 0;
+    const next = ticks[k+1];
+    return next && !next.gap ? k + (t - ticks[k].m) / step : k;
+  };
+  RV.cardIdx = list.map(b => idxOf(b.minutes));
+  const busy = t => times.some(x => x >= t && x < t + step);
+  const html = ticks.map(x => {
+    if(x.gap) return '<div class="rv-tick gap">···</div>';
+    const c = rvClock(x.m);
+    return '<div class="rv-tick">'+c.t+'<small>'+c.ap+'</small>'+(busy(x.m)?'<i></i>':'')+'</div>';
+  }).join('');
+  const wheels = document.querySelectorAll('#rv-evening .rv-wheel');
+  wheels.forEach(w => { w.innerHTML = html; });
+  RV.tickEls = [...wheels].map(w => [...w.children]);
+}
+
+function rvMeasure(){
+  const sc = document.getElementById('rv-scroll');
+  if(!sc) return;
+  RV.cardEls = [...sc.querySelectorAll('.rv-w')];
+  const H = sc.clientHeight;
+  RV.cardGeo = RV.cardEls.map(c => ({ top: c.offsetTop, h: c.offsetHeight }));
+  RV.stops = RV.cardGeo.map(g => Math.max(0, g.top + g.h/2 - H/2));
+}
+
+function rvCenterOn(id, smooth){
+  const sc = document.getElementById('rv-scroll');
+  if(!sc || !RV.stops.length) return;
+  let i = RV.cardEls.findIndex(c => Number(c.dataset.id)===Number(id));
+  if(i < 0) i = 0;
+  sc.scrollTo({ top: RV.stops[i], behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function rvPaint(){
+  const sc = document.getElementById('rv-scroll');
+  if(!sc || !RV.stops.length) return;
+  const s = sc.scrollTop, H = sc.clientHeight, mid = s + H/2, st = RV.stops, T = RV.cardIdx;
+  // The clock, between two bookings, moves by the time between them.
+  let ri = T[0];
+  if(s >= st[st.length-1]) ri = T[T.length-1];
+  else for(let i=0; i<st.length-1; i++){
+    if(s <= st[i+1]){
+      // Within a pixel or two of a card, the clock sits exactly on its time:
+      // the browser rounds the scroll position, and a clock resting a hair off
+      // its mark looks wrong.
+      let f = Math.min(1, Math.max(0, (s - st[i]) / Math.max(1, st[i+1]-st[i])));
+      if(s - st[i] < 2) f = 0; else if(st[i+1] - s < 2) f = 1;
+      ri = T[i] + f * (T[i+1] - T[i]);
+      break;
+    }
+  }
+  RV.tickEls.forEach((ticks, w) => {
+    const lit = w === 1, base = lit ? 26 : H/2;
+    ticks.forEach((el, k) => {
+      const d = k - ri, a = Math.min(Math.abs(d), 3);
+      el.style.top = (base + d*RV_ROW)+'px';
+      el.style.fontSize = (1.32 - .2*Math.min(a,1) - .1*Math.max(0,a-1))+'rem';
+      el.style.opacity = lit ? 1 : Math.max(.12, 1 - .32*a);
+    });
+  });
+  let best = 0, bestD = 1e9;
+  RV.cardEls.forEach((c, i) => {
+    const cy = RV.cardGeo[i].top + RV.cardGeo[i].h/2;
+    const a = Math.min(Math.abs((cy - mid) / 150), 2.2);
+    c.style.transform = 'scale('+(1 - .075*a)+')';
+    c.style.opacity = Math.max(.28, 1 - .3*a);
+    const acts = c.querySelector('.rv-acts');
+    if(acts){ acts.style.opacity = Math.max(.18, 1 - 1.4*a); acts.style.pointerEvents = a < .25 ? 'auto' : 'none'; }
+    if(Math.abs(cy - mid) < bestD){ bestD = Math.abs(cy - mid); best = i; }
+  });
+  RV.cardEls.forEach((c, i) => c.classList.toggle('mid', i===best));
+  const midId = RV.cardEls[best] ? Number(RV.cardEls[best].dataset.id) : null;
+  if(midId !== RV.centerId){
+    RV.centerId = midId;
+    if(RV.armed){ const was = RV.armed.id; RV.armed = null; rvRepaintCard(was); }   // rolled away: disarm
+  }
+}
+
+// A tap on a card that is not in the middle rolls it there — its phone number
+// is not dialled and its buttons are not pressed. In the middle, the buttons work.
+function rvEveningClick(e){
+  const card = e.target.closest('.rv-w');
+  if(!card) return;
+  const id = Number(card.dataset.id);
+  if(!card.classList.contains('mid')){
+    e.preventDefault();
+    rvCenterOn(id, true);
+    return;
+  }
+  const btn = e.target.closest('.rv-act[data-act]');
+  if(btn) rvAct(id, btn.dataset.act, btn);
+}
+
+function rvRepaintCard(id){
+  const old = document.querySelector('#rv-scroll .rv-w[data-id="'+Number(id)+'"]');
+  const b = RV.day && RV.day.bookings.find(x => x.id===Number(id));
+  if(!old || !b) return;
+  old.outerHTML = rvCard(b);
+  const fresh = document.querySelector('#rv-scroll .rv-w[data-id="'+Number(id)+'"]');
+  if(fresh && RV.sizeWatch) RV.sizeWatch.observe(fresh);
+  rvMeasure(); rvPaint();
+}
+
+// "Late · 12 min" is worked out on the phone, so it moves on every minute even
+// when the list itself has not changed.
+function rvRefreshLate(){
+  if(!RV.day) return;
+  RV.day.bookings.forEach(b => {
+    const card = document.querySelector('#rv-scroll .rv-w[data-id="'+b.id+'"]');
+    if(card && Number(card.dataset.late) !== rvLateMinutes(b)) rvRepaintCard(b.id);
+  });
+}
+
+const RV_DONE = { seated:'Arrived', no_show:'No-show', booked:'Put back', cancelled:'Cancelled' };
+
+async function rvAct(id, act, btn){
+  const b = RV.day.bookings.find(x => x.id===id);
+  if(!b || RV.busy) return;
+  // No-show and Cancel take two taps: one tap on a phone during service is too
+  // easy to make by accident, and a cancelled table may go to someone else.
+  if((act==='no_show' || act==='cancelled') && !(RV.armed && RV.armed.id===id && RV.armed.act===act)){
+    const was = RV.armed && RV.armed.id;
+    RV.armed = {id: id, act: act};
+    if(was && was!==id) rvRepaintCard(was);
+    rvRepaintCard(id);
+    clearTimeout(RV.armTimer);
+    RV.armTimer = setTimeout(function(){ if(RV.armed && RV.armed.id===id){ RV.armed = null; rvRepaintCard(id); } }, 4000);
+    return;
+  }
+  RV.armed = null; clearTimeout(RV.armTimer);
+  RV.busy = true;
+  document.querySelectorAll('#rv-scroll .rv-w[data-id="'+id+'"] .rv-act').forEach(x => { x.disabled = true; });
+  const gen = RV.gen;
+  try{
+    const data = await rvApi({action:'staff_mark', id: id, to: act});
+    if(gen !== RV.gen) return;
+    rvApply(data.booking);
+    showToast(RV_DONE[act]+' · '+b.name);
+  }catch(e){
+    if(gen !== RV.gen) return;
+    if(e.data && e.data.booking) rvApply(e.data.booking); else rvRepaintCard(id);
+    showToast(e.message);
+  }finally{
+    RV.busy = false;
+  }
+}
+
+// One booking changed: the card, the numbers and the day in the carousel
+// follow, without waiting for the next refresh.
+function rvApply(nb){
+  if(!RV.day || !nb) return;
+  const list = RV.day.bookings, i = list.findIndex(x => x.id===nb.id);
+  if(i < 0) return;
+  // The card keeps its place on this day's clock (a 12:30 AM table stays at
+  // 24:30 here; the answer to a tap does not know which list it is on).
+  list[i] = Object.assign({}, list[i], nb, { areaName: nb.areaName || list[i].areaName, minutes: list[i].minutes });
+  const live = list.filter(b => b.status!=='cancelled');
+  RV.day.counts = { tables: live.length, people: live.reduce((n,b) => n+b.party, 0),
+    arrived: list.filter(b => b.status==='seated' || b.status==='done').length,
+    noShows: list.filter(b => b.status==='no_show').length, cancelled: list.length - live.length };
+  const d = RV.days.find(x => x.date===RV.day.date);
+  if(d) Object.assign(d, { tables: RV.day.counts.tables, people: RV.day.counts.people, arrived: RV.day.counts.arrived });
+  RV.centerId = nb.id;
+  rvPaintDays(); rvPaintTop(); rvPaintEvening();
+}
+
+window.addEventListener('resize', function(){
+  if(TAB!=='reservations' || RV.view!=='day') return;
+  rvFit(); rvMeasure(); rvPaint();
+});
+
+// ── BIG-PARTY REQUESTS ──
+function rvOpenRequests(){ RV.sheet = {open:null}; rvPaintSheet(); }
+function rvCloseSheet(){ RV.sheet = null; RV.sheetResult = {}; rvPaintSheet(); }
+
+function rvPaintSheet(){
+  let host = document.getElementById('rv-sheet-host');
+  if(!host){ host = document.createElement('div'); host.id = 'rv-sheet-host'; document.body.appendChild(host); }
+  if(!RV.sheet || !RV.day || TAB!=='reservations'){ host.innerHTML = ''; return; }
+  const q = RV.day.requests || [];
+  const done = Object.keys(RV.sheetResult).map(Number);
+  const cards = q.map(rvRequestCard).join('')
+    + done.filter(id => !q.find(r => r.id===id)).map(id => RV.sheetResult[id]).join('');
+  host.innerHTML = '<div class="rv-scrim" onclick="rvCloseSheet()"></div>'
+    + '<div class="rv-sheet" role="dialog" aria-label="Big-party requests"><div class="rv-grab"></div>'
+    + '<div class="rv-sheet-head"><div class="m-h">Big-party requests</div><button type="button" class="rv-x" aria-label="Close" onclick="rvCloseSheet()">&times;</button></div>'
+    + (cards || '<div class="m-sub">No requests waiting. Guests with a party too big to book online send one from the booking page.</div>')
+    + (RV.day.canEdit ? '' : '<div class="rv-readonly">Only a manager can answer requests.</div>')
+    + '</div>';
+}
+
+function rvRequestCard(r){
+  const open = RV.sheet && RV.sheet.open && RV.sheet.open.id===r.id ? RV.sheet.open.mode : null;
+  let form = '';
+  if(open==='accept'){
+    // The rooms the party fits in come first, the snuggest first: fourteen
+    // people are offered the 16-seat back room before the 30-seat dining room.
+    const fits = a => a.seats >= r.party;
+    const rooms = (RV.day.areas || []).slice().sort((a,b) => (fits(b) - fits(a)) || (fits(a) ? a.seats - b.seats : b.seats - a.seats));
+    form = '<div class="rv-rq-form">'
+      + '<div class="rv-form-row">'
+      +   '<div class="m-field"><div class="m-field-label">Day</div><input class="m-input" type="date" id="rq-date-'+r.id+'" value="'+esc(r.date)+'" min="'+esc(RV.today)+'"></div>'
+      +   '<div class="m-field"><div class="m-field-label">Time</div><input class="m-input" type="time" id="rq-time-'+r.id+'" value="'+esc(r.time||'19:00')+'" step="300"></div>'
+      + '</div>'
+      + '<div class="m-field"><div class="m-field-label">Room</div><select class="m-select" id="rq-room-'+r.id+'">'
+      +   rooms.map(a => '<option value="'+a.id+'">'+esc(a.name)+' · '+a.seats+' seats</option>').join('')
+      + '</select></div>'
+      + '<div class="m-sub" style="font-size:.74rem;margin-top:.5rem;">This holds the seats for them: the booking page stops offering them to other guests.</div>'
+      + '<div class="m-actions"><button type="button" class="m-save" style="background:var(--blue);" onclick="rvAccept('+r.id+', this)">Book the table</button>'
+      + '<button type="button" class="m-revert" onclick="RV.sheet.open=null;rvPaintSheet()">Back</button></div></div>';
+  } else if(open==='decline'){
+    form = '<div class="rv-rq-form">'
+      + '<div class="m-field"><div class="m-field-label">A note for yourselves (optional)</div>'
+      + '<textarea class="m-textarea" id="rq-note-'+r.id+'" maxlength="1000" placeholder="e.g. fully booked that night"></textarea></div>'
+      + '<div class="m-sub" style="font-size:.74rem;margin-top:.5rem;">The site does not tell the guest. Call them to say no.</div>'
+      + '<div class="m-actions"><button type="button" class="m-save" onclick="rvDecline('+r.id+', this)">Decline the request</button>'
+      + '<button type="button" class="m-revert" onclick="RV.sheet.open=null;rvPaintSheet()">Back</button></div></div>';
+  }
+  return '<div class="rv-rq">'
+    + '<div class="rv-name">'+esc(r.name)+' <span class="rv-chip big">'+rvPeople(r.party)+'</span></div>'
+    + '<div class="rv-rq-when">'+esc(rvShort(r.date))+' · '+(r.time ? esc(rvHm(r.time)) : 'no time given')+'</div>'
+    + (r.occasion ? '<div class="rv-meta">Occasion: '+esc(r.occasion)+'</div>' : '')
+    + (r.message ? '<div class="rv-note">&ldquo;'+esc(r.message)+'&rdquo;</div>' : '')
+    + '<div class="rv-meta" style="margin-top:.35rem;">Call '+rvTel(r.phone)+'</div>'
+    + (RV.day.canEdit && !open ? '<div class="rv-acts">'
+        + '<button type="button" class="rv-act go" onclick="RV.sheet.open={id:'+r.id+',mode:\'accept\'};rvPaintSheet()">Accept…</button>'
+        + '<button type="button" class="rv-act no" onclick="RV.sheet.open={id:'+r.id+',mode:\'decline\'};rvPaintSheet()">Decline…</button></div>' : '')
+    + form + '</div>';
+}
+
+async function rvAccept(id, btn){
+  const r = RV.day.requests.find(x => x.id===id);
+  if(!r) return;
+  const date = document.getElementById('rq-date-'+id).value;
+  const time = document.getElementById('rq-time-'+id).value;
+  const areaId = Number(document.getElementById('rq-room-'+id).value);
+  btn.disabled = true; btn.textContent = 'Booking…';
+  const gen = RV.gen;
+  try{
+    const data = await rvApi({action:'staff_answer', requestId:id, decision:'accept', date: date, time: time, areaId: areaId});
+    if(gen !== RV.gen) return;
+    RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+esc(r.name)+' <span class="rv-chip in">Booked</span></div>'
+      + '<div class="rv-rq-when">'+esc(rvShort(data.date))+' · '+esc(data.label)+' · '+esc(data.code)+'</div>'
+      + '<div class="rv-meta" style="margin-top:.35rem;">'+(data.emailSent
+          ? 'We emailed '+esc(r.name.split(' ')[0])+' the confirmation.'
+          : 'No email went out. Call '+esc(r.name.split(' ')[0])+' to confirm: '+rvTel(r.phone))+'</div></div>';
+    rvAfterAnswer(id, data.date);
+  }catch(e){
+    showToast(e.message);
+    btn.disabled = false; btn.textContent = 'Book the table';
+  }
+}
+
+async function rvDecline(id, btn){
+  const r = RV.day.requests.find(x => x.id===id);
+  if(!r) return;
+  btn.disabled = true; btn.textContent = 'Declining…';
+  const gen = RV.gen;
+  try{
+    await rvApi({action:'staff_answer', requestId:id, decision:'decline', note: document.getElementById('rq-note-'+id).value});
+    if(gen !== RV.gen) return;
+    RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+esc(r.name)+' <span class="rv-chip cx">Declined</span></div>'
+      + '<div class="rv-meta" style="margin-top:.35rem;">Call them to let them know: '+rvTel(r.phone)+'</div></div>';
+    rvAfterAnswer(id, null);
+  }catch(e){
+    showToast(e.message);
+    btn.disabled = false; btn.textContent = 'Decline the request';
+  }
+}
+
+function rvAfterAnswer(id, date){
+  RV.day.requests = RV.day.requests.filter(x => x.id!==id);
+  if(RV.sheet) RV.sheet.open = null;       // the sheet may have been closed while it saved
+  if(!RV.sheet) showToast(date ? 'Booked' : 'Declined');
+  rvPaintSheet(); rvPaintTop();
+  if(date){ rvLoadDays(date, true); if(date===RV.date) rvLoadDay(RV.date, {quiet:true}); }
+}
+
+// ── SETTINGS AND THE NUMBERS ──
+//
+// Every save redraws the settings. A field someone has typed into but not
+// saved (a rule, a room, the holiday form) keeps what they typed across that
+// redraw; a section that has just been saved starts again from the server.
+document.addEventListener('input', rvMarkTyped, true);
+document.addEventListener('change', rvMarkTyped, true);
+// What was typed is kept in RV, not read back from the screen, so it also
+// survives the whole page being redrawn when the phone is picked up again.
+function rvMarkTyped(e){
+  const t = e.target;
+  if(t && t.id && /^rv-(r|a|h)-/.test(t.id) && t.closest && t.closest('#rv-root')) RV.typed[t.id] = t.type==='checkbox' ? t.checked : t.value;
+}
+// RV.forget: names ending in "-" are a whole section (rv-r-, rv-h-); any other
+// name is one exact field (rv-a-seats-5 is not rv-a-seats-52).
+function rvKeptInputs(){
+  const gone = id => RV.forget.some(p => p.endsWith('-') ? id.startsWith(p) : id === p);
+  Object.keys(RV.typed).forEach(id => { if(gone(id)) delete RV.typed[id]; });
+  RV.forget = [];
+  return RV.typed;
+}
+function rvPutBack(kept){
+  Object.keys(kept).forEach(id => {
+    const el = document.getElementById(id);
+    if(!el || el.disabled) return;
+    if(el.type==='checkbox') el.checked = kept[id]; else el.value = kept[id];
+  });
+  const allDay = document.getElementById('rv-h-allday'), hours = document.getElementById('rv-h-hours');
+  if(allDay && hours) hours.hidden = allDay.checked;
+}
+function rvOpenSettings(){
+  RV.view = RV.view==='settings' ? 'day' : 'settings';
+  RV.armed = null;
+  render();
+  window.scrollTo(0, 0);
+  if(RV.view==='settings') rvLoadSettings(false);
+  else if(!RV.day) rvStart();
+}
+
+async function rvLoadSettings(keepDraft){
+  if(!RV.settings) rvRender();
+  const gen = RV.gen;
+  try{
+    const data = await rvApi({action:'staff_settings'});
+    if(gen !== RV.gen) return;
+    // Unsaved changes to the hours are kept; an untouched draft is replaced, so
+    // hours someone else saved meanwhile are what this screen shows and saves.
+    const edited = RV.settings && RV.hoursDraft && JSON.stringify(RV.hoursDraft) !== JSON.stringify(RV.settings.hours);
+    RV.settings = data; RV.settingsError = null;
+    if(!keepDraft || !edited){
+      RV.hoursDraft = data.hours.map(h => Object.assign({}, h));
+      RV.hoursBase = data.hours.map(h => Object.assign({}, h));
+    }
+  }catch(e){ if(gen !== RV.gen) return; RV.settingsError = e.message; }
+  rvRender();
+}
+
+function rvSettingsHtml(){
+  const back = '<button type="button" class="rv-back" onclick="rvOpenSettings()">&#8249; Back to the day</button>';
+  if(RV.settingsError && !RV.settings) return back + '<div class="m-err">'+esc(RV.settingsError)+'</div>';
+  if(!RV.settings) return back + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>';
+  const S = RV.settings, edit = S.canEdit;
+  return back
+    + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
+    + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
+    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S);
+}
+
+function rvNumbersHtml(S){
+  const n = S.numbers;
+  if(!n) return '';
+  const cols = [['This month', n.thisMonth], ['Last month', n.lastMonth], ['Next 30 days', n.next30]];
+  const row = (label, key, future) => '<tr><td>'+label+'</td>'
+    + cols.map(([, v], i) => '<td>'+(future && i===2 ? '—' : '<b>'+v[key]+'</b>')+'</td>').join('')+'</tr>';
+  return '<div class="m-card"><div class="m-eyebrow">The numbers</div>'
+    + '<div class="m-h" style="font-size:1.2rem;">'+esc(S.restaurant.name)+'</div>'
+    + '<table class="rv-nums"><tr><th></th>'+cols.map(c => '<th>'+c[0]+'</th>').join('')+'</tr>'
+    + row('Tables','tables') + row('People','people') + row('Arrived','arrived',true) + row('No-shows','noShows',true) + row('Cancelled','cancelled')
+    + '</table><div class="m-sub" style="font-size:.72rem;margin-top:.5rem;">Tables are bookings that were not cancelled. This month counts up to today.</div></div>';
+}
+
+function rvSwitchesHtml(S){
+  const R = S.rules, edit = S.canEdit;
+  const sw = (key, on, label, note, disabled) => '<div class="m-switch-row"><div><div class="m-switch-label">'+label+'</div><div class="m-switch-note">'+note+'</div></div>'
+    + '<button type="button" class="m-switch'+(on?' on':'')+'" role="switch" aria-checked="'+(on?'true':'false')+'" aria-label="'+label+'"'
+    + (edit && !disabled ? ' onclick="rvSwitch(\''+key+'\', this)"' : ' disabled')+'></button></div>';
+  return '<div class="m-card"><div class="m-eyebrow">Booking</div>'
+    + sw('enabled', R.enabled, 'Online booking', 'Off: the booking page shows the phone number and asks guests to call.')
+    + sw('emailEnabled', R.emailEnabled, 'Emails to guests', S.email.ready
+        ? 'Confirmation, reminder and cancel link, sent from '+esc(S.email.from)+'.'
+        : 'Not set up for this restaurant yet. Ask Seb\'s Analytics.', !S.email.ready)
+    + sw('autoReleaseLate', R.autoReleaseLate, 'Give away the table of a late guest', 'After the wait below, a guest who has not arrived stops holding their seats online.')
+    + '</div>';
+}
+
+const RV_RULES = [
+  ['holdMinutes', 'A table is held for', 'minutes', 30, 300],
+  ['graceMinutes', 'Wait for a late guest', 'minutes', 0, 240],
+  ['lastSeatingMinutes', 'Last booking before closing', 'minutes', 0, 240],
+  ['leadMinutes', 'Guests book at least', 'minutes ahead', 0, 1440],
+  ['bookAheadDays', 'Guests can book up to', 'days ahead', 1, 365],
+  ['maxPartyInstant', 'Online booking up to', 'people; bigger parties send a request', 1, 50],
+  ['maxPartyRequest', 'The biggest request', 'people', 1, 500],
+];
+
+function rvRulesHtml(S){
+  const R = S.rules, edit = S.canEdit;
+  const rows = RV_RULES.map(([key, label, unit, min, max]) => '<div class="rv-rule"><label for="rv-r-'+key+'">'+label+'<small>'+unit+'</small></label>'
+    + '<input class="m-input" type="number" inputmode="numeric" id="rv-r-'+key+'" min="'+min+'" max="'+max+'" step="1" value="'+Number(R[key])+'"'+(edit?'':' disabled')+'></div>').join('')
+    + '<div class="rv-rule"><label for="rv-r-slotMinutes">Times offered every<small>minutes</small></label>'
+    + '<select class="m-select" id="rv-r-slotMinutes"'+(edit?'':' disabled')+'>'
+    + [15,20,30,60].map(n => '<option value="'+n+'"'+(n===R.slotMinutes?' selected':'')+'>'+n+'</option>').join('')+'</select></div>';
+  return '<div class="m-card"><div class="m-eyebrow">The rules</div>' + rows
+    + (edit ? '<div class="m-actions"><button type="button" class="m-save" onclick="rvSaveRules(this)">Save the rules</button></div>' : '')
+    + '</div>';
+}
+
+async function rvSwitch(key, btn){
+  const gen = RV.gen;
+  const on = !RV.settings.rules[key];
+  btn.disabled = true;
+  try{
+    const data = await rvApi({action:'staff_save_rules', rules: {[key]: on}});
+    if(gen !== RV.gen) return;
+    RV.settings.rules = data.rules;
+    if(RV.day) RV.day.settings.enabled = data.rules.enabled;
+    showToast({enabled:'Online booking', emailEnabled:'Emails to guests', autoReleaseLate:'Giving away late tables'}[key]+(on?' on':' off'));
+  }catch(e){ showToast(e.message); }
+  rvRender();
+}
+
+async function rvSaveRules(btn){
+  const gen = RV.gen;
+  const R = RV.settings.rules, rules = {};
+  RV_RULES.forEach(([key]) => {
+    const v = Number(document.getElementById('rv-r-'+key).value);
+    if(v !== R[key]) rules[key] = v;
+  });
+  const slot = Number(document.getElementById('rv-r-slotMinutes').value);
+  if(slot !== R.slotMinutes) rules.slotMinutes = slot;
+  if(!Object.keys(rules).length){ showToast('Nothing has changed'); return; }
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const data = await rvApi({action:'staff_save_rules', rules: rules});
+    if(gen !== RV.gen) return;
+    RV.forget = ['rv-r-'];
+    RV.settings.rules = data.rules;
+    if(RV.day){ RV.day.settings.slotMinutes = data.rules.slotMinutes; }
+    showToast('Rules saved');
+    rvRender();
+  }catch(e){ showToast(e.message); btn.disabled = false; btn.textContent = 'Save the rules'; }
+}
+
+// Opening hours. Monday first, the way a restaurant reads its week.
+const RV_WEEK = [[1,'Monday'],[2,'Tuesday'],[3,'Wednesday'],[4,'Thursday'],[5,'Friday'],[6,'Saturday'],[0,'Sunday']];
+
+function rvHoursHtml(S){
+  const edit = S.canEdit, draft = edit ? RV.hoursDraft : S.hours;
+  const days = RV_WEEK.map(([wd, name]) => {
+    const svc = draft.map((h, i) => Object.assign({i: i}, h)).filter(h => h.weekday===wd);
+    const list = svc.length ? svc.map(h => edit
+        ? '<div class="rv-svc"><input class="m-input" type="time" value="'+esc(h.opens)+'" aria-label="'+name+' opens" onchange="rvHourSet('+h.i+',\'opens\',this.value)">'
+          + '<span>to</span><input class="m-input" type="time" value="'+esc(h.closes)+'" aria-label="'+name+' closes" onchange="rvHourSet('+h.i+',\'closes\',this.value)">'
+          + (h.closes < h.opens ? '<small>next day</small>' : '')
+          + '<button type="button" class="rv-mini" aria-label="Remove these hours" onclick="rvHourDel('+h.i+')">&times;</button></div>'
+        : '<div class="rv-svc">'+esc(rvHm(h.opens))+' – '+esc(rvHm(h.closes))+(h.closes < h.opens ? ' (next day)' : '')+'</div>').join('')
+      : '<div class="rv-svc"><span class="rv-closed">Closed</span></div>';
+    return '<div class="rv-day"><div class="rv-day-head"><span>'+name+'</span>'
+      + (edit && svc.length < 4 ? '<button type="button" class="rv-mini" onclick="rvHourAdd('+wd+')">+ Hours</button>' : '')+'</div>'+list+'</div>';
+  }).join('');
+  const changed = edit && JSON.stringify(RV.hoursDraft) !== JSON.stringify(S.hours);
+  return '<div class="m-card"><div class="m-eyebrow">Opening hours</div>'
+    + '<div class="m-sub" style="font-size:.74rem;">Lunch and dinner can be two separate hours on the same day. A closing time earlier than the opening time means after midnight. Bookings already made stay as they are.</div>'
+    + days
+    + (edit ? '<div class="m-actions"><button type="button" class="m-save" onclick="rvSaveHours(this)"'+(changed?'':' disabled')+'>Save the hours</button>'
+        + (changed ? '<button type="button" class="m-revert" onclick="RV.hoursDraft=RV.settings.hours.map(h=>Object.assign({},h));RV.hoursBase=RV.settings.hours.map(h=>Object.assign({},h));rvRender()">Undo changes</button>' : '')+'</div>' : '')
+    + '</div>';
+}
+function rvHourSet(i, key, value){ if(RV.hoursDraft[i]){ RV.hoursDraft[i][key] = value; rvRender(); } }
+function rvHourDel(i){ RV.hoursDraft.splice(i, 1); rvRender(); }
+function rvHourAdd(wd){
+  const same = RV.hoursDraft.filter(h => h.weekday===wd);
+  RV.hoursDraft.push(same.length ? {weekday: wd, opens: '17:00', closes: '22:00'} : {weekday: wd, opens: '12:00', closes: '22:00'});
+  rvRender();
+}
+async function rvSaveHours(btn){
+  const gen = RV.gen;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const data = await rvApi({action:'staff_save_hours', hours: RV.hoursDraft, base: RV.hoursBase || RV.settings.hours});
+    if(gen !== RV.gen) return;
+    RV.settings.hours = data.hours.map(h => Object.assign({}, h));
+    RV.hoursDraft = data.hours.map(h => Object.assign({}, h));
+    RV.hoursBase = data.hours.map(h => Object.assign({}, h));
+    showToast('Hours saved');
+    rvRender();
+    rvLoadDays(RV.date, true);
+  }catch(e){
+    if(gen !== RV.gen) return;
+    showToast(e.message);
+    if(e.status === 409 && e.data && Array.isArray(e.data.hours)){
+      // Someone else saved first: their week is shown, to change again from.
+      RV.settings.hours = e.data.hours.map(h => Object.assign({}, h));
+      RV.hoursDraft = e.data.hours.map(h => Object.assign({}, h));
+      RV.hoursBase = e.data.hours.map(h => Object.assign({}, h));
+      rvRender();
+      return;
+    }
+    btn.disabled = false; btn.textContent = 'Save the hours';
+  }
+}
+
+function rvHolidaysHtml(S){
+  const edit = S.canEdit;
+  const list = S.closures.length ? S.closures.map(c => '<div class="rv-hol"><div>'+esc(rvLong(c.date))
+      + '<small>'+(c.opens ? 'Open '+esc(rvHm(c.opens))+' – '+esc(rvHm(c.closes)) : 'Closed all day')+(c.reason ? ' · '+esc(c.reason) : '')+'</small>'
+      + (c.bookedTables ? '<small class="warn">'+c.bookedTables+(c.bookedTables===1?' table is':' tables are')+' booked that day. Call '+(c.bookedTables===1?'the guest':'them')+'.</small>' : '')
+      + '</div>'
+      + (edit ? '<button type="button" class="rv-mini red'+(RV.armed && RV.armed.hol===c.date?' armed':'')+'" onclick="rvHolidayRemove(\''+c.date+'\')">'
+          + (RV.armed && RV.armed.hol===c.date ? 'Sure?' : 'Remove')+'</button>' : '')+'</div>').join('')
+    : '<div class="m-sub" style="padding:.4rem 0;">No holidays coming up.</div>';
+  const add = edit ? '<div class="rv-rq-form">'
+    + '<div class="rv-form-row"><div class="m-field"><div class="m-field-label">Day</div><input class="m-input" type="date" id="rv-h-date" min="'+esc(S.today)+'"></div>'
+    + '<div class="m-field"><div class="m-field-label">Reason (optional)</div><input class="m-input" id="rv-h-reason" maxlength="80" placeholder="e.g. Thanksgiving"></div></div>'
+    + '<label class="m-codes" style="margin-top:.6rem;font-size:.8rem;"><input type="checkbox" id="rv-h-allday" checked onchange="document.getElementById(\'rv-h-hours\').hidden=this.checked"> Closed all day</label>'
+    + '<div class="rv-form-row" id="rv-h-hours" hidden><div class="m-field"><div class="m-field-label">Opens</div><input class="m-input" type="time" id="rv-h-opens" value="12:00"></div>'
+    + '<div class="m-field"><div class="m-field-label">Closes</div><input class="m-input" type="time" id="rv-h-closes" value="17:00"></div></div>'
+    + '<div class="m-actions"><button type="button" class="m-save" onclick="rvHolidayAdd(this)">Add the day</button></div></div>' : '';
+  return '<div class="m-card"><div class="m-eyebrow">Holidays and special days</div>'
+    + '<div class="m-sub" style="font-size:.74rem;">A day here replaces the usual hours: closed, or open with different hours. It does not cancel tables already booked.</div>'
+    + list + add + '</div>';
+}
+async function rvHolidayAdd(btn){
+  const gen = RV.gen;
+  const date = document.getElementById('rv-h-date').value;
+  const allDay = document.getElementById('rv-h-allday').checked;
+  const body = {action:'staff_closure', op:'add', date: date, reason: document.getElementById('rv-h-reason').value};
+  if(!allDay){ body.opens = document.getElementById('rv-h-opens').value; body.closes = document.getElementById('rv-h-closes').value; }
+  if(!date){ showToast('Pick the day'); return; }
+  btn.disabled = true;
+  try{
+    const data = await rvApi(body);
+    if(gen !== RV.gen) return;
+    RV.forget = ['rv-h-'];
+    RV.settingsNote = data.bookedTables
+      ? esc(rvLong(date))+': '+data.bookedTables+(data.bookedTables===1?' table is':' tables are')+' already booked. Closing the day does not cancel '+(data.bookedTables===1?'it':'them')+' — call the guests.'
+      : '';
+    showToast('Saved · '+rvShort(date));
+    await rvLoadSettings(true);
+    rvLoadDays(RV.date, true);
+  }catch(e){ showToast(e.message); btn.disabled = false; }
+}
+async function rvHolidayRemove(date){
+  const gen = RV.gen;
+  if(!(RV.armed && RV.armed.hol===date)){ RV.armed = {hol: date}; rvRender(); return; }
+  RV.armed = null;
+  try{
+    await rvApi({action:'staff_closure', op:'remove', date: date});
+    if(gen !== RV.gen) return;
+    showToast('Removed · '+rvShort(date));
+    RV.settingsNote = '';
+    await rvLoadSettings(true);
+    rvLoadDays(RV.date, true);
+  }catch(e){ showToast(e.message); rvRender(); }
+}
+
+function rvRoomsHtml(S){
+  const edit = S.canEdit;
+  const rooms = S.areas.map(a => edit
+    ? '<div class="rv-room"><div class="rv-room-grid">'
+      + '<div class="m-field"><div class="m-field-label">Room</div><input class="m-input" id="rv-a-name-'+a.id+'" value="'+esc(a.name)+'" maxlength="40"></div>'
+      + '<div class="m-field"><div class="m-field-label">Seats</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-seats-'+a.id+'" value="'+a.seats+'" min="0" max="500"></div>'
+      + '<div class="m-field"><div class="m-field-label">Tables</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-tables-'+a.id+'" value="'+a.tables+'" min="0" max="200"></div>'
+      + '</div><div class="rv-room-foot"><label class="m-codes" style="margin:0;font-size:.78rem;"><input type="checkbox" id="rv-a-active-'+a.id+'"'+(a.active?' checked':'')+'> Open for bookings</label>'
+      + '<button type="button" class="rv-mini" onclick="rvRoomSave('+a.id+', this)">Save</button></div></div>'
+    : '<div class="rv-hol"><div>'+esc(a.name)+'<small>'+a.seats+' seats · '+a.tables+' tables'+(a.active?'':' · closed for bookings')+'</small></div></div>').join('');
+  const add = edit ? '<div class="rv-rq-form"><div class="rv-room-grid">'
+    + '<div class="m-field"><div class="m-field-label">New room</div><input class="m-input" id="rv-a-name-new" maxlength="40" placeholder="e.g. Terrace"></div>'
+    + '<div class="m-field"><div class="m-field-label">Seats</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-seats-new" min="0" max="500"></div>'
+    + '<div class="m-field"><div class="m-field-label">Tables</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-tables-new" min="0" max="200"></div>'
+    + '</div><div class="m-actions"><button type="button" class="m-save" onclick="rvRoomAdd(this)">Add the room</button></div></div>' : '';
+  return '<div class="m-card"><div class="m-eyebrow">Rooms</div>'
+    + '<div class="m-sub" style="font-size:.74rem;">A party is only offered a time if it fits in one room: enough free seats AND a free table. Tables 0 = do not count tables.</div>'
+    + rooms + add + '</div>';
+}
+function rvRoomBody(key){
+  return { name: document.getElementById('rv-a-name-'+key).value,
+           seats: Number(document.getElementById('rv-a-seats-'+key).value),
+           tables: Number(document.getElementById('rv-a-tables-'+key).value) };
+}
+async function rvRoomSave(id, btn){
+  const gen = RV.gen;
+  btn.disabled = true;
+  try{
+    const data = await rvApi(Object.assign({action:'staff_area', op:'save', id: id, active: document.getElementById('rv-a-active-'+id).checked}, rvRoomBody(id)));
+    if(gen !== RV.gen) return;
+    RV.forget = ['rv-a-name-'+id, 'rv-a-seats-'+id, 'rv-a-tables-'+id, 'rv-a-active-'+id];
+    const i = RV.settings.areas.findIndex(a => a.id===id);
+    if(i >= 0) RV.settings.areas[i] = data.area;
+    showToast('Saved · '+data.area.name);
+    rvRender();
+  }catch(e){ showToast(e.message); btn.disabled = false; }
+}
+async function rvRoomAdd(btn){
+  const gen = RV.gen;
+  const body = rvRoomBody('new');
+  if(!body.name.trim()){ showToast('Name the room'); return; }
+  btn.disabled = true;
+  try{
+    const data = await rvApi(Object.assign({action:'staff_area', op:'add'}, body));
+    if(gen !== RV.gen) return;
+    RV.forget = ['rv-a-name-new', 'rv-a-seats-new', 'rv-a-tables-new'];
+    RV.settings.areas.push(data.area);
+    showToast('Added · '+data.area.name);
+    rvRender();
+  }catch(e){ showToast(e.message); btn.disabled = false; }
+}
+
+// Logging out — from the corner menu, or a session that expired — must not
+// leave the day's guests (names and phones) on the screen. taster.js's
+// logout() knows nothing about this page, so this page wraps it.
+(function(){
+  const plain = window.logout;
+  if(typeof plain !== 'function') return;
+  window.logout = function(){
+    const out = plain.apply(this, arguments);
+    try{ rvReset(); rvPaintSheet(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; boot(); }catch(e){}
+    return out;
+  };
+})();
 
 loadSession();
 boot();
