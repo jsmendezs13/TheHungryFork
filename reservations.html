@@ -373,6 +373,12 @@ function renderDays() {
 function renderSizes() {
   const sizes = el('rv-sizes');
   sizes.innerHTML = '';
+  // The manager sets the biggest party that books online (manager.html), so the
+  // line under the times follows that number instead of always saying nine.
+  const foot = el('rv-foot-text');
+  if (foot && foot.firstChild && foot.firstChild.nodeType === 3) {
+    foot.firstChild.textContent = (state.booking.maxPartyInstant + 1) + ' people or more, or a private event? ';
+  }
   for (let n = 1; n <= state.booking.maxPartyInstant; n++) {
     const b = document.createElement('button');
     b.type = 'button';
