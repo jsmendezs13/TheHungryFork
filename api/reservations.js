@@ -16,6 +16,11 @@
 // goes out with the booking, the link inside it cancels without an account
 // (action "link" / "cancel_link"), and Vercel's daily cron calls this same
 // address with GET for the reminders — no thirteenth function.
+//
+// And the restaurant's own side (api/_lib/staff.js): every action that starts
+// with "staff_" is the Reservations tab in manager.html — the day, arrived and
+// no-show, big-party requests, the hours, holidays, rooms and rules. It checks
+// the caller's role in the database on every request.
 
 import crypto from 'node:crypto';
 import { makeLimiter, allow, keyFor, clientIp, normalizeUsPhone, validateName } from './_lib/auth.js';
@@ -28,6 +33,7 @@ import {
   emailReady, senderFor, newLinkToken, saveLink, cancelUrl, cleanToken, hashToken,
   sendEmail, confirmationEmail, reminderEmail, hostOf, sendableAddress, mailboxKey,
 } from './_lib/email.js';
+import { staff } from './_lib/staff.js';
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
 // Vercel plan's limit, so the run is never cut off halfway through a batch.
@@ -68,6 +74,9 @@ export default async function handler(req, res) {
   if (action === 'cancel')      return cancel(req, res, body);
   if (action === 'link')        return byLink(req, res, body);
   if (action === 'cancel_link') return cancelByLink(req, res, body);
+  // The confirmation email is lent to the staff side, so a big party the
+  // manager says yes to hears about it the same way an online booking does.
+  if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail });
   return res.status(400).json({ error: 'Unknown action.' });
 }
 
@@ -181,7 +190,11 @@ async function book(req, res, body) {
   const party = cleanParty(body.party, 50);
   if (!party) return res.status(400).json({ error: BOOK_MESSAGES.bad_party, reason: 'bad_party' });
   if (party > booking.maxPartyInstant) {
-    return res.status(409).json({ error: BOOK_MESSAGES.too_big, reason: 'too_big' });
+    // The manager sets this number now, so the sentence says it.
+    return res.status(409).json({
+      error: `For ${booking.maxPartyInstant + 1} people or more, send a request and the restaurant will answer you.`,
+      reason: 'too_big',
+    });
   }
 
   const at = new Date(String(body.at || ''));
