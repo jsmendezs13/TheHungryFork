@@ -379,7 +379,10 @@ function updateNavBtn(){
     // what the account may actually do, so unhiding this in a console gets you
     // a page that says no.
     if(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin){
-      items.push({label:'Manager', href:'/manager.html', cls:'hf-corner-manager'});
+      // Two doors into the same page: the day's bookings, and the menu and team.
+      // "My Reservations" above is the guest's own; this one is the restaurant's.
+      items.push({label:'Manage Reservations', href:'/manager.html#reservations', cls:'hf-corner-manager'});
+      items.push({label:'Manager', href:'/manager.html#menu', cls:'hf-corner-manager'});
     }
     items.push({label:'Log Out', act:'logout'});
   }else{
