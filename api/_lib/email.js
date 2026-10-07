@@ -227,7 +227,7 @@ export function icsFor({ code, startIso, minutes, restaurant, party, siteHost })
 // on purpose: a dark email is repainted unpredictably by dark-mode inboxes.
 const INK = '#2B211A', MUTED = '#6F6255', RED = '#C8261B', PAPER = '#FCF9F4', LINE = '#E9E0D3', HEAD = '#1E1714';
 
-function layout({ preheader, restaurantName, heading, intro, when, rows, notice, button, footer }) {
+function layout({ preheader, restaurantName, heading, intro, when, rows, notice, button, footer, qr }) {
   const e = escapeHtml;
   const rowHtml = rows.map(([label, value, strong]) =>
     `<tr><td style="padding:9px 0;border-top:1px solid ${LINE};font:13px/1.4 Arial,Helvetica,sans-serif;color:${MUTED};width:110px;vertical-align:top;">${e(label)}</td>` +
@@ -248,6 +248,7 @@ function layout({ preheader, restaurantName, heading, intro, when, rows, notice,
     <p style="margin:0 0 18px;font:15px/1.5 Arial,Helvetica,sans-serif;color:${INK};">${intro}</p>
     <p style="margin:0;font:600 26px/1.25 Georgia,'Times New Roman',serif;color:${INK};">${e(when.long)}</p>
     <p style="margin:2px 0 16px;font:600 26px/1.25 Georgia,'Times New Roman',serif;color:${RED};">${e(when.time)}</p>
+    ${qr ? qrBlock(qr) : ''}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}</table>
   </td></tr>
   ${notice ? `<tr><td style="padding:10px 24px 4px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};">${notice}</td></tr>` : ''}
@@ -261,11 +262,24 @@ function layout({ preheader, restaurantName, heading, intro, when, rows, notice,
 </body></html>`;
 }
 
-function detailRows({ party, areaName, code, restaurant }) {
+// The table's QR (api/_lib/qr.js), attached to the email as table-qr.png and
+// shown inline. The booking code stays under it, small, for a phone call.
+function qrBlock({ cid, code }) {
+  const e = escapeHtml;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:4px 0 18px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:16px;"><tr><td align="center" style="padding:14px 14px 10px;">
+        <img src="cid:${e(cid)}" width="190" height="190" alt="QR code for your table" style="display:block;width:190px;height:190px;border:0;">
+        <div style="font:bold 14px/1.4 Arial,Helvetica,sans-serif;letter-spacing:.14em;color:${INK};margin-top:6px;">${e(code)}</div>
+      </td></tr></table>
+      <div style="font:13px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};margin-top:8px;">At the door, the staff scan it with their phone.</div>
+    </td></tr></table>`;
+}
+
+function detailRows({ party, areaName, code, restaurant, withQr }) {
   const e = escapeHtml;
   const rows = [['People', e(party + (party === 1 ? ' person' : ' people'))]];
   if (areaName) rows.push(['Room', e(areaName)]);
-  rows.push(['Your code', e(code), true]);
+  if (!withQr) rows.push(['Your code', e(code), true]);
   if (restaurant.address) rows.push(['Where', e(restaurant.address)]);
   if (restaurant.phone) {
     const tel = String(restaurant.phone).replace(/[^\d+]/g, '');
@@ -280,17 +294,19 @@ function callToCancel(restaurant) {
   return restaurant.phone ? `Can't make it? Please call ${restaurant.phone} to cancel.` : 'Can\'t make it? Please call the restaurant to cancel.';
 }
 
-function textDetails({ when, party, areaName, code, restaurant }) {
+function textDetails({ when, party, areaName, code, restaurant, withQr }) {
   return [
     `${when.long} at ${when.time}`,
     `${party} ${party === 1 ? 'person' : 'people'}` + (areaName ? ` · ${areaName}` : ''),
-    `Your code: ${code}`,
+    `Your code: ${code}` + (withQr ? ' (show the QR code in this email at the door)' : ''),
     restaurant.address ? `Where: ${restaurant.address}` : null,
     restaurant.phone ? `Phone: ${restaurant.phone}` : null,
   ].filter(Boolean).join('\n');
 }
 
-export function confirmationEmail({ restaurant, timezone, at, party, areaName, code, guestName, graceMinutes, holdMinutes, link, siteHost }) {
+// qrCid: the table's QR is attached under this name (api/_lib/qr.js). Without
+// it the email shows the code instead, exactly as before.
+export function confirmationEmail({ restaurant, timezone, at, party, areaName, code, guestName, graceMinutes, holdMinutes, link, siteHost, qrCid }) {
   const when = whenIn(timezone, at);
   const first = greetingName(guestName);
   const late = graceMinutes
@@ -301,9 +317,10 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
     preheader: `${when.long} at ${when.time} · ${party} ${party === 1 ? 'person' : 'people'} · ${code}`,
     restaurantName: restaurant.name,
     heading: 'Your table is booked',
-    intro: `${first ? escapeHtml(first) + ', we' : 'We'} look forward to seeing you. Show your code when you arrive.`,
+    intro: `${first ? escapeHtml(first) + ', we' : 'We'} look forward to seeing you. Show your ${qrCid ? 'QR code' : 'code'} when you arrive.`,
     when,
-    rows: detailRows({ party, areaName, code, restaurant }),
+    qr: qrCid ? { cid: qrCid, code } : null,
+    rows: detailRows({ party, areaName, code, restaurant, withQr: !!qrCid }),
     notice: `${escapeHtml(late)}<br>The calendar file is attached — open it to put the table in your phone.`
             + (link ? '' : `<br>${escapeHtml(callToCancel(restaurant))}`),
     button: link ? { lead: 'Can\'t make it? Cancelling takes a minute and gives the table to somebody else.',
@@ -312,7 +329,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
   });
   const text = [
     `${restaurant.name} — your table is booked.`, '',
-    textDetails({ when, party, areaName, code, restaurant }), '',
+    textDetails({ when, party, areaName, code, restaurant, withQr: !!qrCid }), '',
     late, '',
     link ? `Can't make it? Cancel here: ${link}` : callToCancel(restaurant), '',
     `You booked this table on ${siteHost}.`,
@@ -326,7 +343,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
   };
 }
 
-export function reminderEmail({ restaurant, timezone, at, party, areaName, code, guestName, link, siteHost, now }) {
+export function reminderEmail({ restaurant, timezone, at, party, areaName, code, guestName, link, siteHost, now, qrCid }) {
   const when = whenIn(timezone, at);
   const day = relativeDay(timezone, at, now);
   const first = greetingName(guestName);
@@ -335,9 +352,10 @@ export function reminderEmail({ restaurant, timezone, at, party, areaName, code,
     preheader: `${day} at ${when.time} · ${party} ${party === 1 ? 'person' : 'people'} · ${code}`,
     restaurantName: restaurant.name,
     heading: day === 'Today' ? 'See you today' : day === 'Tomorrow' ? 'See you tomorrow' : 'See you soon',
-    intro: `${first ? escapeHtml(first) + ', a' : 'A'} reminder of your table. Show your code when you arrive.`,
+    intro: `${first ? escapeHtml(first) + ', a' : 'A'} reminder of your table. Show your ${qrCid ? 'QR code' : 'code'} when you arrive.`,
     when,
-    rows: detailRows({ party, areaName, code, restaurant }),
+    qr: qrCid ? { cid: qrCid, code } : null,
+    rows: detailRows({ party, areaName, code, restaurant, withQr: !!qrCid }),
     notice: link ? null : escapeHtml(callToCancel(restaurant)),
     button: link ? { lead: 'Plans changed? Tell us now and somebody else can have the table.',
                      label: 'Cancel this table', href: link } : null,
@@ -345,7 +363,7 @@ export function reminderEmail({ restaurant, timezone, at, party, areaName, code,
   });
   const text = [
     `${restaurant.name} — see you ${day.toLowerCase() === 'today' || day.toLowerCase() === 'tomorrow' ? day.toLowerCase() : 'soon'}.`, '',
-    textDetails({ when, party, areaName, code, restaurant }), '',
+    textDetails({ when, party, areaName, code, restaurant, withQr: !!qrCid }), '',
     link ? `Plans changed? Cancel here: ${link}` : callToCancel(restaurant), '',
     `You booked this table on ${siteHost}.`,
   ].join('\n');
