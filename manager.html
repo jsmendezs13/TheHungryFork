@@ -159,16 +159,22 @@
   .rv-car { display:flex; align-items:center; gap:.35rem; margin-bottom:.35rem; }
   .rv-arrow { flex:none; width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:#fff; font-size:1.05rem; line-height:1; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0 0 2px; font-family:var(--sans); }
   .rv-arrow:disabled { opacity:.3; cursor:default; }
-  .rv-strip { flex:1; display:flex; align-items:center; justify-content:center; gap:.35rem; overflow:hidden; padding:.35rem 0; min-width:0; }
-  .rv-cday { flex:none; width:50px; text-align:center; background:#fff; border:1px solid var(--border); border-radius:12px; padding:.4rem 0; opacity:.82; font-family:var(--sans); color:var(--text); cursor:pointer; transition:transform .2s, opacity .2s; -webkit-tap-highlight-color:transparent; }
-  .rv-cday.far { opacity:.45; transform:scale(.92); }
-  .rv-cday.blank { visibility:hidden; }
+  /* The days swipe like the evening: a strip that scrolls sideways and snaps,
+     the day in the middle bigger and dark. Every day is the same width, so the
+     snapping never shifts; "bigger" is a transform, painted as it rolls. */
+  .rv-strip { flex:1; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; padding:.75rem 0; min-width:0;
+              scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+              -webkit-mask-image:linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+                      mask-image:linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); }
+  .rv-strip::-webkit-scrollbar { display:none; }
+  .rv-strip-pad { flex:none; width:1px; height:1px; }
+  .rv-cday { flex:none; width:54px; text-align:center; background:#fff; border:1px solid var(--border); border-radius:12px; padding:.4rem 0; font-family:var(--sans); color:var(--text); cursor:pointer;
+             scroll-snap-align:center; transform-origin:50% 50%; will-change:transform, opacity; -webkit-tap-highlight-color:transparent; }
   .rv-cday b { display:block; font-family:var(--serif); font-size:1.2rem; font-weight:600; line-height:1.1; font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; }
   .rv-cday span { font-size:.56rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
   .rv-cday i { display:block; font-style:normal; font-size:.56rem; color:var(--red); font-weight:600; margin-top:.1rem; white-space:nowrap; }
   .rv-cday i.shut { color:var(--muted); font-weight:500; }
-  .rv-cday.on { width:66px; opacity:1; transform:none; background:var(--ink); border-color:var(--ink); color:var(--white); padding:.6rem 0; box-shadow:0 8px 20px rgba(43,33,26,.25); }
-  .rv-cday.on b { font-size:1.55rem; }
+  .rv-cday.on { background:var(--ink); border-color:var(--ink); color:var(--white); box-shadow:0 8px 20px rgba(43,33,26,.25); }
   .rv-cday.on span { color:rgba(252,249,244,.75); } .rv-cday.on i { color:#FF9C92; } .rv-cday.on i.shut { color:rgba(252,249,244,.6); }
   .rv-dateline { text-align:center; font-size:.64rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.7rem; }
 
@@ -230,6 +236,18 @@
   .rv-hand { position:absolute; left:calc(1rem + 54px); width:8px; top:calc(var(--eh, 360px) / 2 - 1px); height:2px; background:var(--ink); border-radius:2px; pointer-events:none; }
   @media (prefers-reduced-motion: reduce) { .rv-w { will-change:auto; } }
 
+  /* ── A TABLE'S QR, SCANNED AT THE DOOR ── */
+  .rv-scan { display:flex; align-items:center; justify-content:space-between; gap:.6rem; background:var(--blue-light); border:1px solid var(--blue); color:#1F3F75;
+             border-radius:12px; padding:.65rem .75rem .65rem .85rem; margin-bottom:.8rem; font-size:.84rem; line-height:1.45; }
+  .rv-scan b { font-weight:600; }
+  .rv-scan.done { background:var(--blue-light); }
+  .rv-scan.warn { background:var(--amber-light); border-color:#E6D2A8; color:var(--amber); }
+  .rv-scan.bad { background:var(--red-light); border-color:rgba(176,16,21,.35); color:var(--red-dark); }
+  .rv-scan-go { flex:none; background:var(--blue); border:none; color:#fff; border-radius:999px; padding:.65rem 1.05rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
+  .rv-scan-go:disabled { opacity:.55; cursor:wait; }
+  .rv-scan-x { flex:none; border:none; background:none; color:inherit; font-size:1.3rem; line-height:1; cursor:pointer; padding:.1rem .25rem; opacity:.7; }
+  .rv-w.scanned { border-color:var(--blue); box-shadow:0 0 0 2px rgba(47,93,168,.35), 0 10px 26px rgba(43,33,26,.14); }
+
   /* ── SHEET (big-party requests) ── */
   .rv-scrim { position:fixed; inset:0; background:rgba(21,13,9,.45); z-index:300; }
   .rv-sheet { position:fixed; left:0; right:0; bottom:0; z-index:301; max-height:88vh; overflow-y:auto; background:var(--white); border-radius:20px 20px 0 0; padding:.6rem 1.1rem calc(env(safe-area-inset-bottom,0px) + 1.4rem); box-shadow:var(--shadow-lg); max-width:720px; margin:0 auto; }
@@ -241,6 +259,7 @@
   .rv-rq-when { font-size:.8rem; margin-top:.2rem; }
   .rv-rq-form { margin-top:.7rem; padding-top:.7rem; border-top:1px solid var(--border); }
   .rv-form-row { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+  .rv-form-row[hidden] { display:none; }   /* "Closed all day" hides Opens/Closes: the grid above would beat hidden */
   .rv-form-row .m-field { margin-top:.6rem; }
 
   /* ── SETTINGS AND NUMBERS ── */
@@ -376,9 +395,15 @@ async function boot(){
   if(!currentSession){
     w.innerHTML =
       '<div class="m-card">'
-    + '<div class="m-eyebrow">Restaurant access</div>'
-    + '<div class="m-h">Log in to manage your restaurant</div>'
-    + '<div class="m-sub">Use the same phone number and PIN you use on the site. If your account has not been given access yet, ask Seb\'s Analytics to add it.</div>'
+    // A table's QR opens this page: say what it is, to staff and to a guest
+    // who scanned their own.
+    + (rvScanToken()
+       ? '<div class="m-eyebrow">A table\'s QR code</div>'
+         + '<div class="m-h">Log in to open this table</div>'
+         + '<div class="m-sub">If you work at the restaurant, log in with your phone number and PIN and the table opens. If this is your own table, there is nothing to do here: show this QR code at the door.</div>'
+       : '<div class="m-eyebrow">Restaurant access</div>'
+         + '<div class="m-h">Log in to manage your restaurant</div>'
+         + '<div class="m-sub">Use the same phone number and PIN you use on the site. If your account has not been given access yet, ask Seb\'s Analytics to add it.</div>')
     + '<div style="margin-top:1.2rem;"><button class="m-btn" onclick="openTasterModal()">Log In</button></div>'
     + '</div>';
     return;
@@ -413,12 +438,19 @@ async function boot(){
         + '<div class="m-sub">You are the platform admin, so you see every restaurant — and right now the <strong>restaurants</strong> table has no rows in it. Add the restaurant, then reload.</div>'
       : '<div class="m-eyebrow">No access yet</div>'
         + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
-        + '<div class="m-sub">This account has no role at any restaurant yet. Ask your manager or Seb\'s Analytics to add it, then reload this page.</div>';
+        + (rvScanToken()
+           ? '<div class="m-sub">This QR code is for the restaurant\'s staff. If it is your own table, show it at the door.</div>'
+           : '<div class="m-sub">This account has no role at any restaurant yet. Ask your manager or Seb\'s Analytics to add it, then reload this page.</div>');
+    // no role: nothing will open this table here, so the token leaves the address
+    if(rvScanToken() && history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search);
     w.innerHTML = '<div class="m-card">' + reason + '</div>';
     return;
   }
 
   RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
+  // A table's QR in the address: open that table. 'out' = the session ended
+  // while asking; the login card is already up and the QR waits for the log-in.
+  if(await rvTakeScan() === 'out') return;
   mountPage();
 }
 
@@ -952,6 +984,9 @@ const RV = {
   sheet: null, sheetResult: {},
   settings: null, settingsError: null, hoursDraft: null, settingsNote: '',
   timer: null, lastScroll: 0, typed: {}, forget: [], hoursBase: null,
+  stripFor: null, stripDates: null, dayRaf: 0, dayTimer: null,
+  stripTouch: false, stripAim: null, stripWidth: 0, stripWatch: null,   // a finger on the strip; the day the arrows head to; its width
+  scan: null,             // a table's QR just scanned: {token, booking, …} or {error}
   // Goes up every time the restaurant changes or the session ends. An answer
   // that comes back for an older generation is dropped, so a slow reply about
   // the last restaurant can never be drawn over (or saved into) this one.
@@ -962,7 +997,8 @@ const RV_ROW = 44;            // pixels between two marks on the clock
 function rvReset(){
   Object.assign(RV, { gen: RV.gen + 1, rid: RESTAURANT ? RESTAURANT.id : null, view: 'day', days: [], daysFrom: null, daysTo: null,
     today: null, date: null, day: null, error: null, centerId: null, armed: null, sheet: null, sheetResult: {},
-    settings: null, settingsError: null, hoursDraft: null, hoursBase: null, settingsNote: '', typed: {}, forget: [] });
+    settings: null, settingsError: null, hoursDraft: null, hoursBase: null, settingsNote: '', typed: {}, forget: [],
+    stripFor: null, stripDates: null, stripTouch: false, stripAim: null, scan: null });
 }
 
 async function rvApi(body){
@@ -979,7 +1015,8 @@ async function rvApi(body){
       logout();                            // clears the list off the screen too (below)
       showToast('Your session expired. Please log in again.');
     }
-    throw new Error('Please log in again.');
+    const out = new Error('Please log in again.'); out.status = 401;
+    throw out;
   }
   if(!res.ok){ const e = new Error(data.error||'Something went wrong. Please try again.'); e.status = res.status; e.data = data; throw e; }
   return data;
@@ -1065,7 +1102,10 @@ async function rvLoadDay(date, opts){
     const listChanged = dayChanged || JSON.stringify(RV.day.bookings) !== JSON.stringify(data.bookings);
     RV.day = data; RV.fetchedAt = Date.now(); RV.error = null;
     RV.date = data.date; RV.today = data.today;
-    if(dayChanged){ RV.centerId = rvDefaultCenter(); RV.armed = null; }
+    if(dayChanged){
+      const scanned = RV.scan && RV.scan.booking && data.bookings.some(b => b.id === RV.scan.booking.id) ? RV.scan.booking.id : null;
+      RV.centerId = scanned || rvDefaultCenter(); RV.armed = null;
+    }
     if(!document.getElementById('rv-evening')){ rvRender(); return; }
     rvPaintDays(); rvPaintTop();
     if(listChanged) rvPaintEvening();
@@ -1115,34 +1155,148 @@ function rvRender(){
   rvPaintDays(); rvPaintTop(); rvPaintEvening(); rvPaintSheet();
 }
 
+// The days swipe sideways like the evening rolls (Sebastian, 25 Sep): the day
+// in the middle is the one shown, bigger and dark; let go and its tables load.
+// The arrows move one day. The strip holds a month either side of the day on
+// screen and is rebuilt around each new day, so it never runs out.
+const RV_SLOT = 60;            // one day in the strip: 54px wide + 6px gap
+
 function rvPaintDays(){
   const car = document.getElementById('rv-car');
   if(!car || !RV.date) return;
-  const info = {};
-  RV.days.forEach(d => { info[d.date] = d; });
-  const cells = [];
-  for(let k=-2; k<=2; k++){
-    const date = rvAddDays(RV.date, k), d = info[date];
-    const label = date===RV.today ? 'Today' : rvFmt(date, {weekday:'short'});
-    let line = '&nbsp;', cls = '';
-    if(d){
-      if(d.tables) line = d.tables+(d.tables===1?' table':' tables');
-      else if(d.open===false){ line = 'Closed'; cls = ' class="shut"'; }
-      else { line = 'none'; cls = ' class="shut"'; }
-    }
-    cells.push('<button type="button" class="rv-cday'+(k===0?' on':'')+(Math.abs(k)===2?' far':'')+'"'
-      + (k===0 ? ' aria-current="date"' : ' onclick="rvPick(\''+date+'\')"')
-      + ' aria-label="'+esc(rvLong(date))+'">'
-      + '<span>'+esc(label)+'</span><b>'+Number(date.slice(8))+'</b><i'+cls+'>'+line+'</i></button>');
-  }
-  car.innerHTML = '<button type="button" class="rv-arrow" aria-label="Previous day" onclick="rvStep(-1)">&#8249;</button>'
-    + '<div class="rv-strip">'+cells.join('')+'</div>'
-    + '<button type="button" class="rv-arrow" aria-label="Next day" onclick="rvStep(1)">&#8250;</button>';
+  if(RV.stripFor !== RV.date || !document.getElementById('rv-strip')) rvBuildStrip(car);
+  else rvFillStrip();
   const line = document.getElementById('rv-dateline');
   if(line) line.textContent = rvLong(RV.date) + (RV.date===RV.today ? ' · today' : '');
 }
 
-function rvStep(n){ rvPick(rvAddDays(RV.date, n)); }
+function rvBuildStrip(car){
+  const lo = RV.today ? rvAddDays(RV.today, -365) : null, hi = RV.today ? rvAddDays(RV.today, 365) : null;
+  const dates = [];
+  for(let k = -30; k <= 30; k++){
+    const date = rvAddDays(RV.date, k);
+    if((lo && date < lo) || (hi && date > hi)) continue;
+    dates.push(date);
+  }
+  RV.stripDates = dates; RV.stripFor = RV.date;
+  car.innerHTML = '<button type="button" class="rv-arrow" aria-label="Previous day" onclick="rvStep(-1)">&#8249;</button>'
+    + '<div class="rv-strip" id="rv-strip"><div class="rv-strip-pad"></div>'
+    + dates.map(date => '<button type="button" class="rv-cday" data-date="'+date+'" aria-label="'+esc(rvLong(date))+'">'
+        + '<span></span><b>'+Number(date.slice(8))+'</b><i>&nbsp;</i></button>').join('')
+    + '<div class="rv-strip-pad"></div></div>'
+    + '<button type="button" class="rv-arrow" aria-label="Next day" onclick="rvStep(1)">&#8250;</button>';
+  const strip = document.getElementById('rv-strip');
+  RV.stripAim = null;
+  rvPadStrip(strip);
+  strip.scrollLeft = dates.indexOf(RV.date) * RV_SLOT;
+  strip.addEventListener('scroll', function(){
+    if(!RV.dayRaf) RV.dayRaf = requestAnimationFrame(function(){ RV.dayRaf = 0; rvPaintStrip(); });
+    clearTimeout(RV.dayTimer);
+    RV.dayTimer = setTimeout(rvStripSettled, 160);
+  }, {passive:true});
+  // A finger resting on the strip is not a choice: the day is picked when it
+  // lets go (and the strip has stopped), never under a finger that paused.
+  strip.addEventListener('touchstart', function(){ RV.stripTouch = true; RV.stripAim = null; clearTimeout(RV.dayTimer); }, {passive:true});
+  const up = function(e){
+    if(e && e.touches && e.touches.length) return;      // another finger is still down
+    RV.stripTouch = false;
+    rvRefitStrip();                                       // a turn of the phone while the finger was down
+    clearTimeout(RV.dayTimer); RV.dayTimer = setTimeout(rvStripSettled, 160);
+  };
+  strip.addEventListener('touchend', up, {passive:true});
+  strip.addEventListener('touchcancel', up, {passive:true});
+  strip.addEventListener('click', function(e){
+    const cell = e.target.closest('.rv-cday');
+    if(!cell) return;
+    const i = RV.stripDates.indexOf(cell.dataset.date);
+    if(i >= 0 && cell.dataset.date !== RV.date){ RV.stripAim = i; strip.scrollTo({left: i*RV_SLOT, behavior: rvSmooth()}); }
+  });
+  if(window.ResizeObserver){
+    if(RV.stripWatch) RV.stripWatch.disconnect();
+    RV.stripWatch = new ResizeObserver(function(){ rvRefitStrip(); });
+    RV.stripWatch.observe(strip);
+  }
+  rvFillStrip();
+}
+
+// Half the strip on each side, so the first and the last day can sit in the middle.
+function rvPadStrip(strip){
+  const pad = Math.max(0, strip.clientWidth/2 - 27);
+  strip.querySelectorAll('.rv-strip-pad').forEach(x => { x.style.width = pad+'px'; });
+  RV.stripWidth = strip.clientWidth;
+}
+
+// The phone turned, or the window changed width: the middle moved, so the
+// strip is padded again and put back on the day shown (review, 1 Oct).
+function rvRefitStrip(){
+  const strip = document.getElementById('rv-strip');
+  if(!strip || !RV.stripDates || RV.stripTouch || strip.clientWidth === RV.stripWidth) return;
+  rvPadStrip(strip);
+  clearTimeout(RV.dayTimer); RV.stripAim = null;
+  const i = RV.stripDates.indexOf(RV.date);
+  if(i >= 0) strip.scrollLeft = i * RV_SLOT;
+  rvPaintStrip();
+}
+
+// The numbers under each day, and "Today", without rebuilding anything.
+function rvFillStrip(){
+  const strip = document.getElementById('rv-strip');
+  if(!strip) return;
+  const info = {};
+  RV.days.forEach(d => { info[d.date] = d; });
+  strip.querySelectorAll('.rv-cday').forEach(cell => {
+    const date = cell.dataset.date, d = info[date];
+    let line = ' ', shut = false;
+    if(d){
+      if(d.tables) line = d.tables+(d.tables===1?' table':' tables');
+      else if(d.open===false){ line = 'Closed'; shut = true; }
+      else { line = 'none'; shut = true; }
+    }
+    cell.querySelector('span').textContent = date===RV.today ? 'Today' : rvFmt(date, {weekday:'short'});
+    const i = cell.querySelector('i');
+    i.textContent = line; i.className = shut ? 'shut' : '';
+  });
+  rvPaintStrip();
+}
+
+// Bigger and dark in the middle, smaller and fainter towards the edges.
+function rvPaintStrip(){
+  const strip = document.getElementById('rv-strip');
+  if(!strip) return;
+  const mid = strip.scrollLeft / RV_SLOT;
+  strip.querySelectorAll('.rv-cday').forEach((cell, i) => {
+    const d = Math.abs(i - mid), a = Math.min(d, 3);
+    cell.style.transform = 'scale('+(1.2 - .2*Math.min(a,1) - .05*Math.max(0, a-1))+')';
+    cell.style.opacity = Math.max(.35, 1 - .25*Math.max(0, a - .5));
+    const on = d < .5;
+    cell.classList.toggle('on', on);
+    if(on) cell.setAttribute('aria-current', 'date'); else cell.removeAttribute('aria-current');
+  });
+}
+
+// The finger let go: the day in the middle is the day.
+function rvStripSettled(){
+  const strip = document.getElementById('rv-strip');
+  if(!strip || !RV.stripDates || RV.stripTouch) return;
+  RV.stripAim = null;
+  const i = Math.max(0, Math.min(RV.stripDates.length - 1, Math.round(strip.scrollLeft / RV_SLOT)));
+  const date = RV.stripDates[i];
+  if(date && date !== RV.date) rvPick(date);
+}
+
+function rvSmooth(){ return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'; }
+
+function rvStep(n){
+  const strip = document.getElementById('rv-strip');
+  if(strip && RV.stripDates){
+    // From where the strip is already heading, so three quick taps are three days.
+    const from = RV.stripAim !== null ? RV.stripAim : RV.stripDates.indexOf(RV.date);
+    const i = from + n;
+    if(from >= 0 && i >= 0 && i < RV.stripDates.length){ RV.stripAim = i; strip.scrollTo({left: i*RV_SLOT, behavior: rvSmooth()}); return; }
+    if(from >= 0){ rvPick(rvAddDays(RV.stripDates[from], n)); return; }
+  }
+  rvPick(rvAddDays(RV.date, n));
+}
 function rvPick(date){
   if(!date || date===RV.date) return;
   // A year back and a year ahead is more than any restaurant needs from here.
@@ -1160,7 +1314,7 @@ function rvPaintTop(){
   const c = same ? d.counts : null;
   const tile = (n, label, red) => '<div class="rv-tile'+(red?' red':'')+'"><b>'+(c ? n : '·')+'</b><span>'+label+'</span></div>';
   const q = d.requests || [];
-  let html = '<div class="rv-tiles">'
+  let html = rvScanHtml() + '<div class="rv-tiles">'
     + tile(c && c.tables, 'Tables') + tile(c && c.people, 'People') + tile(c && c.arrived, 'Arrived')
     + '<button type="button" class="rv-tile'+(q.length?' red':'')+'" onclick="rvOpenRequests()"><b>'+q.length+'</b><span>'+(q.length===1?'Request':'Requests')+'</span></button>'
     + '</div>';
@@ -1199,7 +1353,8 @@ function rvCard(b){
     + (b.canNoShow ? btn('no_show','no','No-show','Sure?') : '')
     + (b.canUndo ? btn('booked','','Undo') : '')
     + (b.canCancel ? btn('cancelled','','Cancel','Sure?') : '');
-  return '<div class="rv-w'+(['seated','no_show','cancelled'].includes(b.status)?' faded':'')+'" data-id="'+b.id+'" data-late="'+late+'">'
+  const scanned = RV.scan && RV.scan.booking && RV.scan.booking.id === b.id ? ' scanned' : '';
+  return '<div class="rv-w'+(['seated','no_show','cancelled'].includes(b.status)?' faded':'')+scanned+'" data-id="'+b.id+'" data-late="'+late+'">'
     + '<div class="rv-w-in">'
     +   '<div class="rv-when"><span>'+esc(b.label)+'</span><em>'+esc(b.code)+'</em></div>'
     +   '<div class="rv-name">'+esc(b.name)+chips+'</div>'
@@ -1433,6 +1588,7 @@ function rvApply(nb){
   // The card keeps its place on this day's clock (a 12:30 AM table stays at
   // 24:30 here; the answer to a tap does not know which list it is on).
   list[i] = Object.assign({}, list[i], nb, { areaName: nb.areaName || list[i].areaName, minutes: list[i].minutes });
+  if(!RV.day.canEdit) Object.assign(list[i], { canArrive: false, canNoShow: false, canUndo: false, canCancel: false });
   const live = list.filter(b => b.status!=='cancelled');
   RV.day.counts = { tables: live.length, people: live.reduce((n,b) => n+b.party, 0),
     arrived: list.filter(b => b.status==='seated' || b.status==='done').length,
@@ -1443,10 +1599,118 @@ function rvApply(nb){
   rvPaintDays(); rvPaintTop(); rvPaintEvening();
 }
 
+// A QR scanned while this page is already open in the browser.
+window.addEventListener('hashchange', async function(){
+  if(!rvScanToken()) return;
+  if(!currentSession){ boot(); return; }     // logged out: "Log in to open this table"
+  if(!ACCESS || !RESTAURANT) return;
+  if(await rvTakeScan() === 'out') return;
+  mountPage();
+});
+
 window.addEventListener('resize', function(){
   if(TAB!=='reservations' || RV.view!=='day') return;
-  rvFit(); rvMeasure(); rvPaint();
+  rvFit(); rvMeasure(); rvPaint(); rvRefitStrip();
 });
+
+// ── A TABLE'S QR CODE, SCANNED AT THE DOOR ──
+//
+// The guest's QR is a link to manager.html#arrive=<token>. The waiter's phone
+// camera opens it; this page asks the server which table it is (staff_scan),
+// opens that day with the table in the middle, and shows one blue banner with
+// Arrived. The whole crew may press it — the token is the proof the guest is
+// there — and the server checks that again (staff_mark with the token).
+function rvScanToken(){
+  const m = /^#arrive=([0-9a-fA-F]{32})$/.exec(window.location.hash || '');
+  return m ? m[1].toLowerCase() : null;
+}
+
+// boot() calls this once it knows the account, before drawing the page.
+let rvScanSeq = 0;
+async function rvTakeScan(){
+  const token = rvScanToken();
+  if(!token) return false;
+  TAB = 'reservations';
+  const mine = ++rvScanSeq;
+  let data = null, failed = null;
+  try{ data = await rvApi({action:'staff_scan', token: token}); }catch(e){ failed = e; }
+  // Two QRs scanned one after the other: only the last one's answer counts.
+  if(mine !== rvScanSeq) return 'out';
+  // The session ended while asking: rvApi has logged out and the login card
+  // is up. The QR stays in the address, so logging in opens the table (review, 1 Oct).
+  if(failed && failed.status === 401) return 'out';
+  // Otherwise the token leaves the address bar now: a refresh, the history or
+  // a shared screenshot of the browser should not carry it.
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
+  try{
+    if(failed) throw failed;
+    const there = ACCESS.restaurants.find(r => Number(r.id) === Number(data.restaurantId));
+    if(there && Number(there.id) !== Number(RESTAURANT.id)){
+      // A platform admin, or someone at two restaurants: open the table's own.
+      RESTAURANT = there;
+      openDishId = null; PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; DISHES_ERROR = null;
+    }
+    rvReset();
+    RV.scan = { token: token, booking: data.booking, date: data.date };
+    RV.date = data.date;
+  }catch(e){
+    rvReset();
+    RV.scan = { error: e.status === 404 || e.status === 400 ? e.message : 'Could not open this table: ' + e.message };
+  }
+  return true;
+}
+
+function rvScanHtml(){
+  const sc = RV.scan;
+  if(!sc) return '';
+  const x = '<button type="button" class="rv-scan-x" aria-label="Close" onclick="rvScanClose()">&times;</button>';
+  if(sc.error) return '<div class="rv-scan bad"><span><b>QR code:</b> '+esc(sc.error)+'</span>'+x+'</div>';
+  const live = RV.day && RV.day.bookings.find(b => b.id === sc.booking.id);
+  const b = Object.assign({}, sc.booking, live ? { status: live.status, seatedLabel: live.seatedLabel } : {});
+  const who = '<b>'+esc(b.name)+'</b> · '+rvPeople(b.party);
+  const when = (sc.date === RV.today ? 'Today' : esc(rvShort(sc.date))) + ' · ' + esc(b.label) + (b.areaName ? ' · '+esc(b.areaName) : '');
+  if(sc.done) return '<div class="rv-scan done"><span><b>Arrived ✓</b> '+who+'<br>'+when+'</span>'+x+'</div>';
+  if(b.status === 'seated' || b.status === 'done')
+    return '<div class="rv-scan warn"><span>'+who+'<br><b>Already arrived'+(b.seatedLabel ? ' at '+esc(b.seatedLabel) : '')+'.</b> This QR code has been used.</span>'+x+'</div>';
+  if(b.status === 'cancelled')
+    return '<div class="rv-scan bad"><span>'+who+'<br><b>This table was cancelled.</b> '+when+'</span>'+x+'</div>';
+  if(sc.booking.canArrive && (b.status === 'booked' || b.status === 'no_show'))
+    return '<div class="rv-scan"><span><b>Scanned:</b> '+who+'<br>'+when+'</span>'
+      + '<button type="button" class="rv-scan-go" onclick="rvScanArrive(this)">Arrived</button>'+x+'</div>';
+  const future = Date.parse(b.at) > rvNowMs();
+  return '<div class="rv-scan warn"><span>'+who+'<br><b>'+(future ? 'Not yet:' : 'Too long ago:')+'</b> this table is for '
+    + esc(rvShort(sc.date))+' at '+esc(b.label)+'.</span>'+x+'</div>';
+}
+
+function rvScanClose(){
+  RV.scan = null;
+  rvPaintTop(); rvPaintEvening();
+}
+
+async function rvScanArrive(btn){
+  const sc = RV.scan;
+  if(!sc || !sc.booking || RV.busy) return;
+  btn.disabled = true; btn.textContent = '…';
+  RV.busy = true;
+  const gen = RV.gen;
+  try{
+    const data = await rvApi({action:'staff_mark', id: sc.booking.id, to: 'seated', token: sc.token});
+    if(gen !== RV.gen) return;
+    sc.done = true; sc.booking = Object.assign({}, sc.booking, data.booking, { canArrive: false });
+    showToast('Arrived · '+data.booking.name);
+    if(RV.day && RV.day.bookings.some(b => b.id === data.booking.id)) rvApply(data.booking); else rvPaintTop();
+  }catch(e){
+    if(gen !== RV.gen) return;
+    if(e.data && e.data.booking){
+      sc.booking = Object.assign({}, sc.booking, e.data.booking, { canArrive: false });
+      if(RV.day && RV.day.bookings.some(b => b.id === e.data.booking.id)) rvApply(e.data.booking);
+    }
+    showToast(e.message);
+    rvPaintTop();
+  }finally{
+    RV.busy = false;
+  }
+}
 
 // ── BIG-PARTY REQUESTS ──
 function rvOpenRequests(){ RV.sheet = {open:null}; rvPaintSheet(); }
