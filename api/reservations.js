@@ -17,6 +17,10 @@
 // (action "link" / "cancel_link"), and Vercel's daily cron calls this same
 // address with GET for the reminders — no thirteenth function.
 //
+// The table's QR code (migration 18, api/_lib/qr.js) goes to the guest four
+// ways: the booked screen, My Reservations, the confirmation and the reminder.
+// It is never a reason for a booking to fail: no token, no QR, the code shows.
+//
 // And the restaurant's own side (api/_lib/staff.js): every action that starts
 // with "staff_" is the Reservations tab in manager.html — the day, arrived and
 // no-show, big-party requests, the hours, holidays, rooms and rules. It checks
@@ -34,6 +38,7 @@ import {
   sendEmail, confirmationEmail, reminderEmail, hostOf, sendableAddress, mailboxKey,
 } from './_lib/email.js';
 import { staff } from './_lib/staff.js';
+import { arrivalTokens, qrDataUrl, qrAttachment, QR_CID } from './_lib/qr.js';
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
 // Vercel plan's limit, so the run is never cut off halfway through a batch.
@@ -228,7 +233,7 @@ async function book(req, res, body) {
 
   const existing = await sb(
     `/reservations?restaurant_id=eq.${restaurantId}&guest_phone=eq.${encodeURIComponent(phone)}` +
-    `&local_date=eq.${localDate}&status=in.(booked,seated)&select=id,code,reserved_at,party_size,guest_name&limit=1`
+    `&local_date=eq.${localDate}&status=in.(booked,seated)&select=id,code,reserved_at,party_size,guest_name,taster_id&limit=1`
   );
   if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
     const row = existing.data[0];
@@ -239,10 +244,15 @@ async function book(req, res, body) {
     // phone number tells you nothing about their evening (review, 22 Sep).
     const sameGuest = String(row.guest_name || '').trim().toLowerCase().replace(/\s+/g, ' ')
                    === name.value.trim().toLowerCase().replace(/\s+/g, ' ');
+    // The QR only to the account that owns the table: a name and a phone
+    // number are on every staff list, and the QR is what lets crew press
+    // Arrived (review, 1 Oct). Anyone else gets the code, as before.
+    const owner = tasterIdFromRequest(req);
     if (sameGuest) return res.status(200).json({
       success: true,
       already: true,
       code: row.code,
+      qr: owner && Number(row.taster_id) === Number(owner) ? await qrFor(row.id, loaded.settings) : null,
       at: new Date(row.reserved_at).toISOString(),
       party: row.party_size,
       date: localDate,
@@ -318,6 +328,7 @@ async function book(req, res, body) {
   return res.status(200).json({
     success:  true,
     code:     result.code,
+    qr:       await qrFor(result.reservation_id, loaded.settings),
     at:       at.toISOString(),
     date:     localDate,
     party,
@@ -327,6 +338,29 @@ async function book(req, res, body) {
     emailSent,
     ...clockIn(timezone, at),
   });
+}
+
+// The table's QR as an image the page can show, or null. Never throws.
+async function qrFor(reservationId, settings) {
+  try {
+    const tokens = await arrivalTokens([reservationId]);
+    return tokens[reservationId] ? await qrDataUrl(settings, tokens[reservationId]) : null;
+  } catch (err) {
+    console.error('[reservations:qr] failed', reservationId, err && err.message);
+    return null;
+  }
+}
+
+// The table's QR as an inline email attachment, or null (the email then shows
+// the code, as it always did).
+async function qrForEmail(reservationId, settings) {
+  try {
+    const tokens = await arrivalTokens([reservationId]);
+    return tokens[reservationId] ? await qrAttachment(settings, tokens[reservationId]) : null;
+  } catch (err) {
+    console.error('[reservations:qr] email png failed', reservationId, err && err.message);
+    return null;
+  }
 }
 
 // ── THE CONFIRMATION EMAIL ────────────────────────────────────────────────────
@@ -352,9 +386,10 @@ async function confirmByEmail({ reservationId, email, loaded, timezone, at, part
 
   const { token, hash } = newLinkToken();
   const linkSaved = await saveLink(reservationId, hash, 'confirmation');
+  const qr = await qrForEmail(reservationId, settings);
   const sender = senderFor(settings, loaded.restaurant);
   const mail = confirmationEmail({
-    restaurant: loaded.restaurant, timezone, at, party, areaName, code, guestName,
+    restaurant: loaded.restaurant, timezone, at, party, areaName, code, guestName, qrCid: qr ? QR_CID : null,
     // Only promise "after 30 minutes the table goes" if the restaurant does that.
     graceMinutes: settings.auto_release_late ? settings.grace_minutes : null,
     holdMinutes:  settings.hold_minutes,
@@ -364,7 +399,7 @@ async function confirmByEmail({ reservationId, email, loaded, timezone, at, part
 
   const sent = await sendEmail({
     from: sender.from, replyTo: sender.replyTo, to,
-    subject: mail.subject, html: mail.html, text: mail.text, attachments: mail.attachments,
+    subject: mail.subject, html: mail.html, text: mail.text, attachments: [...mail.attachments, ...(qr ? [qr] : [])],
     idempotencyKey: `confirm-${code}`,
     tags: [{ name: 'kind', value: 'confirmation' }],
     timeoutMs: 4000,          // the guest is looking at a spinner
@@ -501,10 +536,10 @@ async function mine(req, res, body) {
   const match = phone
     ? `or=(taster_id.eq.${tasterId},guest_phone.eq.${encodeURIComponent(phone)})`
     : `taster_id=eq.${tasterId}`;
-  const rows = await sb(
-    `/reservations?${match}&select=id,code,restaurant_id,area_id,party_size,reserved_at,local_date,` +
-    `local_time,status,notes,hold_minutes&order=reserved_at.desc&limit=60`
-  );
+  const columns = 'id,code,restaurant_id,area_id,party_size,reserved_at,local_date,local_time,status,notes,hold_minutes';
+  let rows = await sb(`/reservations?${match}&select=${columns},arrival_token&order=reserved_at.desc&limit=60`);
+  // Before migration 18 the column is not there: the tables, without QRs.
+  if (!rows.ok && rows.status === 400) rows = await sb(`/reservations?${match}&select=${columns}&order=reserved_at.desc&limit=60`);
   if (!rows.ok || !Array.isArray(rows.data)) {
     console.error('[reservations:mine] read failed', rows.status);
     return res.status(502).json({ error: 'Could not read your tables. Please try again in a moment.' });
@@ -525,9 +560,29 @@ async function mine(req, res, body) {
   const timezone = (settings && settings.settings && settings.settings.timezone) || 'America/New_York';
   const now = Date.now();
 
+  // The QR for the tables still to come (it is what the guest shows at the
+  // door), and for one that has started but is still inside its own time
+  // (hold_minutes) and nobody has marked yet: a guest a few minutes late is at
+  // the door. Not for past or cancelled ones, and at most ten: the ten soonest.
+  const qrs = {};
+  const startedNow = (r) => r.status === 'booked' && new Date(r.reserved_at).getTime() < now
+    && now - new Date(r.reserved_at).getTime() <= (Number(r.hold_minutes) || 90) * 60 * 1000;
+  const lateIds = new Set(rows.data.filter(startedNow).map((r) => r.id));
+  const comingUp = rows.data.filter((r) => r.status === 'booked' && (new Date(r.reserved_at).getTime() >= now || lateIds.has(r.id)))
+                            .sort((a, b) => new Date(a.reserved_at) - new Date(b.reserved_at))
+                            .slice(0, 10);
+  // Each restaurant's own site goes in its QR (one read per restaurant).
+  const siteOf = {};
+  await Promise.all([...new Set(comingUp.map((r) => r.restaurant_id))].map(async (rid) => {
+    const l = rid === (restaurantIds[0] || DEFAULT_RESTAURANT_ID) ? settings : await loadBooking(rid);
+    siteOf[rid] = l && !l.error ? l.settings : null;
+  }));
+  await Promise.all(comingUp.map(async (r) => { qrs[r.id] = await qrDataUrl(siteOf[r.restaurant_id], r.arrival_token); }));
+
   const dressed = rows.data.map((r) => ({
     id:         r.id,
     code:       r.code,
+    qr:         qrs[r.id] || null,
     at:         new Date(r.reserved_at).toISOString(),
     date:       r.local_date,
     party:      r.party_size,
@@ -543,12 +598,14 @@ async function mine(req, res, body) {
     ...clockIn(timezone, r.reserved_at),
   }));
 
+  // Coming up: tables still to start, and a booked one still inside its time
+  // (the guest a few minutes late, at the door, needs it first).
+  const stillOn = (r) => r.status !== 'cancelled' && (new Date(r.at).getTime() >= now || lateIds.has(r.id));
   return res.status(200).json({
     success:  true,
     today:    todayIn(timezone),
-    upcoming: dressed.filter((r) => new Date(r.at).getTime() >= now && r.status !== 'cancelled')
-                     .sort((a, b) => new Date(a.at) - new Date(b.at)),
-    past:     dressed.filter((r) => new Date(r.at).getTime() < now || r.status === 'cancelled'),
+    upcoming: dressed.filter(stillOn).sort((a, b) => new Date(a.at) - new Date(b.at)),
+    past:     dressed.filter((r) => !stillOn(r)),
   });
 }
 
@@ -785,15 +842,18 @@ async function remindOne(row, loaded, areaName) {
   }
   const { token, hash } = newLinkToken();
   const linkSaved = await saveLink(row.id, hash, 'reminder');
+  const qr = await qrForEmail(row.id, settings);
   const sender = senderFor(settings, loaded.restaurant);
   const mail = reminderEmail({
     restaurant: loaded.restaurant, timezone: settings.timezone || 'America/New_York',
     at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName, code: row.code,
     guestName: row.guest_name, link: linkSaved ? cancelUrl(settings, token) : null, siteHost: hostOf(settings),
+    qrCid: qr ? QR_CID : null,
   });
   const sent = await sendEmail({
     from: sender.from, replyTo: sender.replyTo, to,
     subject: mail.subject, html: mail.html, text: mail.text,
+    ...(qr ? { attachments: [qr] } : {}),
     // One key per table per day: a doubled cron run the same morning sends one
     // email; a retry tomorrow, after a real failure, is a new attempt.
     idempotencyKey: `remind-${row.code}-${todayIn(settings.timezone || 'America/New_York')}`,
