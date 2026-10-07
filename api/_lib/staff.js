@@ -6,7 +6,9 @@
 // functions (files starting with _ are not functions).
 //
 // Who may do what — decided here, on every request, from the database:
-//   crew     (1) sees everything a manager sees, phones included, and changes nothing
+//   crew     (1) sees everything a manager sees, phones included, and changes
+//                nothing — except Arrived for a guest whose QR they have just
+//                scanned (staff_scan, then staff_mark with the scanned token)
 //   manager  (2) marks arrived / no-show, cancels, answers big-party requests,
 //                and changes the hours, holidays, rooms and rules
 //   owner (3) and platform admin (4) can do all of that too
@@ -17,7 +19,9 @@
 
 import { makeLimiter, allow, keyFor } from './auth.js';
 import { sb, tasterIdFromRequest, loadAccess, accessProblem, levelAt, LEVEL } from './roles.js';
+import crypto from 'node:crypto';
 import { loadBooking, todayIn, clockIn, cleanDate, cleanText } from './booking.js';
+import { cleanArrivalToken } from './qr.js';
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -93,7 +97,7 @@ export async function staff(req, res, body, action, helpers = {}) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
 
-  const writes = !['staff_days', 'staff_day', 'staff_settings'].includes(action);
+  const writes = !['staff_days', 'staff_day', 'staff_settings', 'staff_scan'].includes(action);
   if (!(await allow(writes ? staffWriteLimiter : staffReadLimiter, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many taps in a few minutes. Wait a moment and try again.' });
   }
@@ -101,6 +105,7 @@ export async function staff(req, res, body, action, helpers = {}) {
   switch (action) {
     case 'staff_days':       return days(req, res, body, tasterId);
     case 'staff_day':        return day(req, res, body, tasterId);
+    case 'staff_scan':       return scan(req, res, body, tasterId);
     case 'staff_mark':       return mark(req, res, body, tasterId);
     case 'staff_answer':     return answer(req, res, body, tasterId, helpers);
     case 'staff_settings':   return settingsRead(req, res, body, tasterId);
@@ -273,6 +278,55 @@ function dressRequest(q) {
   };
 }
 
+// ── A TABLE'S QR CODE, SCANNED AT THE DOOR ────────────────────────────────────
+// The phone's camera opens manager.html#arrive=<token>; the page asks here.
+// Anyone with a role at the table's restaurant gets the table back — crew
+// included, with Arrived if it is due — and nobody else learns anything about
+// it, not even whether the token exists.
+export function serviceDateOf(r) {
+  const t = String(r.local_time || '00:00').slice(0, 5);
+  return t < DAY_STARTS ? addDays(r.local_date, -1) : r.local_date;
+}
+
+async function scan(req, res, body, tasterId) {
+  const token = cleanArrivalToken(body.token);
+  if (!token) return res.status(400).json({ error: 'That is not a table\'s QR code.' });
+  const NOT_HERE = { error: 'This QR code is not a table at your restaurant.' };
+  // Who is asking comes first, so a real token and a made-up one go the same
+  // way: someone with no role anywhere never makes the table be looked up
+  // (review, 1 Oct).
+  const access = await loadAccess(tasterId);
+  const problem = accessProblem(access);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
+  const staffSomewhere = access.isPlatformAdmin
+    || Object.values(access.byRestaurant || {}).some((e) => e && e.level >= LEVEL.crew);
+  if (!staffSomewhere) return res.status(404).json(NOT_HERE);
+  const found = await sb(`/reservations?arrival_token=eq.${token}&select=${BOOKING_COLUMNS},restaurant_id&limit=1`);
+  if (!found.ok) return res.status(502).json({ error: 'Could not read the table (the database answered ' + found.status + ').' });
+  const row = Array.isArray(found.data) && found.data.length ? found.data[0] : null;
+  // Not there and somebody else's are the same answer, so a guess learns nothing.
+  const level = row ? levelAt(access, row.restaurant_id) : LEVEL.none;
+  if (!row || level < LEVEL.crew) return res.status(404).json(NOT_HERE);
+
+  const s = await loadBooking(row.restaurant_id);
+  const timezone = (s && s.settings && s.settings.timezone) || 'America/New_York';
+  const area = row.area_id ? await sb(`/restaurant_areas?id=eq.${row.area_id}&select=id,name`) : null;
+  const areaName = {};
+  if (area && area.ok && Array.isArray(area.data)) area.data.forEach((a) => { areaName[a.id] = a.name; });
+  const date = serviceDateOf(row);
+  const booking = dressBooking(row, timezone, areaName, Date.now(), true, date);
+  // Crew: the one button the scan gives them is Arrived.
+  if (level < LEVEL.manager) Object.assign(booking, { canNoShow: false, canUndo: false, canCancel: false });
+  return res.status(200).json({
+    success: true, restaurantId: row.restaurant_id, date, today: serviceToday(timezone), level, booking,
+  });
+}
+
+function sameToken(a, b) {
+  const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || ''));
+  return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
+}
+
 // ── ARRIVED · NO-SHOW · UNDO · CANCEL ─────────────────────────────────────────
 async function mark(req, res, body, tasterId) {
   const id = Number(body.id);
@@ -283,12 +337,19 @@ async function mark(req, res, body, tasterId) {
 
   // The restaurant comes from the booking itself, never from the request: a
   // manager of one restaurant cannot touch another's tables by sending its id.
-  const found = await sb(`/reservations?id=eq.${id}&select=${BOOKING_COLUMNS},restaurant_id&limit=1`);
+  let found = await sb(`/reservations?id=eq.${id}&select=${BOOKING_COLUMNS},restaurant_id,arrival_token&limit=1`);
+  // Before migration 18 there is no token column: everything works as before
+  // (and nobody's token matches, so crew still change nothing).
+  if (!found.ok && found.status === 400) found = await sb(`/reservations?id=eq.${id}&select=${BOOKING_COLUMNS},restaurant_id&limit=1`);
   if (!found.ok || !Array.isArray(found.data) || !found.data.length) {
     return res.status(404).json({ error: 'That table is not there any more.' });
   }
   const row = found.data[0];
-  const who = await gate(res, tasterId, row.restaurant_id, LEVEL.manager);
+  // The token from the guest's QR lets the whole crew press Arrived — for this
+  // table only, and only Arrived. Everything else still needs a manager.
+  const scanned = to === 'seated' && cleanArrivalToken(body.token) && sameToken(row.arrival_token, cleanArrivalToken(body.token));
+  delete row.arrival_token;                 // never goes back to the page
+  const who = await gate(res, tasterId, row.restaurant_id, scanned ? LEVEL.crew : LEVEL.manager);
   if (!who) return;
 
   const s = await loadBooking(row.restaurant_id);
@@ -296,7 +357,7 @@ async function mark(req, res, body, tasterId) {
   const now = Date.now();
 
   if (!movesFor(row, now)[move.allowed]) {
-    return res.status(409).json({ error: WHY_NOT[to], booking: dressBooking(row, timezone, {}, now, true) });
+    return res.status(409).json({ error: WHY_NOT[to], booking: dressBooking(row, timezone, {}, now, who.canEdit) });
   }
 
   const stamp = new Date(now).toISOString();
@@ -321,11 +382,12 @@ async function mark(req, res, body, tasterId) {
     const now2 = fresh.ok && Array.isArray(fresh.data) && fresh.data.length ? fresh.data[0] : row;
     return res.status(409).json({
       error: 'Someone changed this table a moment ago. The list now shows what it is.',
-      booking: dressBooking(now2, timezone, {}, Date.now(), true),
+      booking: dressBooking(now2, timezone, {}, Date.now(), who.canEdit),
     });
   }
   console.log('[staff:mark] taster', tasterId, 'set', row.code, 'to', to);
-  return res.status(200).json({ success: true, booking: dressBooking(done.data[0], timezone, {}, Date.now(), true) });
+  // Crew get the card back without buttons, as on their list.
+  return res.status(200).json({ success: true, booking: dressBooking(done.data[0], timezone, {}, Date.now(), who.canEdit) });
 }
 
 // ── YES OR NO TO A BIG PARTY ──────────────────────────────────────────────────
