@@ -291,6 +291,93 @@
   .rv-room-grid .m-field { margin-top:0; }
   .rv-room-foot { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.5rem; font-size:.78rem; color:var(--muted); }
   .rv-readonly { font-size:.74rem; color:var(--muted); background:var(--off-white); border-radius:10px; padding:.6rem .8rem; margin-bottom:1rem; line-height:1.55; }
+
+  /* ═══ GUEST MESSAGES (r21, Sebastian 8 Oct: pictures 13 and 17) ═══ */
+  /* The card: the code moves beside the time; the chat sign takes the right of the name line. */
+  .rv-when { justify-content:flex-start; gap:.7rem; }
+  .rv-name { display:flex; align-items:flex-start; gap:.5rem; }
+  .rv-name-text { flex:1; min-width:0; }
+  .rv-chat-sign { flex:none; position:relative; width:38px; height:38px; margin:-6px -4px -4px 0; border-radius:50%; border:1px solid rgba(176,16,21,.35);
+                  background:#fff; color:var(--red); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent; }
+  .rv-chat-sign svg { width:20px; height:20px; }
+  .rv-chat-sign.new { background:var(--red); border-color:var(--red); color:#fff; box-shadow:0 4px 12px rgba(176,16,21,.35); }
+  .rv-chat-sign.shut { color:var(--muted); border-color:var(--border); }
+  .rv-chat-sign b, .mg-bubble b, .mg-n { min-width:20px; height:20px; padding:0 5px; border-radius:999px; font-size:.66rem; font-weight:700; line-height:1; letter-spacing:0;
+                  display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; }
+  .rv-chat-sign b { position:absolute; top:-6px; right:-6px; background:#fff; color:var(--red); border:2px solid var(--red); }
+  /* The bubble: the way in to every conversation, bottom right, like Messenger's. */
+  .mg-bubble { position:fixed; right:16px; bottom:calc(env(safe-area-inset-bottom,0px) + 18px); z-index:280; width:62px; height:62px; border-radius:50%;
+               border:none; background:var(--red); color:#fff; box-shadow:0 10px 26px rgba(176,16,21,.45); display:flex; align-items:center; justify-content:center;
+               cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent; transition:transform .15s; }
+  .mg-bubble:active { transform:scale(.94); }
+  .mg-bubble[hidden] { display:none; }
+  .mg-bubble svg { width:29px; height:29px; }
+  .mg-bubble b { position:absolute; top:-3px; right:-3px; min-width:24px; height:24px; background:#fff; color:var(--red); border:2px solid var(--red); font-size:.74rem; }
+  /* The window */
+  .mg-sheet { height:min(88vh, 860px); max-height:none; display:flex; flex-direction:column; overflow:hidden; padding-bottom:calc(env(safe-area-inset-bottom,0px) + .8rem); }
+  .mg-sheet > * { flex:none; }
+  .mg-tabs { display:flex; gap:.35rem; background:var(--off-white); border-radius:999px; padding:.25rem; margin-bottom:.4rem; }
+  .mg-tab { flex:1; border:none; background:none; border-radius:999px; padding:.55rem .5rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.14em;
+            text-transform:uppercase; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.4rem; }
+  .mg-tab.on { background:#fff; color:var(--text); box-shadow:0 2px 8px rgba(43,33,26,.12); }
+  .mg-days { display:flex; align-items:center; gap:.35rem; }
+  .mg-strip { flex:1; display:flex; gap:6px; overflow-x:auto; padding:.6rem 5px .55rem; scrollbar-width:none; min-width:0; }
+  .mg-strip::-webkit-scrollbar { display:none; }
+  .mg-day { position:relative; flex:none; width:50px; text-align:center; background:#fff; border:1px solid var(--border); border-radius:12px; padding:.35rem 0 .3rem; font-family:var(--sans);
+            color:var(--text); cursor:pointer; }
+  .mg-day span { display:block; font-size:.54rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .mg-day b { display:block; font-family:var(--serif); font-size:1.15rem; font-weight:600; line-height:1.1; font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; }
+  .mg-day i { display:block; font-style:normal; font-size:.54rem; color:var(--muted); min-height:.8rem; white-space:nowrap; }
+  .mg-day.on { background:var(--ink); border-color:var(--ink); color:var(--white); box-shadow:0 6px 16px rgba(43,33,26,.25); }
+  .mg-day.on span, .mg-day.on i { color:rgba(252,249,244,.75); }
+  .mg-day span.dot { position:absolute; top:-4px; right:-4px; width:12px; height:12px; border-radius:50%; background:var(--red); border:2px solid var(--white); box-sizing:border-box; }
+  .mg-scroll { flex:1 1 auto !important; min-height:0; overflow-y:auto; margin:0 -1.1rem; padding:0 1.1rem .4rem; overscroll-behavior:contain; }
+  .mg-row { display:block; width:100%; text-align:left; background:#fff; border:1px solid var(--border); border-radius:14px; padding:.7rem .8rem; margin-bottom:.5rem;
+            font-family:var(--sans); color:var(--text); }
+  .mg-row-main { display:block; width:100%; background:none; border:none; padding:0; margin:0; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+  .mg-row-top, .mg-row-last { display:flex; }
+  .mg-row-last { display:block; }
+  .mg-live { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .mg-row.new { border-color:rgba(176,16,21,.45); box-shadow:0 0 0 1px rgba(176,16,21,.15); }
+  .mg-row-top { display:flex; align-items:center; gap:.5rem; }
+  .mg-row-top b { font-weight:600; font-size:.95rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mg-row-top span { font-size:.68rem; color:var(--muted); white-space:nowrap; }
+  .mg-row-top .mg-n, .mg-tab .mg-n { background:var(--red); color:#fff; }
+  .mg-row-last { font-size:.82rem; color:var(--text); margin-top:.2rem; line-height:1.45; overflow-wrap:anywhere; }
+  .mg-row-last em { font-style:normal; color:var(--muted); }
+  .mg-row-foot { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-top:.35rem; font-size:.66rem; color:var(--muted); }
+  .mg-closed { font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--blue); }
+  .mg-closed.staff { color:var(--muted); }
+  .mg-empty { text-align:center; color:var(--muted); font-size:.85rem; line-height:1.6; padding:1.6rem .8rem; border:1px dashed var(--border); border-radius:14px; background:var(--white); }
+  .mg-foot { font-size:.68rem; color:var(--muted); text-align:center; margin-top:.5rem; line-height:1.5; }
+  /* One conversation */
+  .mg-back { display:block; border:none; background:none; color:var(--red); font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; padding:.1rem 0 .35rem; }
+  .mg-sub { font-size:.76rem; color:var(--muted); line-height:1.5; }
+  .mg-bar { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin:.55rem 0 .45rem; }
+  .mg-state { font-size:.62rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--green); }
+  .mg-shut { background:var(--blue-light); border:1px solid rgba(47,93,168,.35); color:#1F3F75; border-radius:12px; padding:.6rem .75rem; font-size:.8rem; line-height:1.45; margin:.5rem 0; }
+  .mg-shut.staff { background:var(--off-white); border-color:var(--border); color:var(--text); }
+  .mg-shut button { display:block; margin-top:.45rem; }
+  .mg-msgs { display:flex; flex-direction:column; gap:.5rem; padding:.3rem 0 .5rem; }
+  .mg-bub { max-width:84%; padding:.5rem .7rem .55rem; border-radius:14px; font-size:.9rem; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .mg-bub.guest { align-self:flex-start; background:#fff; border:1px solid var(--border); border-bottom-left-radius:4px; }
+  .mg-bub.staff { align-self:flex-end; background:var(--ink); color:var(--white); border-bottom-right-radius:4px; }
+  .mg-bub-who { display:block; font-size:.62rem; font-weight:600; letter-spacing:.04em; margin-bottom:.12rem; white-space:normal; }
+  .mg-bub.guest .mg-bub-who { color:var(--red); }
+  .mg-bub.staff .mg-bub-who { color:rgba(252,249,244,.75); text-align:right; }
+  .mg-bub-who i { font-style:normal; font-weight:400; opacity:.75; }
+  .mg-warn { font-size:.72rem; color:var(--amber); background:var(--amber-light); border-radius:10px; padding:.45rem .6rem; margin:.1rem 0 .4rem; line-height:1.45; }
+  .mg-form { display:flex; gap:.45rem; align-items:flex-end; padding-top:.55rem; border-top:1px solid var(--border); }
+  .mg-input { flex:1; min-width:0; min-height:44px; max-height:140px; resize:none; border:1px solid var(--border); border-radius:12px; background:#fff; color:var(--text);
+              font-family:var(--sans); font-size:1rem; line-height:1.4; padding:.6rem .75rem; outline:none; }
+  .mg-input:focus { border-color:var(--ink); }
+  .mg-send { flex:none; width:44px; height:44px; border-radius:50%; border:none; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .mg-send svg { width:20px; height:20px; }
+  .mg-send:disabled { opacity:.5; cursor:wait; }
+  /* Team: what a crew member does, and whether they answer guests */
+  .m-crew { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .9rem; margin-top:.35rem; }
+  .m-crew .m-select { width:auto; padding:.35rem .6rem; font-size:.76rem; border-radius:999px; }
+  .m-crew .m-codes { margin-top:0; color:var(--text); }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -452,6 +539,8 @@ async function boot(){
   // while asking; the login card is already up and the QR waits for the log-in.
   if(await rvTakeScan() === 'out') return;
   mountPage();
+  // The role icon in the header, with guest messages waiting, comes here.
+  if(window.location.hash === '#messages') msgOpenFromHash();
 }
 
 // Draws the page for the current tab and loads what that tab needs.
@@ -476,6 +565,7 @@ function switchTab(t){
 }
 
 window.addEventListener('hashchange', function(){
+  if(window.location.hash === '#messages'){ if(ACCESS && RESTAURANT) msgOpenFromHash(); return; }
   const t = tabFromHash();
   if(t && ACCESS && RESTAURANT && t!==TAB) switchTab(t);
 });
@@ -767,6 +857,16 @@ function peopleSection(){
       + '<div class="m-person-id">'
       +   '<div class="m-person-name">'+esc(p.name)+' <span class="m-role'+(p.role==='owner'?' owner':'')+'">'+esc(ROLE_LABEL[p.role]||p.role)+'</span></div>'
       +   '<div class="m-person-sub">'+(p.username?esc(p.username)+' · ':'')+(p.phoneEnds?'ends '+esc(p.phoneEnds):'')+'</div>'
+      +   (p.role==='crew' && p.canMessage !== undefined
+            ? '<div class="m-crew">'
+              + '<select class="m-select" aria-label="What '+esc(p.name)+' does" onchange="setJob('+Number(p.id)+',this.value)">'
+              +   '<option value="">Job…</option>'
+              +   CREW_JOBS.map(j => '<option value="'+j+'"'+(p.job===j?' selected':'')+'>'+CREW_JOB_LABEL[j]+'</option>').join('')
+              + '</select>'
+              + '<label class="m-codes"><input type="checkbox"'+(p.canMessage?' checked':'')
+              +   ' onchange="setAnswers('+Number(p.id)+',this.checked,this)"> Answers guest messages</label>'
+              + '</div>'
+            : '')
       +   (p.role==='crew'
             ? '<label class="m-codes"><input type="checkbox"'+(p.canIssueCodes?' checked':'')
               + ' onchange="setCodes('+p.id+',this.checked)"> can give out loyalty codes '
@@ -835,6 +935,37 @@ async function removePerson(roleId){
     if(!res.ok){ showToast(data.error||'Could not remove that person.'); return; }
     showToast('Removed');
     loadPeople();
+  }catch(e){ showToast(e.message||'Network error.'); }
+}
+
+// Sebastian, 8 Oct: a manager decides which crew members talk to guests about
+// their tables (a host, a waiter), and says what each one does.
+const CREW_JOBS = ['host', 'waiter', 'kitchen', 'bar'];
+const CREW_JOB_LABEL = { host:'Host', waiter:'Waiter', kitchen:'Kitchen', bar:'Bar' };
+async function setAnswers(roleId, on, box){
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'messages', restaurantId:RESTAURANT.id, roleId, canMessage:on})
+    });
+    if(!res.ok){ showToast(data.error||'Could not save that.'); if(box) box.checked = !on; return; }
+    const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
+    if(who) who.canMessage = on;
+    showToast((who ? who.name.split(' ')[0] : 'They')+(on ? ' answers guest messages now' : ' no longer answers guest messages'));
+  }catch(e){ showToast(e.message||'Network error.'); if(box) box.checked = !on; }
+}
+async function setJob(roleId, job){
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'job', restaurantId:RESTAURANT.id, roleId, job: job || null})
+    });
+    if(!res.ok){ showToast(data.error||'Could not save that.'); loadPeople(); return; }
+    const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
+    if(who) who.job = job || null;
+    showToast(job ? 'Saved · '+CREW_JOB_LABEL[job] : 'Saved');
   }catch(e){ showToast(e.message||'Network error.'); }
 }
 
@@ -995,6 +1126,7 @@ const RV = {
 const RV_ROW = 44;            // pixels between two marks on the clock
 
 function rvReset(){
+  msgReset();
   Object.assign(RV, { gen: RV.gen + 1, rid: RESTAURANT ? RESTAURANT.id : null, view: 'day', days: [], daysFrom: null, daysTo: null,
     today: null, date: null, day: null, error: null, centerId: null, armed: null, sheet: null, sheetResult: {},
     settings: null, settingsError: null, hoursDraft: null, hoursBase: null, settingsNote: '', typed: {}, forget: [],
@@ -1102,6 +1234,7 @@ async function rvLoadDay(date, opts){
     const listChanged = dayChanged || JSON.stringify(RV.day.bookings) !== JSON.stringify(data.bookings);
     RV.day = data; RV.fetchedAt = Date.now(); RV.error = null;
     RV.date = data.date; RV.today = data.today;
+    msgFromDay(data);
     if(dayChanged){
       const scanned = RV.scan && RV.scan.booking && data.bookings.some(b => b.id === RV.scan.booking.id) ? RV.scan.booking.id : null;
       RV.centerId = scanned || rvDefaultCenter(); RV.armed = null;
@@ -1357,7 +1490,7 @@ function rvCard(b){
   return '<div class="rv-w'+(['seated','no_show','cancelled'].includes(b.status)?' faded':'')+scanned+'" data-id="'+b.id+'" data-late="'+late+'">'
     + '<div class="rv-w-in">'
     +   '<div class="rv-when"><span>'+esc(b.label)+'</span><em>'+esc(b.code)+'</em></div>'
-    +   '<div class="rv-name">'+esc(b.name)+chips+'</div>'
+    +   '<div class="rv-name"><span class="rv-name-text">'+esc(b.name)+chips+'</span>'+msgSign(b)+'</div>'
     +   '<div class="rv-meta">'+rvPeople(b.party)+(b.areaName?' · '+esc(b.areaName):'')+' · '+rvTel(b.phone)+'</div>'
     +   (b.notes ? '<div class="rv-note">&ldquo;'+esc(b.notes)+'&rdquo;</div>' : '')
     + '</div>'
@@ -1521,6 +1654,7 @@ function rvEveningClick(e){
     rvCenterOn(id, true);
     return;
   }
+  if(e.target.closest('.rv-chat-sign')){ msgOpenThread(id); return; }
   const btn = e.target.closest('.rv-act[data-act]');
   if(btn) rvAct(id, btn.dataset.act, btn);
 }
@@ -1570,6 +1704,8 @@ async function rvAct(id, act, btn){
     if(gen !== RV.gen) return;
     rvApply(data.booking);
     showToast(RV_DONE[act]+' · '+b.name);
+    // Arrived closes the guest's conversation (and Undo opens it): the chat sign follows.
+    if(b.chat && (act==='seated' || act==='booked')) rvLoadDay(RV.date, {quiet:true});
   }catch(e){
     if(gen !== RV.gen) return;
     if(e.data && e.data.booking) rvApply(e.data.booking); else rvRepaintCard(id);
@@ -1698,7 +1834,10 @@ async function rvScanArrive(btn){
     if(gen !== RV.gen) return;
     sc.done = true; sc.booking = Object.assign({}, sc.booking, data.booking, { canArrive: false });
     showToast('Arrived · '+data.booking.name);
-    if(RV.day && RV.day.bookings.some(b => b.id === data.booking.id)) rvApply(data.booking); else rvPaintTop();
+    if(RV.day && RV.day.bookings.some(b => b.id === data.booking.id)){
+      rvApply(data.booking);
+      rvLoadDay(RV.date, {quiet:true});        // the guest's conversation closed: its chat sign follows
+    } else rvPaintTop();
   }catch(e){
     if(gen !== RV.gen) return;
     if(e.data && e.data.booking){
@@ -2137,6 +2276,341 @@ async function rvRoomAdd(btn){
   }catch(e){ showToast(e.message); btn.disabled = false; }
 }
 
+// ── GUEST MESSAGES (r21) ──
+//
+// Sebastian, 8 Oct (pictures 13 and 17): a red bubble at the bottom right, like
+// Messenger's, opens the guests' messages; a chat sign on a guest's card opens
+// that guest's conversation. No ready-made answers: people write. Open and
+// Closed on top, and a day strip like the reservations one — the window shows
+// the conversations of one day (the table's day), so yesterday's are a tap away.
+// A conversation closes by itself when the guest arrives; staff can close it
+// and open it again at any time in the 90 days it is kept. Owners, managers and
+// Sebastian answer; crew only when a manager has switched it on in Team. The
+// server checks all of that again on every request (api/_lib/messages.js).
+const MSG = { known: null, unread: 0, open: false, view: 'list', tab: 'open', date: null, today: null, data: null, error: null,
+              threadId: null, thread: null, threadError: null, seq: 0, gen: 0, timer: null, lastList: 0, sending: false, busy: false };
+const MSG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/></svg>';
+const MSG_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>';
+
+// The chat sign on a card whose guest has written: red with the count when
+// something is unread, outlined when read, grey when the conversation is closed.
+function msgSign(b){
+  if(!b.chat) return '';
+  const n = Number(b.chat.unread) || 0;
+  const cls = n ? ' new' : (b.chat.open ? '' : ' shut');
+  return '<button type="button" class="rv-chat-sign'+cls+'" aria-label="Messages from '+esc(b.name)+(n ? ' ('+n+' new)' : '')+'">'
+    + MSG_ICON + (n ? '<b>'+(n>99?'99+':n)+'</b>' : '') + '</button>';
+}
+
+// staff_day says whether this account answers guests here, and how many wait.
+function msgFromDay(day){
+  if(day.messages === null || day.messages === undefined){ MSG.known = false; MSG.unread = 0; }
+  else { MSG.known = true; MSG.unread = Number(day.messages.unread) || 0; }
+  msgBubble();
+}
+function msgBubble(){
+  let b = document.getElementById('mg-bubble');
+  if(!b){
+    b = document.createElement('button');
+    b.type = 'button'; b.id = 'mg-bubble'; b.className = 'mg-bubble'; b.hidden = true;
+    b.addEventListener('click', function(){ msgOpen(); });
+    document.body.appendChild(b);
+  }
+  b.hidden = !(currentSession && MSG.known && !MSG.open);
+  b.innerHTML = MSG_ICON + (MSG.unread ? '<b>'+(MSG.unread>99?'99+':MSG.unread)+'</b>' : '');
+  b.setAttribute('aria-label', 'Guest messages'+(MSG.unread ? ' ('+MSG.unread+' new)' : ''));
+}
+
+// Another restaurant, or the session ended: nothing of the last one stays.
+function msgReset(){
+  MSG.gen += 1;
+  Object.assign(MSG, { known: null, unread: 0, view: 'list', tab: 'open', date: null, today: null, data: null, error: null,
+                       threadId: null, thread: null, threadError: null, sending: false, busy: false });
+  msgHide();
+}
+function msgHide(){
+  MSG.open = false;
+  clearInterval(MSG.timer); MSG.timer = null;
+  const host = document.getElementById('mg-sheet-host');
+  if(host) host.innerHTML = '';
+  msgBubble();
+}
+
+// From the role icon (#messages). Someone at two restaurants lands on the one
+// whose guests are waiting.
+async function msgOpenFromHash(){
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#' + TAB);
+  if(ACCESS && ACCESS.restaurants.length > 1){
+    try{
+      const box = await rvApi({action:'inbox', staff:true});
+      const by = box.staff && box.staff.byRestaurant ? box.staff.byRestaurant : {};
+      let best = null;
+      ACCESS.restaurants.forEach(r => { if((by[r.id]||0) > 0 && (!best || by[r.id] > by[best.id])) best = r; });
+      if(best && String(best.id) !== String(RESTAURANT.id)) switchRestaurant(best.id);
+    }catch(e){ /* open where we are */ }
+  }
+  msgOpen();
+}
+function msgOpen(){
+  if(!RESTAURANT || !currentSession) return;
+  // The server picks the day: today, or the day of the newest message waiting.
+  MSG.open = true; MSG.view = 'list'; MSG.date = null; MSG.tab = 'open'; MSG.data = null;
+  msgBubble(); msgPaint();
+  msgLoadList();
+  msgTimer();
+}
+function msgOpenThread(id){
+  if(!RESTAURANT || !currentSession) return;
+  MSG.open = true; MSG.view = 'thread'; MSG.threadId = Number(id); MSG.thread = null; MSG.threadError = null;
+  msgBubble(); msgPaint();
+  msgLoadThread(true);
+  msgTimer();
+}
+// Closing the window: the day behind it catches up (chat signs, counts).
+function msgClose(){ msgHide(); if(TAB==='reservations' && RV.day && RV.view==='day') rvLoadDay(RV.date, {quiet:true}); }
+
+// While the window is open and on screen: the open conversation every 8
+// seconds, the day's list every 30.
+function msgTimer(){
+  if(MSG.timer) return;
+  MSG.timer = setInterval(function(){
+    if(!MSG.open || !currentSession){ clearInterval(MSG.timer); MSG.timer = null; return; }
+    if(document.visibilityState !== 'visible' || MSG.sending || MSG.busy) return;
+    if(MSG.view === 'thread') msgLoadThread(false);
+    else if(Date.now() - MSG.lastList > 29000) msgLoadList(true);
+  }, 8000);
+}
+
+async function msgLoadList(quiet){
+  const seq = ++MSG.seq, gen = MSG.gen;
+  try{
+    const body = {action:'staff_msgs'};
+    if(MSG.date) body.date = MSG.date;
+    const data = await rvApi(body);
+    if(seq !== MSG.seq || gen !== MSG.gen) return;
+    const changed = JSON.stringify(data) !== JSON.stringify(MSG.data);
+    MSG.data = data; MSG.date = data.date; MSG.today = data.today; MSG.lastList = Date.now(); MSG.error = null;
+    MSG.known = true; MSG.unread = data.unreadCount;
+    msgBubble();
+    if(MSG.open && MSG.view === 'list' && changed) msgPaint();
+  }catch(e){
+    if(seq !== MSG.seq || gen !== MSG.gen) return;
+    if(e.status === 403){ MSG.known = false; msgBubble(); }
+    if(!quiet || !MSG.data){ MSG.error = e.message; if(MSG.open && MSG.view === 'list') msgPaint(); }
+  }
+}
+
+async function msgLoadThread(first){
+  const seq = ++MSG.seq, gen = MSG.gen, id = MSG.threadId;
+  try{
+    const data = await rvApi({action:'staff_msg_thread', id: id});
+    if(seq !== MSG.seq || gen !== MSG.gen || id !== MSG.threadId || MSG.sending) return;
+    const changed = JSON.stringify(data) !== JSON.stringify(MSG.thread);
+    msgAnnounce(MSG.thread, data);
+    MSG.thread = data; MSG.threadError = null;
+    if(data.booking && data.booking.serviceDate) MSG.date = data.booking.serviceDate;
+    if(changed || first) msgPaint(first);
+    msgSignRead(id);
+    // Read now: the role icon's count in the header catches up too.
+    if(first && typeof hfInboxSeen === 'function') hfInboxSeen();
+  }catch(e){
+    if(seq !== MSG.seq || gen !== MSG.gen || id !== MSG.threadId) return;
+    if(first || !MSG.thread){ MSG.threadError = e.message; msgPaint(); }
+  }
+}
+
+// Opened: that card's chat sign has nothing unread any more, and the bubble's count drops.
+function msgSignRead(id){
+  if(!RV.day) return;
+  const b = RV.day.bookings.find(x => x.id === Number(id));
+  if(!b || !b.chat || !b.chat.unread) return;
+  MSG.unread = Math.max(0, MSG.unread - b.chat.unread);
+  b.chat = Object.assign({}, b.chat, {unread: 0});
+  rvRepaintCard(b.id);
+  msgBubble();
+}
+
+function msgPaint(first){
+  let host = document.getElementById('mg-sheet-host');
+  if(!host){ host = document.createElement('div'); host.id = 'mg-sheet-host'; document.body.appendChild(host); }
+  if(!MSG.open){ host.innerHTML = ''; host.dataset.view = ''; return; }
+  const scroller = host.querySelector('.mg-scroll');
+  const atEnd = !scroller || scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40;
+  // A conversation already on screen: only its top and its messages change.
+  // The answer box is left exactly as it is — rebuilding it would close the
+  // keyboard on a phone in the middle of a sentence.
+  if(MSG.view === 'thread' && MSG.thread && host.dataset.view === 't'+MSG.threadId && host.querySelector('.mg-form')){
+    host.querySelector('.mg-top').innerHTML = msgTopHtml(MSG.thread);
+    host.querySelector('.mg-msgs').innerHTML = msgBubblesHtml(MSG.thread);
+    if(first || atEnd) scroller.scrollTop = scroller.scrollHeight;
+    return;
+  }
+  const sameList = MSG.view === 'list' && host.dataset.view === 'list' && host.dataset.date === String(MSG.date);
+  const keepTop = sameList && scroller ? scroller.scrollTop : 0;
+  const oldStrip = host.querySelector('.mg-strip'), keepLeft = sameList && oldStrip ? oldStrip.scrollLeft : null;
+  host.innerHTML = '<div class="rv-scrim" onclick="msgClose()"></div>'
+    + '<div class="rv-sheet mg-sheet" role="dialog" aria-modal="true" aria-label="Guest messages"><div class="rv-grab"></div>'
+    + (MSG.view === 'thread' ? msgThreadHtml() : msgListHtml())
+    + '</div>';
+  host.dataset.view = MSG.view === 'thread' ? (MSG.thread ? 't'+MSG.threadId : '') : 'list';
+  host.dataset.date = String(MSG.date);
+  const sc = host.querySelector('.mg-scroll');
+  if(sc && MSG.view === 'thread') sc.scrollTop = sc.scrollHeight;
+  if(sc && MSG.view === 'list') sc.scrollTop = keepTop;
+  if(MSG.view === 'list'){
+    const strip = host.querySelector('.mg-strip'), on = host.querySelector('.mg-day.on');
+    if(strip && keepLeft !== null) strip.scrollLeft = keepLeft;
+    else if(strip && on) strip.scrollLeft = on.offsetLeft - strip.offsetLeft - strip.clientWidth/2 + on.offsetWidth/2;
+  }
+}
+
+// A screen reader hears a new message once, not the whole conversation again.
+function msgAnnounce(before, after){
+  if(!before || !after || before.booking.id !== after.booking.id) return;
+  const fresh = after.messages.filter(m => m.fromGuest && !before.messages.some(x => x.id === m.id));
+  const live = document.querySelector('#mg-sheet-host .mg-live');
+  if(fresh.length && live) live.textContent = 'New message from '+fresh[fresh.length-1].who+': '+fresh[fresh.length-1].body;
+}
+
+function msgHead(title, back){
+  return '<div class="rv-sheet-head"><div style="min-width:0;">'
+    + (back ? '<button type="button" class="mg-back" onclick="msgBackToList()">&#8249; All conversations</button>' : '')
+    + '<div class="m-h">'+title+'</div></div>'
+    + '<button type="button" class="rv-x" aria-label="Close" onclick="msgClose()">&times;</button></div>';
+}
+
+function msgListHtml(){
+  const d = MSG.data;
+  if(!d) return msgHead('Messages') + (MSG.error ? '<div class="m-err">'+esc(MSG.error)+'</div>' : '<div class="m-skel"></div><div class="m-skel"></div>');
+  const info = {};
+  d.days.forEach(x => { info[x.date] = x; });
+  let days = '';
+  for(let k = -7; k <= 7; k++){
+    const date = rvAddDays(d.date, k), x = info[date];
+    const n = x ? (MSG.tab === 'open' ? x.open : x.closed) : 0;
+    days += '<button type="button" class="mg-day'+(date===d.date?' on':'')+'" onclick="msgPick(\''+date+'\')" aria-label="'+esc(rvLong(date))
+      + (x && x.unread ? ', new messages' : '')+'"'+(date===d.date?' aria-current="date"':'')+'>'
+      + (x && x.unread ? '<span class="dot"></span>' : '')
+      + '<span>'+(date===d.today ? 'Today' : rvFmt(date, {weekday:'short'}))+'</span><b>'+Number(date.slice(8))+'</b>'
+      + '<i>'+(n ? n+(n===1?' chat':' chats') : '&nbsp;')+'</i></button>';
+  }
+  const list = (d.threads || []).filter(t => MSG.tab === 'open' ? t.open : !t.open);
+  const rows = !d.threads ? '<div class="m-skel"></div><div class="m-skel"></div>'
+    : list.length ? list.map(msgRow).join('')
+    : '<div class="mg-empty">'+(MSG.tab === 'open' ? 'No open conversations' : 'No closed conversations')+' for '+esc(rvLong(d.date))+'.'
+      + (MSG.tab === 'open' && d.openCount ? '<br>Days with something new have a red dot.' : '')+'</div>';
+  return msgHead('Messages')
+    + '<div class="mg-tabs" role="tablist">'
+    +   '<button type="button" role="tab" class="mg-tab'+(MSG.tab==='open'?' on':'')+'" aria-selected="'+(MSG.tab==='open')+'" onclick="msgTab(\'open\')">Open'
+    +     (d.openCount ? ' <b class="mg-n">'+d.openCount+'</b>' : '')+'</button>'
+    +   '<button type="button" role="tab" class="mg-tab'+(MSG.tab==='closed'?' on':'')+'" aria-selected="'+(MSG.tab==='closed')+'" onclick="msgTab(\'closed\')">Closed'
+    +     (d.closedUnread ? ' <b class="mg-n" title="Closed, with a message not read yet">'+d.closedUnread+'</b>' : '')+'</button>'
+    + '</div>'
+    + '<div class="mg-days"><button type="button" class="rv-arrow" aria-label="Previous day" onclick="msgStep(-1)">&#8249;</button>'
+    +   '<div class="mg-strip">'+days+'</div>'
+    +   '<button type="button" class="rv-arrow" aria-label="Next day" onclick="msgStep(1)">&#8250;</button></div>'
+    + '<div class="rv-dateline">'+esc(rvLong(d.date))+(d.date===d.today ? ' · today' : '')+'</div>'
+    + '<div class="mg-scroll">'+rows+'</div>'
+    + '<p class="mg-foot">Closed conversations stay here for 90 days after the table, then they are deleted.</p>';
+}
+
+function msgRow(t){
+  const last = t.preview ? '<em>'+esc(t.lastWho || '')+':</em> '+esc(t.preview) : '';
+  const foot = t.closed
+    ? '<span class="mg-closed'+(t.closed.kind==='staff'?' staff':'')+'">Closed · '+esc(t.closed.short)+'</span>'
+      + '<button type="button" class="rv-mini" onclick="msgReopen('+Number(t.id)+',this)" aria-label="Reopen the conversation with '+esc(t.name)+'">Reopen</button>'
+    : '<span>'+esc(t.lastLabel)+'</span>';
+  return '<div class="mg-row'+(t.unread?' new':'')+'">'
+    + '<button type="button" class="mg-row-main" onclick="msgOpenThread('+Number(t.id)+')">'
+    + '<span class="mg-row-top"><b>'+esc(t.name)+'</b><span>'+esc(t.label)+' · '+rvPeople(t.party)+'</span>'
+    + (t.unread ? '<span class="mg-n" aria-label="'+t.unread+' new">'+t.unread+'</span>' : '')+'</span>'
+    + (last ? '<span class="mg-row-last">'+last+'</span>' : '')
+    + '</button>'
+    + '<div class="mg-row-foot">'+foot+'</div></div>';
+}
+
+function msgTopHtml(t){
+  const b = t.booking;
+  const first = String(b.name || '').trim().split(/\s+/)[0] || 'The guest';
+  const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+' · '+rvTel(b.phone);
+  const state = t.open
+    ? '<div class="mg-bar"><span class="mg-state">Open</span><button type="button" class="rv-mini" onclick="msgCloseThread(this)">Close</button></div>'
+      + (t.guestCanReopen ? '' : '<div class="mg-warn">'+esc(first)+' has used the one reopen after 24 hours. If you close it now, only the restaurant can open it again.</div>')
+    : '<div class="mg-shut'+(t.closedNote && t.closedNote.kind==='staff'?' staff':'')+'">&#10003; '+esc(t.closedNote ? t.closedNote.text : 'Closed')
+      + '<button type="button" class="rv-mini" onclick="msgReopenThread(this)">Reopen the conversation</button></div>';
+  return '<div class="mg-sub">'+sub+'</div>' + state;
+}
+function msgBubblesHtml(t){
+  return t.messages.map(m => '<div class="mg-bub '+(m.fromGuest?'guest':'staff')+'"><span class="mg-bub-who">'+esc(m.who)+' <i>· '+esc(m.label)+'</i></span>'
+    + esc(m.body)+'</div>').join('');
+}
+function msgThreadHtml(){
+  const t = MSG.thread;
+  if(!t) return msgHead('Messages', true) + (MSG.threadError ? '<div class="m-err">'+esc(MSG.threadError)+'</div>' : '<div class="m-skel"></div>');
+  return msgHead(esc(t.booking.name), true)
+    + '<div class="mg-top">'+msgTopHtml(t)+'</div>'
+    + '<div class="mg-scroll"><div class="mg-msgs">'+msgBubblesHtml(t)+'</div>'
+    + '<p class="mg-foot">Kept until '+esc(t.keptUntil)+' (90 days after the table), then deleted.</p></div>'
+    + '<p class="mg-live" aria-live="polite"></p>'
+    + '<div class="mg-form"><textarea class="mg-input" rows="1" maxlength="1000" aria-label="Your answer" placeholder="Write your answer…"'
+    + ' oninput="msgGrow(this)" onkeydown="if(event.key===\'Enter\'&&(event.ctrlKey||event.metaKey)){event.preventDefault();msgSend();}"></textarea>'
+    + '<button type="button" class="mg-send" aria-label="Send" onclick="msgSend()">'+MSG_SEND+'</button></div>';
+}
+function msgGrow(input){ input.style.height = 'auto'; input.style.height = Math.min(140, input.scrollHeight + 2) + 'px'; }
+
+function msgBackToList(){ MSG.view = 'list'; MSG.threadId = null; MSG.thread = null; MSG.seq += 1; msgPaint(); msgLoadList(); }
+function msgTab(tab){ MSG.tab = tab; msgPaint(); }
+function msgPick(date){
+  if(!date || date === MSG.date) return;
+  MSG.date = date;
+  if(MSG.data) MSG.data = Object.assign({}, MSG.data, {date: date, threads: null});    // loading
+  msgPaint(); msgLoadList();
+}
+function msgStep(n){ if(MSG.date) msgPick(rvAddDays(MSG.date, n)); }
+
+async function msgSend(){
+  const host = document.getElementById('mg-sheet-host');
+  const input = host && host.querySelector('.mg-input'), send = host && host.querySelector('.mg-send');
+  if(!input || MSG.sending) return;
+  const text = input.value.trim();
+  if(!text){ input.focus(); return; }
+  MSG.sending = true; send.disabled = true;
+  const gen = MSG.gen, id = MSG.threadId;
+  try{
+    const data = await rvApi({action:'staff_msg_send', id: id, body: text});
+    if(gen !== MSG.gen || id !== MSG.threadId) return;
+    MSG.seq += 1;                                   // an older answer still on its way is not drawn
+    MSG.thread = data;
+    input.value = ''; msgGrow(input);
+    MSG.sending = false;
+    msgPaint(true);
+    if(data.emailed) showToast('Sent. '+(String(data.booking.name).split(' ')[0])+' has no account, so we emailed them once.');
+  }catch(e){ showToast(e.message); }
+  finally{ MSG.sending = false; const again = document.querySelector('#mg-sheet-host .mg-send'); if(again) again.disabled = false; }
+}
+
+function msgCloseThread(btn){ return msgState('staff_msg_close', MSG.threadId, btn, 'Closed'); }
+function msgReopenThread(btn){ return msgState('staff_msg_reopen', MSG.threadId, btn, 'Open again'); }
+function msgReopen(id, btn){ return msgState('staff_msg_reopen', id, btn, 'Open again'); }
+async function msgState(action, id, btn, done){
+  if(MSG.busy) return;
+  MSG.busy = true; if(btn) btn.disabled = true;
+  const gen = MSG.gen;
+  try{
+    const data = await rvApi({action: action, id: Number(id)});
+    if(gen !== MSG.gen) return;
+    showToast(done+' · '+data.booking.name);
+    if(MSG.view === 'thread' && Number(id) === MSG.threadId){ MSG.seq += 1; MSG.thread = data; msgPaint(); }
+    else { if(action === 'staff_msg_reopen') MSG.tab = 'open'; msgLoadList(); }
+  }catch(e){ showToast(e.message); if(btn) btn.disabled = false; }
+  finally{ MSG.busy = false; }
+}
+
+// Escape closes the window, as the × does.
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && MSG.open) msgClose(); });
+
 // Logging out — from the corner menu, or a session that expired — must not
 // leave the day's guests (names and phones) on the screen. taster.js's
 // logout() knows nothing about this page, so this page wraps it.
@@ -2145,7 +2619,7 @@ async function rvRoomAdd(btn){
   if(typeof plain !== 'function') return;
   window.logout = function(){
     const out = plain.apply(this, arguments);
-    try{ rvReset(); rvPaintSheet(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; boot(); }catch(e){}
+    try{ rvReset(); rvPaintSheet(); msgHide(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; boot(); }catch(e){}
     return out;
   };
 })();
