@@ -348,7 +348,7 @@ function loadSession(){
     }
   }catch(e){}
 }
-function logout(){localStorage.removeItem('hf_taster');currentTaster=null;currentSession=null;updateNavBtn();showToast('Logged out. See you next time!');}
+function logout(){localStorage.removeItem('hf_taster');try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof HF_INBOX!=='undefined'){HF_INBOX.data=null;HF_INBOX.problem=null;HF_INBOX.who=undefined;}currentTaster=null;currentSession=null;updateNavBtn();showToast('Logged out. See you next time!');}
 
 // ── CORNER ACCOUNT MENU ──
 //
@@ -358,11 +358,27 @@ function logout(){localStorage.removeItem('hf_taster');currentTaster=null;curren
 // change or it went stale. One fixed control in the top-right corner replaces
 // all of them: it is injected here, it re-renders itself from currentTaster,
 // and it is the only place that decides what a signed-in taster may see.
+//
+// Since 8 Oct the corner is a row of round buttons (Sebastian's picture 12):
+//   [bell] [role] [☰]
+// the bell for anyone logged in (the restaurant answered you), the role icon
+// for staff (key = owner, clipboard = manager, chef hat = crew, his eagle for
+// the platform admin; it goes to the manager page and carries the count of
+// guest messages waiting), and the ☰, which is now personal only.
 var HF_CORNER_HTML =
   '<div class="hf-corner" id="hf-corner">'
-+   '<button class="hf-corner-toggle" id="hf-corner-toggle" type="button" aria-label="Account menu" aria-expanded="false" aria-controls="hf-corner-items">'
-+     '<span></span><span></span><span></span><i class="hf-corner-dot"></i>'
-+   '</button>'
++   '<div class="hf-corner-bar">'
++     '<button class="hf-bell" id="hf-bell" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="hf-bell-panel" hidden>'
++       '<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
++         '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2.1H4.4z"/><path d="M9.8 20.6a2.4 2.4 0 0 0 4.4 0"/></svg>'
++       '<b class="hf-count" hidden></b>'
++     '</button>'
++     '<a class="hf-role" id="hf-role" href="/manager.html" hidden><b class="hf-count" hidden></b></a>'
++     '<button class="hf-corner-toggle" id="hf-corner-toggle" type="button" aria-label="Account menu" aria-expanded="false" aria-controls="hf-corner-items">'
++       '<span></span><span></span><span></span><i class="hf-corner-dot"></i>'
++     '</button>'
++   '</div>'
++   '<div class="hf-bell-panel" id="hf-bell-panel" role="region" aria-label="Notifications" hidden></div>'
 +   '<div class="hf-corner-items" id="hf-corner-items"></div>'
 + '</div>';
 
@@ -377,6 +393,7 @@ function hfEsc(s){
 function openCornerMenu(){
   const root=document.getElementById('hf-corner');
   if(!root)return;
+  hfBellClose();
   root.classList.add('open');
   const t=document.getElementById('hf-corner-toggle');
   if(t)t.setAttribute('aria-expanded','true');
@@ -411,25 +428,8 @@ function updateNavBtn(){
     items.push({label:'My Reservations', href:'/reservations.html#mine'});
     items.push({label:'My Tastings', act:'tastings'});
     items.push({label:'My Visits', act:'visits'});
-    // Two different flags, because there are two different kinds of access:
-    // is_platform_admin is Sebastian, who is above every restaurant, and
-    // is_restaurant_admin marks an account that holds a role at one — the
-    // roles API keeps it in step with the restaurant_roles table so that
-    // ordinary customers never pay for an extra request just to find out they
-    // are not managers.
-    //
-    // This only decides whether a link is drawn. manager.html asks the server
-    // what the account may actually do, so unhiding this in a console gets you
-    // a page that says no.
-    if(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin){
-      // One door (Sebastian, 25 Sep): the manager page opens on Reservations,
-      // with Menu and Team one tap away. "My Reservations" above is the
-      // guest's own tables; this is the restaurant's. Its icon and word say
-      // the role (8 Oct): see hfStaffRole below.
-      var role=hfStaffRole();
-      items.push({label:hfRoleWord(role), href:'/manager.html', cls:'hf-corner-manager', icon:hfRoleIcon(role),
-                  aria:'Manager page'+(role?' ('+hfRoleWord(role)+')':'')});
-    }
+    // The manager page is not in here any more (Sebastian, 8 Oct): this menu is
+    // the person's own, and the restaurant's door is the role icon beside it.
     items.push({label:'Log Out', act:'logout'});
   }else{
     items.push({label:'Log In', act:'login'});
@@ -440,13 +440,43 @@ function updateNavBtn(){
     const cls='hf-corner-item'+(it.cls?' '+it.cls:'');
     const text=hfEsc(it.label);
     if(it.kind==='label')return '<div class="'+cls+'"'+style+'>'+text+'</div>';
-    // icon: one of hfRoleIcon's own drawings, never anything typed by a person.
-    if(it.href)return '<a class="'+cls+'" href="'+it.href+'"'+style+(it.aria?' aria-label="'+hfEsc(it.aria)+'"':'')+'>'+(it.icon||'')+text+'</a>';
+    if(it.href)return '<a class="'+cls+'" href="'+it.href+'"'+style+'>'+text+'</a>';
     return '<button type="button" class="'+cls+'" data-act="'+it.act+'"'+style+'>'+text+'</button>';
   }).join('');
 
   if(root)root.classList.toggle('signed-in',!!currentTaster);
+  hfPaintHeader();
 }
+
+// ── THE BELL AND THE ROLE ICON (Sebastian, 8 Oct) ──
+// Two flags decide whether the role icon is drawn at all: is_platform_admin is
+// Sebastian, above every restaurant, and is_restaurant_admin marks an account
+// that holds a role somewhere (the roles API keeps it in step), so ordinary
+// customers never pay for a request to find out they are not managers. Neither
+// is a permission: manager.html asks the server what the account may do.
+function hfPaintHeader(){
+  var bell=document.getElementById('hf-bell'), roleBtn=document.getElementById('hf-role');
+  if(!bell||!roleBtn)return;
+  var staff=!!(currentTaster&&(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin));
+  bell.hidden=!currentTaster;
+  roleBtn.hidden=!staff;
+  if(staff){
+    var role=hfStaffRole()||'manager';            // the clipboard until the server says which
+    if(roleBtn.getAttribute('data-role')!==role){
+      roleBtn.setAttribute('data-role',role);
+      var n=roleBtn.querySelector('.hf-count');
+      roleBtn.innerHTML=hfRoleIcon(role);
+      if(n)roleBtn.appendChild(n);
+    }
+  }else roleBtn.removeAttribute('data-role');
+  // The page titles make room (taster.css): staff have three buttons.
+  document.body.classList.toggle('hf-has-bell',!!currentTaster);
+  document.body.classList.toggle('hf-has-role',staff);
+  if(!currentTaster){hfBellClose();hfInboxPaint(null);return;}
+  hfInboxPaint(HF_INBOX.who===hfWho()?HF_INBOX.data:null);
+  hfInbox(false);
+}
+function hfWho(){return currentTaster?(currentTaster.id==null?null:currentTaster.id):undefined;}
 
 // ── THE STAFF PILL: one icon per role (Sebastian, 8 Oct) ──
 // The key for an owner, the clipboard for a manager, the chef hat for the
@@ -459,13 +489,9 @@ function hfRoleWord(role){
   return ({platform:'Admin', owner:'Owner', manager:'Manager', crew:'Crew'})[role]||'Manager';
 }
 function hfRoleIcon(role){
-  var st=' width="21" height="21" aria-hidden="true" focusable="false" style="vertical-align:-6px;margin-right:7px"';
+  var st=' width="22" height="22" aria-hidden="true" focusable="false"';
   var line=' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
-  if(role==='platform'){
-    // The eagle: "eagle" from IconPark by ByteDance, Apache License 2.0
-    // (github.com/bytedance/IconPark).
-    return '<svg viewBox="0 0 48 48"'+st+'><g fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 23c-4.04-7.043 3.624-11.136 8-12c14.541-12.844 26.485-.287 28 8c1.514 8.287 1.158 14.893 2 18c-6.463-8.7-10.877-7.158-12-5c-2.02 4.144-5.314 4.252-7 3c-4.04-3.314-10.476 3.202-13 7c4.847-8.7 5.505-14.273 5-16c-2.02-8.286-8.307-5.416-11-3"/><circle cx="23" cy="16" r="2" fill="currentColor"/></g></svg>';
-  }
+  if(role==='platform')return hfEagle(27);
   var p={
     owner:'<circle cx="8" cy="15.5" r="4.2"/><path d="M11 12.5 20 3.5M16.5 7l2.5 2.5M14.2 9.3l2 2"/>',
     manager:'<rect x="5.5" y="4.5" width="13" height="16.5" rx="2"/><rect x="9" y="2.5" width="6" height="4" rx="1.2"/><path d="M9 13.2l2.2 2.2 4-4.4"/>',
@@ -473,6 +499,31 @@ function hfRoleIcon(role){
   };
   return p[role]?'<svg viewBox="0 0 24 24"'+st+line+'>'+p[role]+'</svg>':'';
 }
+// Sebastian's eagle (8 Oct): a solid head facing right, drawn for him after
+// the picture he sent — an original drawing, nobody's icon. The eye, the brow
+// and the beak are cut out of the head with a mask, so it is one colour
+// (currentColor) on any background. Each copy needs its own mask id.
+function hfEagle(size){
+  hfEagle.n=(hfEagle.n||0)+1;
+  var id='hf-eagle-m'+hfEagle.n;
+  var head='M40 26C50 24 62 23.5 80 24C92 25 101 29 105 36L104 39'
+    +'C115 38 124 42 129 49C132 54 133 62 128 70C126 66 124 61 120 59.5C116 58.5 111 59 108 60L116 61.6L113 62.8L101 62.6'
+    +'C96 66 93 72 93 80C93 92 100 102 106 110L111 117L103 116C103 122 101 127 99 131L86 123L64 117.5L40 116.8L29 116.5'
+    +'Q18 118 9 116Q15 112 19 108C21 104 23 99 23 92Q13 90 8 82Q15 83 21 81C19 76 19 69 20 62Q12 60 8 52Q14 52 21 51'
+    +'C22 46 25 41 31 37Q24 34 17 29Q28 26 40 26Z';
+  var cut='<path d="M65.5 37.6C74 37 84 38 91.5 40.6" stroke="#000" stroke-width="2.6" stroke-linecap="round" fill="none"/>'
+    +'<path d="M74 40.5C78.5 39.4 86 39.6 90.5 41.6C89.6 46.4 85.6 49.4 81.4 49.2C77.4 48.6 75 45 74 40.5Z" fill="#000"/>'
+    +'<circle cx="82.6" cy="43.6" r="3.4" fill="#fff"/>'
+    +'<path d="M89 42.2L102 41.8M102.2 42L102.2 50.5" stroke="#000" stroke-width="1.8" stroke-linecap="round" fill="none"/>'
+    +'<path d="M103.4 49.2L103.4 52C96 54 88.4 56.6 80 57.8C87.4 55.2 95.4 51.6 103.4 49.2Z" fill="#000"/>'
+    +'<path d="M80 58C90 57.6 100 57.5 109 58" stroke="#000" stroke-width="1.3" stroke-linecap="round" fill="none"/>'
+    +'<circle cx="112.6" cy="44.2" r="1.4" fill="#000"/>';
+  return '<svg class="hf-eagle" viewBox="6 13 128 128" width="'+size+'" height="'+size+'" aria-hidden="true" focusable="false">'
+    +'<defs><mask id="'+id+'" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">'
+    +'<rect x="0" y="0" width="160" height="160" fill="#fff"/>'+cut+'</mask></defs>'
+    +'<path fill="currentColor" mask="url(#'+id+')" d="'+head+'"/></svg>';
+}
+
 // 'platform', 'owner', 'manager', 'crew', or '' while it is not known yet.
 function hfStaffRole(){
   if(!currentTaster)return '';
@@ -502,6 +553,120 @@ function hfLoadRole(who){
     .catch(function(){});
 }
 
+// ── WHAT IS NEW: the bell's list and the role icon's count ──
+// One small question to the server (action "inbox"), kept for 45 seconds in
+// this tab so that walking from page to page does not ask again each time,
+// and asked again every minute while the page is on screen. A page that has
+// just shown the guest a conversation calls hfInboxSeen() so the bell clears.
+var HF_INBOX={data:null, at:0, who:undefined, busy:false, timer:null, problem:null};
+function hfInbox(force){
+  var who=hfWho();
+  if(!currentSession||who===undefined)return;
+  if(!force){
+    if(HF_INBOX.who===who&&HF_INBOX.data&&Date.now()-HF_INBOX.at<45000)return;
+    try{
+      var c=JSON.parse(sessionStorage.getItem('hf_inbox')||'null');
+      if(c&&c.id===who&&Date.now()-c.at<45000&&c.data){HF_INBOX.data=c.data;HF_INBOX.at=c.at;HF_INBOX.who=who;hfInboxPaint(c.data);return;}
+    }catch(e){}
+  }
+  if(HF_INBOX.busy)return;
+  HF_INBOX.busy=true;
+  var token=currentSession;
+  var staff=!!(currentTaster&&(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin));
+  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({action:'inbox',staff:staff})})
+    .then(function(res){
+      // A session that has ended (they last for 30 days) says so in the bell
+      // instead of "Looking…" for ever.
+      if(res.status===401){HF_INBOX.problem='expired';return null;}
+      if(!res.ok){HF_INBOX.problem='down';return null;}
+      return res.json();
+    })
+    .then(function(d){
+      if(!d){var pn=document.getElementById('hf-bell-panel');if(pn&&!pn.hidden&&currentSession===token)hfBellRender();return;}
+      // Only for the account that asked: a log-out or another log-in meanwhile draws nothing.
+      if(!Array.isArray(d.bell)||currentSession!==token||hfWho()!==who)return;
+      HF_INBOX.problem=null;
+      var data={bell:d.bell, staff:d.staff||null};
+      HF_INBOX.data=data;HF_INBOX.at=Date.now();HF_INBOX.who=who;
+      try{sessionStorage.setItem('hf_inbox',JSON.stringify({id:who, at:HF_INBOX.at, data:data}));}catch(e){}
+      hfInboxPaint(data);
+    })
+    .catch(function(){HF_INBOX.problem='down';var pn=document.getElementById('hf-bell-panel');if(pn&&!pn.hidden)hfBellRender();})
+    .then(function(){HF_INBOX.busy=false;});
+}
+function hfInboxSeen(){
+  try{sessionStorage.removeItem('hf_inbox');}catch(e){}
+  HF_INBOX.at=0;
+  hfInbox(true);
+}
+function hfCount(el,n){
+  var b=el&&el.querySelector('.hf-count');
+  if(!b)return;
+  b.hidden=!n;
+  b.textContent=n>99?'99+':String(n||'');
+}
+function hfInboxPaint(data){
+  var bell=document.getElementById('hf-bell'), roleBtn=document.getElementById('hf-role');
+  var answers=data&&Array.isArray(data.bell)?data.bell.reduce(function(n,b){return n+(Number(b.count)||0);},0):0;
+  var waiting=data&&data.staff?Number(data.staff.unread)||0:0;
+  if(bell){
+    hfCount(bell,answers);
+    bell.setAttribute('aria-label',answers?'Notifications: '+answers+' new':'Notifications');
+  }
+  if(roleBtn){
+    hfCount(roleBtn,waiting);
+    var role=roleBtn.getAttribute('data-role')||'';
+    // Guest messages waiting: the icon opens the manager page on them.
+    roleBtn.setAttribute('href',waiting?'/manager.html#messages':'/manager.html');
+    roleBtn.setAttribute('aria-label','Manager page ('+hfRoleWord(role)+')'+(waiting?', '+waiting+' new guest message'+(waiting===1?'':'s'):''));
+  }
+  var panel=document.getElementById('hf-bell-panel');
+  if(panel&&!panel.hidden)hfBellRender();
+}
+
+// The bell's list: "Ana · The Hungry Fork answered you", the table, when.
+// Each one opens that conversation in My Reservations.
+function hfBellRender(){
+  var panel=document.getElementById('hf-bell-panel');
+  if(!panel)return;
+  var list=HF_INBOX.who===hfWho()&&HF_INBOX.data?HF_INBOX.data.bell:null;
+  if(!list){
+    panel.innerHTML='<div class="hf-bell-head">Notifications</div><div class="hf-bell-empty">'
+      +(HF_INBOX.problem==='expired'?'Your session has ended. Log out and in again to see what is new.'
+        :HF_INBOX.problem==='down'?'Could not check right now. Try again in a moment.':'Looking…')+'</div>';
+    return;
+  }
+  if(!list.length){
+    panel.innerHTML='<div class="hf-bell-head">Notifications</div>'
+      +'<div class="hf-bell-empty">Nothing new. When a restaurant answers your message, it shows here.</div>';
+    return;
+  }
+  panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
+    return '<a class="hf-bell-item" href="/reservations.html#chat='+Number(b.reservationId)+'">'
+      +'<b>'+hfEsc(b.who)+' · '+hfEsc(b.restaurant)+' answered you</b>'
+      +'<span>Your table: '+hfEsc(b.table)+'</span>'
+      +'<small>'+hfEsc(b.label)+(b.count>1?' · '+Number(b.count)+' messages':'')+'</small>'
+      +'</a>';
+  }).join('');
+}
+function hfBellOpen(){
+  var panel=document.getElementById('hf-bell-panel'), bell=document.getElementById('hf-bell');
+  if(!panel||!bell)return;
+  closeCornerMenu();
+  panel.hidden=false;
+  bell.setAttribute('aria-expanded','true');
+  hfBellRender();
+  hfInbox(true);
+}
+function hfBellClose(){
+  var panel=document.getElementById('hf-bell-panel'), bell=document.getElementById('hf-bell');
+  if(panel)panel.hidden=true;
+  if(bell)bell.setAttribute('aria-expanded','false');
+}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')hfInbox(false);});
+HF_INBOX.timer=setInterval(function(){if(document.visibilityState==='visible')hfInbox(false);},60000);
+
 // One delegated listener rather than inline onclick, because the pills are
 // rebuilt from scratch on every login state change.
 document.addEventListener('click',function(e){
@@ -518,9 +683,19 @@ document.addEventListener('click',function(e){
     return;
   }
   if(t.closest('#hf-corner-toggle')){toggleCornerMenu();return;}
+  if(t.closest('#hf-bell')){var p=document.getElementById('hf-bell-panel');if(p&&p.hidden)hfBellOpen();else hfBellClose();return;}
+  var bellItem=t.closest('.hf-bell-item');
+  if(bellItem){
+    hfBellClose();
+    // Already on that address: the page will not hear a change, so open it here.
+    var m=/#chat=(\d+)$/.exec(bellItem.getAttribute('href')||'');
+    if(m&&location.pathname==='/reservations.html'&&location.hash==='#chat='+m[1]&&typeof openMine==='function'){e.preventDefault();openMine(Number(m[1]));}
+    return;
+  }
+  if(!t.closest('#hf-bell-panel'))hfBellClose();
   if(!t.closest('#hf-corner'))closeCornerMenu();
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeCornerMenu();if(typeof closeMyVisits==='function')closeMyVisits();}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeCornerMenu();hfBellClose();if(typeof closeMyVisits==='function')closeMyVisits();}});
 
 (function(){
   const host=document.createElement('div');
