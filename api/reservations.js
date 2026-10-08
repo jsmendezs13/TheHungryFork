@@ -191,6 +191,10 @@ async function book(req, res, body) {
   }
   const phone = cleanPhone(body.phone, normalizeUsPhone);
   if (!phone) return res.status(400).json({ error: 'Please write a phone number the restaurant can call.' });
+  // The email is required (Sebastian, 7 Oct): the QR code and the confirmation
+  // go there, and a guest without them is a guest the door cannot find.
+  const email = requiredEmail(body.email);
+  if (!email) return res.status(400).json({ error: EMAIL_NEEDED, reason: 'email' });
 
   const party = cleanParty(body.party, 50);
   if (!party) return res.status(400).json({ error: BOOK_MESSAGES.bad_party, reason: 'bad_party' });
@@ -208,7 +212,6 @@ async function book(req, res, body) {
     return res.status(409).json({ error: BOOK_MESSAGES.past, reason: 'past' });
   }
 
-  const email = cleanEmail(body.email);
   const notes = cleanText(body.notes, 400);
 
   // ── how often ────────────────────────────────────────────────────────────
@@ -224,42 +227,19 @@ async function book(req, res, body) {
   }
 
   // ── one table per phone, per day ─────────────────────────────────────────
-  // Not a rule the database can enforce (a family really can book lunch and
-  // dinner from one phone, and staff do it all the time), but a guest who taps
-  // twice should get their own booking back rather than a second table.
+  // Sebastian's rule (2 Oct): one phone number gets one table a day at a
+  // restaurant online; a second one is a phone call. So a party of twelve
+  // cannot book two tables of six and skip the request the manager answers.
+  // secondTable() below gives the two answers; it runs again right after the
+  // booking, so two bookings sent at the same moment cannot both stay.
   const localDate = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(at);
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'long', month: 'long', day: 'numeric' }).format(at);
+  const sameDay = { req, res, restaurantId, phone, localDate, day, name: name.value, loaded, timezone };
 
-  const existing = await sb(
-    `/reservations?restaurant_id=eq.${restaurantId}&guest_phone=eq.${encodeURIComponent(phone)}` +
-    `&local_date=eq.${localDate}&status=in.(booked,seated)&select=id,code,reserved_at,party_size,guest_name,taster_id&limit=1`
-  );
-  if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
-    const row = existing.data[0];
-    // Given back only to the same guest tapping twice — same number AND same
-    // name. A different name is simply another party (a family booking lunch and
-    // dinner from one phone), so it books like anyone else, and the answer is the
-    // same whether or not that number already had a table: typing somebody's
-    // phone number tells you nothing about their evening (review, 22 Sep).
-    const sameGuest = String(row.guest_name || '').trim().toLowerCase().replace(/\s+/g, ' ')
-                   === name.value.trim().toLowerCase().replace(/\s+/g, ' ');
-    // The QR only to the account that owns the table: a name and a phone
-    // number are on every staff list, and the QR is what lets crew press
-    // Arrived (review, 1 Oct). Anyone else gets the code, as before.
-    const owner = tasterIdFromRequest(req);
-    if (sameGuest) return res.status(200).json({
-      success: true,
-      already: true,
-      code: row.code,
-      qr: owner && Number(row.taster_id) === Number(owner) ? await qrFor(row.id, loaded.settings) : null,
-      at: new Date(row.reserved_at).toISOString(),
-      party: row.party_size,
-      date: localDate,
-      ...clockIn(timezone, row.reserved_at),
-      message: 'You already have a table that day. Here it is again.',
-    });
-  }
+  const before = await tablesThatDay(restaurantId, phone, localDate);
+  if (before.length) return secondTable(sameDay, before);
 
   // ── the database decides ─────────────────────────────────────────────────
   // A signed-in taster gets their booking tied to their account, so it can
@@ -295,6 +275,26 @@ async function book(req, res, body) {
   if (!result.ok) {
     const reason = result.reason || 'taken';
     return res.status(409).json({ error: BOOK_MESSAGES[reason] || BOOK_MESSAGES.taken, reason });
+  }
+
+  // Two bookings for this phone and day sent at the same moment both passed
+  // the check above. The older one stays; this one is given straight back.
+  const after = await tablesThatDay(restaurantId, phone, localDate);
+  const earlier = after.filter((r) => Number(r.id) < Number(result.reservation_id));
+  if (earlier.length) {
+    const stamp = new Date().toISOString();
+    const gave = await sb(`/reservations?id=eq.${Number(result.reservation_id)}&status=eq.booked`, {
+      method: 'PATCH', headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ status: 'cancelled', cancelled_at: stamp, updated_at: stamp }),
+    });
+    if (gave.ok && Array.isArray(gave.data) && gave.data.length) {
+      console.log('[reservations:book] a second table for one phone that day, given back', result.reservation_id);
+      // The other booking, a moment older, is sending its own confirmation now.
+      return secondTable({ ...sameDay, race: true }, earlier);
+    }
+    // Could not give it back: the table is real, so the guest is told so,
+    // as for any booking (never "nothing was booked" about a table that stays).
+    console.error('[reservations:book] could not give back a second table', result.reservation_id, gave.status);
   }
 
   // The area is named for the staff, not the guest ("Bar" is a different
@@ -340,6 +340,117 @@ async function book(req, res, body) {
   });
 }
 
+const EMAIL_NEEDED = 'Please write your email: your QR code and the confirmation go there.';
+
+// ── a second table for the same phone, the same day ──────────────────────────
+// The tables this phone already has at this restaurant that day, oldest first.
+async function tablesThatDay(restaurantId, phone, localDate) {
+  const got = await sb(
+    `/reservations?restaurant_id=eq.${restaurantId}&guest_phone=eq.${encodeURIComponent(phone)}` +
+    `&local_date=eq.${localDate}&status=in.(booked,seated)` +
+    `&select=id,code,reserved_at,party_size,guest_name,guest_email,guest_phone,taster_id,area_id,status,hold_minutes,confirmation_sent_at&order=id.asc&limit=5`
+  );
+  return got.ok && Array.isArray(got.data) ? got.data : [];
+}
+
+// "José Álvarez" and "jose  alvarez" are the same guest.
+function sameName(a, b) {
+  const fold = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  return fold(a) === fold(b);
+}
+
+// The two answers:
+//   · the same guest again (same number AND same name): their table is theirs.
+//     Nothing about it goes on this screen — not the time, not the code, not
+//     the QR — unless the account that owns it is logged in, because a name
+//     and a phone number are on every staff list (and the QR lets crew press
+//     Arrived), and because a name and a number should not tell a stranger
+//     when somebody will be at a restaurant. Instead the confirmation, QR
+//     inside, is sent again to the email SAVED with the table (never the one
+//     typed now), not again within ten minutes of the last one that went.
+//   · another name on the same number: nothing is booked; call the restaurant.
+// What either answer tells someone who types another person's number: that it
+// has a table there that day. Accepted with the rule; the privacy page says so.
+async function secondTable({ req, res, phone, localDate, day, name, loaded, timezone, race }, rows) {
+  const restaurantPhone = (loaded.restaurant && loaded.restaurant.phone) || null;
+  const callLine = `For a second table the same day, please call the restaurant${restaurantPhone ? ': ' + restaurantPhone : ''}.`;
+  const row = rows.find((r) => sameName(r.guest_name, name));
+  if (!row) {
+    return res.status(409).json({
+      reason: 'one_per_day',
+      error: `This phone number already has a table at ${loaded.restaurant.name} on ${day}. ${callLine}`,
+      day, phone: restaurantPhone,
+    });
+  }
+  // Theirs: the account that booked it, or an account on that same phone number
+  // (My Reservations shows them the same table).
+  const owner = tasterIdFromRequest(req);
+  let theirs = !!owner && Number(row.taster_id) === Number(owner);
+  if (owner && !theirs) {
+    const who = await sb(`/tasters?id=eq.${Number(owner)}&select=phone_number`);
+    theirs = who.ok && Array.isArray(who.data) && who.data.length > 0 && !!who.data[0].phone_number
+          && who.data[0].phone_number === row.guest_phone;
+  }
+  if (theirs) {
+    let areaName = null;
+    if (row.area_id) {
+      const area = await sb(`/restaurant_areas?id=eq.${Number(row.area_id)}&select=name`);
+      if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
+    }
+    return res.status(200).json({
+      success: true, already: true, day, date: localDate, phone: restaurantPhone,
+      code: row.code, qr: await qrFor(row.id, loaded.settings),
+      at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName,
+      ...clockIn(timezone, row.reserved_at),
+    });
+  }
+  // Not logged in as its owner: the QR goes to the email saved with the table,
+  // if the table is still to come (or still inside its time).
+  const holdMs = (Number(row.hold_minutes) || (loaded.settings && Number(loaded.settings.hold_minutes)) || 90) * 60 * 1000;
+  const live = row.status === 'booked' && new Date(row.reserved_at).getTime() + holdMs > Date.now();
+  // "Sent a few minutes ago" only when an email really went (the booking notes
+  // when Resend took one), or when the twin booking is sending it right now.
+  const sentAt = row.confirmation_sent_at ? new Date(row.confirmation_sent_at).getTime() : 0;
+  let resent = false, recent = false;
+  if (live && row.guest_email) {
+    if (race || (sentAt && Date.now() - sentAt < 10 * 60 * 1000)) {
+      recent = true;                                // not again so soon
+    } else {
+      try {
+        let areaName = null;
+        if (row.area_id) {
+          const area = await sb(`/restaurant_areas?id=eq.${Number(row.area_id)}&select=name`);
+          if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
+        }
+        resent = await confirmByEmail({
+          reservationId: row.id, email: row.guest_email, loaded, timezone,
+          at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName, code: row.code, guestName: row.guest_name,
+          idempotencyKey: `again-${row.code}-${Math.floor(Date.now() / (10 * 60 * 1000))}`,
+        });
+      } catch (err) {
+        console.error('[reservations:email] sending again threw', row.id, err && err.message);
+      }
+    }
+  }
+  return res.status(200).json({
+    success: true, already: true, day, date: localDate, phone: restaurantPhone, resent, recent,
+  });
+}
+
+// An email that can really be sent to: the booking form's own check, and the
+// sender's stricter one (no quotes, no spaces, a real domain).
+function requiredEmail(value) {
+  const email = cleanEmail(value);
+  return email && sendableAddress(email) ? email : null;
+}
+
+// The restaurant's menu, for the message a guest shares with friends.
+function menuUrlOf(settings) {
+  if (!settings || !settings.site_url) return null;           // no site saved: no menu link, never another restaurant's
+  const site = String(settings.site_url).replace(/\/+$/, '');
+  return /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(site) ? site + '/menu.html' : null;
+}
+
 // The table's QR as an image the page can show, or null. Never throws.
 async function qrFor(reservationId, settings) {
   try {
@@ -366,7 +477,7 @@ async function qrForEmail(reservationId, settings) {
 // ── THE CONFIRMATION EMAIL ────────────────────────────────────────────────────
 // Returns true only when Resend took the email. Every other outcome is written
 // on the booking (email_error), so "why didn't I get an email?" has an answer.
-async function confirmByEmail({ reservationId, email, loaded, timezone, at, party, areaName, code, guestName }) {
+async function confirmByEmail({ reservationId, email, loaded, timezone, at, party, areaName, code, guestName, idempotencyKey }) {
   const settings = loaded && loaded.settings;
   if (!email || !reservationId || !emailReady(settings)) return false;
 
@@ -400,7 +511,7 @@ async function confirmByEmail({ reservationId, email, loaded, timezone, at, part
   const sent = await sendEmail({
     from: sender.from, replyTo: sender.replyTo, to,
     subject: mail.subject, html: mail.html, text: mail.text, attachments: [...mail.attachments, ...(qr ? [qr] : [])],
-    idempotencyKey: `confirm-${code}`,
+    idempotencyKey: idempotencyKey || `confirm-${code}`,
     tags: [{ name: 'kind', value: 'confirmation' }],
     timeoutMs: 4000,          // the guest is looking at a spinner
   });
@@ -451,6 +562,8 @@ async function request(req, res, body) {
   }
   const phone = cleanPhone(body.phone, normalizeUsPhone);
   if (!phone) return res.status(400).json({ error: 'Please write a phone number the restaurant can call.' });
+  const email = requiredEmail(body.email);
+  if (!email) return res.status(400).json({ error: 'Please write your email: if the restaurant says yes, your confirmation and QR code go there.', reason: 'email' });
 
   const party = cleanParty(body.party, booking.maxPartyRequest || 40);
   if (!party) {
@@ -484,7 +597,7 @@ async function request(req, res, body) {
       taster_id:     tasterIdFromRequest(req),
       guest_name:    name.value,
       guest_phone:   phone,
-      guest_email:   cleanEmail(body.email),
+      guest_email:   email,
       party_size:    party,
       wanted_date:   date,
       wanted_time:   time,
@@ -549,11 +662,14 @@ async function mine(req, res, body) {
   const restaurantIds = [...new Set(rows.data.map((r) => r.restaurant_id))];
   const areaIds = [...new Set(rows.data.map((r) => r.area_id).filter(Boolean))];
   const [places, areas] = await Promise.all([
-    restaurantIds.length ? sb(`/restaurants?id=in.(${restaurantIds.join(',')})&select=id,name,restaurant_phone`) : { data: [] },
+    restaurantIds.length ? sb(`/restaurants?id=in.(${restaurantIds.join(',')})&select=id,name,restaurant_phone,address,city,state,zip_code`) : { data: [] },
     areaIds.length ? sb(`/restaurant_areas?id=in.(${areaIds.join(',')})&select=id,name`) : { data: [] },
   ]);
-  const placeName = {}, placePhone = {}, areaName = {};
-  (Array.isArray(places.data) ? places.data : []).forEach((p) => { placeName[p.id] = p.name; placePhone[p.id] = p.restaurant_phone; });
+  const placeName = {}, placePhone = {}, placeAddress = {}, areaName = {};
+  (Array.isArray(places.data) ? places.data : []).forEach((p) => {
+    placeName[p.id] = p.name; placePhone[p.id] = p.restaurant_phone;
+    placeAddress[p.id] = [p.address, p.city, p.state, p.zip_code].filter(Boolean).join(', ') || null;
+  });
   (Array.isArray(areas.data) ? areas.data : []).forEach((a) => { areaName[a.id] = a.name; });
 
   const settings = await loadBooking(restaurantIds[0] || DEFAULT_RESTAURANT_ID);
@@ -591,6 +707,9 @@ async function mine(req, res, body) {
     areaName:   r.area_id ? areaName[r.area_id] || null : null,
     restaurant: placeName[r.restaurant_id] || 'Restaurant',
     phone:      placePhone[r.restaurant_id] || null,
+    // For sharing the table with friends (the page writes the message).
+    address:    placeAddress[r.restaurant_id] || null,
+    menuUrl:    menuUrlOf(siteOf[r.restaurant_id]),
     // A table can be called off right up to the moment it starts. Sebastian's
     // decision: a guest who cancels late is still better than one who never
     // arrives and says nothing.
@@ -604,6 +723,7 @@ async function mine(req, res, body) {
   return res.status(200).json({
     success:  true,
     today:    todayIn(timezone),
+    now:      new Date().toISOString(),        // the countdown runs on the server's clock (taken as it answers)
     upcoming: dressed.filter(stillOn).sort((a, b) => new Date(a.at) - new Date(b.at)),
     past:     dressed.filter((r) => !stillOn(r)),
   });
