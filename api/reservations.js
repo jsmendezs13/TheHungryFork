@@ -25,6 +25,12 @@
 // with "staff_" is the Reservations tab in manager.html — the day, arrived and
 // no-show, big-party requests, the hours, holidays, rooms and rules. It checks
 // the caller's role in the database on every request.
+//
+// Messages about a table (migration 19, api/_lib/messages.js): the guest writes
+// from My Reservations or from the link in their email, the restaurant answers
+// from manager.html, and the bell in the header says what is new. A guest with
+// no account gets one email, at the restaurant's first answer (answerByEmail
+// below). The daily cron deletes conversations 90 days after the table.
 
 import crypto from 'node:crypto';
 import { makeLimiter, allow, keyFor, clientIp, normalizeUsPhone, validateName } from './_lib/auth.js';
@@ -34,10 +40,11 @@ import {
   freeSlots, isOpenOn, cleanDate, cleanParty, cleanPhone, cleanText, cleanEmail, BOOK_MESSAGES,
 } from './_lib/booking.js';
 import {
-  emailReady, senderFor, newLinkToken, saveLink, cancelUrl, cleanToken, hashToken,
-  sendEmail, confirmationEmail, reminderEmail, hostOf, sendableAddress, mailboxKey,
+  emailReady, senderFor, newLinkToken, saveLink, cancelUrl, talkUrl, cleanToken, hashToken,
+  sendEmail, confirmationEmail, reminderEmail, answerEmail, hostOf, sendableAddress, mailboxKey,
 } from './_lib/email.js';
 import { staff } from './_lib/staff.js';
+import { guest, staffMessages, chatSummaries, KEEP_MS } from './_lib/messages.js';
 import { arrivalTokens, qrDataUrl, qrAttachment, QR_CID } from './_lib/qr.js';
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
@@ -79,6 +86,14 @@ export default async function handler(req, res) {
   if (action === 'cancel')      return cancel(req, res, body);
   if (action === 'link')        return byLink(req, res, body);
   if (action === 'cancel_link') return cancelByLink(req, res, body);
+  // Messages about a table, and the bell.
+  if (action === 'msg_list' || action === 'msg_send' || action === 'inbox') {
+    return guest(req, res, body, action, {
+      findByLink: (t) => { const clean = cleanToken(t); return clean ? findByLink(clean) : null; },
+      linkGone: LINK_GONE,
+    });
+  }
+  if (action.startsWith('staff_msg')) return staffMessages(req, res, body, action, { answerByEmail });
   // The confirmation email is lent to the staff side, so a big party the
   // manager says yes to hears about it the same way an online booking does.
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail });
@@ -505,6 +520,7 @@ async function confirmByEmail({ reservationId, email, loaded, timezone, at, part
     graceMinutes: settings.auto_release_late ? settings.grace_minutes : null,
     holdMinutes:  settings.hold_minutes,
     link:         linkSaved ? cancelUrl(settings, token) : null,
+    talk:         linkSaved ? talkUrl(settings, token) : null,
     siteHost:     hostOf(settings),
   });
 
@@ -536,6 +552,66 @@ async function noteEmail(reservationId, fields) {
   });
   if (!done.ok) console.error('[reservations:email] could not note on booking', reservationId, done.status);
   return done.ok;
+}
+
+// ── THE RESTAURANT ANSWERED ───────────────────────────────────────────────────
+// Sebastian's rule (8 Oct): a guest WITHOUT an account gets ONE email, at the
+// restaurant's first answer — "Ana from The Hungry Fork answered your message"
+// and a button back to the conversation, never the words of the message. A
+// guest with an account sees the answer on the bell instead. More answers,
+// more emails? No: one per conversation, ever (first_reply_emailed_at, claimed
+// in the same write that checks it, so two answers at once send one email).
+// Returns true only when Resend took it.
+async function answerByEmail({ reservationId, staffName, loaded, timezone }) {
+  const settings = loaded && !loaded.error ? loaded.settings : null;
+  if (!emailReady(settings)) return false;
+  const found = await sb(`/reservations?id=eq.${Number(reservationId)}&select=id,code,taster_id,guest_name,guest_phone,guest_email,reserved_at&limit=1`);
+  const row = found.ok && Array.isArray(found.data) && found.data.length ? found.data[0] : null;
+  if (!row || !row.guest_email) return false;
+  // An account: booked while logged in, or an account on the table's phone number.
+  if (row.taster_id) return false;
+  const account = await sb(`/tasters?phone_number=eq.${encodeURIComponent(row.guest_phone)}&select=id&limit=1`);
+  if (!account.ok || !Array.isArray(account.data) || account.data.length) return false;   // unknown counts as "has one": no email
+  const to = sendableAddress(row.guest_email);
+  if (!to) return false;
+
+  const claimed = await sb(`/reservation_threads?reservation_id=eq.${Number(row.id)}&first_reply_emailed_at=is.null`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ first_reply_emailed_at: new Date().toISOString() }),
+  });
+  if (!claimed.ok || !Array.isArray(claimed.data) || !claimed.data.length) return false;      // already sent (or being sent)
+  const giveBack = async () => {
+    await sb(`/reservation_threads?reservation_id=eq.${Number(row.id)}`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ first_reply_emailed_at: null }),
+    });
+  };
+  if (!(await allow(emailAddrLimiter, keyFor(mailboxKey(to)), { failOpen: false }))
+      || !(await allow(emailDayLimiter, keyFor('all'), { failOpen: false }))) {
+    await giveBack();                          // the next answer may try again
+    return false;
+  }
+  const { token, hash } = newLinkToken();
+  if (!(await saveLink(row.id, hash, 'answer'))) { await giveBack(); return false; }
+  const sender = senderFor(settings, loaded.restaurant);
+  const mail = answerEmail({
+    restaurant: loaded.restaurant, timezone, at: new Date(row.reserved_at).toISOString(),
+    staffName, guestName: row.guest_name, link: talkUrl(settings, token), siteHost: hostOf(settings),
+  });
+  // No reply-to: a reply would land in the restaurant's inbox and show the
+  // guest's address to whoever reads it (staff never see guest emails). The
+  // email says to answer on the page instead.
+  const sent = await sendEmail({
+    from: sender.from, replyTo: null, to,
+    subject: mail.subject, html: mail.html, text: mail.text,
+    idempotencyKey: `answer-${row.id}`,
+    tags: [{ name: 'kind', value: 'answer' }],
+    timeoutMs: 4000,                           // the manager is looking at a spinner
+  });
+  if (sent.ok || sent.duplicate) return !!sent.ok;
+  console.error('[reservations:email] answer not sent', row.id, sent.error);
+  // A timeout may already have reached the guest: then it counts as sent.
+  if (!sent.timedOut) await giveBack();
+  return false;
 }
 
 // ── NINE OR MORE, AND PRIVATE EVENTS ──────────────────────────────────────────
@@ -695,9 +771,13 @@ async function mine(req, res, body) {
   }));
   await Promise.all(comingUp.map(async (r) => { qrs[r.id] = await qrDataUrl(siteOf[r.restaurant_id], r.arrival_token); }));
 
+  // The conversation of each table: Message, with a count of unread answers.
+  const chats = await chatSummaries(rows.data, now);
+
   const dressed = rows.data.map((r) => ({
     id:         r.id,
     code:       r.code,
+    chat:       chats[r.id] || null,
     qr:         qrs[r.id] || null,
     at:         new Date(r.reserved_at).toISOString(),
     date:       r.local_date,
@@ -799,12 +879,15 @@ async function findByLink(token) {
     `&select=id,code,restaurant_id,area_id,party_size,reserved_at,local_date,status,guest_name&limit=1`
   );
   if (!row.ok || !Array.isArray(row.data) || !row.data.length) return null;
-  // A week after the table, the link is only an old email: it stops opening
-  // anything, so a forwarded message does not show a name and a date forever.
+  // The link lives as long as the table's conversation is kept: 90 days after
+  // the table (it was a week until r21). A guest without an account writes
+  // about the glasses they left through this link, so it has to open as long as
+  // Sebastian's rule lets them write. After that it opens nothing, so a
+  // forwarded email does not show a first name and a date forever.
   if (new Date(row.data[0].reserved_at).getTime() < Date.now() - LINK_LIFE_MS) return null;
   return row.data[0];
 }
-const LINK_LIFE_MS = 7 * 24 * 3600 * 1000;
+const LINK_LIFE_MS = KEEP_MS;
 
 async function byLink(req, res, body) {
   if (!(await allow(linkLimiter, keyFor(clientIp(req)), { failOpen: true }))) {
@@ -823,10 +906,12 @@ async function byLink(req, res, body) {
     const area = await sb(`/restaurant_areas?id=eq.${Number(row.area_id)}&select=name`);
     if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
   }
+  const chat = (await chatSummaries([row]))[row.id] || null;
 
   return res.status(200).json({
     success: true,
     booking: {
+      chat,                                   // null: no messages for this table (too old, or not switched on)
       code:       row.code,
       at:         new Date(row.reserved_at).toISOString(),
       date:       row.local_date,
@@ -874,8 +959,11 @@ async function cancelByLink(req, res, body) {
 const REMIND_BUDGET_MS = 15000;          // of the 30 seconds this function may run
 
 async function remind(req, res) {
+  // First the forgetting: conversations 90 days after their table. Whatever
+  // happens with the emails, this runs.
+  const forgotten = await forgetOldMessages();
   if (!process.env.RESEND_API_KEY) {
-    return res.status(200).json({ success: true, skipped: 'RESEND_API_KEY is not set in Vercel' });
+    return res.status(200).json({ success: true, forgotten, skipped: 'RESEND_API_KEY is not set in Vercel' });
   }
   const started = Date.now();
 
@@ -887,10 +975,11 @@ async function remind(req, res) {
     return res.status(502).json({
       error: 'Could not pick the reminders (the database answered ' + claimed.status + '). '
            + 'If that is a 404, migration 16 has not been run.',
+      forgotten,
     });
   }
   const rows = claimed.data;
-  if (!rows.length) return res.status(200).json({ success: true, claimed: 0, sent: 0, failed: 0, later: 0 });
+  if (!rows.length) return res.status(200).json({ success: true, forgotten, claimed: 0, sent: 0, failed: 0, later: 0 });
 
   // From here on the rows are marked as taken. Whatever happens — a database
   // error, a crash — every row this run did not finish goes back, in one write,
@@ -929,8 +1018,28 @@ async function remind(req, res) {
     }
   }
   // A crashed run must look like one in Vercel's cron log, not like a quiet day.
-  if (crashed) return res.status(500).json({ error: 'The reminder run failed; every table it had not finished was handed back.', claimed: rows.length, sent, failed });
-  return res.status(200).json({ success: true, claimed: rows.length, sent, failed, later });
+  if (crashed) return res.status(500).json({ error: 'The reminder run failed; every table it had not finished was handed back.', forgotten, claimed: rows.length, sent, failed });
+  return res.status(200).json({ success: true, forgotten, claimed: rows.length, sent, failed, later });
+}
+
+// Sebastian's rule (8 Oct): a conversation is kept 90 days after its table,
+// then deleted — the conversation and every message in it (the database
+// deletes the messages with it). Returns how many went, or null when it could
+// not ask (before migration 19, or the database is down). Never throws.
+async function forgetOldMessages() {
+  try {
+    const before = new Date(Date.now() - KEEP_MS).toISOString();
+    const gone = await sb(`/reservation_threads?table_at=lt.${before}&select=reservation_id`, {
+      method: 'DELETE', headers: { Prefer: 'return=representation' },
+    });
+    if (!gone.ok) { console.error('[reservations:forget] failed', gone.status); return null; }
+    const n = Array.isArray(gone.data) ? gone.data.length : 0;
+    if (n) console.log('[reservations:forget] deleted', n, 'conversations older than 90 days after their table');
+    return n;
+  } catch (err) {
+    console.error('[reservations:forget] threw', err && err.message);
+    return null;
+  }
 }
 
 // One guest's reminder going wrong must not stop the others'. If it throws,
@@ -968,6 +1077,7 @@ async function remindOne(row, loaded, areaName) {
     restaurant: loaded.restaurant, timezone: settings.timezone || 'America/New_York',
     at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName, code: row.code,
     guestName: row.guest_name, link: linkSaved ? cancelUrl(settings, token) : null, siteHost: hostOf(settings),
+    talk: linkSaved ? talkUrl(settings, token) : null,
     qrCid: qr ? QR_CID : null,
   });
   const sent = await sendEmail({
