@@ -259,7 +259,7 @@ const TASTER_MODAL_HTML = `
         <input class="t-input" id="signup-pin2" type="password" placeholder="Confirm PIN" maxlength="6" inputmode="numeric">
         <div class="t-checkbox-row">
           <input type="checkbox" id="signup-privacy">
-          <label for="signup-privacy">I agree to the <a href="/privacy.html" target="_blank" rel="noopener" style="color:var(--red);">Privacy Policy</a> and <a href="/terms.html" target="_blank" rel="noopener" style="color:var(--red);">Terms of Service</a>.</label>
+          <label for="signup-privacy">I agree to the <a href="/privacy" target="_blank" rel="noopener" style="color:var(--red);">Privacy Policy</a> and <a href="/terms" target="_blank" rel="noopener" style="color:var(--red);">Terms of Service</a>.</label>
         </div>
         <div class="t-checkbox-row">
           <input type="checkbox" id="signup-promos">
@@ -373,7 +373,7 @@ var HF_CORNER_HTML =
 +         '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2.1H4.4z"/><path d="M9.8 20.6a2.4 2.4 0 0 0 4.4 0"/></svg>'
 +       '<b class="hf-count" hidden></b>'
 +     '</button>'
-+     '<a class="hf-role" id="hf-role" href="/manager.html" hidden><b class="hf-count" hidden></b></a>'
++     '<a class="hf-role" id="hf-role" href="/manager" hidden><b class="hf-count" hidden></b></a>'
 +     '<button class="hf-corner-toggle" id="hf-corner-toggle" type="button" aria-label="Account menu" aria-expanded="false" aria-controls="hf-corner-items">'
 +       '<span></span><span></span><span></span><i class="hf-corner-dot"></i>'
 +     '</button>'
@@ -425,7 +425,7 @@ function updateNavBtn(){
     // then My Visits, then Log Out. My Reservations goes straight to the
     // booking page's own list rather than a fourth overlay copied onto every
     // page.
-    items.push({label:'My Reservations', href:'/reservations.html#mine'});
+    items.push({label:'My Reservations', href:'/reservations#mine'});
     items.push({label:'My Tastings', act:'tastings'});
     items.push({label:'My Visits', act:'visits'});
     // The manager page is not in here any more (Sebastian, 8 Oct): this menu is
@@ -554,23 +554,47 @@ function hfLoadRole(who){
 }
 
 // ── WHAT IS NEW: the bell's list and the role icon's count ──
-// One small question to the server (action "inbox"), kept for 45 seconds in
+// One small question to the server (action "inbox"), kept for 10 seconds in
 // this tab so that walking from page to page does not ask again each time,
-// and asked again every minute while the page is on screen. A page that has
-// just shown the guest a conversation calls hfInboxSeen() so the bell clears.
-var HF_INBOX={data:null, at:0, who:undefined, busy:false, timer:null, problem:null};
+// and asked again every 15 seconds while the page is on screen, and at once
+// when the page comes back on screen (r22: was every minute, kept 45 seconds;
+// Sebastian, 8 Oct: "the messages are slow to arrive"). A page that has just
+// shown the guest a conversation calls hfInboxSeen() so the bell clears. A
+// page that wants to hear what is new defines window.hfOnInbox(data).
+var HF_INBOX={data:null, at:0, tried:0, who:undefined, busy:false, again:false, timer:null, problem:null, keep:10000, every:15000};
+
+// ── HOW OFTEN TO ASK (r22) ──
+// Pages ask the server for news every few seconds while someone is using them.
+// A page left open with nobody touching it slows down: after 2 minutes to
+// every 10 seconds, after 10 to every 30, and after half an hour it stops
+// asking (staff pages keep asking once a minute: a tablet at the host stand is
+// read, not touched). A touch, a key, or coming back to the page wakes it at
+// once. Every question also costs the rate-limit counter (Upstash) a few
+// commands, so a forgotten tab must not ask all day.
+var HF_SEEN_AT=Date.now();
+function hfActive(){var was=Date.now()-HF_SEEN_AT;HF_SEEN_AT=Date.now();return was;}
+function hfPace(fast,slowest){
+  var idle=Date.now()-HF_SEEN_AT;
+  if(idle<120000)return fast;
+  if(idle<600000)return Math.max(fast,10000);
+  if(idle<1800000)return Math.max(fast,30000);
+  return slowest;
+}
+function hfStaffish(){return !!(currentTaster&&(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin));}
 function hfInbox(force){
   var who=hfWho();
   if(!currentSession||who===undefined)return;
   if(!force){
-    if(HF_INBOX.who===who&&HF_INBOX.data&&Date.now()-HF_INBOX.at<45000)return;
+    if(HF_INBOX.who===who&&HF_INBOX.data&&Date.now()-HF_INBOX.at<HF_INBOX.keep)return;
     try{
       var c=JSON.parse(sessionStorage.getItem('hf_inbox')||'null');
-      if(c&&c.id===who&&Date.now()-c.at<45000&&c.data){HF_INBOX.data=c.data;HF_INBOX.at=c.at;HF_INBOX.who=who;hfInboxPaint(c.data);return;}
+      if(c&&c.id===who&&Date.now()-c.at<HF_INBOX.keep&&c.data){HF_INBOX.data=c.data;HF_INBOX.at=c.at;HF_INBOX.who=who;hfInboxPaint(c.data);return;}
     }catch(e){}
   }
-  if(HF_INBOX.busy)return;
-  HF_INBOX.busy=true;
+  // A question is already on its way: a forced one (something was just read)
+  // is asked again as soon as it comes back, and that older answer is not drawn.
+  if(HF_INBOX.busy){if(force)HF_INBOX.again=true;return;}
+  HF_INBOX.busy=true;HF_INBOX.tried=Date.now();
   var token=currentSession;
   var staff=!!(currentTaster&&(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin));
   fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
@@ -585,7 +609,7 @@ function hfInbox(force){
     .then(function(d){
       if(!d){var pn=document.getElementById('hf-bell-panel');if(pn&&!pn.hidden&&currentSession===token)hfBellRender();return;}
       // Only for the account that asked: a log-out or another log-in meanwhile draws nothing.
-      if(!Array.isArray(d.bell)||currentSession!==token||hfWho()!==who)return;
+      if(!Array.isArray(d.bell)||currentSession!==token||hfWho()!==who||HF_INBOX.again)return;
       HF_INBOX.problem=null;
       var data={bell:d.bell, staff:d.staff||null};
       HF_INBOX.data=data;HF_INBOX.at=Date.now();HF_INBOX.who=who;
@@ -593,7 +617,7 @@ function hfInbox(force){
       hfInboxPaint(data);
     })
     .catch(function(){HF_INBOX.problem='down';var pn=document.getElementById('hf-bell-panel');if(pn&&!pn.hidden)hfBellRender();})
-    .then(function(){HF_INBOX.busy=false;});
+    .then(function(){HF_INBOX.busy=false;if(HF_INBOX.again){HF_INBOX.again=false;hfInbox(true);}});
 }
 function hfInboxSeen(){
   try{sessionStorage.removeItem('hf_inbox');}catch(e){}
@@ -618,11 +642,12 @@ function hfInboxPaint(data){
     hfCount(roleBtn,waiting);
     var role=roleBtn.getAttribute('data-role')||'';
     // Guest messages waiting: the icon opens the manager page on them.
-    roleBtn.setAttribute('href',waiting?'/manager.html#messages':'/manager.html');
+    roleBtn.setAttribute('href',waiting?'/manager#messages':'/manager');
     roleBtn.setAttribute('aria-label','Manager page ('+hfRoleWord(role)+')'+(waiting?', '+waiting+' new guest message'+(waiting===1?'':'s'):''));
   }
   var panel=document.getElementById('hf-bell-panel');
   if(panel&&!panel.hidden)hfBellRender();
+  if(data&&typeof window.hfOnInbox==='function'){try{window.hfOnInbox(data);}catch(e){}}
 }
 
 // The bell's list: "Ana · The Hungry Fork answered you", the table, when.
@@ -643,7 +668,7 @@ function hfBellRender(){
     return;
   }
   panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
-    return '<a class="hf-bell-item" href="/reservations.html#chat='+Number(b.reservationId)+'">'
+    return '<a class="hf-bell-item" href="/reservations#chat='+Number(b.reservationId)+'">'
       +'<b>'+hfEsc(b.who)+' · '+hfEsc(b.restaurant)+' answered you</b>'
       +'<span>Your table: '+hfEsc(b.table)+'</span>'
       +'<small>'+hfEsc(b.label)+(b.count>1?' · '+Number(b.count)+' messages':'')+'</small>'
@@ -664,8 +689,27 @@ function hfBellClose(){
   if(panel)panel.hidden=true;
   if(bell)bell.setAttribute('aria-expanded','false');
 }
-document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')hfInbox(false);});
-HF_INBOX.timer=setInterval(function(){if(document.visibilityState==='visible')hfInbox(false);},60000);
+// Back on screen (another app, another tab, the phone unlocked): ask now
+// unless the answer is only a few seconds old.
+function hfInboxWake(){if(document.visibilityState==='visible'&&!HF_INBOX.busy&&Date.now()-HF_INBOX.at>4000)hfInbox(true);}
+// Coming back to the page is someone using it; so is a touch or a key after a
+// quiet minute, and then the page (window.hfOnWake) and the bell catch up now.
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')hfActive();});
+['pointerdown','keydown','touchstart','wheel'].forEach(function(t){
+  document.addEventListener(t,function(){
+    if(hfActive()<60000)return;
+    hfInboxWake();
+    if(typeof window.hfOnWake==='function'){try{window.hfOnWake();}catch(e){}}
+  },{passive:true,capture:true});
+});
+document.addEventListener('visibilitychange',hfInboxWake);
+window.addEventListener('focus',hfInboxWake);
+window.addEventListener('pageshow',function(e){if(e.persisted)hfInboxWake();});
+HF_INBOX.timer=setInterval(function(){
+  if(document.visibilityState!=='visible')return;
+  if(Date.now()-Math.max(HF_INBOX.at,HF_INBOX.tried)<hfPace(HF_INBOX.every,hfStaffish()?60000:Infinity)-500)return;
+  hfInbox(false);
+},1000);
 
 // One delegated listener rather than inline onclick, because the pills are
 // rebuilt from scratch on every login state change.
@@ -689,7 +733,7 @@ document.addEventListener('click',function(e){
     hfBellClose();
     // Already on that address: the page will not hear a change, so open it here.
     var m=/#chat=(\d+)$/.exec(bellItem.getAttribute('href')||'');
-    if(m&&location.pathname==='/reservations.html'&&location.hash==='#chat='+m[1]&&typeof openMine==='function'){e.preventDefault();openMine(Number(m[1]));}
+    if(m&&/^\/reservations(\.html)?$/.test(location.pathname)&&location.hash==='#chat='+m[1]&&typeof openMine==='function'){e.preventDefault();openMine(Number(m[1]));}
     return;
   }
   if(!t.closest('#hf-bell-panel'))hfBellClose();
