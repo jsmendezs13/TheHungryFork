@@ -46,23 +46,38 @@
     color:rgba(252,249,244,.55); margin:0 0 .5rem; }
   .rv-sub { font-size:.84rem; font-weight:300; color:rgba(252,249,244,.7); line-height:1.6; }
 
-  /* ── the day ── */
-  .rv-days { display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding-bottom:2px; margin-bottom:1.1rem; }
-  .rv-days::-webkit-scrollbar { display:none; }
-  .rv-day { flex:0 0 78px; scroll-snap-align:start; border:1px solid rgba(252,249,244,.22); border-radius:12px;
-    padding:.5rem 0; text-align:center; background:none; color:var(--white); cursor:pointer; font-family:inherit;
-    -webkit-tap-highlight-color:transparent; transition:border-color .18s, background .18s; }
-  .rv-day b { display:block; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; color:rgba(252,249,244,.6); font-weight:600; }
+  /* ── the day and the party: two carousels (Sebastian, 7 Oct: picture A) ──
+     The one in the middle is the one chosen: bigger and red. ‹ › move one,
+     a swipe moves several, a tap picks that one. */
+  .rv-car { display:flex; align-items:center; gap:6px; margin-bottom:1.1rem; }
+  .rv-arrow { flex:none; width:34px; height:34px; border-radius:50%; border:1px solid rgba(252,249,244,.3); background:none;
+    color:var(--white); display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;
+    -webkit-tap-highlight-color:transparent; transition:opacity .18s, border-color .18s; }
+  .rv-arrow svg { width:16px; height:16px; display:block; }
+  .rv-arrow:disabled { opacity:.28; cursor:default; }
+  .rv-days, .rv-sizes { position:relative; flex:1; min-width:0; display:flex; align-items:center; overflow-x:auto;
+    scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain; padding:9px 0; }
+  .rv-days::-webkit-scrollbar, .rv-sizes::-webkit-scrollbar { display:none; }
+  /* room either side, so the first and the last can sit in the middle too (set from the strip's width) */
+  .rv-days::before, .rv-days::after, .rv-sizes::before, .rv-sizes::after { content:''; flex:0 0 var(--car-pad, 0px); }
+  .rv-days { gap:10px; }
+  .rv-sizes { gap:12px; }
+  .rv-day, .rv-size { scroll-snap-align:center; opacity:.55; transform:scale(.9); background:none; cursor:pointer;
+    font-family:inherit; -webkit-tap-highlight-color:transparent;
+    transition:transform .2s ease, opacity .2s ease, border-color .18s, background .18s, box-shadow .18s; }
+  .rv-day.near, .rv-size.near { opacity:.82; transform:scale(.97); }
+  .rv-day.on, .rv-size.on { opacity:1; transform:scale(1.14); }
+  .rv-day { flex:0 0 72px; border:1px solid rgba(252,249,244,.22); border-radius:12px;
+    padding:.5rem 0; text-align:center; color:var(--white); }
+  .rv-day b { display:block; font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; color:rgba(252,249,244,.6); font-weight:600; white-space:nowrap; }
   .rv-day span { font-family:var(--serif); font-size:1.35rem; font-weight:600; }
-  .rv-day.on { border-color:var(--red-bright); background:rgba(226,59,46,.14); box-shadow:0 0 10px rgba(226,59,46,.35); }
+  .rv-day.on { border-color:var(--red-bright); background:rgba(226,59,46,.16); box-shadow:0 0 12px rgba(226,59,46,.4); }
   .rv-day.on b { color:#FF9C92; }
-
-  /* ── how many people ── */
-  .rv-sizes { display:flex; gap:7px; margin-bottom:1.2rem; }
-  .rv-size { flex:1; height:40px; border:1px solid rgba(252,249,244,.22); border-radius:11px; background:none;
-    color:rgba(252,249,244,.85); font-family:inherit; font-size:.9rem; font-weight:500; cursor:pointer;
-    -webkit-tap-highlight-color:transparent; transition:background .18s, border-color .18s; }
-  .rv-size.on { background:var(--red-bright); border-color:var(--red-bright); color:#fff; font-weight:600; box-shadow:0 0 12px rgba(226,59,46,.5); }
+  .rv-size { flex:0 0 42px; height:42px; border:1px solid rgba(252,249,244,.22); border-radius:11px;
+    color:rgba(252,249,244,.85); font-size:.95rem; font-weight:500; padding:0; }
+  .rv-size.on { background:var(--red-bright); border-color:var(--red-bright); color:#fff; font-weight:700; box-shadow:0 0 12px rgba(226,59,46,.5); transform:scale(1.22); }
+  .rv-car-cap { text-align:center; font-size:.7rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:#FF9C92; margin:-.65rem 0 1.1rem; }
+  @media (prefers-reduced-motion: reduce) { .rv-day, .rv-size { transition:none; } }
 
   /* ── the free times ── */
   .rv-times { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; overflow-y:auto; padding-bottom:.5rem; }
@@ -158,7 +173,7 @@
 
   @media (min-width:760px) {
     .rv-times { grid-template-columns:repeat(4,1fr); }
-    .rv-day { flex-basis:92px; }
+    .rv-day { flex-basis:84px; }
   }
 </style>
 <link rel="stylesheet" href="/taster.css">
@@ -178,10 +193,19 @@
 <main>
   <!-- 1 · day, people, free times -->
   <section class="rv-step on" id="step-pick">
-    <p class="rv-lbl">Day</p>
-    <div class="rv-days" id="rv-days"></div>
-    <p class="rv-lbl">People</p>
-    <div class="rv-sizes" id="rv-sizes"></div>
+    <p class="rv-lbl" id="rv-days-lbl">Day</p>
+    <div class="rv-car">
+      <button type="button" class="rv-arrow" id="rv-day-prev" aria-label="Earlier day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="rv-days" id="rv-days" role="group" aria-labelledby="rv-days-lbl"></div>
+      <button type="button" class="rv-arrow" id="rv-day-next" aria-label="Later day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <p class="rv-lbl" id="rv-sizes-lbl">People</p>
+    <div class="rv-car">
+      <button type="button" class="rv-arrow" id="rv-size-prev" aria-label="Fewer people"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="rv-sizes" id="rv-sizes" role="group" aria-labelledby="rv-sizes-lbl"></div>
+      <button type="button" class="rv-arrow" id="rv-size-next" aria-label="More people"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <p class="rv-car-cap" id="rv-size-cap" aria-live="polite"></p>
     <p class="rv-lbl" id="rv-times-label">Free tables</p>
     <div class="rv-times" id="rv-times"></div>
     <div class="rv-empty" id="rv-empty" hidden></div>
@@ -330,7 +354,7 @@ window.openTasterModal = function () { window.location.href = 'index.html'; };
 window.openMyTastings  = function () { window.location.href = 'menu.html'; };
 window.openMyVisits    = function () { window.location.href = 'menu.html'; };
 
-const state = { booking:null, restaurant:null, date:null, party:2, slots:[], chosen:null, closed:false, last:null };
+const state = { booking:null, restaurant:null, date:null, party:2, slots:[], chosen:null, closed:false, last:null, ask:0 };
 
 function show(step) {
   document.querySelectorAll('.rv-step').forEach(s => s.classList.toggle('on', s.id === 'step-' + step));
@@ -375,22 +399,160 @@ function dayLabels(date) {
 }
 
 // ── the screen ───────────────────────────────────────────────────────────────
+// ── THE CAROUSELS (Sebastian, 7 Oct: picture A) ──
+// The day and the party are strips that scroll sideways, and the one in the
+// middle is the one chosen. Three ways to choose: tap one, the ‹ › arrows
+// (one step), or a swipe (when the strip stops, the one in the middle is
+// chosen). The free times load once, after the choice, not while it moves.
+// carMake works for both strips; each says what "choosing" means (carPick).
+function carItems(strip) { return Array.prototype.slice.call(strip.children); }
+function carCentreOf(strip) {
+  const mid = strip.scrollLeft + strip.clientWidth / 2;
+  let best = null, far = Infinity;
+  carItems(strip).forEach((it) => {
+    const d = Math.abs(it.offsetLeft + it.offsetWidth / 2 - mid);
+    if (d < far) { far = d; best = it; }
+  });
+  return best;
+}
+// What the screen shows: the one in the middle, its two neighbours, the arrows.
+function carMark(strip, on) {
+  const items = carItems(strip), i = items.indexOf(on);
+  items.forEach((it, k) => {
+    it.classList.toggle('on', k === i);
+    it.classList.toggle('near', Math.abs(k - i) === 1);
+    it.setAttribute('aria-pressed', k === i ? 'true' : 'false');
+  });
+  const car = strip.parentNode;
+  const prev = car.querySelector('.rv-arrow'), next = car.querySelector('.rv-arrow:last-child');
+  const prevOff = i <= 0, nextOff = i < 0 || i >= items.length - 1;
+  // A disabled button drops its focus to the page; whoever is using a keyboard
+  // or a screen reader would lose their place. Hand it to the one chosen first.
+  const keep = (a, off) => { if (a && off && document.activeElement === a && on) on.focus({ preventScroll: true }); };
+  keep(prev, prevOff); keep(next, nextOff);
+  if (prev) prev.disabled = prevOff;
+  if (next) next.disabled = nextOff;
+}
+function carSmooth() {
+  return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function carGo(strip, item, smooth) {
+  if (!item || !strip.clientWidth) return;
+  strip.scrollTo({ left: item.offsetLeft + item.offsetWidth / 2 - strip.clientWidth / 2, behavior: smooth && carSmooth() ? 'smooth' : 'auto' });
+}
+// The room either side, so the first and the last can come to the middle.
+function carFit(strip) {
+  const first = strip.firstElementChild;
+  if (!first || !strip.clientWidth) return;
+  const gap = parseFloat(getComputedStyle(strip).columnGap) || 0;
+  strip.style.setProperty('--car-pad', Math.max(0, (strip.clientWidth - first.offsetWidth) / 2 - gap) + 'px');
+  carGo(strip, strip.querySelector('[aria-pressed="true"]') || first, false);
+}
+function carMake(strip) {
+  if (strip.dataset.car) return;
+  strip.dataset.car = '1';
+  let settle = null, frame = 0, going = null, user = false, touching = false;
+  // Only a finger (or a trackpad) chooses by moving the strip. When the page
+  // moves it (a tap, an arrow, a window that changes size) or the browser
+  // nudges it, the middle passes other days on the way; those are not choices,
+  // and the strip goes back to the one chosen.
+  const choose = (it, smooth) => {
+    if (!it) return;
+    user = false; going = it;
+    carMark(strip, it); carPick(strip, it); carGo(strip, it, smooth);
+  };
+  strip.addEventListener('scroll', () => {
+    if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (user) carMark(strip, carCentreOf(strip)); });
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      // Hidden (the form is showing): nothing is in the middle, so nothing is
+      // chosen; the strip just shows what is already chosen.
+      if (!strip.clientWidth) {
+        user = false; going = null;
+        carMark(strip, strip.querySelector('[data-v="' + (strip.id === 'rv-days' ? state.date : state.party) + '"]'));
+        return;
+      }
+      if (touching) return;          // a finger still on the strip: it has not stopped yet
+      if (user) {
+        user = false; going = null;
+        const it = carCentreOf(strip);
+        if (it) { carMark(strip, it); carPick(strip, it); }
+        return;
+      }
+      const it = going || strip.querySelector('[aria-pressed="true"]');
+      going = null;
+      if (!it) return;
+      carMark(strip, it);
+      if (carCentreOf(strip) !== it) carGo(strip, it, false);
+    }, 160);
+  }, { passive: true });
+  ['pointerdown', 'touchstart', 'wheel'].forEach((ev) => strip.addEventListener(ev, () => { user = true; going = null; }, { passive: true }));
+  // When the finger lifts, the wait starts again from there.
+  strip.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+  ['touchend', 'touchcancel'].forEach((ev) => strip.addEventListener(ev, (e) => {
+    touching = !!(e.touches && e.touches.length);       // another finger may still be on it
+    if (!touching) strip.dispatchEvent(new Event('scroll'));
+  }, { passive: true }));
+  strip.addEventListener('click', (e) => {
+    const it = e.target.closest('button');
+    if (it && it.parentNode === strip) choose(it, true);
+  });
+  strip.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const step = carStep(strip, e.key === 'ArrowLeft' ? -1 : 1);
+    if (step) { choose(step, true); step.focus({ preventScroll: true }); }
+  });
+  const car = strip.parentNode;
+  car.querySelector('.rv-arrow').addEventListener('click', () => choose(carStep(strip, -1), true));
+  car.querySelector('.rv-arrow:last-child').addEventListener('click', () => choose(carStep(strip, 1), true));
+  if (window.ResizeObserver) new ResizeObserver(() => carFit(strip)).observe(strip);
+  else window.addEventListener('resize', () => carFit(strip));
+}
+// One step from the one chosen (not from wherever the strip happens to be).
+function carStep(strip, dir) {
+  const items = carItems(strip);
+  const i = items.findIndex((it) => it.getAttribute('aria-pressed') === 'true');
+  return items[Math.min(items.length - 1, Math.max(0, (i < 0 ? 0 : i) + dir))] || null;
+}
+// Choosing: the state, the line under the people, and the free times (only when it changed).
+function carPick(strip, it) {
+  if (strip.id === 'rv-days') {
+    if (it.dataset.v === state.date) return;
+    state.date = it.dataset.v;
+  } else {
+    const n = Number(it.dataset.v);
+    if (n === state.party) return;
+    state.party = n;
+    sizeCaption();
+  }
+  loadSlots();
+}
+function sizeCaption() {
+  const cap = el('rv-size-cap');
+  if (cap) cap.textContent = state.party + (state.party === 1 ? ' person' : ' people');
+}
+
 function renderDays() {
   const days = el('rv-days');
   days.innerHTML = '';
   const total = Math.min(state.booking.bookAheadDays + 1, 60);
+  let on = null;
   for (let i = 0; i < total; i++) {
     const date = addDays(state.booking.today, i);
     const { weekday, day } = dayLabels(date);
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'rv-day' + (date === state.date ? ' on' : '');
+    b.className = 'rv-day';
+    b.dataset.v = date;
+    b.setAttribute('aria-label', dayLabels(date).long);
     b.innerHTML = '<b>' + (i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : weekday) + '</b><span>' + day + '</span>';
-    b.addEventListener('click', () => { state.date = date; renderDays(); loadSlots(); });
+    if (date === state.date) on = b;
     days.appendChild(b);
   }
-  const on = days.querySelector('.rv-day.on');
-  if (on) on.scrollIntoView({ block:'nearest', inline:'center' });
+  carMake(days);
+  carMark(days, on);
+  carFit(days);
 }
 
 function renderSizes() {
@@ -402,14 +564,21 @@ function renderSizes() {
   if (foot && foot.firstChild && foot.firstChild.nodeType === 3) {
     foot.firstChild.textContent = (state.booking.maxPartyInstant + 1) + ' people or more, or a private event? ';
   }
+  let on = null;
   for (let n = 1; n <= state.booking.maxPartyInstant; n++) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'rv-size' + (n === state.party ? ' on' : '');
+    b.className = 'rv-size';
+    b.dataset.v = String(n);
+    b.setAttribute('aria-label', n + (n === 1 ? ' person' : ' people'));
     b.textContent = n;
-    b.addEventListener('click', () => { state.party = n; renderSizes(); loadSlots(); });
+    if (n === state.party) on = b;
     sizes.appendChild(b);
   }
+  carMake(sizes);
+  carMark(sizes, on);
+  carFit(sizes);
+  sizeCaption();
 }
 
 function renderTimes() {
@@ -438,18 +607,24 @@ function renderTimes() {
 }
 
 async function loadSlots() {
+  // Two quick taps send two questions, and the answers can come back in either
+  // order. Only the newest may draw the times; otherwise the times (and the
+  // table booked) could belong to a different day than the one shown.
+  const ask = state.ask = (state.ask || 0) + 1;
   const box = el('rv-times');
   box.innerHTML = '<div class="rv-empty" style="grid-column:1/-1">Looking…</div>';
   el('rv-empty').hidden = true;
   box.hidden = false;
   try {
     const data = await api({ action: 'slots', restaurantId: RESTAURANT_ID, date: state.date, party: state.party });
+    if (ask !== state.ask) return;
     state.booking = { ...state.booking, ...data.booking };
     state.restaurant = data.restaurant;
     state.slots = data.slots || [];
     state.closed = !!data.closed;
     renderTimes();
   } catch (e) {
+    if (ask !== state.ask) return;
     state.slots = []; state.closed = false;
     box.hidden = true;
     const empty = el('rv-empty');
