@@ -424,8 +424,11 @@ function updateNavBtn(){
     if(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin){
       // One door (Sebastian, 25 Sep): the manager page opens on Reservations,
       // with Menu and Team one tap away. "My Reservations" above is the
-      // guest's own tables; this is the restaurant's.
-      items.push({label:'Manager', href:'/manager.html', cls:'hf-corner-manager'});
+      // guest's own tables; this is the restaurant's. Its icon and word say
+      // the role (8 Oct): see hfStaffRole below.
+      var role=hfStaffRole();
+      items.push({label:hfRoleWord(role), href:'/manager.html', cls:'hf-corner-manager', icon:hfRoleIcon(role),
+                  aria:'Manager page'+(role?' ('+hfRoleWord(role)+')':'')});
     }
     items.push({label:'Log Out', act:'logout'});
   }else{
@@ -437,11 +440,66 @@ function updateNavBtn(){
     const cls='hf-corner-item'+(it.cls?' '+it.cls:'');
     const text=hfEsc(it.label);
     if(it.kind==='label')return '<div class="'+cls+'"'+style+'>'+text+'</div>';
-    if(it.href)return '<a class="'+cls+'" href="'+it.href+'"'+style+'>'+text+'</a>';
+    // icon: one of hfRoleIcon's own drawings, never anything typed by a person.
+    if(it.href)return '<a class="'+cls+'" href="'+it.href+'"'+style+(it.aria?' aria-label="'+hfEsc(it.aria)+'"':'')+'>'+(it.icon||'')+text+'</a>';
     return '<button type="button" class="'+cls+'" data-act="'+it.act+'"'+style+'>'+text+'</button>';
   }).join('');
 
   if(root)root.classList.toggle('signed-in',!!currentTaster);
+}
+
+// ── THE STAFF PILL: one icon per role (Sebastian, 8 Oct) ──
+// The key for an owner, the clipboard for a manager, the chef hat for the
+// crew, and the eagle for Sebastian (the platform admin). The browser only
+// knows that an account holds some role somewhere; which one comes from
+// /api/my-access, asked once per page and kept for ten minutes in this tab.
+// Until it answers, the pill says "Manager", as it did before. This only
+// draws a picture: manager.html asks the server what the account may do.
+function hfRoleWord(role){
+  return ({platform:'Admin', owner:'Owner', manager:'Manager', crew:'Crew'})[role]||'Manager';
+}
+function hfRoleIcon(role){
+  var st=' width="21" height="21" aria-hidden="true" focusable="false" style="vertical-align:-6px;margin-right:7px"';
+  var line=' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+  if(role==='platform'){
+    // The eagle: "eagle" from IconPark by ByteDance, Apache License 2.0
+    // (github.com/bytedance/IconPark).
+    return '<svg viewBox="0 0 48 48"'+st+'><g fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 23c-4.04-7.043 3.624-11.136 8-12c14.541-12.844 26.485-.287 28 8c1.514 8.287 1.158 14.893 2 18c-6.463-8.7-10.877-7.158-12-5c-2.02 4.144-5.314 4.252-7 3c-4.04-3.314-10.476 3.202-13 7c4.847-8.7 5.505-14.273 5-16c-2.02-8.286-8.307-5.416-11-3"/><circle cx="23" cy="16" r="2" fill="currentColor"/></g></svg>';
+  }
+  var p={
+    owner:'<circle cx="8" cy="15.5" r="4.2"/><path d="M11 12.5 20 3.5M16.5 7l2.5 2.5M14.2 9.3l2 2"/>',
+    manager:'<rect x="5.5" y="4.5" width="13" height="16.5" rx="2"/><rect x="9" y="2.5" width="6" height="4" rx="1.2"/><path d="M9 13.2l2.2 2.2 4-4.4"/>',
+    crew:'<path d="M7.5 17.5v-4a4 4 0 0 1-.8-7.6A4.5 4.5 0 0 1 12 3.2a4.5 4.5 0 0 1 5.3 2.7 4 4 0 0 1-.8 7.6v4z"/><path d="M7.5 20.5h9"/><path d="M10 13.8v3.7M14 13.8v3.7"/>'
+  };
+  return p[role]?'<svg viewBox="0 0 24 24"'+st+line+'>'+p[role]+'</svg>':'';
+}
+// 'platform', 'owner', 'manager', 'crew', or '' while it is not known yet.
+function hfStaffRole(){
+  if(!currentTaster)return '';
+  if(currentTaster.is_platform_admin)return 'platform';
+  if(!currentTaster.is_restaurant_admin)return '';
+  var who=currentTaster.id==null?null:currentTaster.id;
+  try{
+    var c=JSON.parse(sessionStorage.getItem('hf_role')||'null');
+    if(c&&c.id===who&&Date.now()-c.at<600000)return c.role||'';
+  }catch(e){}
+  hfLoadRole(who);
+  return '';
+}
+function hfLoadRole(who){
+  if(hfLoadRole.asked==='#'+who||!currentSession)return;      // once per page for each account
+  hfLoadRole.asked='#'+who;
+  fetch('/api/my-access',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:'{}'})
+    .then(function(res){return res.ok?res.json():null;})
+    .then(function(d){
+      if(!d||!Array.isArray(d.restaurants))return;
+      var rank={crew:1, manager:2, owner:3, platform:4}, best='';
+      d.restaurants.forEach(function(x){ if(rank[x.role]&&(!best||rank[x.role]>rank[best]))best=x.role; });
+      try{sessionStorage.setItem('hf_role',JSON.stringify({id:who, role:best, at:Date.now()}));}catch(e){}
+      // Redraw only for the same account that asked (a logout in between: nothing).
+      if(best&&currentTaster&&(currentTaster.id==null?null:currentTaster.id)===who)updateNavBtn();
+    })
+    .catch(function(){});
 }
 
 // One delegated listener rather than inline onclick, because the pills are
