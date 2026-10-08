@@ -162,7 +162,7 @@
   /* The days swipe like the evening: a strip that scrolls sideways and snaps,
      the day in the middle bigger and dark. Every day is the same width, so the
      snapping never shifts; "bigger" is a transform, painted as it rolls. */
-  .rv-strip { flex:1; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; padding:.75rem 0; min-width:0;
+  .rv-strip { position:relative; flex:1; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; padding:.75rem 0; min-width:0;
               scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
               -webkit-mask-image:linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
                       mask-image:linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); }
@@ -321,10 +321,15 @@
             text-transform:uppercase; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.4rem; }
   .mg-tab.on { background:#fff; color:var(--text); box-shadow:0 2px 8px rgba(43,33,26,.12); }
   .mg-days { display:flex; align-items:center; gap:.35rem; }
-  .mg-strip { flex:1; display:flex; gap:6px; overflow-x:auto; padding:.6rem 5px .55rem; scrollbar-width:none; min-width:0; }
+  /* r22: a swiping strip like the evening's — the day in the middle is the day. */
+  .mg-strip { position:relative; flex:1; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; padding:.6rem 0 .55rem; scrollbar-width:none; min-width:0;
+              scroll-snap-type:x mandatory; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+              -webkit-mask-image:linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+                      mask-image:linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%); }
   .mg-strip::-webkit-scrollbar { display:none; }
+  .mg-pad { flex:none; width:1px; height:1px; }
   .mg-day { position:relative; flex:none; width:50px; text-align:center; background:#fff; border:1px solid var(--border); border-radius:12px; padding:.35rem 0 .3rem; font-family:var(--sans);
-            color:var(--text); cursor:pointer; }
+            color:var(--text); cursor:pointer; scroll-snap-align:center; -webkit-tap-highlight-color:transparent; }
   .mg-day span { display:block; font-size:.54rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
   .mg-day b { display:block; font-family:var(--serif); font-size:1.15rem; font-weight:600; line-height:1.1; font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; }
   .mg-day i { display:block; font-style:normal; font-size:.54rem; color:var(--muted); min-height:.8rem; white-space:nowrap; }
@@ -385,7 +390,7 @@
 <body>
 
 <div class="m-topbar">
-  <a href="index.html" class="m-home">&#8249; Site</a>
+  <a href="/" class="m-home">&#8249; Site</a>
   <div class="m-topbar-title">Manager</div>
   <span class="m-topbar-spacer"></span>
 </div>
@@ -1117,6 +1122,7 @@ const RV = {
   timer: null, lastScroll: 0, typed: {}, forget: [], hoursBase: null,
   stripFor: null, stripDates: null, dayRaf: 0, dayTimer: null,
   stripTouch: false, stripAim: null, stripWidth: 0, stripWatch: null,   // a finger on the strip; the day the arrows head to; its width
+  stripMoved: 0, stripLater: null, stripChose: null,                    // when it last moved; a rebuild waiting for it to be still; the day it chose
   scan: null,             // a table's QR just scanned: {token, booking, …} or {error}
   // Goes up every time the restaurant changes or the session ends. An answer
   // that comes back for an older generation is dropped, so a slow reply about
@@ -1291,26 +1297,112 @@ function rvRender(){
 // The days swipe sideways like the evening rolls (Sebastian, 25 Sep): the day
 // in the middle is the one shown, bigger and dark; let go and its tables load.
 // The arrows move one day. The strip holds a month either side of the day on
-// screen and is rebuilt around each new day, so it never runs out.
+// screen; when a swipe comes near either end, it is built again around the day
+// shown, once the strip and the finger are still (r22: it used to be built
+// again after every day, which stopped a phone's glide in the middle).
 const RV_SLOT = 60;            // one day in the strip: 54px wide + 6px gap
 
+// ── SWIPING DAY STRIPS (r22, Sebastian 8 Oct: on his iPhone the strips swung
+// right and left and back) ──
+// The evening's days and the messages' days work alike. A finger's swipe is
+// never moved by the page: when it stops, the day in the middle is the day.
+// A tap or an arrow moves the strip with the page's own glide, with the
+// snapping off while it glides (Safari's smooth scrolling fought the snapping
+// on a phone), and a finger stops that glide at once.
+function stripStop(strip){
+  if(!strip || !strip._anim) return;
+  cancelAnimationFrame(strip._anim); strip._anim = 0;
+  strip.style.scrollSnapType = '';
+}
+function stripGlide(strip, to, smooth){
+  stripStop(strip);
+  const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+  to = Math.max(0, Math.min(max, Math.round(to)));
+  const from = strip.scrollLeft;
+  if(!smooth || rvSmooth() !== 'smooth' || Math.abs(to - from) < 2){ strip.scrollLeft = to; return; }
+  const t0 = performance.now(), ms = Math.min(420, 220 + Math.abs(to - from) * 0.45);
+  strip.style.scrollSnapType = 'none';
+  const step = function(now){
+    const k = Math.min(1, (now - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+    strip.scrollLeft = from + (to - from) * ease;
+    if(k < 1){ strip._anim = requestAnimationFrame(step); return; }
+    strip._anim = 0;
+    strip.style.scrollSnapType = '';
+  };
+  strip._anim = requestAnimationFrame(step);
+}
+// Room either side, so the first and the last day can sit in the middle too.
+// With it, day number i is in the middle exactly when the strip is scrolled
+// i slots (whole pixels, so the glide ends where the snapping would).
+function stripFit(strip, padSel){
+  const pads = strip.querySelectorAll(padSel), cells = strip.querySelectorAll('[data-date]');
+  if(!cells.length || !strip.clientWidth) return;
+  const now = pads.length ? pads[0].offsetWidth : 0;
+  const lead = cells[0].offsetLeft - now + cells[0].offsetWidth/2;
+  const pad = Math.max(0, Math.round(strip.clientWidth/2 - lead));
+  pads.forEach(x => { x.style.width = pad+'px'; });
+}
+
+function rvStripBusy(strip){
+  return !!(RV.stripTouch || (strip && strip._anim) || Date.now() - (RV.stripMoved || 0) < 400);
+}
 function rvPaintDays(){
   const car = document.getElementById('rv-car');
   if(!car || !RV.date) return;
-  if(RV.stripFor !== RV.date || !document.getElementById('rv-strip')) rvBuildStrip(car);
-  else rvFillStrip();
+  const strip = document.getElementById('rv-strip');
+  const i = strip && car.contains(strip) && RV.stripDates ? RV.stripDates.indexOf(RV.date) : -1;
+  const busy = i >= 0 && rvStripBusy(strip), mid = i >= 0 ? Math.round(strip.scrollLeft / RV_SLOT) : -1;
+  // The strip chose this day and then moved on by itself (an iPhone gliding on
+  // without a word): the day in the middle is the day, the strip is not moved.
+  const movedOn = i >= 0 && !busy && mid !== i && RV.stripChose === RV.date;
+  const edge = i >= 0 && rvStripNearEnd(i);
+  if(i < 0 || (edge && !busy && !movedOn)) rvBuildStrip(car);
+  else {
+    if(edge) rvStripLater();
+    if(movedOn) setTimeout(rvStripSettled, 0);
+    // A day chosen elsewhere (Today, a scan, the server): the strip goes there.
+    else if(!busy && mid !== i){ RV.stripAim = null; stripGlide(strip, i*RV_SLOT, false); }
+    rvFillStrip();
+  }
   const line = document.getElementById('rv-dateline');
   if(line) line.textContent = rvLong(RV.date) + (RV.date===RV.today ? ' · today' : '');
 }
+// Near an end, but a finger or the strip is still moving: build it again a
+// little later, when both are still.
+function rvStripLater(){
+  clearTimeout(RV.stripLater);
+  RV.stripLater = setTimeout(function(){
+    const strip = document.getElementById('rv-strip');
+    if(!strip || !RV.stripDates) return;
+    if(rvStripBusy(strip)){ rvStripLater(); return; }
+    rvPaintDays();
+  }, 700);
+}
 
-function rvBuildStrip(car){
+// The days of a strip built around this day: a month either side, within a year of today.
+function rvStripDatesFor(day){
   const lo = RV.today ? rvAddDays(RV.today, -365) : null, hi = RV.today ? rvAddDays(RV.today, 365) : null;
   const dates = [];
   for(let k = -30; k <= 30; k++){
-    const date = rvAddDays(RV.date, k);
+    const date = rvAddDays(day, k);
     if((lo && date < lo) || (hi && date > hi)) continue;
     dates.push(date);
   }
+  return dates;
+}
+// Near either end — and building it again would give more days (not at the year's limit).
+function rvStripNearEnd(i){
+  if(i >= 8 && i <= RV.stripDates.length - 9) return false;
+  const fresh = rvStripDatesFor(RV.date);
+  return fresh[0] !== RV.stripDates[0] || fresh[fresh.length - 1] !== RV.stripDates[RV.stripDates.length - 1];
+}
+function rvBuildStrip(car){
+  const dates = rvStripDatesFor(RV.date);
+  // A keyboard on an arrow keeps its place when the strip is built again.
+  const old = document.activeElement, arrow = old && car.contains(old) && old.classList.contains('rv-arrow') ? (old.getAttribute('aria-label') || '') : null;
+  const was = document.getElementById('rv-strip');
+  if(was) stripStop(was);
+  clearTimeout(RV.stripLater);
   RV.stripDates = dates; RV.stripFor = RV.date;
   car.innerHTML = '<button type="button" class="rv-arrow" aria-label="Previous day" onclick="rvStep(-1)">&#8249;</button>'
     + '<div class="rv-strip" id="rv-strip"><div class="rv-strip-pad"></div>'
@@ -1318,31 +1410,47 @@ function rvBuildStrip(car){
         + '<span></span><b>'+Number(date.slice(8))+'</b><i>&nbsp;</i></button>').join('')
     + '<div class="rv-strip-pad"></div></div>'
     + '<button type="button" class="rv-arrow" aria-label="Next day" onclick="rvStep(1)">&#8250;</button>';
+  if(arrow !== null){ const back = car.querySelector('.rv-arrow[aria-label="'+arrow+'"]'); if(back) back.focus({preventScroll:true}); }
   const strip = document.getElementById('rv-strip');
   RV.stripAim = null;
   rvPadStrip(strip);
   strip.scrollLeft = dates.indexOf(RV.date) * RV_SLOT;
   strip.addEventListener('scroll', function(){
+    RV.stripMoved = Date.now();
     if(!RV.dayRaf) RV.dayRaf = requestAnimationFrame(function(){ RV.dayRaf = 0; rvPaintStrip(); });
     clearTimeout(RV.dayTimer);
     RV.dayTimer = setTimeout(rvStripSettled, 160);
   }, {passive:true});
   // A finger resting on the strip is not a choice: the day is picked when it
   // lets go (and the strip has stopped), never under a finger that paused.
-  strip.addEventListener('touchstart', function(){ RV.stripTouch = true; RV.stripAim = null; clearTimeout(RV.dayTimer); }, {passive:true});
+  // A finger also stops the page's glide at once.
+  strip.addEventListener('touchstart', function(){ RV.stripTouch = true; RV.stripAim = null; stripStop(strip); clearTimeout(RV.dayTimer); }, {passive:true});
   const up = function(e){
     if(e && e.touches && e.touches.length) return;      // another finger is still down
     RV.stripTouch = false;
     rvRefitStrip();                                       // a turn of the phone while the finger was down
     clearTimeout(RV.dayTimer); RV.dayTimer = setTimeout(rvStripSettled, 160);
+    // An iPhone may glide on and stop without a word: look at the middle again.
+    [600, 1200, 2200].forEach(function(ms){ setTimeout(function(){ if(document.getElementById('rv-strip') === strip) rvStripSettled(); }, ms); });
   };
   strip.addEventListener('touchend', up, {passive:true});
   strip.addEventListener('touchcancel', up, {passive:true});
+  // A trackpad moving it sideways is a hand; a mouse wheel scrolling the page is not.
+  strip.addEventListener('wheel', function(e){ if(Math.abs(e.deltaX) > Math.abs(e.deltaY)){ RV.stripAim = null; stripStop(strip); } }, {passive:true});
+  // The keyboard: only the day shown takes Tab (so tabbing in never scrolls the
+  // strip a month away); ‹ › keys move a day.
+  strip.addEventListener('keydown', function(e){
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    rvStep(e.key === 'ArrowLeft' ? -1 : 1);
+    const cell = RV.stripAim !== null ? strip.querySelectorAll('.rv-cday')[RV.stripAim] : null;
+    if(cell) cell.focus({preventScroll:true});
+  });
   strip.addEventListener('click', function(e){
     const cell = e.target.closest('.rv-cday');
     if(!cell) return;
     const i = RV.stripDates.indexOf(cell.dataset.date);
-    if(i >= 0 && cell.dataset.date !== RV.date){ RV.stripAim = i; strip.scrollTo({left: i*RV_SLOT, behavior: rvSmooth()}); }
+    if(i >= 0 && cell.dataset.date !== RV.date){ RV.stripAim = i; stripGlide(strip, i*RV_SLOT, true); }
   });
   if(window.ResizeObserver){
     if(RV.stripWatch) RV.stripWatch.disconnect();
@@ -1354,8 +1462,7 @@ function rvBuildStrip(car){
 
 // Half the strip on each side, so the first and the last day can sit in the middle.
 function rvPadStrip(strip){
-  const pad = Math.max(0, strip.clientWidth/2 - 27);
-  strip.querySelectorAll('.rv-strip-pad').forEach(x => { x.style.width = pad+'px'; });
+  stripFit(strip, '.rv-strip-pad');
   RV.stripWidth = strip.clientWidth;
 }
 
@@ -1364,6 +1471,7 @@ function rvPadStrip(strip){
 function rvRefitStrip(){
   const strip = document.getElementById('rv-strip');
   if(!strip || !RV.stripDates || RV.stripTouch || strip.clientWidth === RV.stripWidth) return;
+  stripStop(strip);
   rvPadStrip(strip);
   clearTimeout(RV.dayTimer); RV.stripAim = null;
   const i = RV.stripDates.indexOf(RV.date);
@@ -1379,7 +1487,7 @@ function rvFillStrip(){
   RV.days.forEach(d => { info[d.date] = d; });
   strip.querySelectorAll('.rv-cday').forEach(cell => {
     const date = cell.dataset.date, d = info[date];
-    let line = ' ', shut = false;
+    let line = ' ', shut = false;
     if(d){
       if(d.tables) line = d.tables+(d.tables===1?' table':' tables');
       else if(d.open===false){ line = 'Closed'; shut = true; }
@@ -1404,17 +1512,18 @@ function rvPaintStrip(){
     const on = d < .5;
     cell.classList.toggle('on', on);
     if(on) cell.setAttribute('aria-current', 'date'); else cell.removeAttribute('aria-current');
+    if(cell.tabIndex !== (on ? 0 : -1)) cell.tabIndex = on ? 0 : -1;
   });
 }
 
-// The finger let go: the day in the middle is the day.
+// The strip stopped (the finger let go, or the glide ended): the day in the middle is the day.
 function rvStripSettled(){
   const strip = document.getElementById('rv-strip');
-  if(!strip || !RV.stripDates || RV.stripTouch) return;
+  if(!strip || !RV.stripDates || RV.stripTouch || strip._anim) return;
   RV.stripAim = null;
   const i = Math.max(0, Math.min(RV.stripDates.length - 1, Math.round(strip.scrollLeft / RV_SLOT)));
   const date = RV.stripDates[i];
-  if(date && date !== RV.date) rvPick(date);
+  if(date && date !== RV.date) rvPick(date, true);
 }
 
 function rvSmooth(){ return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'; }
@@ -1425,13 +1534,15 @@ function rvStep(n){
     // From where the strip is already heading, so three quick taps are three days.
     const from = RV.stripAim !== null ? RV.stripAim : RV.stripDates.indexOf(RV.date);
     const i = from + n;
-    if(from >= 0 && i >= 0 && i < RV.stripDates.length){ RV.stripAim = i; strip.scrollTo({left: i*RV_SLOT, behavior: rvSmooth()}); return; }
+    if(from >= 0 && i >= 0 && i < RV.stripDates.length){ RV.stripAim = i; stripGlide(strip, i*RV_SLOT, true); return; }
     if(from >= 0){ rvPick(rvAddDays(RV.stripDates[from], n)); return; }
   }
   rvPick(rvAddDays(RV.date, n));
 }
-function rvPick(date){
+// fromStrip: the strip chose it (a swipe, a tap, an arrow, once it stopped).
+function rvPick(date, fromStrip){
   if(!date || date===RV.date) return;
+  RV.stripChose = fromStrip ? date : null;
   // A year back and a year ahead is more than any restaurant needs from here.
   if(RV.today && (date < rvAddDays(RV.today, -365) || date > rvAddDays(RV.today, 365))) return;
   RV.date = date; RV.armed = null;
@@ -2288,7 +2399,8 @@ async function rvRoomAdd(btn){
 // Sebastian answer; crew only when a manager has switched it on in Team. The
 // server checks all of that again on every request (api/_lib/messages.js).
 const MSG = { known: null, unread: 0, open: false, view: 'list', tab: 'open', date: null, today: null, data: null, error: null,
-              threadId: null, thread: null, threadError: null, seq: 0, gen: 0, timer: null, lastList: 0, sending: false, busy: false };
+              threadId: null, thread: null, threadError: null, seq: 0, gen: 0, timer: null, lastList: 0, sending: false, busy: false,
+              asking: 0, askedAt: 0, wokeAt: 0, stripDates: null, stripToday: null, stripAim: null, stripTouch: false, stripMoved: 0, stripWatch: null, stripChose: null };
 const MSG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/></svg>';
 const MSG_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
@@ -2371,24 +2483,62 @@ function msgOpenThread(id){
 // Closing the window: the day behind it catches up (chat signs, counts).
 function msgClose(){ msgHide(); if(TAB==='reservations' && RV.day && RV.view==='day') rvLoadDay(RV.date, {quiet:true}); }
 
-// While the window is open and on screen: the open conversation every 8
-// seconds, the day's list every 30.
+// While the window is open and on screen: the open conversation every 3
+// seconds, the day's list every 6 (r22: were 8 and 30 — Sebastian, 8 Oct,
+// "the messages are slow to arrive"). A question still on its way is not
+// asked twice, and coming back to the page asks at once.
+const MSG_THREAD_EVERY = 3000, MSG_LIST_EVERY = 6000;
 function msgTimer(){
   if(MSG.timer) return;
-  MSG.timer = setInterval(function(){
-    if(!MSG.open || !currentSession){ clearInterval(MSG.timer); MSG.timer = null; return; }
-    if(document.visibilityState !== 'visible' || MSG.sending || MSG.busy) return;
-    if(MSG.view === 'thread') msgLoadThread(false);
-    else if(Date.now() - MSG.lastList > 29000) msgLoadList(true);
-  }, 8000);
+  MSG.timer = setInterval(function(){ msgTick(false); }, 1000);      // looks every second; asks as often as msgTick says
 }
+// Nobody touching the page for a while: slower (hfPace, taster.js), but a
+// staff page keeps asking: the open conversation every 30 seconds at most,
+// the list every minute.
+function msgTick(now){
+  if(!MSG.open || !currentSession){ clearInterval(MSG.timer); MSG.timer = null; return; }
+  if(document.visibilityState !== 'visible' || MSG.sending || MSG.busy) return;
+  if(MSG.asking && Date.now() - MSG.askedAt < 15000) return;
+  const pace = function(fast, slowest){ return typeof hfPace === 'function' ? hfPace(fast, slowest) : fast; };
+  if(MSG.view === 'thread'){ if(now || Date.now() - MSG.askedAt >= pace(MSG_THREAD_EVERY, 30000) - 400) msgLoadThread(false); }
+  else if(now || Date.now() - Math.max(MSG.lastList, MSG.askedAt) >= pace(MSG_LIST_EVERY, 60000) - 400) msgLoadList(true);
+}
+// Back on the page (another app, another tab, the phone unlocked): what is
+// open catches up now, and the evening's chat signs too.
+function msgWake(){
+  if(document.visibilityState !== 'visible' || !currentSession) return;
+  if(Date.now() - MSG.wokeAt < 2000) return;          // coming back fires two events: one catch-up
+  MSG.wokeAt = Date.now();
+  if(MSG.open) msgTick(true);
+  else if(TAB==='reservations' && RV.view==='day' && RV.day && !RV.sheet && !RV.armed && !RV.busy
+          && Date.now() - (RV.fetchedAt || 0) > 15000 && Date.now() - RV.lastScroll > 4000) rvLoadDay(RV.date, {quiet:true});
+}
+document.addEventListener('visibilitychange', msgWake);
+window.addEventListener('focus', msgWake);
+window.addEventListener('pageshow', function(e){ if(e.persisted) msgWake(); });
+window.hfOnWake = msgWake;                            // a touch after a quiet minute (taster.js)
+// taster.js asks the server what is new every few seconds (the role icon's
+// count). When this restaurant's count of guest messages changes, the bubble
+// follows at once, and the list or the evening's chat signs catch up.
+window.hfOnInbox = function(data){
+  if(!data || !data.staff || !RESTAURANT || !currentSession || MSG.known !== true) return;
+  const here = (data.staff.restaurants || []).map(String);
+  if(here.indexOf(String(RESTAURANT.id)) < 0) return;
+  const n = Number((data.staff.byRestaurant || {})[RESTAURANT.id]) || 0;
+  if(n === MSG.unread) return;
+  MSG.unread = n; msgBubble();
+  if(MSG.open){ if(MSG.view === 'list' && !(MSG.asking && Date.now() - MSG.askedAt < 15000)) msgLoadList(true); return; }
+  if(TAB==='reservations' && RV.view==='day' && RV.day && !RV.sheet && !RV.armed && !RV.busy && Date.now() - RV.lastScroll > 4000) rvLoadDay(RV.date, {quiet:true});
+};
 
 async function msgLoadList(quiet){
   const seq = ++MSG.seq, gen = MSG.gen;
+  MSG.asking = seq; MSG.askedAt = Date.now();
   try{
     const body = {action:'staff_msgs'};
     if(MSG.date) body.date = MSG.date;
     const data = await rvApi(body);
+    if(MSG.asking === seq) MSG.asking = 0;
     if(seq !== MSG.seq || gen !== MSG.gen) return;
     const changed = JSON.stringify(data) !== JSON.stringify(MSG.data);
     MSG.data = data; MSG.date = data.date; MSG.today = data.today; MSG.lastList = Date.now(); MSG.error = null;
@@ -2396,6 +2546,7 @@ async function msgLoadList(quiet){
     msgBubble();
     if(MSG.open && MSG.view === 'list' && changed) msgPaint();
   }catch(e){
+    if(MSG.asking === seq) MSG.asking = 0;
     if(seq !== MSG.seq || gen !== MSG.gen) return;
     if(e.status === 403){ MSG.known = false; msgBubble(); }
     if(!quiet || !MSG.data){ MSG.error = e.message; if(MSG.open && MSG.view === 'list') msgPaint(); }
@@ -2404,8 +2555,10 @@ async function msgLoadList(quiet){
 
 async function msgLoadThread(first){
   const seq = ++MSG.seq, gen = MSG.gen, id = MSG.threadId;
+  MSG.asking = seq; MSG.askedAt = Date.now();
   try{
     const data = await rvApi({action:'staff_msg_thread', id: id});
+    if(MSG.asking === seq) MSG.asking = 0;
     if(seq !== MSG.seq || gen !== MSG.gen || id !== MSG.threadId || MSG.sending) return;
     const changed = JSON.stringify(data) !== JSON.stringify(MSG.thread);
     msgAnnounce(MSG.thread, data);
@@ -2416,6 +2569,7 @@ async function msgLoadThread(first){
     // Read now: the role icon's count in the header catches up too.
     if(first && typeof hfInboxSeen === 'function') hfInboxSeen();
   }catch(e){
+    if(MSG.asking === seq) MSG.asking = 0;
     if(seq !== MSG.seq || gen !== MSG.gen || id !== MSG.threadId) return;
     if(first || !MSG.thread){ MSG.threadError = e.message; msgPaint(); }
   }
@@ -2447,9 +2601,9 @@ function msgPaint(first){
     if(first || atEnd) scroller.scrollTop = scroller.scrollHeight;
     return;
   }
+  if(MSG.view === 'list' && MSG.data && host.dataset.view === 'list' && msgPatchList(host)) return;
   const sameList = MSG.view === 'list' && host.dataset.view === 'list' && host.dataset.date === String(MSG.date);
   const keepTop = sameList && scroller ? scroller.scrollTop : 0;
-  const oldStrip = host.querySelector('.mg-strip'), keepLeft = sameList && oldStrip ? oldStrip.scrollLeft : null;
   host.innerHTML = '<div class="rv-scrim" onclick="msgClose()"></div>'
     + '<div class="rv-sheet mg-sheet" role="dialog" aria-modal="true" aria-label="Guest messages"><div class="rv-grab"></div>'
     + (MSG.view === 'thread' ? msgThreadHtml() : msgListHtml())
@@ -2460,9 +2614,8 @@ function msgPaint(first){
   if(sc && MSG.view === 'thread') sc.scrollTop = sc.scrollHeight;
   if(sc && MSG.view === 'list') sc.scrollTop = keepTop;
   if(MSG.view === 'list'){
-    const strip = host.querySelector('.mg-strip'), on = host.querySelector('.mg-day.on');
-    if(strip && keepLeft !== null) strip.scrollLeft = keepLeft;
-    else if(strip && on) strip.scrollLeft = on.offsetLeft - strip.offsetLeft - strip.clientWidth/2 + on.offsetWidth/2;
+    const strip = host.querySelector('.mg-strip');
+    if(strip) msgStripMake(strip);
   }
 }
 
@@ -2484,23 +2637,6 @@ function msgHead(title, back){
 function msgListHtml(){
   const d = MSG.data;
   if(!d) return msgHead('Messages') + (MSG.error ? '<div class="m-err">'+esc(MSG.error)+'</div>' : '<div class="m-skel"></div><div class="m-skel"></div>');
-  const info = {};
-  d.days.forEach(x => { info[x.date] = x; });
-  let days = '';
-  for(let k = -7; k <= 7; k++){
-    const date = rvAddDays(d.date, k), x = info[date];
-    const n = x ? (MSG.tab === 'open' ? x.open : x.closed) : 0;
-    days += '<button type="button" class="mg-day'+(date===d.date?' on':'')+'" onclick="msgPick(\''+date+'\')" aria-label="'+esc(rvLong(date))
-      + (x && x.unread ? ', new messages' : '')+'"'+(date===d.date?' aria-current="date"':'')+'>'
-      + (x && x.unread ? '<span class="dot"></span>' : '')
-      + '<span>'+(date===d.today ? 'Today' : rvFmt(date, {weekday:'short'}))+'</span><b>'+Number(date.slice(8))+'</b>'
-      + '<i>'+(n ? n+(n===1?' chat':' chats') : '&nbsp;')+'</i></button>';
-  }
-  const list = (d.threads || []).filter(t => MSG.tab === 'open' ? t.open : !t.open);
-  const rows = !d.threads ? '<div class="m-skel"></div><div class="m-skel"></div>'
-    : list.length ? list.map(msgRow).join('')
-    : '<div class="mg-empty">'+(MSG.tab === 'open' ? 'No open conversations' : 'No closed conversations')+' for '+esc(rvLong(d.date))+'.'
-      + (MSG.tab === 'open' && d.openCount ? '<br>Days with something new have a red dot.' : '')+'</div>';
   return msgHead('Messages')
     + '<div class="mg-tabs" role="tablist">'
     +   '<button type="button" role="tab" class="mg-tab'+(MSG.tab==='open'?' on':'')+'" aria-selected="'+(MSG.tab==='open')+'" onclick="msgTab(\'open\')">Open'
@@ -2509,11 +2645,177 @@ function msgListHtml(){
     +     (d.closedUnread ? ' <b class="mg-n" title="Closed, with a message not read yet">'+d.closedUnread+'</b>' : '')+'</button>'
     + '</div>'
     + '<div class="mg-days"><button type="button" class="rv-arrow" aria-label="Previous day" onclick="msgStep(-1)">&#8249;</button>'
-    +   '<div class="mg-strip">'+days+'</div>'
+    +   msgStripHtml(d)
     +   '<button type="button" class="rv-arrow" aria-label="Next day" onclick="msgStep(1)">&#8250;</button></div>'
-    + '<div class="rv-dateline">'+esc(rvLong(d.date))+(d.date===d.today ? ' · today' : '')+'</div>'
-    + '<div class="mg-scroll">'+rows+'</div>'
+    + '<div class="rv-dateline mg-dateline">'+esc(rvLong(d.date))+(d.date===d.today ? ' · today' : '')+'</div>'
+    + '<div class="mg-scroll">'+msgRowsHtml(d)+'</div>'
     + '<p class="mg-foot">Closed conversations stay here for 90 days after the table, then they are deleted.</p>';
+}
+function msgRowsHtml(d){
+  const list = (d.threads || []).filter(t => MSG.tab === 'open' ? t.open : !t.open);
+  return !d.threads ? '<div class="m-skel"></div><div class="m-skel"></div>'
+    : list.length ? list.map(msgRow).join('')
+    : '<div class="mg-empty">'+(MSG.tab === 'open' ? 'No open conversations' : 'No closed conversations')+' for '+esc(rvLong(d.date))+'.'
+      + (MSG.tab === 'open' && d.openCount ? '<br>Days with something new have a red dot.' : '')+'</div>';
+}
+// The tabs' words and numbers, changed where they are (a keyboard on a tab keeps it).
+function msgTabsPatch(box, d){
+  const tabs = box.querySelectorAll('.mg-tab');
+  if(tabs.length !== 2) return;
+  [['open', 'Open', d.openCount, ''], ['closed', 'Closed', d.closedUnread, ' title="Closed, with a message not read yet"']].forEach((t, k) => {
+    const on = MSG.tab === t[0];
+    tabs[k].classList.toggle('on', on);
+    tabs[k].setAttribute('aria-selected', String(on));
+    tabs[k].innerHTML = t[1] + (t[2] ? ' <b class="mg-n"'+t[3]+'>'+t[2]+'</b>' : '');
+  });
+}
+
+// ── THE MESSAGES' DAY STRIP (r22) ──
+// Like the evening's: the day in the middle is the day — a swipe, the arrows
+// or a tap. It holds every day a conversation can be on, from 91 days ago
+// (they are kept 90 days after the table) to two months ahead (further if a
+// table is), and is built once when the list opens. After that only its
+// numbers and dots change, so a new message never moves it under a finger.
+const MG_SLOT = 56;            // one day: 50px wide + 6px gap
+function msgStripDates(d){
+  let from = rvAddDays(d.today, -91), to = rvAddDays(d.today, 61);
+  (d.days || []).forEach(x => { if(x.date > to) to = x.date; if(x.date < from) from = x.date; });
+  if(d.date < from) from = d.date;
+  if(d.date > to) to = d.date;
+  const out = [];
+  for(let date = from; date <= to && out.length < 800; date = rvAddDays(date, 1)) out.push(date);
+  return out;
+}
+function msgStripHtml(d){
+  MSG.stripDates = msgStripDates(d); MSG.stripToday = d.today; MSG.stripAim = null;
+  return '<div class="mg-strip"><div class="mg-pad"></div>'
+    + MSG.stripDates.map(date => '<button type="button" class="mg-day" data-date="'+date+'" aria-label="'+esc(rvLong(date))+'">'
+        + '<span class="mg-wd">'+(date===d.today ? 'Today' : rvFmt(date, {weekday:'short'}))+'</span><b>'+Number(date.slice(8))+'</b><i>&nbsp;</i></button>').join('')
+    + '<div class="mg-pad"></div></div>';
+}
+// The counts under the days (open or closed, as the tab) and the red dots.
+function msgFillStrip(strip){
+  const d = MSG.data;
+  if(!strip || !d) return;
+  const info = {};
+  (d.days || []).forEach(x => { info[x.date] = x; });
+  strip.querySelectorAll('.mg-day').forEach(cell => {
+    const date = cell.dataset.date, x = info[date];
+    const n = x ? (MSG.tab === 'open' ? x.open : x.closed) : 0;
+    const line = n ? n+(n===1?' chat':' chats') : '\u00a0';
+    const i = cell.querySelector('i');
+    if(i.textContent !== line) i.textContent = line;
+    let dot = cell.querySelector('.dot');
+    const red = !!(x && x.unread);
+    if(red && !dot){ dot = document.createElement('span'); dot.className = 'dot'; cell.insertBefore(dot, cell.firstChild); }
+    if(dot && !red) dot.remove();
+    cell.setAttribute('aria-label', rvLong(date) + (red ? ', new messages' : ''));
+  });
+  msgPaintStrip(strip);
+}
+// Dark in the middle: the day shown, or the one a finger is bringing there.
+function msgPaintStrip(strip){
+  if(!strip || !MSG.stripDates || !strip.clientWidth) return;
+  const k = Math.max(0, Math.min(MSG.stripDates.length - 1, Math.round(strip.scrollLeft / MG_SLOT)));
+  strip.querySelectorAll('.mg-day').forEach((cell, i) => {
+    const on = i === k;
+    if(cell.classList.contains('on') !== on) cell.classList.toggle('on', on);
+    if(on) cell.setAttribute('aria-current', 'date'); else cell.removeAttribute('aria-current');
+    if(cell.tabIndex !== (on ? 0 : -1)) cell.tabIndex = on ? 0 : -1;
+  });
+}
+function msgStripBusy(strip){
+  return !!(MSG.stripTouch || (strip && strip._anim) || Date.now() - (MSG.stripMoved || 0) < 400);
+}
+function msgStripPlace(strip){
+  const k = MSG.stripDates.indexOf(MSG.date);
+  if(k >= 0) strip.scrollLeft = k * MG_SLOT;
+  msgPaintStrip(strip);
+}
+function msgStripMake(strip){
+  if(MSG.stripWatch) MSG.stripWatch.disconnect();
+  MSG.stripTouch = false; MSG.stripAim = null;
+  stripFit(strip, '.mg-pad');
+  strip._w = strip.clientWidth;
+  msgStripPlace(strip);
+  msgFillStrip(strip);
+  let timer = null, raf = 0;
+  const later = function(){ clearTimeout(timer); timer = setTimeout(function(){ msgStripSettled(strip); }, 160); };
+  strip.addEventListener('scroll', function(){
+    MSG.stripMoved = Date.now();
+    if(!raf) raf = requestAnimationFrame(function(){ raf = 0; msgPaintStrip(strip); });
+    later();
+  }, {passive:true});
+  strip.addEventListener('touchstart', function(){ MSG.stripTouch = true; MSG.stripAim = null; stripStop(strip); clearTimeout(timer); }, {passive:true});
+  const up = function(e){
+    if(e && e.touches && e.touches.length) return;
+    MSG.stripTouch = false; later();
+    // An iPhone may glide on and stop without a word: look at the middle again.
+    [600, 1200, 2200].forEach(function(ms){ setTimeout(function(){ msgStripSettled(strip); }, ms); });
+  };
+  strip.addEventListener('touchend', up, {passive:true});
+  strip.addEventListener('touchcancel', up, {passive:true});
+  strip.addEventListener('wheel', function(e){ if(Math.abs(e.deltaX) > Math.abs(e.deltaY)){ MSG.stripAim = null; stripStop(strip); } }, {passive:true});
+  // Only the day shown takes Tab; ‹ › keys move a day.
+  strip.addEventListener('keydown', function(e){
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    msgStep(e.key === 'ArrowLeft' ? -1 : 1);
+    const cell = MSG.stripAim !== null ? strip.querySelectorAll('.mg-day')[MSG.stripAim] : null;
+    if(cell) cell.focus({preventScroll:true});
+  });
+  strip.addEventListener('click', function(e){
+    const cell = e.target.closest('.mg-day');
+    if(!cell) return;
+    const k = MSG.stripDates.indexOf(cell.dataset.date);
+    if(k < 0) return;
+    if(Math.round(strip.scrollLeft / MG_SLOT) === k && !strip._anim){ msgPick(cell.dataset.date); return; }
+    MSG.stripAim = k; stripGlide(strip, k * MG_SLOT, true);
+  });
+  // The phone turned, or the window changed width: padded again, back on the day.
+  if(window.ResizeObserver){
+    MSG.stripWatch = new ResizeObserver(function(){
+      if(!strip.isConnected || MSG.stripTouch || !strip.clientWidth || strip.clientWidth === strip._w) return;
+      stripStop(strip); stripFit(strip, '.mg-pad'); strip._w = strip.clientWidth;
+      MSG.stripAim = null; msgStripPlace(strip);
+    });
+    MSG.stripWatch.observe(strip);
+  }
+}
+// The strip stopped (the finger let go, or the glide ended): the day in the middle is the day.
+function msgStripSettled(strip){
+  if(!strip.isConnected || MSG.stripTouch || strip._anim || !MSG.stripDates) return;
+  MSG.stripAim = null;
+  const k = Math.max(0, Math.min(MSG.stripDates.length - 1, Math.round(strip.scrollLeft / MG_SLOT)));
+  const date = MSG.stripDates[k];
+  if(date && date !== MSG.date) msgPick(date, true);
+}
+// The list already on screen: the tabs, the day's line, the rows and the
+// strip's numbers change where they are, and the strip is not moved while a
+// finger (or its glide) is on it. False when it has to be built again.
+function msgPatchList(host){
+  const d = MSG.data, strip = host.querySelector('.mg-strip'), sc = host.querySelector('.mg-scroll');
+  const tabs = host.querySelector('.mg-tabs'), line = host.querySelector('.mg-dateline');
+  if(!d || !strip || !sc || !tabs || !line || !MSG.stripDates || MSG.stripToday !== d.today) return false;
+  const first = MSG.stripDates[0], last = MSG.stripDates[MSG.stripDates.length - 1];
+  if(d.date < first || d.date > last || (d.days || []).some(x => x.date < first || x.date > last)) return false;
+  const same = host.dataset.date === String(d.date);
+  const keepTop = same ? sc.scrollTop : 0;
+  msgTabsPatch(tabs, d);
+  line.textContent = rvLong(d.date) + (d.date===d.today ? ' · today' : '');
+  sc.innerHTML = msgRowsHtml(d);
+  sc.scrollTop = keepTop;
+  host.dataset.date = String(d.date);
+  msgFillStrip(strip);
+  const k = MSG.stripDates.indexOf(d.date);
+  if(!msgStripBusy(strip) && Math.round(strip.scrollLeft / MG_SLOT) !== k){
+    // The strip chose this day and moved on by itself (an iPhone gliding on
+    // without a word): the day in the middle is the day. Otherwise the day was
+    // chosen elsewhere (the server's day at opening): the strip goes there.
+    if(MSG.stripChose === d.date) setTimeout(function(){ msgStripSettled(strip); }, 0);
+    else { MSG.stripAim = null; msgStripPlace(strip); }
+  }
+  return true;
 }
 
 function msgRow(t){
@@ -2562,13 +2864,23 @@ function msgGrow(input){ input.style.height = 'auto'; input.style.height = Math.
 
 function msgBackToList(){ MSG.view = 'list'; MSG.threadId = null; MSG.thread = null; MSG.seq += 1; msgPaint(); msgLoadList(); }
 function msgTab(tab){ MSG.tab = tab; msgPaint(); }
-function msgPick(date){
+function msgPick(date, fromStrip){
   if(!date || date === MSG.date) return;
+  MSG.stripChose = fromStrip ? date : null;
   MSG.date = date;
   if(MSG.data) MSG.data = Object.assign({}, MSG.data, {date: date, threads: null});    // loading
   msgPaint(); msgLoadList();
 }
-function msgStep(n){ if(MSG.date) msgPick(rvAddDays(MSG.date, n)); }
+function msgStep(n){
+  const strip = document.querySelector('#mg-sheet-host .mg-strip');
+  if(strip && MSG.stripDates){
+    // From where the strip is already heading, so three quick taps are three days.
+    const from = MSG.stripAim !== null && MSG.stripAim !== undefined ? MSG.stripAim : MSG.stripDates.indexOf(MSG.date);
+    const k = from + n;
+    if(from >= 0 && k >= 0 && k < MSG.stripDates.length){ MSG.stripAim = k; stripGlide(strip, k * MG_SLOT, true); return; }
+  }
+  if(MSG.date) msgPick(rvAddDays(MSG.date, n));
+}
 
 async function msgSend(){
   const host = document.getElementById('mg-sheet-host');
