@@ -224,7 +224,7 @@
 <body>
 
 <div class="rv-topbar">
-  <a href="index.html" class="rv-back" aria-label="Home">
+  <a href="/" class="rv-back" aria-label="Home">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
@@ -393,9 +393,9 @@ const RESTAURANT_ID = 1;
 // The account menu in the corner comes from taster.js, but the screens behind
 // two of its links live on other pages. Rather than let a tap do nothing, they
 // go where the screen actually is.
-window.openTasterModal = function () { window.location.href = 'index.html'; };
-window.openMyTastings  = function () { window.location.href = 'menu.html'; };
-window.openMyVisits    = function () { window.location.href = 'menu.html'; };
+window.openTasterModal = function () { window.location.href = '/'; };
+window.openMyTastings  = function () { window.location.href = '/menu'; };
+window.openMyVisits    = function () { window.location.href = '/menu'; };
 
 const state = { booking:null, restaurant:null, date:null, party:2, slots:[], chosen:null, closed:false, last:null, ask:0 };
 
@@ -448,6 +448,16 @@ function dayLabels(date) {
 // (one step), or a swipe (when the strip stops, the one in the middle is
 // chosen). The free times load once, after the choice, not while it moves.
 // carMake works for both strips; each says what "choosing" means (carPick).
+//
+// r22 (Sebastian, 8 Oct: on his iPhone the strips swung right and left and
+// back). Two things fought his finger: Safari's own smooth scrolling against
+// the snapping, and the page putting the strip back on the day it had just
+// chosen while the iPhone was still gliding on to another. Now:
+//   · whatever stops in the middle is chosen, and the page never moves the
+//     strip after a finger has moved it;
+//   · a tap, an arrow or a new width moves it with the page's own glide, with
+//     the snapping off while it glides (so nothing fights it), and a finger
+//     stops that glide at once.
 function carItems(strip) { return Array.prototype.slice.call(strip.children); }
 function carCentreOf(strip) {
   const mid = strip.scrollLeft + strip.clientWidth / 2;
@@ -459,12 +469,15 @@ function carCentreOf(strip) {
   return best;
 }
 // What the screen shows: the one in the middle, its two neighbours, the arrows.
+// Only the one chosen takes the Tab key (the arrows move between them), so
+// tabbing in never scrolls the strip to its first day.
 function carMark(strip, on) {
   const items = carItems(strip), i = items.indexOf(on);
   items.forEach((it, k) => {
     it.classList.toggle('on', k === i);
     it.classList.toggle('near', Math.abs(k - i) === 1);
     it.setAttribute('aria-pressed', k === i ? 'true' : 'false');
+    it.tabIndex = k === (i < 0 ? 0 : i) ? 0 : -1;
   });
   const car = strip.parentNode;
   const prev = car.querySelector('.rv-arrow'), next = car.querySelector('.rv-arrow:last-child');
@@ -479,63 +492,107 @@ function carMark(strip, on) {
 function carSmooth() {
   return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
+// The page's glide stops (a finger came, or another move starts); the
+// snapping comes back.
+function carStop(strip) {
+  if (!strip._carAnim) return;
+  cancelAnimationFrame(strip._carAnim);
+  strip._carAnim = 0;
+  strip.style.scrollSnapType = '';
+}
+// The page moves the strip so that this one sits in the middle. Each step is
+// marked as the page's own (strip._carSelf), so it is never taken for a finger.
 function carGo(strip, item, smooth) {
   if (!item || !strip.clientWidth) return;
-  strip.scrollTo({ left: item.offsetLeft + item.offsetWidth / 2 - strip.clientWidth / 2, behavior: smooth && carSmooth() ? 'smooth' : 'auto' });
+  carStop(strip);
+  const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+  const to = Math.max(0, Math.min(max, Math.round(item.offsetLeft + item.offsetWidth / 2 - strip.clientWidth / 2)));
+  const from = strip.scrollLeft;
+  strip._carSelf = Date.now() + 250;
+  if (!smooth || !carSmooth() || Math.abs(to - from) < 2) { strip.scrollLeft = to; return; }
+  const t0 = performance.now(), ms = Math.min(420, 220 + Math.abs(to - from) * 0.45);
+  strip.style.scrollSnapType = 'none';
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms), ease = 1 - Math.pow(1 - k, 3);
+    strip._carSelf = Date.now() + 250;
+    strip.scrollLeft = from + (to - from) * ease;
+    if (k < 1) { strip._carAnim = requestAnimationFrame(step); return; }
+    strip._carAnim = 0;
+    strip.style.scrollSnapType = '';
+  };
+  strip._carAnim = requestAnimationFrame(step);
 }
 // The room either side, so the first and the last can come to the middle.
+// Whole pixels, so every stopping place is a whole pixel too.
 function carFit(strip) {
   const first = strip.firstElementChild;
   if (!first || !strip.clientWidth) return;
   const gap = parseFloat(getComputedStyle(strip).columnGap) || 0;
-  strip.style.setProperty('--car-pad', Math.max(0, (strip.clientWidth - first.offsetWidth) / 2 - gap) + 'px');
+  strip.style.setProperty('--car-pad', Math.max(0, Math.round((strip.clientWidth - first.offsetWidth) / 2 - gap)) + 'px');
+  if (strip._carTouch) return;            // a finger is on it: it chooses, not the page
   carGo(strip, strip.querySelector('[aria-pressed="true"]') || first, false);
 }
 function carMake(strip) {
   if (strip.dataset.car) return;
   strip.dataset.car = '1';
-  let settle = null, frame = 0, going = null, user = false, touching = false;
-  // Only a finger (or a trackpad) chooses by moving the strip. When the page
-  // moves it (a tap, an arrow, a window that changes size) or the browser
-  // nudges it, the middle passes other days on the way; those are not choices,
-  // and the strip goes back to the one chosen.
+  let settle = null, frame = 0, going = null;
+  // going: the one the page is moving the strip to (a tap, an arrow). Any
+  // movement the page did not make is a finger's (or a trackpad's), and then
+  // the one in the middle when it stops is the choice.
+  const pageMoving = () => !!strip._carAnim || Date.now() < (strip._carSelf || 0);
+  const hands = () => { going = null; carStop(strip); };
   const choose = (it, smooth) => {
     if (!it) return;
-    user = false; going = it;
+    going = it;
     carMark(strip, it); carPick(strip, it); carGo(strip, it, smooth);
   };
   strip.addEventListener('scroll', () => {
-    if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (user) carMark(strip, carCentreOf(strip)); });
+    if (!pageMoving()) going = null;
+    if (!frame) frame = requestAnimationFrame(() => {
+      frame = 0;
+      if (!going && strip.clientWidth) carMark(strip, carCentreOf(strip));
+    });
     clearTimeout(settle);
     settle = setTimeout(() => {
       // Hidden (the form is showing): nothing is in the middle, so nothing is
       // chosen; the strip just shows what is already chosen.
       if (!strip.clientWidth) {
-        user = false; going = null;
+        going = null;
         carMark(strip, strip.querySelector('[data-v="' + (strip.id === 'rv-days' ? state.date : state.party) + '"]'));
         return;
       }
-      if (touching) return;          // a finger still on the strip: it has not stopped yet
-      if (user) {
-        user = false; going = null;
-        const it = carCentreOf(strip);
-        if (it) { carMark(strip, it); carPick(strip, it); }
+      if (strip._carTouch || strip._carAnim) return;     // a finger still on it, or the glide still going
+      if (going) {
+        // The page's own move has ended where it was going (a pixel off at most).
+        const it = going;
+        going = null;
+        carMark(strip, it);
+        if (carCentreOf(strip) !== it) carGo(strip, it, false);
         return;
       }
-      const it = going || strip.querySelector('[aria-pressed="true"]');
-      going = null;
-      if (!it) return;
-      carMark(strip, it);
-      if (carCentreOf(strip) !== it) carGo(strip, it, false);
+      // A finger moved it: the one in the middle is the choice. The strip is
+      // not moved again, so nothing fights the phone's own snapping.
+      const it = carCentreOf(strip);
+      if (it) { carMark(strip, it); carPick(strip, it); }
     }, 160);
   }, { passive: true });
-  ['pointerdown', 'touchstart', 'wheel'].forEach((ev) => strip.addEventListener(ev, () => { user = true; going = null; }, { passive: true }));
-  // When the finger lifts, the wait starts again from there.
-  strip.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+  strip.addEventListener('touchstart', () => { strip._carTouch = true; hands(); }, { passive: true });
+  // When the last finger lifts, the wait starts again from there. An iPhone
+  // may glide on and stop without telling the page at all, so the middle is
+  // looked at again a few times after the lift: whatever sits there is chosen.
+  const recheck = () => {
+    if (strip._carTouch || strip._carAnim || going || !strip.clientWidth) return;
+    const it = carCentreOf(strip), on = strip.querySelector('[aria-pressed="true"]');
+    if (it && it !== on) { carMark(strip, it); carPick(strip, it); }
+  };
   ['touchend', 'touchcancel'].forEach((ev) => strip.addEventListener(ev, (e) => {
-    touching = !!(e.touches && e.touches.length);       // another finger may still be on it
-    if (!touching) strip.dispatchEvent(new Event('scroll'));
+    strip._carTouch = !!(e.touches && e.touches.length);
+    if (strip._carTouch) return;
+    strip.dispatchEvent(new Event('scroll'));
+    [600, 1200, 2200].forEach((ms) => setTimeout(recheck, ms));
   }, { passive: true }));
+  // A trackpad moving it sideways is a hand; a mouse wheel turning the page up or down is not.
+  strip.addEventListener('wheel', (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) hands(); }, { passive: true });
   strip.addEventListener('click', (e) => {
     const it = e.target.closest('button');
     if (it && it.parentNode === strip) choose(it, true);
@@ -1172,13 +1229,12 @@ async function shareNow(r) {
   try { file = withQr ? (r._card || qrFile(r)) : null; } catch (e) { file = null; }
   try {
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      // Some chats keep only the picture when a picture and words are shared
-      // together, so the words go on the clipboard too (not awaited: the share
-      // sheet must open inside the tap).
-      let copied = false;
-      try { if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => { copied = true; }, () => {}); } catch (e) { /* no clipboard */ }
+      // Nothing is written to the clipboard here (r22, Sebastian 8 Oct). On an
+      // iPhone that write landed after the share sheet closed, on top of what
+      // its Copy had put there (the picture), so pasting in WhatsApp gave only
+      // the words. Copy in the share sheet now keeps the picture, and the
+      // picture carries the day, the time, the address and the QR.
       await navigator.share({ files: [file], text, title });
-      if (copied && file !== r._card) showToast('The message is copied too, in case your chat sent only the picture.');
       return;
     }
     if (!file && navigator.share) { await navigator.share({ text, title }); return; }
@@ -1322,6 +1378,9 @@ const SEND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   + '<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>';
 state.chats = {};
 let chatTimer = null;
+// How often an open conversation asks for news (r22: was 10 seconds; Sebastian,
+// 8 Oct, "the messages are slow to arrive"). Coming back to the page asks at once.
+const CHAT_EVERY = 3000;
 
 function chatBlock(key, chat) {
   const n = chat && chat.unread ? '<b class="n" aria-hidden="true">' + Number(chat.unread) + '</b>' : '';
@@ -1350,30 +1409,70 @@ function chatOpen(key, open) {
   btn.querySelector('span').textContent = open ? 'Hide messages' : 'Message';
   if (!open) return;
   chatLoad(key, true);
-  if (!chatTimer) chatTimer = setInterval(chatTick, 10000);
+  if (!chatTimer) chatTimer = setInterval(() => chatTick(false), 1000);   // looks every second; asks as often as chatTick says
   setTimeout(() => { try { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* old browser */ } }, 60);
 }
 
-// While a conversation is open and on screen, it is asked for again every ten
-// seconds, so an answer appears without a refresh.
-function chatTick() {
-  const open = Object.keys(state.chats).filter((k) => { const b = el('chat-' + k); return b && !b.hidden && b.offsetParent !== null; });
+// While a conversation is open and on screen, it is asked for again every
+// three seconds, so an answer appears without a refresh. A question still on
+// its way is not asked twice (a slow phone network).
+// Nobody touching the page for a while: slower, and after half an hour it
+// stops until someone comes back (hfPace, taster.js).
+function chatShown(k) { const b = el('chat-' + k); return !!(b && !b.hidden && b.offsetParent !== null); }
+function chatTick(now) {
+  const open = Object.keys(state.chats).filter(chatShown);
   if (!open.length) { clearInterval(chatTimer); chatTimer = null; return; }
   if (document.visibilityState !== 'visible') return;
-  open.forEach((k) => chatLoad(k, false));
+  const every = typeof hfPace === 'function' ? hfPace(CHAT_EVERY, Infinity) : CHAT_EVERY;
+  open.forEach((k) => {
+    const c = state.chats[k];
+    if (chatAsking(k) || (!now && Date.now() - (c.askedAt || 0) < every - 400)) return;
+    chatLoad(k, false);
+  });
 }
+// A question that has not come back in 15 seconds is given up on.
+function chatAsking(key) { const c = state.chats[key]; return !!(c && c.asking && Date.now() - c.askedAt < 15000); }
+// Back on the page (another app, another tab, the phone unlocked): the open
+// conversations catch up now, not at the next tick.
+function chatWake() { if (document.visibilityState === 'visible' && chatTimer) chatTick(true); }
+window.hfOnWake = chatWake;
+document.addEventListener('visibilitychange', chatWake);
+window.addEventListener('focus', chatWake);
+window.addEventListener('pageshow', (e) => { if (e.persisted) chatWake(); });
+// What is new for this account (taster.js asks the server every few seconds
+// for the bell): a closed conversation gets its count on Message at once, and
+// an open one with a new answer is asked for now.
+window.hfOnInbox = function (data) {
+  if (!data || !Array.isArray(data.bell)) return;
+  const fresh = {};
+  data.bell.forEach((b) => { fresh['t' + Number(b.reservationId)] = Number(b.count) || 0; });
+  document.querySelectorAll('.rv-msg-btn[data-chat^="t"]').forEach((btn) => {
+    const key = btn.dataset.chat, n = fresh[key] || 0;
+    // Open and on screen: read it now. Open but behind another step (Book a
+    // table): not read where nobody can see it; the count waits on Message.
+    if (chatShown(key)) { if (n && state.chats[key] && !chatAsking(key)) chatLoad(key, false); return; }
+    let badge = btn.querySelector('.n');
+    if (n && !badge) { badge = document.createElement('b'); badge.className = 'n'; badge.setAttribute('aria-hidden', 'true'); btn.appendChild(badge); }
+    if (badge && !n) badge.remove();
+    if (n) badge.textContent = String(n);
+    btn.setAttribute('aria-label', 'Messages with the restaurant' + (n ? ', ' + n + ' new' : ''));
+  });
+};
 
 async function chatLoad(key, first) {
   const c = state.chats[key] || (state.chats[key] = {});
   const seq = (c.seq || 0) + 1;
   c.seq = seq;
   let data;
+  c.asking = seq; c.askedAt = Date.now();
   try { data = await api(Object.assign({ action: 'msg_list' }, chatTarget(key))); }
   catch (e) {
+    if (c.asking === seq) c.asking = 0;
     if (seq !== c.seq) return;
     if (first) { const list = el('chat-' + key) && el('chat-' + key).querySelector('.rv-chat-list'); if (list) list.innerHTML = '<p class="rv-chat-empty">' + esc(e.message) + '</p>'; }
     return;
   }
+  if (c.asking === seq) c.asking = 0;
   if (seq !== c.seq || c.sending) return;
   const changed = JSON.stringify(data) !== JSON.stringify(c.data);
   // A screen reader hears the restaurant's new answer once, not the whole conversation again.
@@ -1481,7 +1580,7 @@ el('sent-back').addEventListener('click', () => { show('pick'); loadSlots(); });
 // when booking is off — never an empty picker.
 function goBook() {
   if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
-  if (!state.booking) { window.location.href = 'reservations.html'; return; }   // the first load never finished
+  if (!state.booking) { window.location.href = '/reservations'; return; }   // the first load never finished
   if (!state.booking.enabled) { show('off'); return; }
   show('pick'); loadSlots();
 }
