@@ -1,7 +1,10 @@
 // api/_lib/email.js
 //
 // The emails a guest gets about a table: the confirmation, the reminder the day
-// before, and inside both a link that cancels the table without logging in.
+// before, and inside both a link that cancels the table without logging in —
+// and, since r21, one that opens the table's conversation with the restaurant.
+// A guest without an account also gets one email when the restaurant first
+// answers them (answerEmail).
 //
 // One Resend account (Seb's Analytics) sends for every restaurant. What the
 // guest sees — the name, the address, where a reply goes — is a setting of the
@@ -100,10 +103,16 @@ export async function saveLink(reservationId, hash, purpose) {
 }
 // The token goes after #, not ?, so a browser never sends it to a web server.
 // (Resend does keep a copy of each email it sends, link included, for a while —
-// which is why a link also stops working a week after the table.)
+// which is why a link also stops working, 90 days after the table, when the
+// table's conversation is deleted.)
 export function cancelUrl(settings, token) {
   const site = (settings && settings.site_url) || 'https://thehungryfork.fun';
   return `${site}/reservations.html#cancel=${token}`;
+}
+// The same table with its conversation open: "Write to the restaurant".
+export function talkUrl(settings, token) {
+  const site = (settings && settings.site_url) || 'https://thehungryfork.fun';
+  return `${site}/reservations.html#talk=${token}`;
 }
 
 // ── sending ──────────────────────────────────────────────────────────────────
@@ -227,7 +236,7 @@ export function icsFor({ code, startIso, minutes, restaurant, party, siteHost })
 // on purpose: a dark email is repainted unpredictably by dark-mode inboxes.
 const INK = '#2B211A', MUTED = '#6F6255', RED = '#C8261B', PAPER = '#FCF9F4', LINE = '#E9E0D3', HEAD = '#1E1714';
 
-function layout({ preheader, restaurantName, heading, intro, when, rows, notice, button, footer, qr }) {
+function layout({ preheader, restaurantName, heading, intro, when, rows, notice, write, button, footer, qr }) {
   const e = escapeHtml;
   const rowHtml = rows.map(([label, value, strong]) =>
     `<tr><td style="padding:9px 0;border-top:1px solid ${LINE};font:13px/1.4 Arial,Helvetica,sans-serif;color:${MUTED};width:110px;vertical-align:top;">${e(label)}</td>` +
@@ -252,6 +261,10 @@ function layout({ preheader, restaurantName, heading, intro, when, rows, notice,
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}</table>
   </td></tr>
   ${notice ? `<tr><td style="padding:10px 24px 4px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};">${notice}</td></tr>` : ''}
+  ${write ? `<tr><td style="padding:18px 24px 4px;">
+    <p style="margin:0 0 10px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${INK};">${write.lead}</p>
+    <a href="${e(write.href)}" style="display:inline-block;padding:13px 22px;background:${RED};border:1px solid ${RED};border-radius:999px;font:bold 13px/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#ffffff;text-decoration:none;">${e(write.label)}</a>
+  </td></tr>` : ''}
   ${button ? `<tr><td style="padding:18px 24px 26px;">
     <p style="margin:0 0 10px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${INK};">${button.lead}</p>
     <a href="${e(button.href)}" style="display:inline-block;padding:12px 22px;border:1px solid ${RED};border-radius:999px;font:bold 13px/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:${RED};text-decoration:none;">${e(button.label)}</a>
@@ -306,7 +319,7 @@ function textDetails({ when, party, areaName, code, restaurant, withQr }) {
 
 // qrCid: the table's QR is attached under this name (api/_lib/qr.js). Without
 // it the email shows the code instead, exactly as before.
-export function confirmationEmail({ restaurant, timezone, at, party, areaName, code, guestName, graceMinutes, holdMinutes, link, siteHost, qrCid }) {
+export function confirmationEmail({ restaurant, timezone, at, party, areaName, code, guestName, graceMinutes, holdMinutes, link, talk, siteHost, qrCid }) {
   const when = whenIn(timezone, at);
   const first = greetingName(guestName);
   const late = graceMinutes
@@ -323,6 +336,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
     rows: detailRows({ party, areaName, code, restaurant, withQr: !!qrCid }),
     notice: `${escapeHtml(late)}<br>The calendar file is attached — open it to put the table in your phone.`
             + (link ? '' : `<br>${escapeHtml(callToCancel(restaurant))}`),
+    write: talk ? { ...writeButton(restaurant), href: talk } : null,
     button: link ? { lead: 'Can\'t make it? Cancelling takes a minute and gives the table to somebody else.',
                      label: 'Cancel this table', href: link } : null,
     footer: `You booked this table on ${escapeHtml(siteHost)}. This address only sends emails about your bookings.`,
@@ -331,9 +345,11 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
     `${restaurant.name} — your table is booked.`, '',
     textDetails({ when, party, areaName, code, restaurant, withQr: !!qrCid }), '',
     late, '',
+    talk ? `A question, or something to tell us? Write to the restaurant: ${talk}` : null,
+    talk ? '' : null,
     link ? `Can't make it? Cancel here: ${link}` : callToCancel(restaurant), '',
     `You booked this table on ${siteHost}.`,
-  ].join('\n');
+  ].filter((line) => line !== null).join('\n');
   return {
     subject, html, text,
     attachments: [{
@@ -343,7 +359,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
   };
 }
 
-export function reminderEmail({ restaurant, timezone, at, party, areaName, code, guestName, link, siteHost, now, qrCid }) {
+export function reminderEmail({ restaurant, timezone, at, party, areaName, code, guestName, link, talk, siteHost, now, qrCid }) {
   const when = whenIn(timezone, at);
   const day = relativeDay(timezone, at, now);
   const first = greetingName(guestName);
@@ -357,6 +373,7 @@ export function reminderEmail({ restaurant, timezone, at, party, areaName, code,
     qr: qrCid ? { cid: qrCid, code } : null,
     rows: detailRows({ party, areaName, code, restaurant, withQr: !!qrCid }),
     notice: link ? null : escapeHtml(callToCancel(restaurant)),
+    write: talk ? { ...writeButton(restaurant), href: talk } : null,
     button: link ? { lead: 'Plans changed? Tell us now and somebody else can have the table.',
                      label: 'Cancel this table', href: link } : null,
     footer: `You booked this table on ${escapeHtml(siteHost)}. This address only sends emails about your bookings.`,
@@ -364,8 +381,45 @@ export function reminderEmail({ restaurant, timezone, at, party, areaName, code,
   const text = [
     `${restaurant.name} — see you ${day.toLowerCase() === 'today' || day.toLowerCase() === 'tomorrow' ? day.toLowerCase() : 'soon'}.`, '',
     textDetails({ when, party, areaName, code, restaurant, withQr: !!qrCid }), '',
+    talk ? `A question, or something to tell us? Write to the restaurant: ${talk}` : null,
+    talk ? '' : null,
     link ? `Plans changed? Cancel here: ${link}` : callToCancel(restaurant), '',
     `You booked this table on ${siteHost}.`,
+  ].filter((line) => line !== null).join('\n');
+  return { subject, html, text };
+}
+
+// "Write to the restaurant" (Sebastian, 8 Oct): instead of calling, the guest
+// writes; the restaurant answers on the same page.
+function writeButton(restaurant) {
+  return {
+    lead: `A question, or something to tell ${escapeHtml(restaurant.name)}? Write to them here instead of calling.`,
+    label: 'Write to the restaurant',
+  };
+}
+
+// The restaurant answered a guest who has no account (one email per
+// conversation, at the first answer). The message itself is NOT in the email:
+// the guest reads it, and answers, on the page the button opens.
+export function answerEmail({ restaurant, timezone, at, staffName, guestName, link, siteHost }) {
+  const when = whenIn(timezone, at);
+  const first = greetingName(guestName);
+  const who = String(staffName || '').trim() || 'The team';
+  const subject = `${who} from ${restaurant.name} answered your message`;
+  const html = layout({
+    preheader: `About your table on ${when.long} at ${when.time}`,
+    restaurantName: restaurant.name,
+    heading: 'You have an answer',
+    intro: `${first ? escapeHtml(first) + ', ' : ''}${escapeHtml(who)} from ${escapeHtml(restaurant.name)} answered your message about your table.`,
+    when,
+    rows: [],
+    write: { lead: 'Read the answer, and write back if you need to:', label: 'Read and answer', href: link },
+    footer: `You wrote to ${escapeHtml(restaurant.name)} about a table booked on ${escapeHtml(siteHost)}. We send this email once per conversation. Replies to it are not read: please answer on the page the button opens.`,
+  });
+  const text = [
+    `${who} from ${restaurant.name} answered your message about your table on ${when.long} at ${when.time}.`, '',
+    `Read and answer: ${link}`, '',
+    `We send this email once per conversation. Replies to it are not read: please answer on the page above.`,
   ].join('\n');
   return { subject, html, text };
 }
