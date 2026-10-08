@@ -64,7 +64,7 @@
 <body>
 
 <div class="m-topbar">
-  <a href="index.html" class="m-home">&#8249; Site</a>
+  <a href="/" class="m-home">&#8249; Site</a>
   <div class="m-topbar-title">Check In</div>
   <span class="m-topbar-spacer"></span>
 </div>
@@ -116,7 +116,7 @@ function boot(){
   if(TICKET===null){
     const params = new URLSearchParams(location.search);
     TICKET = params.get('t') || '';
-    if(TICKET) history.replaceState(null,'','/checkin.html');
+    if(TICKET) history.replaceState(null,'','/checkin');
   }
 
   if(!currentSession){
@@ -202,7 +202,7 @@ function renderConfirm(){
       ? '<div class="c-note c-warn">They have already been marked here today. One visit per day counts, so pressing Confirm will not add another.</div>'
       : '')
   + '<button class="m-btn" id="c-go" onclick="confirmVisit()">Confirm Visit</button>'
-  + '<button class="m-btn-ghost" onclick="location.href=\'/index.html\'">Cancel</button>'
+  + '<button class="m-btn-ghost" onclick="location.href=\'/\'">Cancel</button>'
   + '</div>';
 }
 
@@ -239,7 +239,7 @@ async function confirmVisit(){
   + '</div>'
   + (nth ? '<div class="c-note">'+esc(nth)+'</div>' : '')
   + '<button class="m-btn" onclick="askForCode()">Next customer</button>'
-  + '<button class="m-btn-ghost" onclick="location.href=\'/index.html\'">Done</button>'
+  + '<button class="m-btn-ghost" onclick="location.href=\'/\'">Done</button>'
   + '</div>';
 }
 
