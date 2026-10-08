@@ -463,7 +463,7 @@ function requiredEmail(value) {
 function menuUrlOf(settings) {
   if (!settings || !settings.site_url) return null;           // no site saved: no menu link, never another restaurant's
   const site = String(settings.site_url).replace(/\/+$/, '');
-  return /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(site) ? site + '/menu.html' : null;
+  return /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(site) ? site + '/menu' : null;
 }
 
 // The table's QR as an image the page can show, or null. Never throws.
