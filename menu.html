@@ -898,7 +898,7 @@
 
 <!-- TOP BAR -->
 <div class="menu-topbar">
-  <a href="index.html" class="menu-home" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  <a href="/" class="menu-home" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   <div class="menu-topbar-title">The Menu</div>
   <span class="menu-topbar-spacer" style="width:58px;"></span>
 </div>
@@ -942,8 +942,8 @@
 <footer>
   <img src="hungry-fork-logo.png" alt="The Hungry Fork">
   <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
-  <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
-  <p style="margin-top:10px;"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></p>
+  <p style="margin-top:8px;">Powered by <a href="/">Seb's Analytics LLC</a></p>
+  <p style="margin-top:10px;"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></p>
 </footer>
 
 <!-- DISH VIEW MODAL -->
@@ -1388,7 +1388,7 @@ function renderCave(animClass,mediaOnly){
       ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
       <div class="cave-acts">
         <button class="cave-share-btn" onclick="caveShare()">${caveIcon('share')}Share</button>
-        <a class="cave-share-btn cave-reserve-btn" href="/reservations.html">${caveIcon('calendar')}Reserve</a>
+        <a class="cave-share-btn cave-reserve-btn" href="/reservations">${caveIcon('calendar')}Reserve</a>
       </div>
     </section>
     <section class="cave-sec cave-sec-recs">
@@ -1419,8 +1419,8 @@ function caveFootHTML(){
   return '<div class="cave-foot">'
     + '<img src="hungry-fork-logo.png" alt="The Hungry Fork">'
     + '<div class="cave-foot-line">123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm</div>'
-    + '<div class="cave-foot-line">Powered by <a href="index.html">Seb\'s Analytics LLC</a></div>'
-    + '<div class="cave-foot-line"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></div>'
+    + '<div class="cave-foot-line">Powered by <a href="/">Seb\'s Analytics LLC</a></div>'
+    + '<div class="cave-foot-line"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></div>'
     + '</div>';
 }
 function cavePin(e,id){
