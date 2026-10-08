@@ -37,7 +37,7 @@ export default async function handler(req, res) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
 
-  const { action, restaurantId, phone, role, tasterId: targetId, canIssueCodes } = req.body || {};
+  const { action, restaurantId, phone, role, tasterId: targetId, canIssueCodes, canMessage, job } = req.body || {};
   const restId = Number(restaurantId);
   if (!Number.isInteger(restId) || restId <= 0) {
     return res.status(400).json({ error: 'Which restaurant?' });
@@ -54,10 +54,14 @@ export default async function handler(req, res) {
 
   // ── LIST ────────────────────────────────────────────────────────────────
   if (action === 'list') {
-    const rows = await sb(
+    let rows = await sb(
       `/restaurant_roles?restaurant_id=eq.${restId}` +
-      '&select=id,taster_id,role,can_issue_codes,created_at&order=role.asc'
+      '&select=id,taster_id,role,can_issue_codes,can_message,job,created_at&order=role.asc'
     );
+    // Before migration 19 there is no can_message or job: the list as before.
+    if (!rows.ok && rows.status === 400) {
+      rows = await sb(`/restaurant_roles?restaurant_id=eq.${restId}&select=id,taster_id,role,can_issue_codes,created_at&order=role.asc`);
+    }
     if (!rows.ok || !Array.isArray(rows.data)) {
       // The status is in the message on purpose. "Could not read the people
       // list" sent Sebastian looking at the People feature; "status 401" would
@@ -95,6 +99,10 @@ export default async function handler(req, res) {
           phoneEnds: t.phone_number ? String(t.phone_number).slice(-4) : null,
           role: r.role,
           canIssueCodes: !!r.can_issue_codes,
+          // Crew only (migration 19): what they do, and whether they answer
+          // guest messages. undefined before the migration: the page hides both.
+          canMessage: 'can_message' in r ? !!r.can_message : undefined,
+          job: 'job' in r ? r.job || null : undefined,
           // What this particular caller may do to this particular row.
           canRemove: myLevel > (ROLE_RANK[r.role] || 0),
         };
@@ -216,8 +224,50 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   }
 
+  // ── CREW: ANSWERS GUEST MESSAGES · JOB ────────────────────────────────────
+  // Sebastian, 8 Oct: a manager decides which crew members talk to guests
+  // about their tables (a host, a waiter), and can say what each one does.
+  // Managers and owners always answer; this switch is for crew only.
+  if (action === 'messages' || action === 'job') {
+    const rowId = Number(req.body.roleId);
+    if (!Number.isInteger(rowId) || rowId <= 0) return res.status(400).json({ error: 'Which person?' });
+    const row = await sb(`/restaurant_roles?id=eq.${rowId}&select=id,restaurant_id,role`);
+    if (!row.ok || !Array.isArray(row.data) || row.data.length === 0) {
+      return res.status(404).json({ error: 'That role no longer exists.' });
+    }
+    const target = row.data[0];
+    if (Number(target.restaurant_id) !== restId) {
+      return res.status(403).json({ error: 'That role belongs to another restaurant.' });
+    }
+    if (target.role !== 'crew') {
+      return res.status(400).json({ error: 'Managers and owners always answer guests. This is for crew.' });
+    }
+    let patch;
+    if (action === 'messages') {
+      if (typeof canMessage !== 'boolean') return res.status(400).json({ error: 'On or off?' });
+      patch = { can_message: canMessage };
+    } else {
+      const value = job === null || job === '' ? null : String(job);
+      if (value !== null && !CREW_JOBS.includes(value)) return res.status(400).json({ error: 'Pick host, waiter, kitchen or bar.' });
+      patch = { job: value };
+    }
+    const saved = await sb(`/restaurant_roles?id=eq.${rowId}&restaurant_id=eq.${restId}`, {
+      method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(patch),
+    });
+    if (!saved.ok) {
+      return res.status(saved.status === 400 ? 409 : 500).json({
+        error: saved.status === 400 ? 'This needs migration 19 first (the messages database).' : 'Could not save that.',
+      });
+    }
+    console.log('[roles] taster', tasterId, 'set', Object.keys(patch)[0], 'for role', rowId, 'at', restId);
+    return res.status(200).json({ success: true, canMessage: saved.data && saved.data[0] ? !!saved.data[0].can_message : undefined,
+                                  job: saved.data && saved.data[0] ? saved.data[0].job || null : undefined });
+  }
+
   return res.status(400).json({ error: 'Unknown action.' });
 }
+
+const CREW_JOBS = ['host', 'waiter', 'kitchen', 'bar'];
 
 // tasters.is_restaurant_admin is a copy of "does this account hold any role
 // anywhere". It exists so the corner menu on every page can decide whether to
