@@ -107,12 +107,12 @@ export async function saveLink(reservationId, hash, purpose) {
 // table's conversation is deleted.)
 export function cancelUrl(settings, token) {
   const site = (settings && settings.site_url) || 'https://thehungryfork.fun';
-  return `${site}/reservations.html#cancel=${token}`;
+  return `${site}/reservations#cancel=${token}`;
 }
 // The same table with its conversation open: "Write to the restaurant".
 export function talkUrl(settings, token) {
   const site = (settings && settings.site_url) || 'https://thehungryfork.fun';
-  return `${site}/reservations.html#talk=${token}`;
+  return `${site}/reservations#talk=${token}`;
 }
 
 // ── sending ──────────────────────────────────────────────────────────────────
