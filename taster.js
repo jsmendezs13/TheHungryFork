@@ -292,7 +292,48 @@ const TASTER_MODAL_HTML = `
   while(host.firstChild)document.body.appendChild(host.firstChild);
   const sb=document.getElementById('t-success-btn');
   if(sb&&TASTER.successLabel)sb.textContent=TASTER.successLabel;
+  hfPinBoxes();
 })();
+
+// ── PIN BOXES: the number keypad only (Sebastian, 7 Oct) ──
+// A PIN is six digits, but iPhones show the full letter keyboard for any
+// password box, whatever inputmode says, and a letter then fails with an
+// error. So on iPhones and iPads (and only there), where the browser can draw
+// dots in a plain text box, the five PIN boxes become text boxes that ask for
+// the number keypad and show dots. Everywhere else they stay password boxes:
+// Android already shows the number keypad for those, and a password box is
+// what screen readers and password managers treat as secret (review, 8 Oct).
+// Either way anything that is not a digit is dropped as it is typed or
+// pasted, and only six digits are kept.
+function hfPinBoxes(){
+  var ua=navigator.userAgent||'';
+  var ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);   // iPads say "Macintosh"
+  var dots=ios&&!!(window.CSS&&CSS.supports&&CSS.supports('-webkit-text-security','disc'));
+  ['login-pin','reset-pin','reset-pin2','signup-pin','signup-pin2'].forEach(function(id){
+    var box=document.getElementById(id);
+    if(!box)return;
+    box.setAttribute('inputmode','numeric');
+    box.setAttribute('pattern','[0-9]*');
+    // The login box may be filled from a saved PIN. The new-PIN boxes are not
+    // marked "new-password": that is what makes browsers offer a long strong
+    // password, which a six-digit box cannot take (review, 8 Oct). If Safari
+    // suggests one anyway, passwordrules keeps it to six digits.
+    if(id==='login-pin')box.setAttribute('autocomplete','current-password');
+    else box.setAttribute('passwordrules','minlength: 6; maxlength: 6; required: digit; allowed: digit;');
+    box.removeAttribute('maxlength');           // so a pasted "12 34 56" still fits
+    if(dots){
+      box.type='text';
+      box.style.setProperty('-webkit-text-security','disc');
+      box.setAttribute('autocorrect','off');
+      box.setAttribute('autocapitalize','off');
+      box.spellcheck=false;
+    }
+    box.addEventListener('input',function(){
+      var d=box.value.replace(/\D/g,'').slice(0,6);
+      if(box.value!==d)box.value=d;
+    });
+  });
+}
 
 // ── SESSION ──
 function saveSession(t,s){localStorage.setItem('hf_taster',JSON.stringify({taster:t,session:s}));currentTaster=t;currentSession=s;updateNavBtn();}
@@ -363,11 +404,13 @@ function updateNavBtn(){
   const items=[];
   if(currentTaster){
     items.push({label:'Hi, '+(currentTaster.first_name||'there'), kind:'label', cls:'hf-corner-name'});
+    // Sebastian's order (7 Oct): My Reservations first, then My Tastings,
+    // then My Visits, then Log Out. My Reservations goes straight to the
+    // booking page's own list rather than a fourth overlay copied onto every
+    // page.
+    items.push({label:'My Reservations', href:'/reservations.html#mine'});
     items.push({label:'My Tastings', act:'tastings'});
     items.push({label:'My Visits', act:'visits'});
-    // Straight to the booking page's own list rather than a fourth overlay
-    // copied onto every page.
-    items.push({label:'My Reservations', href:'/reservations.html#mine'});
     // Two different flags, because there are two different kinds of access:
     // is_platform_admin is Sebastian, who is above every restaurant, and
     // is_restaurant_admin marks an account that holds a role at one — the
