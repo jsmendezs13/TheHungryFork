@@ -933,6 +933,7 @@ async function openMine() {
       (up.length ? '<p class="rv-mine-head">Coming up</p>' + up.map((r, i) => mineCard(r, true, i === 0)).join('') : '')
       + (past.length ? '<p class="rv-mine-head">Before</p>' + past.map((r) => mineCard(r, false)).join('') : '');
     startCounts();
+    prepareCards();
   } catch (e) {
     box.innerHTML = '<p class="rv-sub">' + esc(e.message) + '</p>';
   }
@@ -975,17 +976,131 @@ function paintCount(box) {
 // table. It is the guest's to give: it is their table.
 const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg>';
+// The message (Sebastian, 8 Oct): a blank line between the parts, and both
+// maps, Google's and Apple's.
+function shareAddress(a) {
+  // "New York, NY, 10004" reads better as "New York, NY 10004".
+  return String(a || '').trim().replace(/,\s*(\d{5}(?:-\d{4})?)$/, ' $1');
+}
+function mapQuery(a) {
+  // Spaces as + and commas left alone: the same link, shorter in a chat.
+  return encodeURIComponent(a).replace(/%20/g, '+').replace(/%2C/g, ',');
+}
 function shareText(r, withQr) {
-  const lines = ['I booked a table for us 🍽', r.restaurant,
+  const lines = ['I booked a table for us 🍽', '', r.restaurant,
     dayLabels(r.date).long + ' · ' + r.label + ' · ' + r.party + (r.party === 1 ? ' person' : ' people')];
   if (r.address) {
-    lines.push(r.address);
-    // Spaces as + and commas left alone: the same link, shorter in a chat.
-    lines.push('Map: https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.address).replace(/%20/g, '+').replace(/%2C/g, ','));
+    const a = shareAddress(r.address), q = mapQuery(a);
+    lines.push('', '📍 ' + a,
+      'Google Maps: https://www.google.com/maps/search/?api=1&query=' + q,
+      'Apple Maps: https://maps.apple.com/?q=' + q);
   }
-  if (r.menuUrl) lines.push('Menu: ' + r.menuUrl);
+  if (r.menuUrl) lines.push('', '🍴 Menu: ' + r.menuUrl);
   if (withQr) lines.push('', 'Whoever gets there first shows this QR at the door.');
   return lines.join('\n');
+}
+
+// ── The shared picture (picture B, light — Sebastian, 8 Oct) ──
+// On an iPhone, Copy in the share sheet copies only the picture, so the
+// picture carries everything: the restaurant, the day, the time, the people,
+// the QR, its code and the address. It is drawn as soon as the card is on
+// screen, because a phone opens its share sheet only inside the tap itself;
+// until it is ready (or if it cannot be drawn), the plain QR goes, as before.
+function cardCanvas(r, qrImg) {
+  const W = 1080, H = 1350, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const ink = '#2B211A', soft = '#7A6A5C', red = '#B01015';
+  const serif = '"Cormorant Garamond", Georgia, serif', sans = 'Inter, "Segoe UI", system-ui, sans-serif';
+  g.fillStyle = '#FCF9F4'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(176,16,21,.35)'; g.lineWidth = 3; g.strokeRect(36, 36, W - 72, H - 72);
+  g.strokeStyle = 'rgba(43,33,26,.10)'; g.lineWidth = 1.5; g.strokeRect(52, 52, W - 104, H - 104);
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  const spaced = (t, y, sp) => {
+    if ('letterSpacing' in g) { g.letterSpacing = sp + 'px'; g.fillText(t, W / 2 + sp / 2, y); g.letterSpacing = '0px'; }
+    else g.fillText(t, W / 2, y);
+  };
+  // As big as fits, never smaller than min.
+  const fit = (t, weight, size, min, family, room) => {
+    do { g.font = weight + ' ' + size + 'px ' + family; size -= 2; } while (g.measureText(t).width > room && size >= min);
+  };
+  // One line if it fits at min or bigger; otherwise two lines, broken where
+  // the two halves come out most even (after a comma if there is one), at
+  // the biggest size where both fit. Returns the lines; g.font is left set.
+  const block = (t, weight, size, min, family, room, byComma) => {
+    const at = (n) => { g.font = weight + ' ' + n + 'px ' + family; };
+    for (let n = size; n >= min; n -= 2) { at(n); if (g.measureText(t).width <= room) return [t]; }
+    const words = t.split(' ');
+    // An address breaks after a comma when it has one; a name anywhere.
+    const commas = !!byComma && words.some((w, i) => i < words.length - 1 && /,$/.test(w));
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+      if (commas && !/,$/.test(a)) continue;
+      at(size); const w = Math.max(g.measureText(a).width, g.measureText(b).width);
+      if (!best || w < best.w) best = { w, a, b };
+    }
+    if (!best) { for (let n = min; n > 10; n -= 1) { at(n); if (g.measureText(t).width <= room) break; } return [t]; }
+    for (let n = size; n > 10; n -= 1) {
+      at(n);
+      if (g.measureText(best.a).width <= room && g.measureText(best.b).width <= room) break;
+    }
+    return [best.a, best.b];
+  };
+  g.fillStyle = red; g.font = '600 26px ' + sans; spaced('TABLE RESERVATION', 150, 9);
+  g.fillStyle = ink;
+  const name = block(String(r.restaurant || ''), 600, 96, 64, serif, W - 200);
+  if (name.length === 1) g.fillText(name[0], W / 2, 250);
+  else {   // two lines, a little smaller, between the label and the red line
+    g.font = g.font.replace(/\d+px/, (m) => Math.min(parseInt(m, 10), 56) + 'px');
+    g.fillText(name[0], W / 2, 212); g.fillText(name[1], W / 2, 266);
+  }
+  g.fillStyle = red; g.fillRect(W / 2 - 60, 290, 120, 3);
+  g.fillStyle = ink; fit(dayLabels(r.date).long, 600, 58, 36, serif, W - 200); g.fillText(dayLabels(r.date).long, W / 2, 385);
+  g.fillStyle = soft; g.font = '500 34px ' + sans;
+  g.fillText(r.label + '  ·  ' + r.party + (r.party === 1 ? ' person' : ' people'), W / 2, 440);
+  // the QR, on white
+  const q = 520, qx = (W - q) / 2, qy = 492;
+  g.fillStyle = '#FFFFFF'; g.beginPath();
+  if (g.roundRect) g.roundRect(qx - 26, qy - 26, q + 52, q + 110, 28); else g.rect(qx - 26, qy - 26, q + 52, q + 110);
+  g.fill(); g.strokeStyle = 'rgba(43,33,26,.12)'; g.lineWidth = 2; g.stroke();
+  g.imageSmoothingEnabled = false; g.drawImage(qrImg, qx, qy, q, q);
+  g.fillStyle = ink; g.font = '600 38px ' + sans; spaced(String(r.code || ''), qy + q + 58, 8);
+  g.fillStyle = soft; g.font = '400 30px ' + sans; g.fillText('Show this QR at the door', W / 2, 1150);
+  if (r.address) {
+    const a = block(shareAddress(r.address), 500, 30, 24, sans, W - 160, true);
+    g.fillStyle = ink;
+    if (a.length === 1) g.fillText(a[0], W / 2, 1215);
+    else { g.fillText(a[0], W / 2, 1200); g.fillText(a[1], W / 2, 1242); }
+  }
+  return c;
+}
+async function cardFile(r) {
+  const img = new Image();
+  const loaded = new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error('The QR picture did not load.')); });
+  img.src = r.qr;
+  await loaded;
+  if (document.fonts && document.fonts.load) {
+    // The page's own fonts; if they are slow, the picture is drawn with the
+    // fallbacks rather than not at all.
+    const fonts = ['600 96px "Cormorant Garamond"', '600 26px Inter', '500 34px Inter', '400 30px Inter'];
+    // With the real words, so letters like ở or Ł get their part of the font too.
+    const words = [r.restaurant, dayLabels(r.date).long, r.label, r.code, r.address, 'TABLE RESERVATION Show this QR at the door people person'].join(' ');
+    await Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f, words))).catch(() => {}),
+                        new Promise((ok) => setTimeout(ok, 3000))]);
+  }
+  const canvas = cardCanvas(r, img);
+  const blob = await new Promise((ok, no) => canvas.toBlob((b) => (b ? ok(b) : no(new Error('No picture.'))), 'image/png'));
+  canvas.width = canvas.height = 0;            // give the drawing memory back at once (phones have little)
+  return new File([blob], 'table-' + String(r.code).replace(/[^A-Za-z0-9-]/g, '') + '.png', { type: 'image/png' });
+}
+function prepareCards() {
+  Object.keys(state.mine || {}).forEach((id) => {
+    const r = state.mine[id];
+    if (r.status !== 'booked' || !hasQrImage(r) || r._card || r._cardBusy) return;
+    r._card = null; r._cardBusy = true;               // _: ours, never a field from the server
+    cardFile(r).then((f) => { r._card = f; }, () => {}).then(() => { r._cardBusy = false; });
+  });
 }
 function qrFile(r) {
   const bin = atob(r.qr.slice('data:image/png;base64,'.length));
@@ -1007,7 +1122,7 @@ async function shareNow(r) {
   const text = shareText(r, withQr);
   const title = 'A table at ' + r.restaurant;
   let file = null;
-  try { file = withQr ? qrFile(r) : null; } catch (e) { file = null; }
+  try { file = withQr ? (r._card || qrFile(r)) : null; } catch (e) { file = null; }
   try {
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       // Some chats keep only the picture when a picture and words are shared
@@ -1016,7 +1131,7 @@ async function shareNow(r) {
       let copied = false;
       try { if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => { copied = true; }, () => {}); } catch (e) { /* no clipboard */ }
       await navigator.share({ files: [file], text, title });
-      if (copied) showToast('The message is copied too, in case your chat sent only the picture.');
+      if (copied && file !== r._card) showToast('The message is copied too, in case your chat sent only the picture.');
       return;
     }
     if (!file && navigator.share) { await navigator.share({ text, title }); return; }
@@ -1033,9 +1148,12 @@ async function shareNow(r) {
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
+  // The picture B already carries the day, the time and the address; the plain QR does not.
+  const card = !!file && file === r._card;
   showToast(copied
-    ? (file ? 'Message copied and the QR picture saved: paste the message in your chat and add the picture.' : 'Message copied: paste it in your chat.')
-    : (file ? 'The QR picture is saved. Send it with the day, the time and the address.' : 'Could not copy the message.'));
+    ? (file ? 'Message copied and the picture saved: paste the message in your chat and add the picture.' : 'Message copied: paste it in your chat.')
+    : (file ? (card ? 'The picture of your table is saved: send it in your chat.' : 'The QR picture is saved. Send it with the day, the time and the address.')
+            : 'Could not copy the message.'));
 }
 document.addEventListener('click', (event) => {
   const b = event.target.closest('.rv-share-btn');
