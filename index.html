@@ -434,8 +434,8 @@
 <footer>
   <img src="hungry-fork-logo.png" alt="The Hungry Fork">
   <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
-  <p style="margin-top:8px;">Powered by <a href="index.html">Seb's Analytics LLC</a></p>
-  <p style="margin-top:10px;"><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></p>
+  <p style="margin-top:8px;">Powered by <a href="/">Seb's Analytics LLC</a></p>
+  <p style="margin-top:10px;"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></p>
 </footer>
 
 <!-- MY TASTINGS MODAL -->
@@ -841,7 +841,7 @@ async function loadMyTastings(){
   }
 }
 function viewTastingDish(dishId){
-  window.location.href='menu.html?dish='+encodeURIComponent(dishId);
+  window.location.href='/menu?dish='+encodeURIComponent(dishId);
 }
 
 // ── LUCKY BITE ──
@@ -910,7 +910,7 @@ async function loadOverallRating(){
 // ── ENTER MENU PAGE ──
 function menuEnter(){
   document.body.classList.add('warping');
-  setTimeout(()=>{window.location.href='menu.html';},430);
+  setTimeout(()=>{window.location.href='/menu';},430);
 }
 
 // ── FORK'S RATING INFO ──
@@ -958,7 +958,7 @@ function fiRender(){
 // dish (the T-Bone). The video is a general restaurant video now, and the
 // chef's pick is whatever the manager flags, so the tap goes straight to the
 // Chef's Pick cave on the menu and there is no dish name written down here.
-function goChefsPick(){window.location.href='menu.html?cat=chefs-pick&enter=1';}
+function goChefsPick(){window.location.href='/menu?cat=chefs-pick&enter=1';}
 (function(){
   const hero=document.querySelector('.video-hero');
   if(!hero)return;
@@ -1013,7 +1013,7 @@ function railInit(){
       const i=parseInt(b.dataset.idx);
       if(Math.abs(railWrap(i-railPos))>0.3){railTo(i);return;}
       if(b.dataset.menu)menuEnter();
-      else if(b.dataset.book)window.location.href='reservations.html';   // the booking screen
+      else if(b.dataset.book)window.location.href='/reservations';   // the booking screen
       else openComingSoon(b.dataset.name);
     });
   });
@@ -1056,7 +1056,7 @@ loadDishes()
   .catch(e => console.error('[index] could not load dishes', e));
 (function(){
   const params=new URLSearchParams(window.location.search);
-  if(params.get('dish'))window.location.replace('menu.html'+window.location.search);
+  if(params.get('dish'))window.location.replace('/menu'+window.location.search);
 })();
 </script>
 </body>
