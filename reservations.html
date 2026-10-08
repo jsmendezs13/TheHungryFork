@@ -114,6 +114,27 @@
   .rv-check svg { width:32px; height:32px; color:#FF9C92; }
   .rv-done h2 { font-family:var(--serif); font-size:2rem; font-weight:600; margin-bottom:.3rem; }
   .rv-code { font-family:var(--sans); font-size:1.5rem; font-weight:600; letter-spacing:.18em; margin:1rem 0 .2rem; }
+  /* The table's QR (migration 18): white, so a phone camera reads it on a dark
+     page, and the code under it for a phone call. */
+  .rv-qr { display:inline-block; background:#fff; border-radius:16px; padding:12px 12px 8px; margin:.8rem 0 .2rem; text-align:center; }
+  .rv-qr img { display:block; width:200px; height:200px; }
+  .rv-qr b { display:block; color:#2B211A; font-family:var(--sans); font-size:.95rem; font-weight:600; letter-spacing:.16em; margin-top:.3rem; }
+  .rv-qr-note { font-size:.8rem; color:rgba(252,249,244,.72); margin:.3rem 0 .4rem; }
+  .rv-qr-btn { display:inline-block; margin-top:.7rem; background:none; border:1px solid rgba(252,249,244,.35); color:var(--white); border-radius:999px;
+               padding:.5rem 1rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
+  .rv-card .rv-qr { display:block; width:max-content; margin:.8rem auto .1rem; }
+  /* My Reservations (7 Oct): the countdown in boxes (2B) and Share with the QR (3B). */
+  .rv-card-acts { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin-top:.7rem; }
+  .rv-card-acts .rv-qr-btn { margin-top:0; }
+  .rv-share-btn { display:inline-flex; align-items:center; gap:.45em; background:none; border:1px solid rgba(252,249,244,.35); color:var(--white); border-radius:999px;
+                  padding:.5rem 1rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
+  .rv-share-btn svg { width:1.3em; height:1.3em; flex:none; }
+  .rv-count { display:flex; gap:8px; margin:.75rem 0 .2rem; }
+  .rv-count > div { flex:1; background:rgba(252,249,244,.08); border:1px solid rgba(252,249,244,.18); border-radius:10px; text-align:center; padding:.45rem 0; }
+  .rv-count b { display:block; font-family:var(--serif); font-size:1.5rem; font-weight:600; line-height:1; }
+  .rv-count span { display:block; font-size:.55rem; letter-spacing:.16em; text-transform:uppercase; color:rgba(252,249,244,.6); margin-top:3px; }
+  .rv-count-now { flex:1; font-size:.95rem; font-weight:600; color:var(--white); margin:0; }
+  .rv-qr[hidden], .rv-card .rv-qr[hidden], .rv-qr-note[hidden], .rv-count[hidden] { display:none; }   /* the display above would beat "hidden" */
   .rv-when { font-family:var(--serif); font-size:1.6rem; font-weight:600; margin-top:.8rem; }
   .rv-where { font-size:.82rem; color:rgba(252,249,244,.7); line-height:1.6; margin-top:.5rem; }
 
@@ -182,8 +203,8 @@
         <input class="rv-input" id="who-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name"></div>
       <div class="rv-field"><label for="who-phone">Phone</label>
         <input class="rv-input" id="who-phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(347) 555 0134"></div>
-      <div class="rv-field"><label for="who-email">Email — for the confirmation (optional)</label>
-        <input class="rv-input" id="who-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com"></div>
+      <div class="rv-field"><label for="who-email">Email — your QR code is sent here</label>
+        <input class="rv-input" id="who-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com" required></div>
       <div class="rv-field"><label for="who-notes">Anything we should know? (optional)</label>
         <textarea class="rv-area" id="who-notes" maxlength="400" placeholder="Birthday, high chair, allergies…"></textarea></div>
     </div>
@@ -200,7 +221,9 @@
       <h2 id="done-title">Your table is booked</h2>
       <p class="rv-sub" id="done-name">—</p>
       <div class="rv-when" id="done-when">—</div>
-      <p class="rv-lbl" style="margin-top:1.2rem;">Booking code</p>
+      <p class="rv-lbl" style="margin-top:1.2rem;" id="done-code-lbl">Booking code</p>
+      <div class="rv-qr" id="done-qr" hidden><img id="done-qr-img" alt="The QR code for your table"><b id="done-qr-code"></b></div>
+      <p class="rv-qr-note" id="done-qr-note" hidden>Show this QR code at the door.</p>
       <div class="rv-code" id="done-code">—</div>
       <p class="rv-where" id="done-where">—</p>
       <p class="rv-where" id="done-hold">—</p>
@@ -236,8 +259,8 @@
         <input class="rv-input" id="req-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name"></div>
       <div class="rv-field"><label for="req-phone">Phone</label>
         <input class="rv-input" id="req-phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(347) 555 0134"></div>
-      <div class="rv-field"><label for="req-email">Email (optional)</label>
-        <input class="rv-input" id="req-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com"></div>
+      <div class="rv-field"><label for="req-email">Email — for your confirmation and QR code</label>
+        <input class="rv-input" id="req-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com" required></div>
       <div class="rv-field"><label for="req-message">What do you need?</label>
         <textarea class="rv-area" id="req-message" maxlength="1000" placeholder="A private room, a set menu, a cake…"></textarea></div>
     </div>
@@ -287,7 +310,7 @@
   </section>
 </main>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/taster.js"></script>
 <script>
@@ -328,7 +351,7 @@ async function api(body) {
   const res = await fetch('/api/reservations', { method:'POST', headers, body: JSON.stringify(body) });
   let data = {};
   try { data = await res.json(); } catch (e) { /* a proxy page, or nothing at all */ }
-  if (!res.ok) { const err = new Error(data.error || 'Something went wrong. Please try again.'); err.reason = data.reason; throw err; }
+  if (!res.ok) { const err = new Error(data.error || 'Something went wrong. Please try again.'); err.reason = data.reason; err.data = data; throw err; }
   return data;
 }
 
@@ -398,7 +421,7 @@ function renderTimes() {
   if (!state.slots.length) {
     box.hidden = true; empty.hidden = false;
     empty.innerHTML = state.closed
-      ? '<b>' + state.restaurant.name + ' is closed that day.</b><br>Try another day above.'
+      ? '<b>' + esc(state.restaurant.name) + ' is closed that day.</b><br>Try another day above.'
       : '<b>No free tables for ' + state.party + (state.party === 1 ? ' person' : ' people') + ' that day.</b><br>'
         + 'Try another day, or a smaller party — or send a request and the restaurant will see what it can do.';
     return;
@@ -408,7 +431,7 @@ function renderTimes() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'rv-time';
-    b.innerHTML = slot.label + (slot.areaName ? '<small>' + slot.areaName + '</small>' : '');
+    b.innerHTML = esc(slot.label) + (slot.areaName ? '<small>' + esc(slot.areaName) + '</small>' : '');
     b.addEventListener('click', () => pickSlot(slot));
     box.appendChild(b);
   });
@@ -431,7 +454,7 @@ async function loadSlots() {
     box.hidden = true;
     const empty = el('rv-empty');
     empty.hidden = false;
-    empty.innerHTML = '<b>Could not load the free times.</b><br>' + e.message;
+    empty.innerHTML = '<b>Could not load the free times.</b><br>' + esc(e.message);
   }
 }
 
@@ -459,6 +482,7 @@ async function confirmTable() {
   const name = el('who-name').value.trim(), phone = el('who-phone').value.trim();
   if (name.length < 2) return say(el('who-err'), 'Please write the name for the table.');
   if (phone.replace(/\D/g, '').length < 7) return say(el('who-err'), 'Please write a phone number the restaurant can call.');
+  if (!emailOk(el('who-email').value)) return say(el('who-err'), 'Please write your email: your QR code and the confirmation go there.');
 
   button.disabled = true; button.textContent = 'Taking the table…';
   say(el('who-err'), '');
@@ -473,11 +497,21 @@ async function confirmTable() {
       notes: el('who-notes').value.trim(),
     });
     state.last = data;
-    el('done-title').textContent = data.already ? 'You already had a table' : 'Your table is booked';
-    el('done-name').textContent = name + ' · ' + state.party + (state.party === 1 ? ' person' : ' people')
+    if (data.already && !data.code) { againNotice(data); return; }
+    doneLook(data.already ? 'again' : 'booked');
+    el('done-title').textContent = data.already ? 'You already have a table that day' : 'Your table is booked';
+    const party = data.party || state.party;
+    el('done-name').textContent = name + ' · ' + party + (party === 1 ? ' person' : ' people')
       + (data.areaName ? ' · ' + data.areaName : '');
     el('done-when').textContent = dayLabels(data.date || state.date).long + ' · ' + data.label;
     el('done-code').textContent = data.code;
+    // The QR when there is one (migration 18); the code alone otherwise.
+    const hasQr = typeof data.qr === 'string' && data.qr.indexOf('data:image/png;base64,') === 0;
+    el('done-qr').hidden = !hasQr;
+    el('done-qr-note').hidden = !hasQr;
+    el('done-code').hidden = hasQr;
+    el('done-code-lbl').textContent = hasQr ? 'Your QR code' : 'Booking code';
+    if (hasQr) { el('done-qr-img').src = data.qr; el('done-qr-code').textContent = data.code; }
     el('done-where').textContent = [state.restaurant.name, state.restaurant.address].filter(Boolean).join(' · ');
     el('done-hold').textContent = 'The table is held for ' + (data.holdMinutes || state.booking.holdMinutes || 90)
       + ' minutes. If you are running late, call '
@@ -488,11 +522,23 @@ async function confirmTable() {
     el('done-mail').textContent = data.emailSent && typed
       ? 'We have emailed the confirmation to ' + typed + ', with a link to cancel if your plans change.'
       : '';
+    if (data.already) {
+      // Their own table again. The QR goes to the email saved with it, never
+      // onto this screen (unless it is their account): see api/reservations.js.
+      state.callPhone = data.phone || state.restaurant.phone || null;
+      el('done-where').textContent = hasQr ? [state.restaurant.name, state.restaurant.address].filter(Boolean).join(' · ')
+        : 'Show this code at the door.';
+      el('done-hold').textContent = 'For a second table the same day, please call the restaurant'
+        + (state.callPhone ? ': ' + state.callPhone : '') + '.';
+      el('done-mail').hidden = true;
+    }
     show('done');
   } catch (e) {
     // "taken" is the one error worth acting on: the times have moved on, so
     // the page goes back and shows what is actually free now.
-    if (e.reason === 'taken' || e.reason === 'past') {
+    if (e.reason === 'one_per_day') {
+      onePerDay(e.data || {});
+    } else if (e.reason === 'taken' || e.reason === 'past') {
       say(el('who-err'), '');
       show('pick');
       showToast(e.message);
@@ -505,6 +551,60 @@ async function confirmTable() {
   } finally {
     button.disabled = false; button.textContent = 'Confirm the table';
   }
+}
+
+// The same test the server makes (api/reservations.js, requiredEmail): an
+// address Resend can really send to.
+function emailOk(value) {
+  const v = String(value || '').trim();
+  return v.length <= 120 && /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z0-9-]{2,}$/i.test(v);
+}
+
+// The done screen has three looks: booked; "you already have a table that
+// day" (the same guest again); and "one table per phone each day" (another
+// name on the same phone: nothing was booked). The last two offer a call.
+const DONE_TICK = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 L9.5 18 L20 6.5"/></svg>';
+const DONE_INFO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 7.5v.5M12 11v6"/></svg>';
+function doneLook(look) {
+  state.doneLook = look;
+  document.querySelector('#step-done .rv-check').innerHTML = look === 'one' ? DONE_INFO : DONE_TICK;
+  ['done-when', 'done-code-lbl', 'done-code'].forEach((id) => { el(id).hidden = look === 'one' || look === 'notice'; });
+  el('done-cal').textContent = look === 'booked' ? 'Add it to my calendar' : 'Call the restaurant';
+  el('done-again').textContent = look === 'booked' ? 'Book another table' : 'Pick another day';
+}
+// The same guest again, not logged in as the table's account: their table is
+// theirs, but this screen says nothing about it (the email does).
+function againNotice(data) {
+  state.callPhone = data.phone || state.restaurant.phone || null;
+  doneLook('notice');
+  el('done-title').textContent = 'You already have a table that day';
+  el('done-name').textContent = 'This phone number already has a table at ' + state.restaurant.name
+    + (data.day ? ' on ' + data.day : ' that day') + '.';
+  el('done-qr').hidden = true; el('done-qr-note').hidden = true;
+  el('done-where').textContent = data.resent ? 'We sent your QR code again to the email you booked with.'
+    : data.recent ? 'We sent your QR code to the email you booked with a few minutes ago. Please look in your inbox.'
+    : 'To see it, log in with this phone number, or call the restaurant.';
+  el('done-hold').textContent = 'For a second table the same day, please call the restaurant'
+    + (state.callPhone ? ': ' + state.callPhone : '') + '.';
+  el('done-mail').hidden = true;
+  show('done');
+}
+function onePerDay(data) {
+  state.callPhone = data.phone || state.restaurant.phone || null;
+  doneLook('one');
+  el('done-title').textContent = 'One table per phone each day';
+  el('done-name').textContent = 'This phone number already has a table at ' + state.restaurant.name
+    + (data.day ? ' on ' + data.day : ' that day') + '.';
+  el('done-qr').hidden = true; el('done-qr-note').hidden = true;
+  el('done-where').textContent = 'For a second table the same day, please call the restaurant'
+    + (state.callPhone ? ': ' + state.callPhone : '') + '.';
+  el('done-hold').textContent = 'Nothing was booked this time.';
+  el('done-mail').hidden = true;
+  show('done');
+}
+function callRestaurant() {
+  const digits = String(state.callPhone || state.restaurant.phone || '').replace(/[^\d+]/g, '');
+  if (digits) window.location.href = 'tel:' + digits;
 }
 
 // ── the calendar file ────────────────────────────────────────────────────────
@@ -553,6 +653,7 @@ function openRequest() {
   if (typeof currentTaster !== 'undefined' && currentTaster) {
     if (!el('req-name').value) el('req-name').value = [currentTaster.first_name, currentTaster.last_name].filter(Boolean).join(' ');
     if (!el('req-phone').value && currentTaster.phone_number) el('req-phone').value = currentTaster.phone_number;
+    if (!el('req-email').value && currentTaster.email) el('req-email').value = currentTaster.email;
   }
   say(el('req-err'), '');
   show('request');
@@ -566,6 +667,7 @@ async function sendRequest() {
   if (!date) return say(el('req-err'), 'Please pick a day.');
   if (name.length < 2) return say(el('req-err'), 'Please write your name.');
   if (phone.replace(/\D/g, '').length < 7) return say(el('req-err'), 'Please write a phone number the restaurant can call.');
+  if (!emailOk(el('req-email').value)) return say(el('req-err'), 'Please write your email: if the restaurant says yes, your confirmation and QR code go there.');
 
   button.disabled = true; button.textContent = 'Sending…';
   say(el('req-err'), '');
@@ -600,16 +702,30 @@ function statusChip(r) {
   return '<span class="rv-chip booked">Booked</span>';
 }
 
-function mineCard(r, upcoming) {
+// open: the QR shows straight away (the first table coming up); the others
+// have a button, so a long list stays short.
+function mineCard(r, upcoming, open) {
   const bits = [r.party + (r.party === 1 ? ' person' : ' people')];
   if (r.areaName) bits.push(r.areaName);
   bits.push(r.restaurant);
+  const qr = upcoming && hasQrImage(r);
+  const live = upcoming && r.status === 'booked';        // still to come: the countdown and Share
   return '<div class="rv-card' + (upcoming ? '' : ' gone') + '">'
     + statusChip(r)
-    + '<div class="rv-card-when">' + dayLabels(r.date).long + ' · ' + r.label + '</div>'
-    + '<div class="rv-card-what">' + bits.join(' · ') + '</div>'
-    + '<div class="rv-card-code">' + r.code + '</div>'
-    + (r.canCancel ? '<button type="button" class="rv-cancel" data-id="' + r.id + '">Cancel this table</button>' : '')
+    + '<div class="rv-card-when">' + dayLabels(r.date).long + ' · ' + esc(r.label) + '</div>'
+    + '<div class="rv-card-what">' + bits.map(esc).join(' · ') + '</div>'
+    + (live ? '<div class="rv-count" role="timer" data-at="' + esc(r.at) + '" data-qr="' + (qr ? 1 : 0) + '"></div>' : '')
+    + (qr
+        ? '<div class="rv-qr" id="qr-' + Number(r.id) + '"' + (open ? '' : ' hidden') + '><img src="' + esc(r.qr) + '" alt="The QR code for this table"><b>' + esc(r.code) + '</b></div>'
+        : '<div class="rv-card-code">' + esc(r.code) + '</div>')
+    + (qr || live
+        ? '<div class="rv-card-acts">'
+          + (qr ? '<button type="button" class="rv-qr-btn" data-qr="' + Number(r.id) + '">' + (open ? 'Hide the QR code' : 'Show my QR code') + '</button>' : '')
+          + (live ? '<button type="button" class="rv-share-btn" data-share="' + Number(r.id) + '" aria-label="Share the table on '
+                    + esc(dayLabels(r.date).long) + ' at ' + esc(r.label) + '">' + SHARE_ICON + 'Share</button>' : '')
+          + '</div>'
+        : '')
+    + (r.canCancel ? '<button type="button" class="rv-cancel" data-id="' + Number(r.id) + '">Cancel this table</button>' : '')
     + '</div>';
 }
 
@@ -627,18 +743,141 @@ async function openMine() {
   try {
     const data = await api({ action: 'mine', restaurantId: RESTAURANT_ID });
     const up = data.upcoming || [], past = data.past || [];
+    // The countdown runs on the server's clock: a phone set five minutes wrong
+    // would count to the wrong moment.
+    const serverNow = Date.parse(data.now || '');
+    state.skew = Number.isNaN(serverNow) ? 0 : serverNow - Date.now();
+    state.mine = {};
+    up.forEach((r) => { state.mine[r.id] = r; });
     if (!up.length && !past.length) {
       box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">No tables yet</h2>'
         + '<p class="rv-sub" style="margin-top:.6rem;">When you book one, it will be here with its code.</p></div>';
       return;
     }
     box.innerHTML =
-      (up.length ? '<p class="rv-mine-head">Coming up</p>' + up.map((r) => mineCard(r, true)).join('') : '')
+      (up.length ? '<p class="rv-mine-head">Coming up</p>' + up.map((r, i) => mineCard(r, true, i === 0)).join('') : '')
       + (past.length ? '<p class="rv-mine-head">Before</p>' + past.map((r) => mineCard(r, false)).join('') : '');
+    startCounts();
   } catch (e) {
-    box.innerHTML = '<p class="rv-sub">' + e.message + '</p>';
+    box.innerHTML = '<p class="rv-sub">' + esc(e.message) + '</p>';
   }
 }
+
+function hasQrImage(r) { return typeof r.qr === 'string' && r.qr.indexOf('data:image/png;base64,') === 0; }
+
+// ── the countdown (2B): days · hours · min · sec, until the table ───────────
+let countTimer = null;
+function nowMs() { return Date.now() + (state.skew || 0); }
+function startCounts() {
+  clearInterval(countTimer);
+  const tick = () => {
+    const boxes = document.querySelectorAll('#mine-body .rv-count');
+    if (!boxes.length || !el('step-mine').classList.contains('on')) { clearInterval(countTimer); countTimer = null; return; }
+    boxes.forEach(paintCount);
+  };
+  document.querySelectorAll('#mine-body .rv-count').forEach(paintCount);
+  countTimer = setInterval(tick, 1000);
+}
+function paintCount(box) {
+  const left = Date.parse(box.dataset.at) - nowMs();
+  if (Number.isNaN(left)) { box.hidden = true; return; }
+  if (left <= 0) {
+    box.innerHTML = '<p class="rv-count-now">It\'s time: show your ' + (box.dataset.qr === '1' ? 'QR code' : 'code') + ' at the door.</p>';
+    box.setAttribute('aria-label', 'Your table is now.');
+    return;
+  }
+  const t = Math.floor(left / 1000);
+  const d = Math.floor(t / 86400), h = Math.floor((t % 86400) / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+  const two = (n) => String(n).padStart(2, '0');
+  const cell = (n, label) => '<div><b>' + n + '</b><span>' + label + '</span></div>';
+  box.innerHTML = cell(d, d === 1 ? 'Day' : 'Days') + cell(two(h), 'Hours') + cell(two(m), 'Min') + cell(two(sec), 'Sec');
+  box.setAttribute('aria-label', 'Starts in ' + d + (d === 1 ? ' day, ' : ' days, ') + h + (h === 1 ? ' hour and ' : ' hours and ')
+    + m + (m === 1 ? ' minute.' : ' minutes.'));
+}
+
+// ── Share with friends (3B): the table, the map, the menu, and the QR ───────
+// Whoever gets there first shows the QR, so crew can press Arrived for the
+// table. It is the guest's to give: it is their table.
+const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg>';
+function shareText(r, withQr) {
+  const lines = ['I booked a table for us 🍽', r.restaurant,
+    dayLabels(r.date).long + ' · ' + r.label + ' · ' + r.party + (r.party === 1 ? ' person' : ' people')];
+  if (r.address) {
+    lines.push(r.address);
+    // Spaces as + and commas left alone: the same link, shorter in a chat.
+    lines.push('Map: https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.address).replace(/%20/g, '+').replace(/%2C/g, ','));
+  }
+  if (r.menuUrl) lines.push('Menu: ' + r.menuUrl);
+  if (withQr) lines.push('', 'Whoever gets there first shows this QR at the door.');
+  return lines.join('\n');
+}
+function qrFile(r) {
+  const bin = atob(r.qr.slice('data:image/png;base64,'.length));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new File([bytes], 'table-qr-' + String(r.code).replace(/[^A-Za-z0-9-]/g, '') + '.png', { type: 'image/png' });
+}
+let sharing = false;
+async function shareTable(r) {
+  if (sharing) return;                               // a second tap while the share sheet is open
+  sharing = true;
+  // Some phones never answer when their share sheet is closed a certain way:
+  // after 15 seconds the button works again whatever happened.
+  const unstick = setTimeout(() => { sharing = false; }, 15000);
+  try { await shareNow(r); } finally { clearTimeout(unstick); sharing = false; }
+}
+async function shareNow(r) {
+  const withQr = hasQrImage(r);
+  const text = shareText(r, withQr);
+  const title = 'A table at ' + r.restaurant;
+  let file = null;
+  try { file = withQr ? qrFile(r) : null; } catch (e) { file = null; }
+  try {
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Some chats keep only the picture when a picture and words are shared
+      // together, so the words go on the clipboard too (not awaited: the share
+      // sheet must open inside the tap).
+      let copied = false;
+      try { if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => { copied = true; }, () => {}); } catch (e) { /* no clipboard */ }
+      await navigator.share({ files: [file], text, title });
+      if (copied) showToast('The message is copied too, in case your chat sent only the picture.');
+      return;
+    }
+    if (!file && navigator.share) { await navigator.share({ text, title }); return; }
+  } catch (e) {
+    if (e && (e.name === 'AbortError' || e.name === 'InvalidStateError')) return;   // closed, or already open
+  }
+  // No share sheet here (a computer, mostly): the message to paste, and the QR as a picture.
+  let copied = false;
+  try { await navigator.clipboard.writeText(text); copied = true; } catch (e) { copied = false; }
+  if (file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  showToast(copied
+    ? (file ? 'Message copied and the QR picture saved: paste the message in your chat and add the picture.' : 'Message copied: paste it in your chat.')
+    : (file ? 'The QR picture is saved. Send it with the day, the time and the address.' : 'Could not copy the message.'));
+}
+document.addEventListener('click', (event) => {
+  const b = event.target.closest('.rv-share-btn');
+  if (!b || !state.mine) return;
+  const r = state.mine[Number(b.dataset.share)];
+  if (r) shareTable(r);
+});
+
+// My Reservations: show or hide a table's QR code.
+document.addEventListener('click', (event) => {
+  const b = event.target.closest('.rv-qr-btn');
+  if (!b) return;
+  const box = el('qr-' + Number(b.dataset.qr));
+  if (!box) return;
+  box.hidden = !box.hidden;
+  b.textContent = box.hidden ? 'Show my QR code' : 'Hide the QR code';
+});
 
 // Two taps to cancel, because one tap on a phone is too easy to do by accident
 // and this gives the table away.
@@ -728,7 +967,7 @@ function esc(value) {
 el('rv-go-request').addEventListener('click', openRequest);
 el('who-go').addEventListener('click', confirmTable);
 el('who-back').addEventListener('click', () => { show('pick'); loadSlots(); });
-el('done-cal').addEventListener('click', addToCalendar);
+el('done-cal').addEventListener('click', () => (state.doneLook === 'booked' ? addToCalendar() : callRestaurant()));
 el('done-again').addEventListener('click', () => { state.chosen = null; show('pick'); loadSlots(); });
 el('req-go').addEventListener('click', sendRequest);
 el('req-back').addEventListener('click', () => show('pick'));
