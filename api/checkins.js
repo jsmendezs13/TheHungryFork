@@ -95,7 +95,7 @@ async function issueToken(req, res, tasterId) {
     console.error('[checkins:token] sweep failed', e?.message);
   }
 
-  const url = `${siteUrl()}/checkin.html?t=${encodeURIComponent(token)}`;
+  const url = `${siteUrl()}/checkin?t=${encodeURIComponent(token)}`;
 
   // Drawn on the server, as an SVG. No QR library in the browser, no request to
   // a QR website, and nothing about this customer ever leaves our own servers
