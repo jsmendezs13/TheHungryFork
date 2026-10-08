@@ -156,7 +156,7 @@
   /* ── my tables ── */
   .rv-card { border:1px solid rgba(252,249,244,.18); border-radius:14px; padding:.9rem 1rem 1rem; margin-bottom:.8rem;
     background:rgba(252,249,244,.05); }
-  .rv-card.gone { opacity:.55; }
+  .rv-card.gone > :not(.rv-chat):not(.rv-msg-btn) { opacity:.55; }   /* a past table fades; its conversation does not (r21) */
   .rv-card-when { font-family:var(--serif); font-size:1.45rem; font-weight:600; line-height:1.25; }
   .rv-card-what { font-size:.82rem; color:rgba(252,249,244,.72); margin-top:.2rem; line-height:1.5; }
   .rv-card-code { font-size:.72rem; letter-spacing:.14em; color:rgba(252,249,244,.55); margin-top:.45rem; }
@@ -170,6 +170,49 @@
   .rv-cancel.sure { background:var(--red-bright); border-color:var(--red-bright); color:#fff; }
   .rv-mine-head { font-size:.62rem; font-weight:600; letter-spacing:.26em; text-transform:uppercase;
     color:rgba(252,249,244,.55); margin:.2rem 0 .6rem; }
+
+  /* ── the card's buttons (Sebastian, 8 Oct: picture 14) ──
+     Cancel on the left, Show my QR code in the middle, Share on the right,
+     and Message under all three. */
+  .rv-card-acts.row3 { flex-wrap:nowrap; gap:.4rem; margin-top:.75rem; }
+  .rv-card-acts.row3 > button { margin:0; min-height:38px; padding:.45rem .7rem; font-size:.62rem; letter-spacing:.1em; line-height:1.25; justify-content:center; text-align:center; }
+  .rv-card-acts.row3 .rv-qr-btn { flex:1 1 auto; min-width:0; }
+  .rv-card-acts.row3 .rv-cancel, .rv-card-acts.row3 .rv-share-btn { flex:0 0 auto; }
+  .rv-card-acts.row3 .rv-cancel.sure { min-width:4.6rem; }
+
+  /* ── messages with the restaurant (r21) ── */
+  .rv-msg-btn { display:flex; width:100%; align-items:center; justify-content:center; gap:.5em; margin-top:.5rem; min-height:40px;
+    background:rgba(252,249,244,.06); border:1px solid rgba(252,249,244,.35); color:var(--white); border-radius:999px; padding:.45rem 1rem;
+    font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .rv-msg-btn svg { width:1.35em; height:1.35em; flex:none; }
+  .rv-msg-btn[aria-expanded="true"] { background:rgba(252,249,244,.13); }
+  .rv-msg-btn .n { min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:var(--red-bright); color:#fff; font-size:.66rem;
+    letter-spacing:0; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 8px rgba(226,59,46,.6); }
+  .rv-chat { margin-top:.55rem; border:1px solid rgba(252,249,244,.16); border-radius:14px; background:rgba(0,0,0,.2); padding:.7rem .65rem .6rem; text-align:left; }
+  .rv-chat[hidden] { display:none; }
+  .rv-chat-list { display:flex; flex-direction:column; gap:.5rem; max-height:min(50vh, 380px); overflow-y:auto; padding:.1rem .1rem .2rem; }
+  .rv-chat-empty { font-size:.8rem; line-height:1.55; color:rgba(252,249,244,.72); padding:.1rem .2rem .2rem; }
+  .rv-bub { max-width:86%; padding:.5rem .7rem .55rem; border-radius:14px; font-size:.9rem; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .rv-bub.them { align-self:flex-start; background:#FCF9F4; color:#2B211A; border-bottom-left-radius:4px; }
+  .rv-bub.me { align-self:flex-end; background:var(--red-bright); color:#fff; border-bottom-right-radius:4px; }
+  .rv-bub-who { display:block; font-size:.62rem; font-weight:600; letter-spacing:.04em; margin-bottom:.12rem; white-space:normal; }
+  .rv-bub.them .rv-bub-who { color:#9A3324; }
+  .rv-bub.me .rv-bub-who { color:rgba(255,255,255,.85); text-align:right; }
+  .rv-bub-who i { font-style:normal; font-weight:400; opacity:.75; }
+  .rv-chat-note { font-size:.78rem; line-height:1.5; color:rgba(252,249,244,.82); background:rgba(252,249,244,.07); border:1px solid rgba(252,249,244,.12);
+    border-radius:10px; padding:.45rem .6rem; margin:.5rem 0 0; }
+  .rv-chat-note[hidden], .rv-chat-form[hidden] { display:none; }
+  .rv-chat-form { display:flex; gap:.45rem; align-items:flex-end; margin-top:.55rem; }
+  .rv-chat-input { flex:1; min-width:0; min-height:44px; max-height:140px; resize:none; border:1px solid rgba(252,249,244,.26); border-radius:12px;
+    background:rgba(252,249,244,.07); color:var(--white); font-family:inherit; font-size:1rem; line-height:1.4; padding:.6rem .75rem; outline:none; }
+  .rv-chat-input::placeholder { color:rgba(252,249,244,.4); }
+  .rv-chat-input:focus { border-color:var(--red-bright); box-shadow:0 0 0 3px rgba(226,59,46,.18); }
+  .rv-chat-send { flex:none; width:44px; height:44px; border-radius:50%; border:none; background:var(--red-bright); color:#fff; display:flex;
+    align-items:center; justify-content:center; cursor:pointer; box-shadow:0 6px 16px rgba(226,59,46,.35); }
+  .rv-chat-send svg { width:20px; height:20px; }
+  .rv-chat-send:disabled { opacity:.5; cursor:wait; }
+  .rv-chat-foot { font-size:.66rem; line-height:1.5; color:rgba(252,249,244,.5); margin-top:.5rem; }
+  .rv-chat-live { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
   @media (min-width:760px) {
     .rv-times { grid-template-columns:repeat(4,1fr); }
@@ -893,18 +936,20 @@ function mineCard(r, upcoming, open) {
     + (qr
         ? '<div class="rv-qr" id="qr-' + Number(r.id) + '"' + (open ? '' : ' hidden') + '><img src="' + esc(r.qr) + '" alt="The QR code for this table"><b>' + esc(r.code) + '</b></div>'
         : '<div class="rv-card-code">' + esc(r.code) + '</div>')
-    + (qr || live
-        ? '<div class="rv-card-acts">'
+    // Sebastian's order (8 Oct): Cancel · Show my QR code · Share, then Message.
+    + (qr || live || r.canCancel
+        ? '<div class="rv-card-acts row3">'
+          + (r.canCancel ? '<button type="button" class="rv-cancel" data-id="' + Number(r.id) + '" data-label="Cancel" data-sure="Sure?" aria-label="Cancel this table">Cancel</button>' : '')
           + (qr ? '<button type="button" class="rv-qr-btn" data-qr="' + Number(r.id) + '">' + (open ? 'Hide the QR code' : 'Show my QR code') + '</button>' : '')
           + (live ? '<button type="button" class="rv-share-btn" data-share="' + Number(r.id) + '" aria-label="Share the table on '
                     + esc(dayLabels(r.date).long) + ' at ' + esc(r.label) + '">' + SHARE_ICON + 'Share</button>' : '')
           + '</div>'
         : '')
-    + (r.canCancel ? '<button type="button" class="rv-cancel" data-id="' + Number(r.id) + '">Cancel this table</button>' : '')
+    + (r.chat ? chatBlock('t' + Number(r.id), r.chat) : '')
     + '</div>';
 }
 
-async function openMine() {
+async function openMine(chatId) {
   show('mine');
   const box = el('mine-body');
   if (typeof currentSession === 'undefined' || !currentSession) {
@@ -934,6 +979,8 @@ async function openMine() {
       + (past.length ? '<p class="rv-mine-head">Before</p>' + past.map((r) => mineCard(r, false)).join('') : '');
     startCounts();
     prepareCards();
+    // From the bell: that table's conversation, open.
+    if (chatId && el('chat-t' + Number(chatId))) chatOpen('t' + Number(chatId), true);
   } catch (e) {
     box.innerHTML = '<p class="rv-sub">' + esc(e.message) + '</p>';
   }
@@ -1176,16 +1223,23 @@ document.addEventListener('click', (event) => {
 // and this gives the table away.
 document.addEventListener('click', async (event) => {
   const button = event.target.closest('.rv-cancel');
+  // Each Cancel button says its own words: "Cancel this table" on the email's
+  // table, "Cancel" in a card's row of three (with "Sure?" on the first tap).
+  const label = (b) => b.dataset.label || 'Cancel this table';
+  const sure = (b) => b.dataset.sure || 'Tap again to cancel';
+  // The short "Cancel"/"Sure?" in a card's row say the whole sentence to a screen reader.
+  const speak = (b, armed) => { if (b.dataset.label) b.setAttribute('aria-label', armed ? 'Sure? Tap again to cancel this table' : 'Cancel this table'); };
   if (!button) {
-    document.querySelectorAll('.rv-cancel.sure').forEach((b) => { b.classList.remove('sure'); b.textContent = 'Cancel this table'; });
+    document.querySelectorAll('.rv-cancel.sure').forEach((b) => { b.classList.remove('sure'); b.textContent = label(b); speak(b, false); });
     return;
   }
   if (!button.classList.contains('sure')) {
     button.classList.add('sure');
-    button.textContent = 'Tap again to cancel';
+    button.textContent = sure(button);
+    speak(button, true);
     return;
   }
-  button.disabled = true; button.textContent = 'Cancelling…';
+  button.disabled = true; button.textContent = button.dataset.label ? '…' : 'Cancelling…';
   try {
     // Two kinds of Cancel button, one listener: a table on the guest's own list
     // (by its number, needs the session) or the one an email link opened (by the
@@ -1193,14 +1247,14 @@ document.addEventListener('click', async (event) => {
     if (button.dataset.link) {
       await api({ action: 'cancel_link', token: button.dataset.link });
       showToast('Your table is cancelled. Thank you for telling us.');
-      openLink(button.dataset.link);
+      openLink(button.dataset.link, false);
     } else {
       await api({ action: 'cancel', id: Number(button.dataset.id) });
       showToast('Your table is cancelled. Thank you for telling us.');
       openMine();
     }
   } catch (e) {
-    button.disabled = false; button.classList.remove('sure'); button.textContent = 'Cancel this table';
+    button.disabled = false; button.classList.remove('sure'); button.textContent = label(button);
     showToast(e.message);
   }
 });
@@ -1209,17 +1263,21 @@ document.addEventListener('click', async (event) => {
 // reservations.html#cancel=<token>. The token stays after the #, so the browser
 // never sends it to a server log; the page posts it to the API itself. Whoever
 // holds the email holds the table — no account, no password, like a paper card.
+// #talk=<token> is the same link with the conversation open: "Write to the
+// restaurant" in the emails, and "Read and answer" in the answer email (r21).
 function linkToken() {
-  const m = /^#cancel=([A-Za-z0-9_-]{32})$/.exec(window.location.hash || '');
+  const m = /^#(?:cancel|talk)=([A-Za-z0-9_-]{32})$/.exec(window.location.hash || '');
   return m ? m[1] : null;
 }
+function linkTalks() { return /^#talk=/.test(window.location.hash || ''); }
 
-async function openLink(token) {
+async function openLink(token, talk) {
   // Out of the address bar and the history once read: on a shared phone or a
   // family computer, the next person should not find the link sitting there.
-  if (/^#cancel=/.test(window.location.hash || '')) {
+  if (/^#(?:cancel|talk)=/.test(window.location.hash || '')) {
     try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) { /* old browser: harmless */ }
   }
+  state.linkToken = token;
   show('link');
   const box = el('link-body');
   box.innerHTML = '<p class="rv-sub">Looking for your table…</p>';
@@ -1240,21 +1298,174 @@ async function openLink(token) {
       + '<div class="rv-card-what">' + rows.map(esc).join(' · ') + '</div>'
       + '<div class="rv-card-code">' + esc(b.code) + '</div>'
       + (b.canCancel ? '<button type="button" class="rv-cancel" data-link="' + esc(token) + '">Cancel this table</button>' : '')
+      + (b.chat ? chatBlock('link', b.chat) : '')
       + '</div>'
       + (b.canCancel ? '' : '<p class="rv-sub" style="margin-top:.4rem;">'
           + (b.status === 'cancelled' ? 'Nothing more to do — the table has gone back to the restaurant.'
              : 'This table can no longer be changed online. ' + (b.phone ? 'Call ' + esc(b.phone) + '.' : 'Please call the restaurant.'))
           + '</p>');
+    if (b.chat && talk) chatOpen('link', true);
   } catch (e) {
     box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">This link has expired</h2>'
       + '<p class="rv-sub" style="margin-top:.6rem;">' + esc(e.message) + '</p></div>';
   }
 }
 
+// ── messages with the restaurant (r21, Sebastian 8 Oct) ──────────────────────
+// Instead of calling: the guest writes about their table and the restaurant
+// answers here. No ready-made answers. A key names the conversation on this
+// screen: 't<table>' in My Reservations (the session decides whose it is), or
+// 'link' for the table an email's link opened (the token decides).
+const MSG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/></svg>';
+const SEND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>';
+state.chats = {};
+let chatTimer = null;
+
+function chatBlock(key, chat) {
+  const n = chat && chat.unread ? '<b class="n" aria-hidden="true">' + Number(chat.unread) + '</b>' : '';
+  return '<button type="button" class="rv-msg-btn" data-chat="' + key + '" aria-expanded="false" aria-controls="chat-' + key + '"'
+    + ' aria-label="Messages with the restaurant' + (chat && chat.unread ? ', ' + Number(chat.unread) + ' new' : '') + '">'
+    + MSG_ICON + '<span>Message</span>' + n + '</button>'
+    + '<div class="rv-chat" id="chat-' + key + '" hidden>'
+    +   '<div class="rv-chat-list"><p class="rv-chat-empty">Loading the messages…</p></div>'
+    +   '<p class="rv-chat-live" aria-live="polite"></p>'
+    +   '<p class="rv-chat-note" hidden></p>'
+    +   '<div class="rv-chat-form" hidden>'
+    +     '<textarea class="rv-chat-input" rows="1" maxlength="1000" aria-label="Your message" placeholder="Write to the restaurant…"></textarea>'
+    +     '<button type="button" class="rv-chat-send" aria-label="Send">' + SEND_ICON + '</button>'
+    +   '</div>'
+    +   '<p class="rv-chat-foot"></p>'
+    + '</div>';
+}
+function chatTarget(key) { return key === 'link' ? { token: state.linkToken } : { id: Number(key.slice(1)) }; }
+
+function chatOpen(key, open) {
+  const box = el('chat-' + key);
+  const btn = document.querySelector('.rv-msg-btn[data-chat="' + key + '"]');
+  if (!box || !btn) return;
+  box.hidden = !open;
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn.querySelector('span').textContent = open ? 'Hide messages' : 'Message';
+  if (!open) return;
+  chatLoad(key, true);
+  if (!chatTimer) chatTimer = setInterval(chatTick, 10000);
+  setTimeout(() => { try { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* old browser */ } }, 60);
+}
+
+// While a conversation is open and on screen, it is asked for again every ten
+// seconds, so an answer appears without a refresh.
+function chatTick() {
+  const open = Object.keys(state.chats).filter((k) => { const b = el('chat-' + k); return b && !b.hidden && b.offsetParent !== null; });
+  if (!open.length) { clearInterval(chatTimer); chatTimer = null; return; }
+  if (document.visibilityState !== 'visible') return;
+  open.forEach((k) => chatLoad(k, false));
+}
+
+async function chatLoad(key, first) {
+  const c = state.chats[key] || (state.chats[key] = {});
+  const seq = (c.seq || 0) + 1;
+  c.seq = seq;
+  let data;
+  try { data = await api(Object.assign({ action: 'msg_list' }, chatTarget(key))); }
+  catch (e) {
+    if (seq !== c.seq) return;
+    if (first) { const list = el('chat-' + key) && el('chat-' + key).querySelector('.rv-chat-list'); if (list) list.innerHTML = '<p class="rv-chat-empty">' + esc(e.message) + '</p>'; }
+    return;
+  }
+  if (seq !== c.seq || c.sending) return;
+  const changed = JSON.stringify(data) !== JSON.stringify(c.data);
+  // A screen reader hears the restaurant's new answer once, not the whole conversation again.
+  if (c.data && changed) {
+    const fresh = data.messages.filter((m) => !m.mine && !c.data.messages.some((x) => x.id === m.id));
+    const live = el('chat-' + key) && el('chat-' + key).querySelector('.rv-chat-live');
+    if (fresh.length && live) live.textContent = 'New message from ' + fresh[fresh.length - 1].who + ': ' + fresh[fresh.length - 1].body;
+  }
+  c.data = data;
+  if (changed || first) chatPaint(key, first);
+  // Read now: the count on the button goes, and the bell is told.
+  const btn = document.querySelector('.rv-msg-btn[data-chat="' + key + '"]');
+  const n = btn && btn.querySelector('.n');
+  if (n) { n.remove(); btn.setAttribute('aria-label', 'Messages with the restaurant'); if (typeof hfInboxSeen === 'function') hfInboxSeen(); }
+}
+
+function chatPaint(key, first) {
+  const box = el('chat-' + key), c = state.chats[key];
+  if (!box || !c || !c.data) return;
+  const d = c.data;
+  const list = box.querySelector('.rv-chat-list');
+  const atEnd = first || list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  list.innerHTML = d.messages.length
+    ? d.messages.map((m) => '<div class="rv-bub ' + (m.mine ? 'me' : 'them') + '">'
+        + '<span class="rv-bub-who">' + esc(m.who) + ' <i>· ' + esc(m.label) + '</i></span>' + esc(m.body) + '</div>').join('')
+    : '<p class="rv-chat-empty">Write here instead of calling: running late, an allergy, something you left behind. '
+      + esc(d.restaurant) + ' answers you here' + (d.canWrite ? '.' : '') + '</p>';
+  const note = box.querySelector('.rv-chat-note');
+  note.hidden = !d.note;
+  note.textContent = d.note || '';
+  box.querySelector('.rv-chat-form').hidden = !d.canWrite;
+  box.querySelector('.rv-chat-foot').textContent = 'Messages are kept until ' + d.keptUntil + ' (90 days after your table), then deleted.';
+  if (atEnd) list.scrollTop = list.scrollHeight;
+}
+
+async function chatSend(key) {
+  const box = el('chat-' + key), c = state.chats[key] || (state.chats[key] = {});
+  if (!box || c.sending) return;
+  const input = box.querySelector('.rv-chat-input'), send = box.querySelector('.rv-chat-send');
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  c.sending = true; send.disabled = true;
+  try {
+    const data = await api(Object.assign({ action: 'msg_send', body: text }, chatTarget(key)));
+    c.seq = (c.seq || 0) + 1;                     // an older answer still on its way is not drawn
+    c.data = data;
+    input.value = ''; chatGrow(input);
+    chatPaint(key, true);
+  } catch (e) {
+    showToast(e.message);
+    if (e.data && e.data.reason === 'closed') { c.sending = false; chatLoad(key, false); }
+  } finally {
+    c.sending = false; send.disabled = false;
+  }
+}
+function chatGrow(input) { input.style.height = 'auto'; input.style.height = Math.min(140, input.scrollHeight + 2) + 'px'; }
+
+document.addEventListener('click', (event) => {
+  const b = event.target.closest('.rv-msg-btn');
+  if (b) { const box = el('chat-' + b.dataset.chat); chatOpen(b.dataset.chat, !!(box && box.hidden)); return; }
+  const send = event.target.closest('.rv-chat-send');
+  if (send) { const box = send.closest('.rv-chat'); if (box) chatSend(box.id.slice(5)); }
+});
+document.addEventListener('input', (event) => { if (event.target.classList && event.target.classList.contains('rv-chat-input')) chatGrow(event.target); });
+// Ctrl+Enter (or ⌘+Enter) sends; Enter alone is a new line, as on a phone.
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return;
+  const box = event.target.closest && event.target.closest('.rv-chat');
+  if (box) { event.preventDefault(); chatSend(box.id.slice(5)); }
+});
+
 function esc(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
+
+// Logging out here (the ☰): the guest's tables and conversations leave the
+// screen, and nothing keeps asking for them. A table opened by an email's link
+// needs no account, so it stays.
+(function () {
+  const plain = window.logout;
+  if (typeof plain !== 'function') return;
+  window.logout = function () {
+    const out = plain.apply(this, arguments);
+    try {
+      clearInterval(chatTimer); chatTimer = null;
+      Object.keys(state.chats).forEach((k) => { if (k !== 'link') delete state.chats[k]; });
+      if (el('step-mine').classList.contains('on')) openMine();
+    } catch (e) { /* the page goes on */ }
+    return out;
+  };
+})();
 
 // ── start ────────────────────────────────────────────────────────────────────
 el('rv-go-request').addEventListener('click', openRequest);
@@ -1276,9 +1487,17 @@ function goBook() {
 }
 el('mine-book').addEventListener('click', goBook);
 el('link-book').addEventListener('click', goBook);
+// #mine, or #chat=<table> from the bell: My Reservations (with that conversation open).
+function mineHash() {
+  const h = window.location.hash || '';
+  if (h === '#mine') return { chat: null };
+  const m = /^#chat=(\d{1,12})$/.exec(h);
+  return m ? { chat: Number(m[1]) } : null;
+}
 window.addEventListener('hashchange', () => {
-  if (window.location.hash === '#mine') openMine();
-  else if (linkToken()) openLink(linkToken());
+  const mine = mineHash();
+  if (mine) openMine(mine.chat);
+  else if (linkToken()) openLink(linkToken(), linkTalks());
 });
 
 (async function start() {
@@ -1286,7 +1505,7 @@ window.addEventListener('hashchange', () => {
   // A link from an email opens that table straight away — before, and whatever,
   // the booking settings say. A guest cancelling does not need free times.
   const fromEmail = linkToken();
-  if (fromEmail) openLink(fromEmail);
+  if (fromEmail) openLink(fromEmail, linkTalks());
   try {
     const data = await api({ action: 'slots', restaurantId: RESTAURANT_ID });
     state.booking = data.booking;
@@ -1299,7 +1518,7 @@ window.addEventListener('hashchange', () => {
       el('off-phone').textContent = data.restaurant.phone
         ? 'Call ' + data.restaurant.phone + ' and they will keep a table for you.'
         : 'Please call the restaurant and they will keep a table for you.';
-      if (window.location.hash === '#mine') { openMine(); return; }
+      if (mineHash()) { openMine(mineHash().chat); return; }
       if (fromEmail) return;                    // the email's table stays on screen
       show('off');
       return;
@@ -1309,7 +1528,7 @@ window.addEventListener('hashchange', () => {
     state.slots = data.slots || [];
     state.closed = !!data.closed;
     renderTimes();
-    if (window.location.hash === '#mine') openMine();
+    if (mineHash()) openMine(mineHash().chat);
   } catch (e) {
     el('off-text').textContent = e.message;
     el('off-phone').textContent = 'Please try again in a moment.';
