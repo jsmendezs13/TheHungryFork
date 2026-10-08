@@ -47,8 +47,8 @@ export const MAX_BODY = 1000;
 // sharing the restaurant's Wi-Fi do not share a limit; by address otherwise.
 const guestSendTable = makeLimiter({ requests: 12,  window: '10 m', prefix: 'resv:msg:send:table' });
 const guestSendIp    = makeLimiter({ requests: 60,  window: '1 h',  prefix: 'resv:msg:send:ip' });
-const guestRead      = makeLimiter({ requests: 400, window: '10 m', prefix: 'resv:msg:read' });
-const staffRead      = makeLimiter({ requests: 900, window: '10 m', prefix: 'resv:msg:staff:read' });
+const guestRead      = makeLimiter({ requests: 900, window: '10 m', prefix: 'resv:msg:read' });   // r22: pages ask every 3 s (was 10)
+const staffRead      = makeLimiter({ requests: 1800, window: '10 m', prefix: 'resv:msg:staff:read' });  // r22: one login on a few devices, each asking every 3 s
 const staffWrite     = makeLimiter({ requests: 150, window: '10 m', prefix: 'resv:msg:staff:write' });
 
 const GONE = 'This conversation is not kept any more: messages are deleted 90 days after the table.';
@@ -409,7 +409,8 @@ async function inbox(req, res, body) {
         if (unread.ok && Array.isArray(unread.data)) {
           const byRestaurant = {};
           unread.data.forEach((m) => { byRestaurant[m.restaurant_id] = (byRestaurant[m.restaurant_id] || 0) + 1; });
-          staff = { unread: unread.data.length, conversations: new Set(unread.data.map((m) => m.reservation_id)).size, byRestaurant };
+          // restaurants: where this count applies, so a page can tell "none waiting" from "not counted here".
+          staff = { unread: unread.data.length, conversations: new Set(unread.data.map((m) => m.reservation_id)).size, byRestaurant, restaurants: rids };
         }
       }
     }
