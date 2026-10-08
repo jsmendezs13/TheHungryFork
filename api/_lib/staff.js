@@ -16,6 +16,11 @@
 // What staff never see: the guest's email address. The privacy page promises it
 // is seen by "only us", so it is never selected in a staff read. The server
 // still uses it to send the confirmation when a manager accepts a request.
+//
+// Guest messages (migration 19) live in api/_lib/messages.js. Two things about
+// them are here, because they belong to the day and to Arrived: the chat sign
+// on a guest's card (staff_day), and the conversation closing by itself when
+// the guest arrives (staff_mark).
 
 import { makeLimiter, allow, keyFor } from './auth.js';
 import { sb, tasterIdFromRequest, loadAccess, accessProblem, levelAt, LEVEL } from './roles.js';
@@ -137,6 +142,18 @@ async function gate(res, tasterId, restaurantId, need) {
   return { rid, level, canEdit: level >= LEVEL.manager };
 }
 
+// Who answers guest messages at a restaurant (Sebastian, 8 Oct): owners,
+// managers and the platform admin always; crew only when a manager has switched
+// "Answers guest messages" on for them in Team (restaurant_roles.can_message).
+// Before migration 19 the column is not there, and crew answer nothing.
+export async function canMessageAt(tasterId, restaurantId, level) {
+  if (level >= LEVEL.manager) return true;
+  if (level < LEVEL.crew) return false;
+  const got = await sb(`/restaurant_roles?taster_id=eq.${Number(tasterId)}&restaurant_id=eq.${Number(restaurantId)}` +
+                       '&role=eq.crew&select=can_message');
+  return got.ok && Array.isArray(got.data) && got.data.some((r) => r.can_message === true);
+}
+
 async function settingsFor(res, rid) {
   const loaded = await loadBooking(rid);
   if (!loaded || loaded.error) {
@@ -213,10 +230,34 @@ async function day(req, res, body, tasterId) {
     .filter((r) => inServiceDay(r, date))
     .map((r) => dressBooking(r, s.timezone, areaName, now, who.canEdit, date));
   const live = dressed.filter((b) => b.status !== 'cancelled');
+
+  // The chat sign on a card whose guest has written, and the count on the
+  // messages bubble — only for those who answer guests.
+  const canMessage = await canMessageAt(tasterId, who.rid, who.level);
+  let messages = null;
+  if (canMessage) {
+    const ids = dressed.map((b) => Number(b.id));
+    const [threads, unread] = await Promise.all([
+      ids.length ? sb(`/reservation_threads?reservation_id=in.(${ids.join(',')})&select=reservation_id,closed_at`) : { ok: true, data: [] },
+      sb(`/reservation_messages?restaurant_id=eq.${who.rid}&from_guest=is.true&read_at=is.null&select=reservation_id&limit=2000`),
+    ]);
+    if (threads.ok && unread.ok && Array.isArray(threads.data) && Array.isArray(unread.data)) {
+      const count = {};
+      unread.data.forEach((m) => { count[m.reservation_id] = (count[m.reservation_id] || 0) + 1; });
+      const open = {};
+      threads.data.forEach((t) => { open[t.reservation_id] = !t.closed_at; });
+      dressed.forEach((b) => {
+        b.chat = b.id in open ? { open: open[b.id], unread: count[b.id] || 0 } : null;
+      });
+      messages = { unread: unread.data.length, conversations: Object.keys(count).length };
+    }
+  }
   return res.status(200).json({
     success: true,
     today, date, timezone: s.timezone, now: new Date(now).toISOString(),
     level: who.level, canEdit: who.canEdit,
+    // null: this account does not answer guests here, or migration 19 is not run.
+    messages,
     settings: {
       enabled: !!s.settings.is_enabled,
       graceMinutes: s.settings.grace_minutes,
@@ -386,8 +427,35 @@ async function mark(req, res, body, tasterId) {
     });
   }
   console.log('[staff:mark] taster', tasterId, 'set', row.code, 'to', to);
+  await arrivalClosesChat(id, to, scanned, tasterId, stamp, row.status);
   // Crew get the card back without buttons, as on their list.
   return res.status(200).json({ success: true, booking: dressBooking(done.data[0], timezone, {}, Date.now(), who.canEdit) });
+}
+
+// The guest is here: their conversation closes by itself (Sebastian, 8 Oct),
+// saying how they came in (the QR, or a tap on Arrived). Undo puts it back the
+// way it was. A conversation the staff closed by hand is left alone, and a
+// table nobody wrote about has nothing to close. Never stops the mark itself.
+async function arrivalClosesChat(id, to, scanned, tasterId, stamp, from) {
+  try {
+    if (to === 'seated') {
+      await sb(`/reservation_threads?reservation_id=eq.${Number(id)}&closed_at=is.null`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ closed_at: stamp, closed_reason: scanned ? 'qr' : 'arrived', closed_by: tasterId }),
+      });
+    } else if (to === 'booked' && from === 'seated') {
+      // The arrival was a mistake: it never happened, so neither did the
+      // close, and the guest's 24 hours do not start from it (the database
+      // forgets the first close only when it was this one).
+      await sb(`/reservation_threads?reservation_id=eq.${Number(id)}&closed_reason=in.(arrived,qr)`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ closed_at: null, closed_reason: null, closed_by: null, first_closed_at: null,
+                               reopened_at: stamp, reopened_by: 'staff' }),
+      });
+    }
+  } catch (err) {
+    console.error('[staff:mark] conversation not closed', id, err && err.message);
+  }
 }
 
 // ── YES OR NO TO A BIG PARTY ──────────────────────────────────────────────────
