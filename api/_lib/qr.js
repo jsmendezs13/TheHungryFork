@@ -62,9 +62,12 @@ function inside(x, y, x0, y0, x1, y1, r) {
   return Math.min(1, Math.max(0, 0.5 - d));
 }
 
-export function drawTableQr(text) {
-  const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
-  const n = qr.modules.size, bits = qr.modules.data;
+// Everything that is the same in every code of one size — the red frame, the
+// three corner squares and the logo — is drawn once and kept (r23: the
+// pictures cost a fifth of what they did). Only the dots are drawn per code.
+const TEMPLATES = new Map();
+function template(n) {
+  if (TEMPLATES.has(n)) return TEMPLATES.get(n);
   const off = Math.round((QUIET + FRAME + EDGE) * MOD);
   const W = n * MOD + off * 2;
   const px = Buffer.alloc(W * W);                             // palette numbers, 0 = white
@@ -80,17 +83,6 @@ export function drawTableQr(text) {
       if (a > 0) px[y * W + x] = shade(SHADE_RED, a);
     }
   }
-  // the dots (not the corner squares, not under the logo)
-  const mid = n / 2, lw = LOGO_W / MOD, lh = LOGO_H / MOD;
-  const isEye = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
-  const underLogo = (r, c) => Math.abs(c + 0.5 - mid) < lw / 2 + LOGO_PAD && Math.abs(r + 0.5 - mid) < lh / 2 + LOGO_PAD;
-  const full = SHADE_INK + STEPS - 1;
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      if (!bits[r * n + c] || isEye(r, c) || underLogo(r, c)) continue;
-      for (let y = 0; y < MOD; y++) { const at = (off + r * MOD + y) * W + off + c * MOD; px.fill(full, at, at + MOD); }
-    }
-  }
   // the three corner squares: a ring with softly rounded corners, and its centre
   for (const [r0, c0] of [[0, 0], [0, n - 7], [n - 7, 0]]) {
     const X = off + c0 * MOD, Y = off + r0 * MOD;
@@ -104,9 +96,72 @@ export function drawTableQr(text) {
     }
   }
   // the logo, in the middle (already on white)
-  const L = logo(), lx = Math.round(off + mid * MOD - LOGO_W / 2), ly = Math.round(off + mid * MOD - LOGO_H / 2);
+  const mid = n / 2, L = logo();
+  const lx = Math.round(off + mid * MOD - LOGO_W / 2), ly = Math.round(off + mid * MOD - LOGO_H / 2);
   for (let y = 0; y < LOGO_H; y++) for (let x = 0; x < LOGO_W; x++) px[(ly + y) * W + lx + x] = LOGO_FIRST + L[y * LOGO_W + x];
-  return png(px, W, W);
+  const t = { W, off, px };
+  TEMPLATES.set(n, t);
+  return t;
+}
+const isEye = (n, r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+const underLogo = (n, r, c) => Math.abs(c + 0.5 - n / 2) < LOGO_W / MOD / 2 + LOGO_PAD && Math.abs(r + 0.5 - n / 2) < LOGO_H / MOD / 2 + LOGO_PAD;
+
+// The finished pictures of the last few hundred links, kept while this server
+// is warm: a guest opening My Reservations again gets them at once.
+const DRAWN = new Map(), KEEP = 300;
+export function drawTableQr(text) {
+  const kept = DRAWN.get(text);
+  if (kept) { DRAWN.delete(text); DRAWN.set(text, kept); return kept; }
+  const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
+  const n = qr.modules.size, bits = qr.modules.data;
+  const { W, off, px: base } = template(n);
+  const px = Buffer.from(base);
+  const full = SHADE_INK + STEPS - 1;
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (!bits[r * n + c] || isEye(n, r, c) || underLogo(n, r, c)) continue;
+      for (let y = 0; y < MOD; y++) { const at = (off + r * MOD + y) * W + off + c * MOD; px.fill(full, at, at + MOD); }
+    }
+  }
+  const picture = png(px, W, W);
+  DRAWN.set(text, picture);
+  if (DRAWN.size > KEEP) DRAWN.delete(DRAWN.keys().next().value);
+  return picture;
+}
+
+// The same look as an SVG (r23: the My Visits code, Sebastian 8 Oct "it looks
+// as well as the new version"): sharp at any size; the logo inside it as a
+// small picture.
+const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+let logoPng = null;
+function logoDataUrl() {
+  if (!logoPng) {
+    const L = logo(), pal = Buffer.from(LOGO_PALETTE);
+    logoPng = 'data:image/png;base64,' + png(L, LOGO_W, LOGO_H, pal).toString('base64');
+  }
+  return logoPng;
+}
+export function tableQrSvg(text) {
+  const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
+  const n = qr.modules.size, bits = qr.modules.data;
+  const pad = QUIET + FRAME + EDGE, S = n + pad * 2;
+  let dots = '';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (bits[r * n + c] && !isEye(n, r, c) && !underLogo(n, r, c)) dots += `M${c} ${r}h1v1h-1z`;
+    }
+  }
+  const s = 0.55, ink = hex(INK);
+  const eyes = [[0, 0], [0, n - 7], [n - 7, 0]].map(([r, c]) =>
+    `<path fill-rule="evenodd" fill="${ink}" d="M${c + s} ${r}h${7 - 2 * s}a${s} ${s} 0 0 1 ${s} ${s}v${7 - 2 * s}a${s} ${s} 0 0 1 ${-s} ${s}h${-(7 - 2 * s)}a${s} ${s} 0 0 1 ${-s} ${-s}v${-(7 - 2 * s)}a${s} ${s} 0 0 1 ${s} ${-s}z`
+    + `M${c + 1} ${r + 1}v5h5v-5z"/><rect x="${c + 2}" y="${r + 2}" width="3" height="3" rx="0.33" fill="${ink}"/>`).join('');
+  const lw = LOGO_W / MOD, lh = LOGO_H / MOD, o = -pad;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${o} ${o} ${S} ${S}" role="img" aria-label="QR code">`
+    + `<rect x="${o}" y="${o}" width="${S}" height="${S}" fill="#fff"/>`
+    + `<rect x="${o + EDGE + FRAME / 2}" y="${o + EDGE + FRAME / 2}" width="${S - 2 * EDGE - FRAME}" height="${S - 2 * EDGE - FRAME}" rx="${ROUND - FRAME / 2}" fill="none" stroke="${hex(RED)}" stroke-width="${FRAME}"/>`
+    + `<path fill="${ink}" shape-rendering="crispEdges" d="${dots}"/>` + eyes
+    + `<image href="${logoDataUrl()}" x="${n / 2 - lw / 2}" y="${n / 2 - lh / 2}" width="${lw}" height="${lh}"/>`
+    + '</svg>';
 }
 
 // A palette PNG: the signature, IHDR, PLTE, the pixels deflated, IEND.
@@ -118,12 +173,12 @@ function chunk(type, data) {
   const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body), 0);
   return Buffer.concat([len, body, crc]);
 }
-function png(px, w, h) {
+function png(px, w, h, palette = PALETTE) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 3;      // 8 bits, a palette
   const rows = Buffer.alloc((w + 1) * h);                                             // each row: filter 0, then its pixels
   for (let y = 0; y < h; y++) px.copy(rows, y * (w + 1) + 1, y * w, (y + 1) * w);
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('PLTE', PALETTE),
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('PLTE', palette),
     chunk('IDAT', zlib.deflateSync(rows, { level: 6 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
