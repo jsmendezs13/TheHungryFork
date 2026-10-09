@@ -940,7 +940,7 @@
 
 <!-- FOOTER -->
 <footer>
-  <img src="hungry-fork-logo.png" alt="The Hungry Fork">
+  <img src="/_vercel/image?url=%2Fhungry-fork-logo.png&w=384&q=75" data-orig="/hungry-fork-logo.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="The Hungry Fork">
   <p>123 Stone St, Manhattan, NY · Mon–Sun 12pm–11pm</p>
   <p style="margin-top:8px;">Powered by <a href="/">Seb's Analytics LLC</a></p>
   <p style="margin-top:10px;"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></p>
@@ -1070,7 +1070,7 @@
 <div class="maps-modal" id="maps-modal" onclick="if(event.target===this)closeMapsChooser()">
   <div class="maps-sheet">
     <div class="maps-sheet-title">
-      <img src="hungry-fork-logo.png" alt="" style="height:28px; width:auto; border-radius:4px; background:white; padding:2px;">
+      <img src="/_vercel/image?url=%2Fhungry-fork-logo.png&w=256&q=75" data-orig="/hungry-fork-logo.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="" style="height:28px; width:auto; border-radius:4px; background:white; padding:2px;">
       Open location in…
     </div>
     <a class="maps-option" href="https://www.google.com/maps/place/Stone+St,+New+York,+NY+10004/@40.7040321,-74.0115947,17z" target="_blank" onclick="closeMapsChooser()">
@@ -1100,7 +1100,7 @@
 <!-- COMING SOON -->
 <div class="cs-overlay" id="cs-overlay" onclick="if(event.target===this)closeComingSoon()">
   <div class="cs-box">
-    <img src="menu-button-blank.png" class="cs-icon" alt="">
+    <img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" class="cs-icon" alt="">
     <div class="cs-title" id="cs-title"></div>
     <p class="cs-sub">Coming soon &mdash; we are cooking something special for you.</p>
     <button class="cs-close" onclick="closeComingSoon()">Close</button>
@@ -1290,12 +1290,14 @@ function exitCave(){
   document.body.style.overflow='';
 }
 function recImgErr(img,emoji){
+  if(hfImgBack(img))return;                  // r23: the lighter copy failed: the original first, then the emoji
   const dv=document.createElement('div');
   dv.className='rec-emoji';
   dv.textContent=emoji;
   img.replaceWith(dv);
 }
 function caveImgErr(img,emoji){
+  if(hfImgBack(img))return;                  // r23: the lighter copy failed: the original first, then the emoji
   const div=document.createElement('div');
   div.className='cave-photo-fallback';
   div.textContent=emoji;
@@ -1321,7 +1323,7 @@ function renderCave(animClass,mediaOnly){
   const hdots=document.getElementById('cave-hdots');
   if(!card)return;
   if(!caveDishes.length){
-    card.innerHTML=`<div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
+    card.innerHTML=`<div class="cave-grade"><img src="/_vercel/image?url=%2Fgrade-a.png&w=256&q=75" data-orig="/grade-a.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
     caveScrollBar();
@@ -1334,10 +1336,10 @@ function renderCave(animClass,mediaOnly){
   const multi=caveDishes.length>1;
   let media;
   if(caveViewIdx===0){
-    media=`<img src="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
+    media=`<img src="${hfImgSrc(d.img,hfPhotoW(420,640))}" data-orig="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
   }else if(caveViewIdx===1){
     const ing=(d.ingredients&&d.ingredients.length)?`<ul class="ing-list">`+d.ingredients.map(x=>`<li>${x}</li>`).join('')+`</ul>`:'';
-    media=`<div class="exploded-row"><img src="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div>`;
+    media=`<div class="exploded-row"><img src="${hfImgSrc(d.imgOpen,hfPhotoW(220,384))}" data-orig="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div>`;
   }else{
     media=`<div class="cave-text-view">
       <p class="cave-about">${d.about||d.desc}</p>
@@ -1365,7 +1367,7 @@ function renderCave(animClass,mediaOnly){
   card.scrollTop=0;                      // a new dish starts at its photo (phones scroll the whole card)
   card.innerHTML=`
     <section class="cave-sec cave-sec-media">
-      <div class="cave-grade"><img src="grade-a.png" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
+      <div class="cave-grade"><img src="/_vercel/image?url=%2Fgrade-a.png&w=256&q=75" data-orig="/grade-a.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
       <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
       ${caveSwipeHint('up')}
       <div class="cave-photo-row">
@@ -1393,8 +1395,8 @@ function renderCave(animClass,mediaOnly){
     </section>
     <section class="cave-sec cave-sec-recs">
       <div class="cave-recs">
-        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${d.id}-wine.png" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
-        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${d.id}-cocktail.png" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
+        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${hfImgSrc(d.id+'-wine.png',140)}" data-orig="${d.id}-wine.png" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
+        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${hfImgSrc(d.id+'-cocktail.png',140)}" data-orig="${d.id}-cocktail.png" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
       </div>
     </section>
     ${caveFootHTML()}
@@ -1417,7 +1419,7 @@ function caveFootHTML(){
   // renderCave() had to run again on every login and logout. The corner menu
   // is fixed and always on screen, cave included, so the footer is static now.
   return '<div class="cave-foot">'
-    + '<img src="hungry-fork-logo.png" alt="The Hungry Fork">'
+    + '<img src="/_vercel/image?url=%2Fhungry-fork-logo.png&w=384&q=75" data-orig="/hungry-fork-logo.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="The Hungry Fork">'
     + '<div class="cave-foot-line">123 Stone St, Manhattan, NY &middot; Mon&ndash;Sun 12pm&ndash;11pm</div>'
     + '<div class="cave-foot-line">Powered by <a href="/">Seb\'s Analytics LLC</a></div>'
     + '<div class="cave-foot-line"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></div>'
@@ -2381,7 +2383,7 @@ function togglePin(e,id){
   localStorage.setItem('hf_pins',JSON.stringify(p));
   loadMyTastings();
 }
-function tastingThumbErr(img,emoji){const d=document.createElement('div');d.className='tasting-thumb tasting-thumb-emoji';d.textContent=emoji;img.replaceWith(d);}
+function tastingThumbErr(img,emoji){if(hfImgBack(img))return;const d=document.createElement('div');d.className='tasting-thumb tasting-thumb-emoji';d.textContent=emoji;img.replaceWith(d);}
 
 async function loadMyTastings(){
   const list=document.getElementById('tastings-list');
@@ -2405,7 +2407,7 @@ async function loadMyTastings(){
       const dishName=dishInfo?dishInfo.name:('Dish #'+r.dish_id);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
-      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
+      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
       const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
       return`<div class="review-item tasting-item"${clickAttr}>
         ${pinBtn}
