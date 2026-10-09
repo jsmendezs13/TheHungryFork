@@ -83,6 +83,7 @@ export default async function handler(req, res) {
   if (action === 'book')        return book(req, res, body);
   if (action === 'request')     return request(req, res, body);
   if (action === 'mine')        return mine(req, res, body);
+  if (action === 'qr')          return oneQr(req, res, body);
   if (action === 'cancel')      return cancel(req, res, body);
   if (action === 'link')        return byLink(req, res, body);
   if (action === 'cancel_link') return cancelByLink(req, res, body);
@@ -712,19 +713,30 @@ async function request(req, res, body) {
 // the form — and it would be strange for the site to know about a table and
 // then pretend it does not. The phone number comes from the tasters row, never
 // from the request, so nobody can ask about somebody else's number.
+// Whose tables: the account's own, and any booked with its phone number.
+async function mineMatch(tasterId) {
+  const who = await sb(`/tasters?id=eq.${tasterId}&select=id,phone_number`);
+  if (!who.ok || !Array.isArray(who.data) || !who.data.length) return null;
+  const phone = who.data[0].phone_number || null;
+  return phone
+    ? `or=(taster_id.eq.${tasterId},guest_phone.eq.${encodeURIComponent(phone)})`
+    : `taster_id=eq.${tasterId}`;
+}
+// A table whose QR the guest may have: still to come, or started but still
+// inside its own time (hold_minutes) and nobody has marked it yet.
+function qrTime(r, now) {
+  if (r.status !== 'booked') return false;
+  const at = new Date(r.reserved_at).getTime();
+  return at >= now || now - at <= (Number(r.hold_minutes) || 90) * 60 * 1000;
+}
+const QRS_AT_ONCE = 3;        // r23: the rest are drawn when the guest opens them
+
 async function mine(req, res, body) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
 
-  const who = await sb(`/tasters?id=eq.${tasterId}&select=id,phone_number`);
-  if (!who.ok || !Array.isArray(who.data) || !who.data.length) {
-    return res.status(401).json({ error: 'Please log in again.' });
-  }
-  const phone = who.data[0].phone_number || null;
-
-  const match = phone
-    ? `or=(taster_id.eq.${tasterId},guest_phone.eq.${encodeURIComponent(phone)})`
-    : `taster_id=eq.${tasterId}`;
+  const match = await mineMatch(tasterId);
+  if (!match) return res.status(401).json({ error: 'Please log in again.' });
   const columns = 'id,code,restaurant_id,area_id,party_size,reserved_at,local_date,local_time,status,notes,hold_minutes';
   let rows = await sb(`/reservations?${match}&select=${columns},arrival_token&order=reserved_at.desc&limit=60`);
   // Before migration 18 the column is not there: the tables, without QRs.
@@ -755,17 +767,20 @@ async function mine(req, res, body) {
   // The QR for the tables still to come (it is what the guest shows at the
   // door), and for one that has started but is still inside its own time
   // (hold_minutes) and nobody has marked yet: a guest a few minutes late is at
-  // the door. Not for past or cancelled ones, and at most ten: the ten soonest.
-  const qrs = {};
-  const startedNow = (r) => r.status === 'booked' && new Date(r.reserved_at).getTime() < now
-    && now - new Date(r.reserved_at).getTime() <= (Number(r.hold_minutes) || 90) * 60 * 1000;
+  // the door. Not for past or cancelled ones. r23 (Sebastian, 8 Oct: "too slow
+  // when I'm logged in"): the pictures of the three soonest come with the
+  // list; the others say qrLater, and the page asks for one (action "qr")
+  // when the guest opens it or it comes into view.
+  const qrs = {}, later = new Set();
+  const startedNow = (r) => r.status === 'booked' && new Date(r.reserved_at).getTime() < now && qrTime(r, now);
   const lateIds = new Set(rows.data.filter(startedNow).map((r) => r.id));
-  const comingUp = rows.data.filter((r) => r.status === 'booked' && (new Date(r.reserved_at).getTime() >= now || lateIds.has(r.id)))
-                            .sort((a, b) => new Date(a.reserved_at) - new Date(b.reserved_at))
-                            .slice(0, 10);
+  const allComing = rows.data.filter((r) => r.status === 'booked' && (new Date(r.reserved_at).getTime() >= now || lateIds.has(r.id)))
+                             .sort((a, b) => new Date(a.reserved_at) - new Date(b.reserved_at));
+  const comingUp = allComing.slice(0, QRS_AT_ONCE);
+  allComing.slice(QRS_AT_ONCE).forEach((r) => { if (r.arrival_token) later.add(r.id); });
   // Each restaurant's own site goes in its QR (one read per restaurant).
   const siteOf = {};
-  await Promise.all([...new Set(comingUp.map((r) => r.restaurant_id))].map(async (rid) => {
+  await Promise.all([...new Set(allComing.map((r) => r.restaurant_id))].map(async (rid) => {
     const l = rid === (restaurantIds[0] || DEFAULT_RESTAURANT_ID) ? settings : await loadBooking(rid);
     siteOf[rid] = l && !l.error ? l.settings : null;
   }));
@@ -779,6 +794,7 @@ async function mine(req, res, body) {
     code:       r.code,
     chat:       chats[r.id] || null,
     qr:         qrs[r.id] || null,
+    qrLater:    later.has(r.id) || undefined,
     at:         new Date(r.reserved_at).toISOString(),
     date:       r.local_date,
     party:      r.party_size,
@@ -807,6 +823,30 @@ async function mine(req, res, body) {
     upcoming: dressed.filter(stillOn).sort((a, b) => new Date(a.at) - new Date(b.at)),
     past:     dressed.filter((r) => !stillOn(r)),
   });
+}
+
+// One table's QR, for My Reservations (r23): the guest opened a table whose
+// picture did not come with the list. Only the account's own table, and only
+// while its QR is still good (as in mine).
+async function oneQr(req, res, body) {
+  const tasterId = tasterIdFromRequest(req);
+  if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
+  if (!(await allow(readLimiter, keyFor('q' + tasterId), { failOpen: true }))) {
+    return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
+  }
+  const id = Number(body.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Which table?' });
+  const match = await mineMatch(tasterId);
+  if (!match) return res.status(401).json({ error: 'Please log in again.' });
+  const got = await sb(`/reservations?id=eq.${id}&${match}&select=id,restaurant_id,status,reserved_at,hold_minutes,arrival_token&limit=1`);
+  if (!got.ok || !Array.isArray(got.data)) return res.status(502).json({ error: 'Could not read the table. Please try again in a moment.' });
+  const r = got.data[0];
+  // Another guest's table reads exactly like one that does not exist.
+  if (!r || !qrTime(r, Date.now())) return res.status(404).json({ error: 'This table has no QR code now.' });
+  const loaded = await loadBooking(r.restaurant_id);
+  const qr = await qrDataUrl(loaded && !loaded.error ? loaded.settings : null, r.arrival_token);
+  if (!qr) return res.status(404).json({ error: 'This table has no QR code now.' });
+  return res.status(200).json({ success: true, id: r.id, qr });
 }
 
 // ── GIVING THE TABLE BACK ─────────────────────────────────────────────────────
