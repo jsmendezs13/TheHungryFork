@@ -553,6 +553,30 @@ function hfLoadRole(who){
     .catch(function(){});
 }
 
+// ── LIGHTER PICTURES (r23) ──
+// Sebastian, 8 Oct: on a friend's older phone a dish photo took long to appear.
+// The photos are PNG files of 1.7 to 2.3 MB. Vercel's image service (vercel.json,
+// "images") sends each phone a WebP copy at the width it needs, a tenth of the
+// weight or less. Only our own pictures (a plain file name) go through it; if
+// it ever fails, hfImgBack() puts the original back (data-orig).
+var HF_IMG_SIZES=[96,256,384,640,828,1080,1200];
+function hfImgSrc(src,cssWidth){
+  var s=String(src||'');
+  if(!/^\/?[A-Za-z0-9_-]+\.(png|jpe?g)$/.test(s))return s;   // lower-case endings only, as vercel.json allows
+  var want=Math.ceil((Number(cssWidth)||420)*Math.min(window.devicePixelRatio||1,3)), w=HF_IMG_SIZES[HF_IMG_SIZES.length-1];
+  for(var i=0;i<HF_IMG_SIZES.length;i++){if(HF_IMG_SIZES[i]>=want){w=HF_IMG_SIZES[i];break;}}
+  return '/_vercel/image?url='+encodeURIComponent('/'+s.replace(/^\//,''))+'&w='+w+'&q=75';
+}
+// The width a dish photo is shown at, measured on the menu (r23): a phone or a
+// tablet, or a computer's wider cave (1024 px and up).
+function hfPhotoW(phone,computer){return (window.innerWidth||0)>=1024?computer:phone;}
+function hfImgBack(img){
+  var orig=img&&img.getAttribute('data-orig');
+  if(!orig||img.getAttribute('src')===orig||img.getAttribute('data-tried')==='1')return false;
+  img.setAttribute('data-tried','1');img.setAttribute('src',orig);
+  return true;
+}
+
 // ── WHAT IS NEW: the bell's list and the role icon's count ──
 // One small question to the server (action "inbox"), kept for 10 seconds in
 // this tab so that walking from page to page does not ask again each time,
