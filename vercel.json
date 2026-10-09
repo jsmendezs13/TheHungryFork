@@ -1,5 +1,12 @@
 {
   "cleanUrls": true,
+  "images": {
+    "sizes": [96, 256, 384, 640, 828, 1080, 1200],
+    "qualities": [75],
+    "formats": ["image/webp"],
+    "minimumCacheTTL": 604800,
+    "localPatterns": [{ "pathname": "^/[A-Za-z0-9_-]+\\.(png|jpg|jpeg)$", "search": "" }]
+  },
   "crons": [
     { "path": "/api/reservations", "schedule": "0 14 * * *" }
   ]
