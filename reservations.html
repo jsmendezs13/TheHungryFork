@@ -3,9 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+// r24 · The free times are asked for here, in the first line of the page.
+// Before, the page waited for the Google Fonts file and for its own scripts
+// (below) and only then asked the server; on a phone with a slow connection
+// those seconds were most of the wait. start() uses this answer when it is
+// good, and asks the usual way (with the usual error message) when it is not.
+window.hfEarlySlots = (function () {
+  try {
+    return { rid: 1, ask: fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'slots', restaurantId: 1 }) })
+      .then(function (r) { return r.json().then(function (d) { return r.ok ? d : null; }); })
+      .catch(function () { return null; }) };
+  } catch (e) { return null; }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- The fonts load beside the page, not in front of it: until they arrive the
+     page shows in Georgia and the system font, then switches. -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
 <meta name="theme-color" content="#140D0A">
 <title>The Hungry Fork — Reservations</title>
 <style>
@@ -1685,6 +1703,18 @@ window.addEventListener('hashchange', () => {
   else if (linkToken()) openLink(linkToken(), linkTalks());
 });
 
+// The first free times were asked for in the page's first line (hfEarlySlots,
+// in the head). Used once, and only when the answer is a good one.
+async function firstSlots() {
+  const early = window.hfEarlySlots;
+  window.hfEarlySlots = null;
+  if (early && early.rid === RESTAURANT_ID) {
+    const d = await early.ask;
+    if (d && d.booking && d.restaurant) return d;
+  }
+  return api({ action: 'slots', restaurantId: RESTAURANT_ID });
+}
+
 (async function start() {
   if (typeof loadSession === 'function') loadSession();
   // A link from an email opens that table straight away — before, and whatever,
@@ -1692,7 +1722,7 @@ window.addEventListener('hashchange', () => {
   const fromEmail = linkToken();
   if (fromEmail) openLink(fromEmail, linkTalks());
   try {
-    const data = await api({ action: 'slots', restaurantId: RESTAURANT_ID });
+    const data = await firstSlots();
     state.booking = data.booking;
     state.restaurant = data.restaurant;
     state.date = data.date || data.booking.today;
