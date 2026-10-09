@@ -353,6 +353,9 @@
   .mg-row-foot { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-top:.35rem; font-size:.66rem; color:var(--muted); }
   .mg-closed { font-size:.58rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--blue); }
   .mg-closed.staff { color:var(--muted); }
+  .mg-where { margin-top:.8rem; display:flex; flex-wrap:wrap; gap:.4rem; justify-content:center; align-items:center; }
+  .mg-where > span { flex-basis:100%; font-size:.78rem; }
+  .mg-jump { font:inherit; font-size:.8rem; font-weight:600; color:var(--ink); background:var(--white); border:1px solid var(--border); border-radius:999px; padding:.35rem .8rem; cursor:pointer; }
   .mg-empty { text-align:center; color:var(--muted); font-size:.85rem; line-height:1.6; padding:1.6rem .8rem; border:1px dashed var(--border); border-radius:14px; background:var(--white); }
   .mg-foot { font-size:.68rem; color:var(--muted); text-align:center; margin-top:.5rem; line-height:1.5; }
   /* One conversation */
@@ -2656,7 +2659,18 @@ function msgRowsHtml(d){
   return !d.threads ? '<div class="m-skel"></div><div class="m-skel"></div>'
     : list.length ? list.map(msgRow).join('')
     : '<div class="mg-empty">'+(MSG.tab === 'open' ? 'No open conversations' : 'No closed conversations')+' for '+esc(rvLong(d.date))+'.'
-      + (MSG.tab === 'open' && d.openCount ? '<br>Days with something new have a red dot.' : '')+'</div>';
+      + (MSG.tab === 'open' && d.openCount ? '<br>Days with something new have a red dot.' : '')
+      + msgWhereHtml(d)+'</div>';
+}
+// r23: "Open 4" but nothing on this day: the days that have the open conversations, one tap each.
+function msgWhereHtml(d){
+  if(MSG.tab !== 'open') return '';
+  const days = (d.days || []).filter(x => x.open > 0 && x.date !== d.date);
+  if(!days.length) return '';
+  return '<div class="mg-where"><span>Open conversations are on:</span>'
+    + days.slice(0, 10).map(x => '<button type="button" class="mg-jump" onclick="msgPick(\''+esc(x.date)+'\')">'
+        + esc(rvShort(x.date))+' · '+Number(x.open)+'</button>').join('')
+    + (days.length > 10 ? '<span>…and '+(days.length - 10)+' more days</span>' : '')+'</div>';
 }
 // The tabs' words and numbers, changed where they are (a keyboard on a tab keeps it).
 function msgTabsPatch(box, d){
