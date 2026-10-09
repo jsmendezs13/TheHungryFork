@@ -11,7 +11,7 @@
 // taster id comes from the signed token and from nowhere else, so there is no
 // parameter to tamper with.
 
-import QRCode from 'qrcode';
+import { tableQrSvg } from './_lib/qr.js';
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, sb } from './_lib/roles.js';
 import {
@@ -101,17 +101,14 @@ async function issueToken(req, res, tasterId) {
   // a QR website, and nothing about this customer ever leaves our own servers
   // to have a picture made of it.
   //
-  // Error correction M, not H: the code has to survive a fingerprint on a
-  // screen, not a sun-bleached sticker on a window. M keeps the squares big,
-  // which is what actually matters when one phone photographs another.
+  // r23 (Sebastian, 8 Oct: "the QR code for My Visits should look like the new
+  // ones"): the same look as the table's QR — the steak-on-a-fork logo in the
+  // middle, black dots, a red frame (api/_lib/qr.js). The logo hides some dots,
+  // so it carries the most error correction (H) instead of M; tested with four
+  // QR readers, sharp and damaged, like the table's.
   let svg;
   try {
-    svg = await QRCode.toString(url, {
-      type: 'svg',
-      errorCorrectionLevel: 'M',
-      margin: 1,
-      color: { dark: '#2B211A', light: '#FFFFFF' },
-    });
+    svg = tableQrSvg(url);
   } catch (e) {
     console.error('[checkins:token] qr failed', e?.message);
     return res.status(500).json({ error: 'Could not draw your check-in code.' });
