@@ -983,7 +983,7 @@ function mineCard(r, upcoming, open) {
   const bits = [r.party + (r.party === 1 ? ' person' : ' people')];
   if (r.areaName) bits.push(r.areaName);
   bits.push(r.restaurant);
-  const qr = upcoming && hasQrImage(r);
+  const qr = upcoming && (hasQrImage(r) || !!r.qrLater);  // r23: qrLater = drawn when opened
   const live = upcoming && r.status === 'booked';        // still to come: the countdown and Share
   return '<div class="rv-card' + (upcoming ? '' : ' gone') + '">'
     + statusChip(r)
@@ -991,7 +991,7 @@ function mineCard(r, upcoming, open) {
     + '<div class="rv-card-what">' + bits.map(esc).join(' · ') + '</div>'
     + (live ? '<div class="rv-count" role="timer" data-at="' + esc(r.at) + '" data-qr="' + (qr ? 1 : 0) + '"></div>' : '')
     + (qr
-        ? '<div class="rv-qr" id="qr-' + Number(r.id) + '"' + (open ? '' : ' hidden') + '><img src="' + esc(r.qr) + '" alt="The QR code for this table"><b>' + esc(r.code) + '</b></div>'
+        ? '<div class="rv-qr" id="qr-' + Number(r.id) + '"' + (open ? '' : ' hidden') + '><img' + (hasQrImage(r) ? ' src="' + esc(r.qr) + '"' : '') + ' alt="The QR code for this table"><b>' + esc(r.code) + '</b></div>'
         : '<div class="rv-card-code">' + esc(r.code) + '</div>')
     // Sebastian's order (8 Oct): Cancel · Show my QR code · Share, then Message.
     + (qr || live || r.canCancel
@@ -1069,10 +1069,18 @@ function paintCount(box) {
   const t = Math.floor(left / 1000);
   const d = Math.floor(t / 86400), h = Math.floor((t % 86400) / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
   const two = (n) => String(n).padStart(2, '0');
-  const cell = (n, label) => '<div><b>' + n + '</b><span>' + label + '</span></div>';
-  box.innerHTML = cell(d, d === 1 ? 'Day' : 'Days') + cell(two(h), 'Hours') + cell(two(m), 'Min') + cell(two(sec), 'Sec');
-  box.setAttribute('aria-label', 'Starts in ' + d + (d === 1 ? ' day, ' : ' days, ') + h + (h === 1 ? ' hour and ' : ' hours and ')
-    + m + (m === 1 ? ' minute.' : ' minutes.'));
+  // r23: the four boxes are made once; each second only the numbers that
+  // changed are written (a list of tables no longer redraws itself every second).
+  let cells = box.querySelectorAll('b');
+  if (cells.length !== 4) {
+    box.innerHTML = '<div><b></b><span></span></div><div><b></b><span>Hours</span></div><div><b></b><span>Min</span></div><div><b></b><span>Sec</span></div>';
+    cells = box.querySelectorAll('b');
+  }
+  const put = (node, text) => { if (node.textContent !== text) node.textContent = text; };
+  put(cells[0], String(d)); put(box.querySelector('span'), d === 1 ? 'Day' : 'Days');
+  put(cells[1], two(h)); put(cells[2], two(m)); put(cells[3], two(sec));
+  const said = 'Starts in ' + d + (d === 1 ? ' day, ' : ' days, ') + h + (h === 1 ? ' hour and ' : ' hours and ') + m + (m === 1 ? ' minute.' : ' minutes.');
+  if (box.getAttribute('aria-label') !== said) box.setAttribute('aria-label', said);
 }
 
 // ── Share with friends (3B): the table, the map, the menu, and the QR ───────
@@ -1198,13 +1206,48 @@ async function cardFile(r) {
   canvas.width = canvas.height = 0;            // give the drawing memory back at once (phones have little)
   return new File([blob], 'table-' + String(r.code).replace(/[^A-Za-z0-9-]/g, '') + '.png', { type: 'image/png' });
 }
+// r23 (Sebastian, 8 Oct: "too slow when I'm logged in"): the share picture of a
+// table is drawn when its card comes into view, one table at a time, when the
+// phone has a moment — not every table's at once as the list opens. Until it
+// is ready, Share sends the plain QR (as before).
+let cardWatch = null;
+const cardQueue = [];
+let cardBusy = false;
 function prepareCards() {
-  Object.keys(state.mine || {}).forEach((id) => {
-    const r = state.mine[id];
-    if (r.status !== 'booked' || !hasQrImage(r) || r._card || r._cardBusy) return;
-    r._card = null; r._cardBusy = true;               // _: ours, never a field from the server
-    cardFile(r).then((f) => { r._card = f; }, () => {}).then(() => { r._cardBusy = false; });
-  });
+  if (cardWatch) cardWatch.disconnect();
+  cardQueue.length = 0;
+  const cards = Array.prototype.slice.call(document.querySelectorAll('#mine-body .rv-share-btn'));
+  if (!('IntersectionObserver' in window)) { cards.forEach((b) => queueCard(Number(b.dataset.share))); return; }
+  cardWatch = new IntersectionObserver((seen) => {
+    seen.forEach((e) => {
+      if (!e.isIntersecting) return;
+      cardWatch.unobserve(e.target);
+      const id = Number(e.target.dataset.share), r = state.mine && state.mine[id];
+      if (r && r.status === 'booked' && r.qrLater) mineQr(r);   // the QR at once (small), so Share has it; the picture when idle
+      queueCard(id);
+    });
+  }, { root: el('mine-body'), rootMargin: '200px 0px' });   // the list scrolls inside #mine-body, so it is the root (or the 200px would not count)
+  cards.forEach((b) => cardWatch.observe(b));
+}
+function queueCard(id) {
+  const r = state.mine && state.mine[id];
+  if (!r || r.status !== 'booked' || r._card || r._cardQueued) return;
+  r._cardQueued = true;                                // _: ours, never a field from the server
+  cardQueue.push(r);
+  nextCard();
+}
+function nextCard() {
+  if (cardBusy || !cardQueue.length) return;
+  cardBusy = true;
+  const r = cardQueue.shift();
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 120));
+  idle(async () => {
+    try {
+      if (await mineQr(r)) r._card = await cardFile(r);
+    } catch (e) { /* the plain QR goes instead */ }
+    cardBusy = false;
+    nextCard();
+  }, { timeout: 1500 });
 }
 function qrFile(r) {
   const bin = atob(r.qr.slice('data:image/png;base64,'.length));
@@ -1219,9 +1262,18 @@ async function shareTable(r) {
   // Some phones never answer when their share sheet is closed a certain way:
   // after 15 seconds the button works again whatever happened.
   const unstick = setTimeout(() => { sharing = false; }, 15000);
-  try { await shareNow(r); } finally { clearTimeout(unstick); sharing = false; }
+  try {
+    // r23: a table whose QR did not come with the list and is not here yet
+    // (tapped the moment it came into view): wait for it, three seconds at most.
+    let waited = false;
+    if (!hasQrImage(r) && r.qrLater) {
+      waited = true;
+      await Promise.race([mineQr(r), new Promise((ok) => setTimeout(ok, 3000))]);
+    }
+    await shareNow(r, waited);
+  } finally { clearTimeout(unstick); sharing = false; }
 }
-async function shareNow(r) {
+async function shareNow(r, waited) {
   const withQr = hasQrImage(r);
   const text = shareText(r, withQr);
   const title = 'A table at ' + r.restaurant;
@@ -1240,6 +1292,9 @@ async function shareNow(r) {
     if (!file && navigator.share) { await navigator.share({ text, title }); return; }
   } catch (e) {
     if (e && (e.name === 'AbortError' || e.name === 'InvalidStateError')) return;   // closed, or already open
+    // After the wait some phones no longer count it as the guest's own tap:
+    // the QR is here now, so the next tap shares at once.
+    if (waited && e && e.name === 'NotAllowedError') { showToast(hasQrImage(r) ? 'Your QR is ready: tap Share again.' : 'Tap Share again.'); return; }
   }
   // No share sheet here (a computer, mostly): the message to paste, and the QR as a picture.
   let copied = false;
@@ -1266,14 +1321,45 @@ document.addEventListener('click', (event) => {
 });
 
 // My Reservations: show or hide a table's QR code.
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const b = event.target.closest('.rv-qr-btn');
   if (!b) return;
   const box = el('qr-' + Number(b.dataset.qr));
   if (!box) return;
+  const r = state.mine && state.mine[Number(b.dataset.qr)];
+  if (box.hidden && r && !hasQrImage(r)) {
+    b.textContent = 'Drawing your QR…';
+    if (!(await mineQr(r))) { b.textContent = 'Show my QR code'; showToast('Could not draw the QR code. Try again in a moment.'); return; }
+    box.hidden = false;                                // shown, even if it was tapped twice while it came
+    b.textContent = 'Hide the QR code';
+    return;
+  }
   box.hidden = !box.hidden;
   b.textContent = box.hidden ? 'Show my QR code' : 'Hide the QR code';
 });
+// A table whose QR did not come with the list (r23): asked for once, then kept
+// for this page (by account and table, so the list opened again does not ask
+// again, and another account on this phone never gets it).
+const qrAsks = {};
+function mineQr(r) {
+  if (hasQrImage(r)) return Promise.resolve(true);
+  if (!r.qrLater) return Promise.resolve(false);       // the server has no QR for it
+  const id = Number(r.id), key = String((typeof currentSession !== 'undefined' && currentSession) || '') + ':' + id;
+  if (!qrAsks[key]) {
+    qrAsks[key] = api({ action: 'qr', id }).then(
+      (d) => (d && typeof d.qr === 'string' && d.qr.indexOf('data:image/png;base64,') === 0 ? d.qr : null), () => null)
+      .then((qr) => { if (!qr) delete qrAsks[key]; return qr; });
+  }
+  return qrAsks[key].then((qr) => {
+    if (!qr) return false;
+    r.qr = qr; r.qrLater = false;
+    const now = state.mine && state.mine[id];          // the list may have been opened again meanwhile
+    if (now && now !== r && !hasQrImage(now)) { now.qr = qr; now.qrLater = false; }
+    const img = document.querySelector('#qr-' + id + ' img');
+    if (img && img.getAttribute('src') !== qr) img.src = qr;
+    return true;
+  });
+}
 
 // Two taps to cancel, because one tap on a phone is too easy to do by accident
 // and this gives the table away.
