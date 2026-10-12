@@ -69,6 +69,7 @@ export default async function handler(req, res) {
     success: true,
     tasterId: access.tasterId,
     firstName: access.firstName,
+    handle: access.handle || null,
     isPlatformAdmin: access.isPlatformAdmin,
     restaurants,
   });
