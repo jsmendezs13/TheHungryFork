@@ -9,6 +9,14 @@
 // (below) and only then asked the server; on a phone with a slow connection
 // those seconds were most of the wait. start() uses this answer when it is
 // good, and asks the usual way (with the usual error message) when it is not.
+// r27 (Sebastian, 12 Oct) · "My Reservations" in the corner menu is a link to
+// /reservations#mine. The page used to start on the booking screen and jump to
+// the guest's tables once the free times had come back. Now, from its first
+// line, a page opened on #mine (or on a table from the bell) keeps the booking
+// screen out of sight, and shows the tables straight away.
+(function () {
+  try { if (/^#(?:mine|chat=\d{1,12})$/.test(window.location.hash || '')) document.documentElement.className += ' rv-mine-first'; } catch (e) { /* the page then starts as before */ }
+})();
 window.hfEarlySlots = (function () {
   try {
     return { rid: 1, ask: fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -60,6 +68,9 @@ window.hfEarlySlots = (function () {
     display:flex; flex-direction:column; min-height:0; }
   .rv-step { display:none; flex-direction:column; flex:1; min-height:0; padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 18px); }
   .rv-step.on { display:flex; }
+  /* r27: opened on My Reservations — the booking screen never shows, and the tables' screen is there from the first paint. */
+  html.rv-mine-first #step-pick { display:none !important; }
+  html.rv-mine-first #step-mine { display:flex; }
   #step-pick { padding:0; }
 
   .rv-lbl { font-size:.62rem; font-weight:600; letter-spacing:.26em; text-transform:uppercase;
@@ -108,6 +119,9 @@ window.hfEarlySlots = (function () {
   .rv-eyebrow { font-size:.54rem; font-weight:400; letter-spacing:.24em; text-transform:uppercase; color:rgba(252,249,244,.9); line-height:1.5; }
   .rv-hero h1 { font-family:var(--serif); font-size:1.9rem; font-weight:600; line-height:1.02; margin:.5rem 0 .45rem; }
   .rv-hero-line { font-size:.68rem; line-height:1.4; color:rgba(252,249,244,.66); }
+  /* r27: the hours the manager chose. Two lines of room are kept from the first paint (the usual week is two lines),
+     so the page does not move when they arrive. */
+  .rv-hero-line .hf-hours:empty { display:block; min-height:2.8em; }     /* until the hours arrive, so the page does not move; then they are plain lines of the text */
   .rv-plate { position:absolute; z-index:0; top:34px; right:max(-46px, -11.7vw); width:min(238px, 62vw); height:auto;
     filter:drop-shadow(0 14px 18px rgba(0,0,0,.6)); pointer-events:none; }
   .rv-body { padding:0 16px 20px; }
@@ -180,6 +194,7 @@ window.hfEarlySlots = (function () {
   .rv-bar-go { flex:none; background:var(--red-bright); color:#fff; border:none; border-radius:999px; padding:.85rem 1.4rem;
     font-family:inherit; font-size:.74rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer;
     box-shadow:0 8px 20px rgba(226,59,46,.35); -webkit-tap-highlight-color:transparent; transition:opacity .2s, transform .12s; }
+  .rv-bar-mine { display:none; }          /* r27: only in the desktop version (below) */
   .rv-bar-go:active { transform:translateY(1px); }
   .rv-bar-go:disabled { opacity:.45; box-shadow:none; cursor:default; }
 
@@ -336,6 +351,7 @@ window.hfEarlySlots = (function () {
     .rv-eyebrow { font-size:.7rem; letter-spacing:.28em; }
     .rv-hero h1 { font-size:clamp(2.2rem, calc(var(--L) / 13), 3.3rem); margin:.7rem 0 .8rem; }
     .rv-hero-line { font-size:.95rem; line-height:1.55; }
+    .rv-hero-line .hf-hours:empty { min-height:3.1em; }
     .rv-plate { top:50%; right:-56px; width:var(--plate); transform:translateY(-50%); }
     .rv-maps { gap:10px; padding:20px 0 0; }
     .rv-flag { width:38px; }
@@ -357,8 +373,16 @@ window.hfEarlySlots = (function () {
     .rv-book::before { content:'Book a table'; display:block; font-family:var(--serif); font-size:1.95rem; font-weight:600; line-height:1.1; margin:0 0 1.3rem; }
     .rv-bar { position:absolute; right:28px; top:calc(28px + var(--card-h)); width:448px; height:88px; padding:0 26px;
       border:1px solid rgba(252,249,244,.16); border-radius:0 0 24px 24px; background:#130B07; }
-    .rv-bar-sum b { font-size:1.25rem; }
+    .rv-bar { gap:8px; }
+    .rv-bar-go { padding-left:1.15rem; padding-right:1.15rem; }       /* a little narrower, so the day and time keep their room */
+    .rv-bar-sum b { font-size:1.12rem; }
     .rv-bar-sum small { font-size:.74rem; }
+    /* r27 (Sebastian, 12 Oct): "My reservations", a blue button beside Book. The same place the corner menu goes to.
+       Two short lines, so the day and time keep their room in the bar. */
+    .rv-bar-mine { flex:none; display:inline-flex; align-items:center; justify-content:center; text-align:center; background:#3A6BC4; color:#fff; border:none; border-radius:999px;
+      padding:.46rem .8rem; font-family:inherit; font-size:.72rem; font-weight:600; letter-spacing:.02em; line-height:1.18; white-space:nowrap; cursor:pointer;
+      box-shadow:0 8px 20px rgba(58,107,196,.35); -webkit-tap-highlight-color:transparent; transition:filter .15s, transform .12s; }
+    .rv-bar-mine:active { transform:translateY(1px); }
 
     /* things a mouse can do */
     @media (hover:hover) {
@@ -367,7 +391,7 @@ window.hfEarlySlots = (function () {
       .rv-arrow:not(:disabled):hover { border-color:rgba(252,249,244,.75); background:rgba(252,249,244,.09); }
       .rv-size:not(.on):hover, .rv-time:not(.on):hover { opacity:1; border-color:rgba(252,249,244,.65); }
       .rv-cd:not(:disabled):not(.on):hover span { background:rgba(252,249,244,.13); }
-      .rv-bar-go:not(:disabled):hover { filter:brightness(1.1); }
+      .rv-bar-go:not(:disabled):hover, .rv-bar-mine:hover { filter:brightness(1.1); }
       .rv-link:hover { color:#FFC2BA; }
     }
   }
@@ -395,7 +419,7 @@ window.hfEarlySlots = (function () {
           <div class="rv-eyebrow">Steakhouse<br>Stone Street</div>
           <h1>The Hungry Fork</h1>
           <!-- The address and the hours are the ones on the home page (index.html, the footer). -->
-          <div class="rv-hero-line">123 Stone St<br>Manhattan, NY<br>Open every day<br>12pm – 11pm</div>
+          <div class="rv-hero-line">123 Stone St<br>Manhattan, NY<span class="hf-hours" data-hf-hours="hero" data-hf-keep></span></div>
         </div>
         <img class="rv-plate" src="/_vercel/image?url=%2Fsliced-steak-plate.png&w=640&q=75" data-orig="/sliced-steak-plate.png"
              onerror="this.onerror=null;this.src=this.dataset.orig" width="1700" height="1000" decoding="async" fetchpriority="low"
@@ -415,7 +439,7 @@ window.hfEarlySlots = (function () {
         <!-- The words about the restaurant: change them here, between the tags. -->
         <div class="rv-about">
           <h2>About the restaurant</h2>
-          <p class="rv-about-p clamp" id="rv-about-p">The Hungry Fork is a steakhouse on Stone Street, in the old cobblestone heart of Lower Manhattan. We cook steak the way it should be: the T-bone, the sliced steak, and a salmon with sweet corn, served in a warm, dark dining room made for a long dinner. Open every day, from noon to 11 pm.</p>
+          <p class="rv-about-p clamp" id="rv-about-p">The Hungry Fork is a steakhouse on Stone Street, in the old cobblestone heart of Lower Manhattan. We cook steak the way it should be: the T-bone, the sliced steak, and a salmon with sweet corn, served in a warm, dark dining room made for a long dinner. <span data-hf-hours="about" data-hf-keep></span></p>
           <button type="button" class="rv-link rv-more" id="rv-more" aria-expanded="false" aria-controls="rv-about-p">Read more</button>
         </div>
 
@@ -457,6 +481,7 @@ window.hfEarlySlots = (function () {
 
     <div class="rv-bar" id="rv-bar">
       <div class="rv-bar-sum" aria-live="polite"><b id="rv-bar-when">—</b><small id="rv-bar-what"></small></div>
+      <button type="button" class="rv-bar-mine" id="rv-bar-mine" aria-label="My reservations">My<br>reservations</button>
       <button type="button" class="rv-bar-go" id="rv-bar-go" disabled>Book</button>
     </div>
   </section>
@@ -604,6 +629,7 @@ const state = { booking:null, restaurant:null, date:null, party:2, slots:[], cho
                 loading:false, calMonth:null, closedDays:{}, wantLabel:null };
 
 function show(step) {
+  document.documentElement.classList.remove('rv-mine-first');     // from the first screen the page shows, it decides
   document.querySelectorAll('.rv-step').forEach(s => s.classList.toggle('on', s.id === 'step-' + step));
   window.scrollTo(0, 0);
   if (step === 'pick') bookTop();
@@ -2030,6 +2056,11 @@ function goBook() {
   show('pick'); loadSlots();
 }
 el('mine-book').addEventListener('click', goBook);
+// The blue button beside Book (desktop): the same as "My Reservations" in the corner menu.
+el('rv-bar-mine').addEventListener('click', () => {
+  if ((window.location.hash || '') === '#mine') openMine();      // the address already says so: the tables are drawn again
+  else window.location.hash = '#mine';                           // hashchange opens them, as the menu's link does
+});
 el('link-book').addEventListener('click', goBook);
 // #mine, or #chat=<table> from the bell: My Reservations (with that conversation open).
 function mineHash() {
@@ -2096,6 +2127,10 @@ async function firstSlots() {
   // the booking settings say. A guest cancelling does not need free times.
   const fromEmail = linkToken();
   if (fromEmail) openLink(fromEmail, linkTalks());
+  // r27: from the corner menu or the bell the guest's tables open at once, not
+  // after the free times (which are still asked for, for the "Book a table" button).
+  const wantsMine = !fromEmail && mineHash();
+  if (wantsMine) openMine(wantsMine.chat);
   try {
     const data = await firstSlots();
     state.booking = data.booking;
@@ -2108,8 +2143,7 @@ async function firstSlots() {
       el('off-phone').textContent = data.restaurant.phone
         ? 'Call ' + data.restaurant.phone + ' and they will keep a table for you.'
         : 'Please call the restaurant and they will keep a table for you.';
-      if (mineHash()) { openMine(mineHash().chat); return; }
-      if (fromEmail) return;                    // the email's table stays on screen
+      if (wantsMine || fromEmail) return;       // the tables (or the email's table) stay on screen
       show('off');
       return;
     }
@@ -2119,11 +2153,10 @@ async function firstSlots() {
     state.closed = !!data.closed;
     if (state.closed) state.closedDays[state.date] = true;
     renderTimes();
-    if (mineHash()) openMine(mineHash().chat);
   } catch (e) {
     el('off-text').textContent = e.message;
     el('off-phone').textContent = 'Please try again in a moment.';
-    if (!fromEmail) show('off');
+    if (!fromEmail && !wantsMine) show('off');
   }
 })();
 </script>
