@@ -1,7 +1,7 @@
 // api/_lib/guests.js
 //
-// Two small things the restaurant's pages need about a guest (Sebastian, 12 Oct).
-// Both are read-only and neither ever selects the guest's email address.
+// Two small things the restaurant's pages need about a person. Both are
+// read-only and neither ever selects an email address.
 //
 //   waitingOnly(rows)   "New" means a guest is still waiting for an answer.
 //                       A guest's message the restaurant has answered after is
@@ -14,6 +14,10 @@
 //                       taster_id, set as row.handle. A booking made without an
 //                       account has none: row.handle is null and the page
 //                       shows the name alone.
+//   handlesById(ids)    The same, for any list of accounts (the staff who wrote
+//                       a message or closed a conversation): { id: 'Ana_1' }.
+//                       r27 (Sebastian, 12 Oct): the handle goes beside every
+//                       name, so three people called Laura can be told apart.
 
 import { sb } from './roles.js';
 
@@ -43,19 +47,24 @@ export async function waitingOnly(rows) {
   return list.filter((m) => !(Number(m.id) < lastAnswer[m.reservation_id]));
 }
 
+// ids: account numbers. Returns { id: handle } for the ones that have a handle.
+export async function handlesById(ids) {
+  const list = wholeIds((Array.isArray(ids) ? ids : []).map((id) => ({ id })), 'id');
+  const handle = {};
+  if (!list.length) return handle;
+  const parts = [];
+  for (let i = 0; i < list.length; i += CHUNK) parts.push(list.slice(i, i + CHUNK));
+  const got = await Promise.all(parts.map((p) => sb(`/tasters?id=in.(${p.join(',')})&select=id,username&limit=${p.length}`)));
+  got.forEach((g) => {
+    if (g.ok && Array.isArray(g.data)) g.data.forEach((t) => { if (t.username) handle[t.id] = String(t.username); });
+  });
+  return handle;
+}
+
 // rows: bookings or requests that carry taster_id. Sets row.handle on each.
 export async function addHandles(rows) {
   const list = Array.isArray(rows) ? rows : [];
-  const ids = wholeIds(list, 'taster_id');
-  const handle = {};
-  if (ids.length) {
-    const parts = [];
-    for (let i = 0; i < ids.length; i += CHUNK) parts.push(ids.slice(i, i + CHUNK));
-    const got = await Promise.all(parts.map((p) => sb(`/tasters?id=in.(${p.join(',')})&select=id,username&limit=${p.length}`)));
-    got.forEach((g) => {
-      if (g.ok && Array.isArray(g.data)) g.data.forEach((t) => { if (t.username) handle[t.id] = String(t.username); });
-    });
-  }
+  const handle = await handlesById(list.map((r) => r && r.taster_id));
   list.forEach((r) => { if (r) r.handle = (r.taster_id && handle[r.taster_id]) || null; });
   return list;
 }
