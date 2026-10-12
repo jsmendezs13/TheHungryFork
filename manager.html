@@ -336,6 +336,14 @@
   .mg-day.on { background:var(--ink); border-color:var(--ink); color:var(--white); box-shadow:0 6px 16px rgba(43,33,26,.25); }
   .mg-day.on span, .mg-day.on i { color:rgba(252,249,244,.75); }
   .mg-day span.dot { position:absolute; top:-4px; right:-4px; width:12px; height:12px; border-radius:50%; background:var(--red); border:2px solid var(--white); box-sizing:border-box; }
+  /* r26 (Sebastian, 12 Oct): today's chip is a little bigger and blue, so where we are is easy to find.
+     It grows with transform, not width: a day stays one 56px slot (MG_SLOT), so the strip's maths is the same. */
+  .mg-day.today { z-index:1; transform:scale(1.14); background:var(--blue-light); border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
+  .mg-day.today span { color:var(--blue); font-weight:700; }
+  .mg-day.today b { color:var(--blue); }
+  .mg-day.today i { color:#1F3F75; }
+  .mg-day.today.on { background:var(--blue); border-color:var(--blue); box-shadow:0 6px 16px rgba(47,93,168,.4); }
+  .mg-day.today.on span, .mg-day.today.on b, .mg-day.today.on i { color:#fff; }
   .mg-scroll { flex:1 1 auto !important; min-height:0; overflow-y:auto; margin:0 -1.1rem; padding:0 1.1rem .4rem; overscroll-behavior:contain; }
   .mg-row { display:block; width:100%; text-align:left; background:#fff; border:1px solid var(--border); border-radius:14px; padding:.7rem .8rem; margin-bottom:.5rem;
             font-family:var(--sans); color:var(--text); }
@@ -345,7 +353,8 @@
   .mg-live { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
   .mg-row.new { border-color:rgba(176,16,21,.45); box-shadow:0 0 0 1px rgba(176,16,21,.15); }
   .mg-row-top { display:flex; align-items:center; gap:.5rem; }
-  .mg-row-top b { font-weight:600; font-size:.95rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mg-row-top b { font-weight:600; font-size:.95rem; flex:1; min-width:0; line-height:1.25; overflow-wrap:anywhere; }   /* r26: the name and its handle both show; a long one wraps */
+  .mg-row-top b .reviewer-handle { white-space:normal; overflow-wrap:anywhere; }   /* a very long handle breaks inside the name's own room, never under the time */
   .mg-row-top span { font-size:.68rem; color:var(--muted); white-space:nowrap; }
   .mg-row-top .mg-n, .mg-tab .mg-n { background:var(--red); color:#fff; }
   .mg-row-last { font-size:.82rem; color:var(--text); margin-top:.2rem; line-height:1.45; overflow-wrap:anywhere; }
@@ -441,6 +450,13 @@ let TAB = tabFromHash() || 'reservations';
 function tabFromHash(){ const t = (location.hash||'').replace('#',''); return TABS[t] ? t : null; }
 
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// A guest, as the menu's reviews show one: the name, then the handle in grey
+// beside it — "Johan S Mendez (Johan_I)". A booking made without an account has
+// no handle, and the name stands alone. (.reviewer-handle is in taster.css.)
+// <wbr>: on a narrow phone a long name breaks before the handle, not inside it.
+function whoHtml(name, handle){
+  return esc(name) + (handle ? '<wbr><span class="reviewer-handle">('+esc(handle)+')</span>' : '');
+}
 function wrap(){return document.getElementById('m-wrap');}
 
 
@@ -1567,7 +1583,7 @@ function rvPaintTop(){
     + '</div>';
   if(q.length){
     const r = q[0];
-    html += '<div class="rv-banner"><span><b>'+esc(r.name)+'</b> asks for <b>'+rvPeople(r.party)+'</b> · '+esc(rvShort(r.date))
+    html += '<div class="rv-banner"><span><b>'+whoHtml(r.name, r.handle)+'</b> asks for <b>'+rvPeople(r.party)+'</b> · '+esc(rvShort(r.date))
       + (q.length>1 ? ' · +'+(q.length-1)+' more' : '')+'</span>'
       + '<button type="button" class="rv-act no" style="background:#fff;flex:none;" onclick="rvOpenRequests()">'+(d.canEdit?'Answer':'See')+'</button></div>';
   }
@@ -1604,7 +1620,7 @@ function rvCard(b){
   return '<div class="rv-w'+(['seated','no_show','cancelled'].includes(b.status)?' faded':'')+scanned+'" data-id="'+b.id+'" data-late="'+late+'">'
     + '<div class="rv-w-in">'
     +   '<div class="rv-when"><span>'+esc(b.label)+'</span><em>'+esc(b.code)+'</em></div>'
-    +   '<div class="rv-name"><span class="rv-name-text">'+esc(b.name)+chips+'</span>'+msgSign(b)+'</div>'
+    +   '<div class="rv-name"><span class="rv-name-text">'+whoHtml(b.name, b.handle)+chips+'</span>'+msgSign(b)+'</div>'
     +   '<div class="rv-meta">'+rvPeople(b.party)+(b.areaName?' · '+esc(b.areaName):'')+' · '+rvTel(b.phone)+'</div>'
     +   (b.notes ? '<div class="rv-note">&ldquo;'+esc(b.notes)+'&rdquo;</div>' : '')
     + '</div>'
@@ -1917,7 +1933,7 @@ function rvScanHtml(){
   if(sc.error) return '<div class="rv-scan bad"><span><b>QR code:</b> '+esc(sc.error)+'</span>'+x+'</div>';
   const live = RV.day && RV.day.bookings.find(b => b.id === sc.booking.id);
   const b = Object.assign({}, sc.booking, live ? { status: live.status, seatedLabel: live.seatedLabel } : {});
-  const who = '<b>'+esc(b.name)+'</b> · '+rvPeople(b.party);
+  const who = '<b>'+whoHtml(b.name, b.handle)+'</b> · '+rvPeople(b.party);
   const when = (sc.date === RV.today ? 'Today' : esc(rvShort(sc.date))) + ' · ' + esc(b.label) + (b.areaName ? ' · '+esc(b.areaName) : '');
   if(sc.done) return '<div class="rv-scan done"><span><b>Arrived ✓</b> '+who+'<br>'+when+'</span>'+x+'</div>';
   if(b.status === 'seated' || b.status === 'done')
@@ -2013,7 +2029,7 @@ function rvRequestCard(r){
       + '<button type="button" class="m-revert" onclick="RV.sheet.open=null;rvPaintSheet()">Back</button></div></div>';
   }
   return '<div class="rv-rq">'
-    + '<div class="rv-name">'+esc(r.name)+' <span class="rv-chip big">'+rvPeople(r.party)+'</span></div>'
+    + '<div class="rv-name">'+whoHtml(r.name, r.handle)+' <span class="rv-chip big">'+rvPeople(r.party)+'</span></div>'
     + '<div class="rv-rq-when">'+esc(rvShort(r.date))+' · '+(r.time ? esc(rvHm(r.time)) : 'no time given')+'</div>'
     + (r.occasion ? '<div class="rv-meta">Occasion: '+esc(r.occasion)+'</div>' : '')
     + (r.message ? '<div class="rv-note">&ldquo;'+esc(r.message)+'&rdquo;</div>' : '')
@@ -2035,7 +2051,7 @@ async function rvAccept(id, btn){
   try{
     const data = await rvApi({action:'staff_answer', requestId:id, decision:'accept', date: date, time: time, areaId: areaId});
     if(gen !== RV.gen) return;
-    RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+esc(r.name)+' <span class="rv-chip in">Booked</span></div>'
+    RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+whoHtml(r.name, r.handle)+' <span class="rv-chip in">Booked</span></div>'
       + '<div class="rv-rq-when">'+esc(rvShort(data.date))+' · '+esc(data.label)+' · '+esc(data.code)+'</div>'
       + '<div class="rv-meta" style="margin-top:.35rem;">'+(data.emailSent
           ? 'We emailed '+esc(r.name.split(' ')[0])+' the confirmation.'
@@ -2055,7 +2071,7 @@ async function rvDecline(id, btn){
   try{
     await rvApi({action:'staff_answer', requestId:id, decision:'decline', note: document.getElementById('rq-note-'+id).value});
     if(gen !== RV.gen) return;
-    RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+esc(r.name)+' <span class="rv-chip cx">Declined</span></div>'
+    RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+whoHtml(r.name, r.handle)+' <span class="rv-chip cx">Declined</span></div>'
       + '<div class="rv-meta" style="margin-top:.35rem;">Call them to let them know: '+rvTel(r.phone)+'</div></div>';
     rvAfterAnswer(id, null);
   }catch(e){
@@ -2703,7 +2719,7 @@ function msgStripDates(d){
 function msgStripHtml(d){
   MSG.stripDates = msgStripDates(d); MSG.stripToday = d.today; MSG.stripAim = null;
   return '<div class="mg-strip"><div class="mg-pad"></div>'
-    + MSG.stripDates.map(date => '<button type="button" class="mg-day" data-date="'+date+'" aria-label="'+esc(rvLong(date))+'">'
+    + MSG.stripDates.map(date => '<button type="button" class="mg-day'+(date===d.today ? ' today' : '')+'" data-date="'+date+'" aria-label="'+esc(rvLong(date))+'">'
         + '<span class="mg-wd">'+(date===d.today ? 'Today' : rvFmt(date, {weekday:'short'}))+'</span><b>'+Number(date.slice(8))+'</b><i>&nbsp;</i></button>').join('')
     + '<div class="mg-pad"></div></div>';
 }
@@ -2840,7 +2856,7 @@ function msgRow(t){
     : '<span>'+esc(t.lastLabel)+'</span>';
   return '<div class="mg-row'+(t.unread?' new':'')+'">'
     + '<button type="button" class="mg-row-main" onclick="msgOpenThread('+Number(t.id)+')">'
-    + '<span class="mg-row-top"><b>'+esc(t.name)+'</b><span>'+esc(t.label)+' · '+rvPeople(t.party)+'</span>'
+    + '<span class="mg-row-top"><b>'+whoHtml(t.name, t.handle)+'</b><span>'+esc(t.label)+' · '+rvPeople(t.party)+'</span>'
     + (t.unread ? '<span class="mg-n" aria-label="'+t.unread+' new">'+t.unread+'</span>' : '')+'</span>'
     + (last ? '<span class="mg-row-last">'+last+'</span>' : '')
     + '</button>'
@@ -2865,7 +2881,7 @@ function msgBubblesHtml(t){
 function msgThreadHtml(){
   const t = MSG.thread;
   if(!t) return msgHead('Messages', true) + (MSG.threadError ? '<div class="m-err">'+esc(MSG.threadError)+'</div>' : '<div class="m-skel"></div>');
-  return msgHead(esc(t.booking.name), true)
+  return msgHead(whoHtml(t.booking.name, t.booking.handle), true)
     + '<div class="mg-top">'+msgTopHtml(t)+'</div>'
     + '<div class="mg-scroll"><div class="mg-msgs">'+msgBubblesHtml(t)+'</div>'
     + '<p class="mg-foot">Kept until '+esc(t.keptUntil)+' (90 days after the table), then deleted.</p></div>'
@@ -2917,15 +2933,20 @@ async function msgSend(){
   finally{ MSG.sending = false; const again = document.querySelector('#mg-sheet-host .mg-send'); if(again) again.disabled = false; }
 }
 
-function msgCloseThread(btn){ return msgState('staff_msg_close', MSG.threadId, btn, 'Closed'); }
+function msgCloseThread(btn){
+  // Closing answers what is on the screen: the server marks the guest's messages
+  // up to the last one drawn as read, so no "new" is left on a chat nobody has to open again.
+  const seen = MSG.thread && MSG.thread.messages ? MSG.thread.messages.reduce((n, m) => m.fromGuest ? Math.max(n, Number(m.id) || 0) : n, 0) : 0;
+  return msgState('staff_msg_close', MSG.threadId, btn, 'Closed', seen ? { seen: seen } : null);
+}
 function msgReopenThread(btn){ return msgState('staff_msg_reopen', MSG.threadId, btn, 'Open again'); }
 function msgReopen(id, btn){ return msgState('staff_msg_reopen', id, btn, 'Open again'); }
-async function msgState(action, id, btn, done){
+async function msgState(action, id, btn, done, extra){
   if(MSG.busy) return;
   MSG.busy = true; if(btn) btn.disabled = true;
   const gen = MSG.gen;
   try{
-    const data = await rvApi({action: action, id: Number(id)});
+    const data = await rvApi(Object.assign({action: action, id: Number(id)}, extra || {}));
     if(gen !== MSG.gen) return;
     showToast(done+' · '+data.booking.name);
     if(MSG.view === 'thread' && Number(id) === MSG.threadId){ MSG.seq += 1; MSG.thread = data; msgPaint(); }
