@@ -34,6 +34,7 @@ import { makeLimiter, allow, keyFor, clientIp } from './auth.js';
 import { sb, tasterIdFromRequest, loadAccess, accessProblem, levelAt, LEVEL } from './roles.js';
 import { loadBooking, clockIn, cleanDate } from './booking.js';
 import { serviceDateOf, serviceToday, addDays, canMessageAt } from './staff.js';
+import { waitingOnly, addHandles } from './guests.js';
 
 export const KEEP_DAYS = 90;
 export const KEEP_MS = KEEP_DAYS * 24 * 3600 * 1000;
@@ -404,13 +405,15 @@ async function inbox(req, res, body) {
         if (await canMessageAt(tasterId, rid, e.level)) rids.push(Number(rid));
       }
       if (rids.length) {
-        const unread = await sb(`/reservation_messages?from_guest=is.true&read_at=is.null&restaurant_id=in.(${rids.join(',')})` +
-          '&select=reservation_id,restaurant_id&limit=1000');
-        if (unread.ok && Array.isArray(unread.data)) {
+        const asked = await sb(`/reservation_messages?from_guest=is.true&read_at=is.null&restaurant_id=in.(${rids.join(',')})` +
+          '&select=id,reservation_id,restaurant_id&limit=1000');
+        if (asked.ok && Array.isArray(asked.data)) {
+          // Only the guests still waiting for an answer (guests.js).
+          const waiting = await waitingOnly(asked.data);
           const byRestaurant = {};
-          unread.data.forEach((m) => { byRestaurant[m.restaurant_id] = (byRestaurant[m.restaurant_id] || 0) + 1; });
+          waiting.forEach((m) => { byRestaurant[m.restaurant_id] = (byRestaurant[m.restaurant_id] || 0) + 1; });
           // restaurants: where this count applies, so a page can tell "none waiting" from "not counted here".
-          staff = { unread: unread.data.length, conversations: new Set(unread.data.map((m) => m.reservation_id)).size, byRestaurant, restaurants: rids };
+          staff = { unread: waiting.length, conversations: new Set(waiting.map((m) => m.reservation_id)).size, byRestaurant, restaurants: rids };
         }
       }
     }
@@ -479,6 +482,15 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
       body: JSON.stringify({ closed_at: stamp, closed_reason: 'staff', closed_by: tasterId }),
     });
     if (!done.ok) return res.status(502).json({ error: 'Could not close it. Please try again.' });
+    // Closing is the answer to what was on the screen: those guest messages are
+    // read, even for Sebastian, whose opening a chat never marks them (a message
+    // that arrived after the screen was drawn is above `seen` and stays new).
+    const seen = Number(body.seen);
+    if (Number.isInteger(seen) && seen > 0) {
+      await sb(`/reservation_messages?reservation_id=eq.${id}&id=lte.${seen}&from_guest=is.true&read_at=is.null`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ read_at: stamp }),
+      });
+    }
     console.log('[messages] taster', tasterId, 'closed the conversation of', row.code);
     return staffReply(res, row, null, who, timezone);
   }
@@ -529,13 +541,13 @@ async function staffReply(res, row, thread, who, timezone, opts = {}) {
   const list = await messagesOf(row.id);
   if (list === null) return res.status(502).json({ error: 'Could not read the messages. Please try again.' });
   if (opts.read) await markRead(row.id, list, false);
-  const names = await closerNames([th]);
+  const [names] = await Promise.all([closerNames([th]), addHandles([row])]);
   const now = Date.now();
   return res.status(200).json({
     success: true,
     ...(opts.emailed ? { emailed: true } : {}),
     booking: {
-      id: row.id, name: row.guest_name, phone: row.guest_phone, code: row.code, party: row.party_size,
+      id: row.id, name: row.guest_name, handle: row.handle || null, phone: row.guest_phone, code: row.code, party: row.party_size,
       status: row.status, day: tableDay(timezone, row.reserved_at), ...clockIn(timezone, row.reserved_at),
       serviceDate: th.service_date,
     },
@@ -596,14 +608,15 @@ async function staffDay(req, res, body, tasterId) {
   const [threads, unread] = await Promise.all([
     sb(`/reservation_threads?restaurant_id=eq.${who.rid}&table_at=gte.${since}` +
        '&select=reservation_id,service_date,closed_at,closed_reason,closed_by,last_at,last_from_guest,guest_late_reopen_at&order=last_at.desc&limit=2000'),
-    sb(`/reservation_messages?restaurant_id=eq.${who.rid}&from_guest=is.true&read_at=is.null&select=reservation_id&limit=2000`),
+    sb(`/reservation_messages?restaurant_id=eq.${who.rid}&from_guest=is.true&read_at=is.null&select=id,reservation_id&limit=2000`),
   ]);
   if (!threads.ok || !Array.isArray(threads.data)) {
     return res.status(502).json({ error: 'Could not read the messages (the database answered ' + threads.status + ').'
       + (threads.status === 404 ? ' That usually means migration 19 has not been run yet.' : '') });
   }
   const count = {};
-  (unread.ok && Array.isArray(unread.data) ? unread.data : []).forEach((m) => { count[m.reservation_id] = (count[m.reservation_id] || 0) + 1; });
+  const waiting = await waitingOnly(unread.ok && Array.isArray(unread.data) ? unread.data : []);
+  waiting.forEach((m) => { count[m.reservation_id] = (count[m.reservation_id] || 0) + 1; });
 
   const days = {};
   threads.data.forEach((t) => {
@@ -634,6 +647,7 @@ async function staffDay(req, res, body, tasterId) {
     ]);
     const rowOf = {};
     (tables.ok && Array.isArray(tables.data) ? tables.data : []).forEach((r) => { rowOf[r.id] = r; });
+    await addHandles(Object.values(rowOf));
     const lastOf = {};
     (last.ok && Array.isArray(last.data) ? last.data : []).forEach((m) => { if (!lastOf[m.reservation_id]) lastOf[m.reservation_id] = m; });
     const now = Date.now();
@@ -641,7 +655,7 @@ async function staffDay(req, res, body, tasterId) {
       const r = rowOf[t.reservation_id], m = lastOf[t.reservation_id];
       const preview = m ? String(m.body).replace(/\s+/g, ' ') : '';
       return {
-        id: Number(t.reservation_id), name: r.guest_name, code: r.code, party: r.party_size, status: r.status,
+        id: Number(t.reservation_id), name: r.guest_name, handle: r.handle || null, code: r.code, party: r.party_size, status: r.status,
         ...clockIn(timezone, r.reserved_at),
         minutes: minutesOf(r),
         open: !t.closed_at,
