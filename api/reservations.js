@@ -55,6 +55,9 @@ export const config = { maxDuration: 30 };
 // it refuses rather than failing open: an unlimited booking endpoint is a
 // machine for filling a dining room with guests who do not exist.
 const readLimiter     = makeLimiter({ requests: 240, window: '10 m', prefix: 'resv:slots' });
+// r27: the opening hours are asked for by the bottom of every page, so they
+// have their own allowance and never use up the one the free times need.
+const hoursLimiter    = makeLimiter({ requests: 120, window: '10 m', prefix: 'resv:hours' });
 const bookIpLimiter   = makeLimiter({ requests: 10,  window: '1 h',  prefix: 'resv:book:ip' });
 const bookPhoneLimit  = makeLimiter({ requests: 4,   window: '24 h', prefix: 'resv:book:phone' });
 const reqIpLimiter    = makeLimiter({ requests: 6,   window: '1 h',  prefix: 'resv:req:ip' });
@@ -80,6 +83,7 @@ export default async function handler(req, res) {
   const action = String(body.action || 'slots');
 
   if (action === 'slots')       return slots(req, res, body);
+  if (action === 'hours')       return hours(req, res, body);
   if (action === 'book')        return book(req, res, body);
   if (action === 'request')     return request(req, res, body);
   if (action === 'mine')        return mine(req, res, body);
@@ -176,6 +180,30 @@ async function slots(req, res, body) {
     party,
     closed:     open === false,          // a holiday, or a day they never open
     slots:      free.slots,
+  });
+}
+
+// ── THE OPENING HOURS ─────────────────────────────────────────────────────────
+// r27 (Sebastian, 12 Oct): the bottom of the site and the Reservations page say
+// the hours the manager chose (Reservations → Opening hours), not a line written
+// once into the page. The week as it is saved: a day with two services has two
+// rows, and a closing time earlier than the opening time means after midnight.
+// Public, like the free times — it says nothing about any guest. The page turns
+// it into words ("Mon–Tue 2pm–11pm"), and keeps the last answer in the browser
+// so the next page opens with the hours already there.
+async function hours(req, res, body) {
+  if (!(await allow(hoursLimiter, keyFor(clientIp(req)), { failOpen: true }))) {
+    return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
+  }
+  const restaurantId = Number(body.restaurantId) || DEFAULT_RESTAURANT_ID;
+  const got = await sb(`/restaurant_hours?restaurant_id=eq.${restaurantId}&select=weekday,opens_at,closes_at&order=weekday.asc,opens_at.asc&limit=28`);
+  if (!got.ok || !Array.isArray(got.data)) {
+    console.error('[reservations:hours] read failed', got.status);
+    return res.status(502).json({ error: 'Could not read the opening hours.' });
+  }
+  return res.status(200).json({
+    success: true,
+    hours: got.data.map((h) => ({ weekday: h.weekday, opens: String(h.opens_at).slice(0, 5), closes: String(h.closes_at).slice(0, 5) })),
   });
 }
 
