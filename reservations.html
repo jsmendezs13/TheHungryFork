@@ -311,6 +311,66 @@ window.hfEarlySlots = (function () {
   @media (min-width:760px) {
     .rv-time { flex-basis:100px; }
   }
+
+  /* ═══ DESKTOP (Sebastian, 12 Oct) ═══════════════════════════════════════════
+     From 1024 px wide the first screen is two columns: the restaurant on the left
+     (the plate, the address, the three map apps, the text) and on the right a card
+     for the booking (day, people, free hours) with the bar and Book as its foot.
+     All of it is inside this one media query: below 1024 px nothing here applies, so
+     the phone (and the tablet) are exactly as they were. The steps after Book keep
+     their one narrow column, centred. The card sits over the page with its own
+     scroll if the window is short, so Book is always on screen.
+     ═══════════════════════════════════════════════════════════════════════ */
+  @media (min-width:1024px) {
+    main { max-width:1240px; }
+    .rv-step:not(#step-pick) { width:100%; max-width:600px; margin:0 auto; }
+
+    #step-pick { position:relative; padding:28px; --card-h:max(320px, min(calc(100% - 144px), 640px));
+      --L:calc(min(100vw, 1240px) - 544px); --plate:min(450px, calc(var(--L) * .6)); }       /* L = the left column's width */
+    .rv-pick { position:static; margin-right:488px; scrollbar-width:thin; scrollbar-color:rgba(252,249,244,.28) transparent; }
+    .rv-body { padding:0; }
+
+    /* the restaurant, on the left */
+    .rv-hero { min-height:330px; border:1px solid rgba(252,249,244,.12); border-radius:24px; }
+    .rv-hero-text { width:calc(var(--L) - var(--plate) + 4px); max-width:none; padding:46px 0 40px 40px; }
+    .rv-eyebrow { font-size:.7rem; letter-spacing:.28em; }
+    .rv-hero h1 { font-size:clamp(2.2rem, calc(var(--L) / 13), 3.3rem); margin:.7rem 0 .8rem; }
+    .rv-hero-line { font-size:.95rem; line-height:1.55; }
+    .rv-plate { top:50%; right:-56px; width:var(--plate); transform:translateY(-50%); }
+    .rv-maps { gap:10px; padding:20px 0 0; }
+    .rv-flag { width:38px; }
+    .rv-map { height:50px; gap:9px; padding:0 12px; font-size:.86rem; }
+    .rv-mi { width:24px; height:24px; font-size:19px; }
+    .rv-mi-w { font-size:.88rem; border-radius:7px; }
+    .rv-about { padding:26px 2px 12px; }
+    .rv-about h2 { font-size:2.05rem; margin-bottom:.5rem; }
+    .rv-about-p { font-size:1rem; line-height:1.72; max-width:64ch; }
+    .rv-about-p.clamp { display:block; overflow:visible; -webkit-line-clamp:unset; }
+    .rv-more { display:none; }
+
+    /* the booking card, on the right: its own scroll, and the bar as its foot */
+    .rv-book { position:absolute; top:28px; right:28px; width:448px; height:var(--card-h); margin:0; padding:26px 26px 10px;
+      border:1px solid rgba(252,249,244,.16); border-bottom:0; border-radius:24px 24px 0 0; background:#1A100B;
+      display:flex; flex-direction:column; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(252,249,244,.28) transparent; }
+    .rv-book > * { flex:none; }
+    .rv-book .rv-foot { margin-top:auto; padding-top:14px; }
+    .rv-book::before { content:'Book a table'; display:block; font-family:var(--serif); font-size:1.95rem; font-weight:600; line-height:1.1; margin:0 0 1.3rem; }
+    .rv-bar { position:absolute; right:28px; top:calc(28px + var(--card-h)); width:448px; height:88px; padding:0 26px;
+      border:1px solid rgba(252,249,244,.16); border-radius:0 0 24px 24px; background:#130B07; }
+    .rv-bar-sum b { font-size:1.25rem; }
+    .rv-bar-sum small { font-size:.74rem; }
+
+    /* things a mouse can do */
+    @media (hover:hover) {
+      .rv-map:hover { background:rgba(252,249,244,.14); border-color:rgba(252,249,244,.55); }
+      .rv-dayline:hover { border-color:rgba(252,249,244,.55); }
+      .rv-arrow:not(:disabled):hover { border-color:rgba(252,249,244,.75); background:rgba(252,249,244,.09); }
+      .rv-size:not(.on):hover, .rv-time:not(.on):hover { opacity:1; border-color:rgba(252,249,244,.65); }
+      .rv-cd:not(:disabled):not(.on):hover span { background:rgba(252,249,244,.13); }
+      .rv-bar-go:not(:disabled):hover { filter:brightness(1.1); }
+      .rv-link:hover { color:#FFC2BA; }
+    }
+  }
 </style>
 <link rel="stylesheet" href="/taster.css">
 </head>
@@ -682,7 +742,10 @@ function carFit(strip) {
   const gap = parseFloat(getComputedStyle(strip).columnGap) || 0;
   strip.style.setProperty('--car-pad', Math.max(0, Math.round((strip.clientWidth - first.offsetWidth) / 2 - gap)) + 'px');
   if (strip._carTouch) return;            // a finger is on it: it chooses, not the page
-  carGo(strip, strip.querySelector('[aria-pressed="true"]') || first, false);
+  // The one that IS chosen (the page's own record), not the one that looks chosen: while the window
+  // changes size the browser moves the strip a little first, and that must never change the choice.
+  const v = carChosenValue(strip);
+  carGo(strip, (v !== null && strip.querySelector('[data-v="' + v + '"]')) || strip.querySelector('[aria-pressed="true"]') || first, false);
 }
 function carMake(strip) {
   if (strip.dataset.car) return;
