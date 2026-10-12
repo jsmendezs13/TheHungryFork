@@ -69,7 +69,7 @@ export const LEVEL = { none: 0, crew: 1, manager: 2, owner: 3, platform: 4 };
 // Reads the caller's real, current standing straight from the database.
 export async function loadAccess(tasterId) {
   const [who, roles] = await Promise.all([
-    sb(`/tasters?id=eq.${tasterId}&select=id,first_name,is_platform_admin`),
+    sb(`/tasters?id=eq.${tasterId}&select=id,first_name,username,is_platform_admin`),
     sb(`/restaurant_roles?taster_id=eq.${tasterId}&select=restaurant_id,role,can_issue_codes`),
   ]);
 
@@ -106,6 +106,7 @@ export async function loadAccess(tasterId) {
   return {
     tasterId: who.data[0].id,
     firstName: who.data[0].first_name,
+    handle: who.data[0].username || null,       // r27: shown beside the name (Santiago (Santi_V))
     isPlatformAdmin: !!who.data[0].is_platform_admin,
     byRestaurant,
     rolesUnavailable,
