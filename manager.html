@@ -176,6 +176,15 @@
   .rv-cday i.shut { color:var(--muted); font-weight:500; }
   .rv-cday.on { background:var(--ink); border-color:var(--ink); color:var(--white); box-shadow:0 8px 20px rgba(43,33,26,.25); }
   .rv-cday.on span { color:rgba(252,249,244,.75); } .rv-cday.on i { color:#FF9C92; } .rv-cday.on i.shut { color:rgba(252,249,244,.6); }
+  /* r27 (Sebastian, 12 Oct): today is blue here too, as in Messages, so where we are is easy to find.
+     Light blue when another day is shown; solid blue when today is the day in the middle. */
+  .m-eyebrow .reviewer-handle { text-transform:none; letter-spacing:.02em; }   /* "Signed in as SANTIAGO (Santi_V)": the handle keeps its own letters */
+  .rv-cday.today { z-index:1; background:var(--blue-light); border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
+  .rv-cday.today span { color:var(--blue); font-weight:700; }
+  .rv-cday.today b { color:var(--blue); }
+  .rv-cday.today i, .rv-cday.today i.shut { color:#1F3F75; }
+  .rv-cday.today.on { background:var(--blue); border-color:var(--blue); box-shadow:0 8px 20px rgba(47,93,168,.4); }
+  .rv-cday.today.on span, .rv-cday.today.on b, .rv-cday.today.on i, .rv-cday.today.on i.shut { color:#fff; }
   .rv-dateline { text-align:center; font-size:.64rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.7rem; }
 
   .rv-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; margin-bottom:.8rem; }
@@ -383,6 +392,7 @@
   .mg-bub.guest .mg-bub-who { color:var(--red); }
   .mg-bub.staff .mg-bub-who { color:rgba(252,249,244,.75); text-align:right; }
   .mg-bub-who i { font-style:normal; font-weight:400; opacity:.75; }
+  .mg-bub-who .reviewer-handle { color:inherit; opacity:.75; font-size:inherit; font-weight:400; margin-left:.25rem; letter-spacing:inherit; }   /* r27: the handle beside a name in a bubble, readable on red and on dark */
   .mg-warn { font-size:.72rem; color:var(--amber); background:var(--amber-light); border-radius:10px; padding:.45rem .6rem; margin:.1rem 0 .4rem; line-height:1.45; }
   .mg-form { display:flex; gap:.45rem; align-items:flex-end; padding-top:.55rem; border-top:1px solid var(--border); }
   .mg-input { flex:1; min-width:0; min-height:44px; max-height:140px; resize:none; border:1px solid var(--border); border-radius:12px; background:#fff; color:var(--text);
@@ -456,6 +466,10 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 // <wbr>: on a narrow phone a long name breaks before the handle, not inside it.
 function whoHtml(name, handle){
   return esc(name) + (handle ? '<wbr><span class="reviewer-handle">('+esc(handle)+')</span>' : '');
+}
+// The same, as plain text (a toast, a screen reader's label, a question box): "Johan S Mendez (Johan_I)".
+function whoText(name, handle){
+  return String(name==null?'':name) + (handle ? ' ('+handle+')' : '');
 }
 function wrap(){return document.getElementById('m-wrap');}
 
@@ -545,10 +559,10 @@ async function boot(){
     // the account lacks permission.
     const reason = ACCESS.isPlatformAdmin
       ? '<div class="m-eyebrow">Nothing to manage</div>'
-        + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+        + '<div class="m-h">Hi '+(ACCESS.firstName ? whoHtml(ACCESS.firstName, ACCESS.handle) : 'there')+'</div>'
         + '<div class="m-sub">You are the platform admin, so you see every restaurant — and right now the <strong>restaurants</strong> table has no rows in it. Add the restaurant, then reload.</div>'
       : '<div class="m-eyebrow">No access yet</div>'
-        + '<div class="m-h">Hi '+esc(ACCESS.firstName||'there')+'</div>'
+        + '<div class="m-h">Hi '+(ACCESS.firstName ? whoHtml(ACCESS.firstName, ACCESS.handle) : 'there')+'</div>'
         + (rvScanToken()
            ? '<div class="m-sub">This QR code is for the restaurant\'s staff. If it is your own table, show it at the door.</div>'
            : '<div class="m-sub">This account has no role at any restaurant yet. Ask your manager or Seb\'s Analytics to add it, then reload this page.</div>');
@@ -625,7 +639,7 @@ function header(){
   const roleLabel = RESTAURANT.role==='platform'?'Platform admin':RESTAURANT.role;
   return '<div class="m-card m-head-card">'
     + '<div class="m-head-row"><div>'
-    +   '<div class="m-eyebrow">Signed in as '+esc(ACCESS.firstName||'')+'</div>'
+    +   '<div class="m-eyebrow">Signed in as '+whoHtml(ACCESS.firstName||'', ACCESS.handle)+'</div>'
     +   '<div class="m-h">'+esc(RESTAURANT.name||'Restaurant')+'</div>'
     + '</div><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span></div>'
     + picker
@@ -879,11 +893,11 @@ function peopleSection(){
     ? PEOPLE.people.map(p =>
         '<div class="m-person">'
       + '<div class="m-person-id">'
-      +   '<div class="m-person-name">'+esc(p.name)+' <span class="m-role'+(p.role==='owner'?' owner':'')+'">'+esc(ROLE_LABEL[p.role]||p.role)+'</span></div>'
+      +   '<div class="m-person-name">'+whoHtml(p.name, p.username)+' <span class="m-role'+(p.role==='owner'?' owner':'')+'">'+esc(ROLE_LABEL[p.role]||p.role)+'</span></div>'
       +   '<div class="m-person-sub">'+(p.username?esc(p.username)+' · ':'')+(p.phoneEnds?'ends '+esc(p.phoneEnds):'')+'</div>'
       +   (p.role==='crew' && p.canMessage !== undefined
             ? '<div class="m-crew">'
-              + '<select class="m-select" aria-label="What '+esc(p.name)+' does" onchange="setJob('+Number(p.id)+',this.value)">'
+              + '<select class="m-select" aria-label="What '+esc(whoText(p.name, p.username))+' does" onchange="setJob('+Number(p.id)+',this.value)">'
               +   '<option value="">Job…</option>'
               +   CREW_JOBS.map(j => '<option value="'+j+'"'+(p.job===j?' selected':'')+'>'+CREW_JOB_LABEL[j]+'</option>').join('')
               + '</select>'
@@ -938,7 +952,7 @@ async function addPerson(){
     });
     if(!res.ok){ showToast(data.error||'Could not add that person.'); }
     else {
-      showToast(data.added.name+' is now '+ROLE_LABEL[data.added.role]);
+      showToast(whoText(data.added.name, data.added.username)+' is now '+ROLE_LABEL[data.added.role]);
       phoneEl.value='';
       await loadPeople();
       return;
@@ -949,7 +963,7 @@ async function addPerson(){
 
 async function removePerson(roleId){
   const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
-  if(!confirm('Remove '+(who ? who.name : 'this person')+'?')) return;
+  if(!confirm('Remove '+(who ? whoText(who.name, who.username) : 'this person')+'?')) return;
   try{
     const {res, data} = await callApi('/api/roles', {
       method:'POST',
@@ -976,7 +990,7 @@ async function setAnswers(roleId, on, box){
     if(!res.ok){ showToast(data.error||'Could not save that.'); if(box) box.checked = !on; return; }
     const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
     if(who) who.canMessage = on;
-    showToast((who ? who.name.split(' ')[0] : 'They')+(on ? ' answers guest messages now' : ' no longer answers guest messages'));
+    showToast((who ? whoText(who.name.split(' ')[0], who.username) : 'They')+(on ? ' answers guest messages now' : ' no longer answers guest messages'));
   }catch(e){ showToast(e.message||'Network error.'); if(box) box.checked = !on; }
 }
 async function setJob(roleId, job){
@@ -1513,6 +1527,7 @@ function rvFillStrip(){
       else { line = 'none'; shut = true; }
     }
     cell.querySelector('span').textContent = date===RV.today ? 'Today' : rvFmt(date, {weekday:'short'});
+    cell.classList.toggle('today', date===RV.today);
     const i = cell.querySelector('i');
     i.textContent = line; i.className = shut ? 'shut' : '';
   });
@@ -1526,8 +1541,10 @@ function rvPaintStrip(){
   const mid = strip.scrollLeft / RV_SLOT;
   strip.querySelectorAll('.rv-cday').forEach((cell, i) => {
     const d = Math.abs(i - mid), a = Math.min(d, 3);
-    cell.style.transform = 'scale('+(1.2 - .2*Math.min(a,1) - .05*Math.max(0, a-1))+')';
-    cell.style.opacity = Math.max(.35, 1 - .25*Math.max(0, a - .5));
+    // Today is a little bigger and never fades towards the edge: it is the day to find.
+    const today = cell.classList.contains('today');
+    cell.style.transform = 'scale('+((1.2 - .2*Math.min(a,1) - .05*Math.max(0, a-1)) * (today ? 1.1 : 1))+')';
+    cell.style.opacity = Math.max(today ? .9 : .35, 1 - .25*Math.max(0, a - .5));
     const on = d < .5;
     cell.classList.toggle('on', on);
     if(on) cell.setAttribute('aria-current', 'date'); else cell.removeAttribute('aria-current');
@@ -1833,7 +1850,7 @@ async function rvAct(id, act, btn){
     const data = await rvApi({action:'staff_mark', id: id, to: act});
     if(gen !== RV.gen) return;
     rvApply(data.booking);
-    showToast(RV_DONE[act]+' · '+b.name);
+    showToast(RV_DONE[act]+' · '+whoText(b.name, b.handle));
     // Arrived closes the guest's conversation (and Undo opens it): the chat sign follows.
     if(b.chat && (act==='seated' || act==='booked')) rvLoadDay(RV.date, {quiet:true});
   }catch(e){
@@ -1963,7 +1980,7 @@ async function rvScanArrive(btn){
     const data = await rvApi({action:'staff_mark', id: sc.booking.id, to: 'seated', token: sc.token});
     if(gen !== RV.gen) return;
     sc.done = true; sc.booking = Object.assign({}, sc.booking, data.booking, { canArrive: false });
-    showToast('Arrived · '+data.booking.name);
+    showToast('Arrived · '+whoText(data.booking.name, data.booking.handle));
     if(RV.day && RV.day.bookings.some(b => b.id === data.booking.id)){
       rvApply(data.booking);
       rvLoadDay(RV.date, {quiet:true});        // the guest's conversation closed: its chat sign follows
@@ -2054,8 +2071,8 @@ async function rvAccept(id, btn){
     RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+whoHtml(r.name, r.handle)+' <span class="rv-chip in">Booked</span></div>'
       + '<div class="rv-rq-when">'+esc(rvShort(data.date))+' · '+esc(data.label)+' · '+esc(data.code)+'</div>'
       + '<div class="rv-meta" style="margin-top:.35rem;">'+(data.emailSent
-          ? 'We emailed '+esc(r.name.split(' ')[0])+' the confirmation.'
-          : 'No email went out. Call '+esc(r.name.split(' ')[0])+' to confirm: '+rvTel(r.phone))+'</div></div>';
+          ? 'We emailed '+whoHtml(r.name.split(' ')[0], r.handle)+' the confirmation.'
+          : 'No email went out. Call '+whoHtml(r.name.split(' ')[0], r.handle)+' to confirm: '+rvTel(r.phone))+'</div></div>';
     rvAfterAnswer(id, data.date);
   }catch(e){
     showToast(e.message);
@@ -2431,7 +2448,7 @@ function msgSign(b){
   if(!b.chat) return '';
   const n = Number(b.chat.unread) || 0;
   const cls = n ? ' new' : (b.chat.open ? '' : ' shut');
-  return '<button type="button" class="rv-chat-sign'+cls+'" aria-label="Messages from '+esc(b.name)+(n ? ' ('+n+' new)' : '')+'">'
+  return '<button type="button" class="rv-chat-sign'+cls+'" aria-label="Messages from '+esc(whoText(b.name, b.handle))+(n ? ' ('+n+' new)' : '')+'">'
     + MSG_ICON + (n ? '<b>'+(n>99?'99+':n)+'</b>' : '') + '</button>';
 }
 
@@ -2643,7 +2660,7 @@ function msgAnnounce(before, after){
   if(!before || !after || before.booking.id !== after.booking.id) return;
   const fresh = after.messages.filter(m => m.fromGuest && !before.messages.some(x => x.id === m.id));
   const live = document.querySelector('#mg-sheet-host .mg-live');
-  if(fresh.length && live) live.textContent = 'New message from '+fresh[fresh.length-1].who+': '+fresh[fresh.length-1].body;
+  if(fresh.length && live) live.textContent = 'New message from '+whoText(fresh[fresh.length-1].who, fresh[fresh.length-1].handle)+': '+fresh[fresh.length-1].body;
 }
 
 function msgHead(title, back){
@@ -2849,10 +2866,10 @@ function msgPatchList(host){
 }
 
 function msgRow(t){
-  const last = t.preview ? '<em>'+esc(t.lastWho || '')+':</em> '+esc(t.preview) : '';
+  const last = t.preview ? '<em>'+whoHtml(t.lastWho || '', t.lastHandle)+':</em> '+esc(t.preview) : '';
   const foot = t.closed
     ? '<span class="mg-closed'+(t.closed.kind==='staff'?' staff':'')+'">Closed · '+esc(t.closed.short)+'</span>'
-      + '<button type="button" class="rv-mini" onclick="msgReopen('+Number(t.id)+',this)" aria-label="Reopen the conversation with '+esc(t.name)+'">Reopen</button>'
+      + '<button type="button" class="rv-mini" onclick="msgReopen('+Number(t.id)+',this)" aria-label="Reopen the conversation with '+esc(whoText(t.name, t.handle))+'">Reopen</button>'
     : '<span>'+esc(t.lastLabel)+'</span>';
   return '<div class="mg-row'+(t.unread?' new':'')+'">'
     + '<button type="button" class="mg-row-main" onclick="msgOpenThread('+Number(t.id)+')">'
@@ -2869,13 +2886,13 @@ function msgTopHtml(t){
   const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+' · '+rvTel(b.phone);
   const state = t.open
     ? '<div class="mg-bar"><span class="mg-state">Open</span><button type="button" class="rv-mini" onclick="msgCloseThread(this)">Close</button></div>'
-      + (t.guestCanReopen ? '' : '<div class="mg-warn">'+esc(first)+' has used the one reopen after 24 hours. If you close it now, only the restaurant can open it again.</div>')
+      + (t.guestCanReopen ? '' : '<div class="mg-warn">'+whoHtml(first, b.handle)+' has used the one reopen after 24 hours. If you close it now, only the restaurant can open it again.</div>')
     : '<div class="mg-shut'+(t.closedNote && t.closedNote.kind==='staff'?' staff':'')+'">&#10003; '+esc(t.closedNote ? t.closedNote.text : 'Closed')
       + '<button type="button" class="rv-mini" onclick="msgReopenThread(this)">Reopen the conversation</button></div>';
   return '<div class="mg-sub">'+sub+'</div>' + state;
 }
 function msgBubblesHtml(t){
-  return t.messages.map(m => '<div class="mg-bub '+(m.fromGuest?'guest':'staff')+'"><span class="mg-bub-who">'+esc(m.who)+' <i>· '+esc(m.label)+'</i></span>'
+  return t.messages.map(m => '<div class="mg-bub '+(m.fromGuest?'guest':'staff')+'"><span class="mg-bub-who">'+(m.who==='You' ? 'You' : whoHtml(m.who, m.handle))+' <i>· '+esc(m.label)+'</i></span>'
     + esc(m.body)+'</div>').join('');
 }
 function msgThreadHtml(){
@@ -2948,7 +2965,7 @@ async function msgState(action, id, btn, done, extra){
   try{
     const data = await rvApi(Object.assign({action: action, id: Number(id)}, extra || {}));
     if(gen !== MSG.gen) return;
-    showToast(done+' · '+data.booking.name);
+    showToast(done+' · '+whoText(data.booking.name, data.booking.handle));
     if(MSG.view === 'thread' && Number(id) === MSG.threadId){ MSG.seq += 1; MSG.thread = data; msgPaint(); }
     else { if(action === 'staff_msg_reopen') MSG.tab = 'open'; msgLoadList(); }
   }catch(e){ showToast(e.message); if(btn) btn.disabled = false; }
