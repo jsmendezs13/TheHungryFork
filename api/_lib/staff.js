@@ -27,6 +27,7 @@ import { sb, tasterIdFromRequest, loadAccess, accessProblem, levelAt, LEVEL } fr
 import crypto from 'node:crypto';
 import { loadBooking, todayIn, clockIn, cleanDate, cleanText } from './booking.js';
 import { cleanArrivalToken } from './qr.js';
+import { waitingOnly, addHandles } from './guests.js';
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -93,10 +94,11 @@ const WHY_NOT = {
 };
 
 // Everything a staff read selects from reservations. guest_email is NOT here,
-// on purpose, and a test fails if it ever is.
-const BOOKING_COLUMNS = 'id,code,area_id,guest_name,guest_phone,party_size,reserved_at,local_date,local_time,'
+// on purpose, and a test fails if it ever is. taster_id is: it only finds the
+// guest's handle (guests.js), and never goes back to the page.
+const BOOKING_COLUMNS = 'id,code,area_id,taster_id,guest_name,guest_phone,party_size,reserved_at,local_date,local_time,'
                       + 'status,notes,source,seated_at,no_show_at,cancelled_at,created_at';
-const REQUEST_COLUMNS = 'id,guest_name,guest_phone,party_size,wanted_date,wanted_time,occasion,message,status,created_at';
+const REQUEST_COLUMNS = 'id,taster_id,guest_name,guest_phone,party_size,wanted_date,wanted_time,occasion,message,status,created_at';
 
 export async function staff(req, res, body, action, helpers = {}) {
   const tasterId = tasterIdFromRequest(req);
@@ -226,6 +228,8 @@ async function day(req, res, body, tasterId) {
   areaList.forEach((a) => { areaName[a.id] = a.name; });
   const now = Date.now();
 
+  const requestRows = requests.ok && Array.isArray(requests.data) ? requests.data : [];
+  await addHandles([...bookings.data, ...requestRows]);
   const dressed = bookings.data
     .filter((r) => inServiceDay(r, date))
     .map((r) => dressBooking(r, s.timezone, areaName, now, who.canEdit, date));
@@ -239,17 +243,19 @@ async function day(req, res, body, tasterId) {
     const ids = dressed.map((b) => Number(b.id));
     const [threads, unread] = await Promise.all([
       ids.length ? sb(`/reservation_threads?reservation_id=in.(${ids.join(',')})&select=reservation_id,closed_at`) : { ok: true, data: [] },
-      sb(`/reservation_messages?restaurant_id=eq.${who.rid}&from_guest=is.true&read_at=is.null&select=reservation_id&limit=2000`),
+      sb(`/reservation_messages?restaurant_id=eq.${who.rid}&from_guest=is.true&read_at=is.null&select=id,reservation_id&limit=2000`),
     ]);
     if (threads.ok && unread.ok && Array.isArray(threads.data) && Array.isArray(unread.data)) {
+      // New = a guest still waiting for an answer (guests.js).
+      const waiting = await waitingOnly(unread.data);
       const count = {};
-      unread.data.forEach((m) => { count[m.reservation_id] = (count[m.reservation_id] || 0) + 1; });
+      waiting.forEach((m) => { count[m.reservation_id] = (count[m.reservation_id] || 0) + 1; });
       const open = {};
       threads.data.forEach((t) => { open[t.reservation_id] = !t.closed_at; });
       dressed.forEach((b) => {
         b.chat = b.id in open ? { open: open[b.id], unread: count[b.id] || 0 } : null;
       });
-      messages = { unread: unread.data.length, conversations: Object.keys(count).length };
+      messages = { unread: waiting.length, conversations: Object.keys(count).length };
     }
   }
   return res.status(200).json({
@@ -274,7 +280,7 @@ async function day(req, res, body, tasterId) {
     },
     bookings: dressed,
     areas: areaList.filter((a) => a.is_active).map((a) => ({ id: a.id, name: a.name, seats: a.seats })),
-    requests: (requests.ok && Array.isArray(requests.data) ? requests.data : []).map((q) => dressRequest(q)),
+    requests: requestRows.map((q) => dressRequest(q)),
   });
 }
 
@@ -293,6 +299,7 @@ export function dressBooking(r, timezone, areaName, now, canEdit, serviceDate) {
     id:     r.id,
     code:   r.code,
     name:   r.guest_name,
+    handle: r.handle || null,
     phone:  r.guest_phone,
     party:  r.party_size,
     areaId: r.area_id || null,
@@ -313,7 +320,7 @@ export function dressBooking(r, timezone, areaName, now, canEdit, serviceDate) {
 
 function dressRequest(q) {
   return {
-    id: q.id, name: q.guest_name, phone: q.guest_phone, party: q.party_size,
+    id: q.id, name: q.guest_name, handle: q.handle || null, phone: q.guest_phone, party: q.party_size,
     date: q.wanted_date, time: q.wanted_time ? String(q.wanted_time).slice(0, 5) : null,
     occasion: q.occasion || null, message: q.message || null, status: q.status, createdAt: q.created_at,
   };
@@ -355,6 +362,7 @@ async function scan(req, res, body, tasterId) {
   const areaName = {};
   if (area && area.ok && Array.isArray(area.data)) area.data.forEach((a) => { areaName[a.id] = a.name; });
   const date = serviceDateOf(row);
+  await addHandles([row]);
   const booking = dressBooking(row, timezone, areaName, Date.now(), true, date);
   // Crew: the one button the scan gives them is Arrived.
   if (level < LEVEL.manager) Object.assign(booking, { canNoShow: false, canUndo: false, canCancel: false });
@@ -392,6 +400,7 @@ async function mark(req, res, body, tasterId) {
   delete row.arrival_token;                 // never goes back to the page
   const who = await gate(res, tasterId, row.restaurant_id, scanned ? LEVEL.crew : LEVEL.manager);
   if (!who) return;
+  await addHandles([row]);                  // after the check: nobody else's table is looked at
 
   const s = await loadBooking(row.restaurant_id);
   const timezone = (s && s.settings && s.settings.timezone) || 'America/New_York';
@@ -421,6 +430,7 @@ async function mark(req, res, body, tasterId) {
     // Somebody else changed it first (another phone, or the guest's own link).
     const fresh = await sb(`/reservations?id=eq.${id}&select=${BOOKING_COLUMNS}&limit=1`);
     const now2 = fresh.ok && Array.isArray(fresh.data) && fresh.data.length ? fresh.data[0] : row;
+    now2.handle = row.handle || null;
     return res.status(409).json({
       error: 'Someone changed this table a moment ago. The list now shows what it is.',
       booking: dressBooking(now2, timezone, {}, Date.now(), who.canEdit),
@@ -428,6 +438,7 @@ async function mark(req, res, body, tasterId) {
   }
   console.log('[staff:mark] taster', tasterId, 'set', row.code, 'to', to);
   await arrivalClosesChat(id, to, scanned, tasterId, stamp, row.status);
+  done.data[0].handle = row.handle || null;
   // Crew get the card back without buttons, as on their list.
   return res.status(200).json({ success: true, booking: dressBooking(done.data[0], timezone, {}, Date.now(), who.canEdit) });
 }
