@@ -34,7 +34,7 @@ import { makeLimiter, allow, keyFor, clientIp } from './auth.js';
 import { sb, tasterIdFromRequest, loadAccess, accessProblem, levelAt, LEVEL } from './roles.js';
 import { loadBooking, clockIn, cleanDate } from './booking.js';
 import { serviceDateOf, serviceToday, addDays, canMessageAt } from './staff.js';
-import { waitingOnly, addHandles } from './guests.js';
+import { waitingOnly, addHandles, handlesById } from './guests.js';
 
 export const KEEP_DAYS = 90;
 export const KEEP_MS = KEEP_DAYS * 24 * 3600 * 1000;
@@ -541,7 +541,12 @@ async function staffReply(res, row, thread, who, timezone, opts = {}) {
   const list = await messagesOf(row.id);
   if (list === null) return res.status(502).json({ error: 'Could not read the messages. Please try again.' });
   if (opts.read) await markRead(row.id, list, false);
-  const [names] = await Promise.all([closerNames([th]), addHandles([row])]);
+  // r27 (Sebastian, 12 Oct): every name carries its handle — the guest's, and
+  // the staff member's who wrote each answer or closed the conversation.
+  const [names, , byId] = await Promise.all([
+    closerNames([th]), addHandles([row]),
+    handlesById(list.filter((m) => !m.from_guest).map((m) => m.author_id)),
+  ]);
   const now = Date.now();
   return res.status(200).json({
     success: true,
@@ -563,6 +568,7 @@ async function staffReply(res, row, thread, who, timezone, opts = {}) {
       id: m.id,
       fromGuest: !!m.from_guest,
       who: m.from_guest ? firstWord(row.guest_name) : (Number(m.author_id) === Number(who.access.tasterId) ? 'You' : (m.author_name || 'The team')),
+      handle: m.from_guest ? (row.handle || null) : (byId[m.author_id] || null),
       body: m.body,
       at: new Date(m.created_at).toISOString(),
       label: whenLabel(timezone, m.created_at, now),
@@ -577,9 +583,12 @@ function firstWord(name) {
 async function closerNames(threads) {
   const ids = [...new Set(threads.filter((t) => t && t.closed_reason === 'staff' && t.closed_by).map((t) => Number(t.closed_by)))];
   if (!ids.length) return {};
-  const got = await sb(`/tasters?id=in.(${ids.join(',')})&select=id,first_name`);
+  const got = await sb(`/tasters?id=in.(${ids.join(',')})&select=id,first_name,username`);
   const out = {};
-  (got.ok && Array.isArray(got.data) ? got.data : []).forEach((t) => { out[t.id] = staffName(t.first_name); });
+  // "Ana (Ana_1)": the closed note is one line of text, so the handle is in it.
+  (got.ok && Array.isArray(got.data) ? got.data : []).forEach((t) => {
+    out[t.id] = staffName(t.first_name) + (t.username ? ` (${t.username})` : '');
+  });
   return out;
 }
 
@@ -587,7 +596,8 @@ async function closerNames(threads) {
 function closedNote(th, row, names, timezone) {
   const at = clockIn(timezone, th.closed_at).label;
   if (th.closed_reason === 'qr' || th.closed_reason === 'arrived') {
-    return { kind: 'arrived', text: `Closed by itself: ${firstWord(row.guest_name)} arrived at ${at}${th.closed_reason === 'qr' ? ' (QR)' : ''}`,
+    const guest = firstWord(row.guest_name) + (row.handle ? ` (${row.handle})` : '');
+    return { kind: 'arrived', text: `Closed by itself: ${guest} arrived at ${at}${th.closed_reason === 'qr' ? ' (QR)' : ''}`,
              short: `Arrived ${at}${th.closed_reason === 'qr' ? ' (QR)' : ''}` };
   }
   const by = names[th.closed_by] || 'the team';
@@ -642,7 +652,7 @@ async function staffDay(req, res, body, tasterId) {
     const ids = here.map((t) => Number(t.reservation_id));
     const [tables, last, names] = await Promise.all([
       sb(`/reservations?id=in.(${ids.join(',')})&select=${TABLE_COLUMNS}`),
-      sb(`/reservation_messages?reservation_id=in.(${ids.join(',')})&select=reservation_id,from_guest,author_name,body,created_at&order=id.desc&limit=${Math.min(2000, ids.length * 40)}`),
+      sb(`/reservation_messages?reservation_id=in.(${ids.join(',')})&select=reservation_id,from_guest,author_id,author_name,body,created_at&order=id.desc&limit=${Math.min(2000, ids.length * 40)}`),
       closerNames(here),
     ]);
     const rowOf = {};
@@ -650,6 +660,7 @@ async function staffDay(req, res, body, tasterId) {
     await addHandles(Object.values(rowOf));
     const lastOf = {};
     (last.ok && Array.isArray(last.data) ? last.data : []).forEach((m) => { if (!lastOf[m.reservation_id]) lastOf[m.reservation_id] = m; });
+    const lastBy = await handlesById(Object.values(lastOf).filter((m) => !m.from_guest).map((m) => m.author_id));
     const now = Date.now();
     list = here.filter((t) => rowOf[t.reservation_id]).map((t) => {
       const r = rowOf[t.reservation_id], m = lastOf[t.reservation_id];
@@ -665,6 +676,7 @@ async function staffDay(req, res, body, tasterId) {
         lastLabel: whenLabel(timezone, t.last_at, now),
         lastFromGuest: m ? !!m.from_guest : !!t.last_from_guest,
         lastWho: m ? (m.from_guest ? firstWord(r.guest_name) : (m.author_name || 'The team')) : null,
+        lastHandle: m ? (m.from_guest ? (r.handle || null) : (lastBy[m.author_id] || null)) : null,
         preview: Array.from(preview).length > 90 ? Array.from(preview).slice(0, 88).join('') + '…' : preview,
       };
     }).sort((a, b) => (b.unread > 0) - (a.unread > 0) || a.minutes - b.minutes || a.id - b.id);
