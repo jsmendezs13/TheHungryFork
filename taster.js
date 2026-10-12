@@ -1271,3 +1271,97 @@ function hfvRender(){
   host.innerHTML=HF_VISITS_HTML;
   while(host.firstChild)document.body.appendChild(host.firstChild);
 })();
+
+// ── THE RESTAURANT'S OPENING HOURS (r27, Sebastian 12 Oct) ──
+// The bottom of the site and the Reservations page say the hours the manager
+// chose (Reservations → Opening hours), not a line written once into a page.
+// Any element with data-hf-hours="foot" (or "hero") is filled with them. It
+// stays empty and hidden until they are known, so a page never shows hours
+// that are not the real ones. The last answer is kept in this browser: the next
+// page opens with the hours already there, and the fresh answer replaces them a
+// moment later. The server's answer is the week as saved: weekday 0 is Sunday,
+// a day with two services has two rows, and a closing time earlier than the
+// opening time means after midnight.
+var HF_HOURS={rows:null,asked:false};
+var HF_WEEK=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+// "14:00" -> "2pm", "13:30" -> "1:30pm", "00:00" -> "12am", "12:00" -> "12pm"
+function hfClock(t){
+  var h=Number(String(t).slice(0,2)), m=String(t).slice(3,5);
+  var ap=h>=12?'pm':'am';
+  h=h%12; if(h===0)h=12;
+  return h+(m==='00'?'':':'+m)+ap;
+}
+// The week in words, Monday first, days with the same hours together: one line
+// each. style 'foot': "Mon–Tue 2pm–11pm"; 'hero': "Mon–Tue 2pm – 11pm", and
+// when every day is the same, "Open every day" over "12pm – 11pm".
+function hfHoursLines(rows,style){
+  var hero=style==='hero', dash=hero?' \u2013 ':'\u2013';
+  var by=[[],[],[],[],[],[],[]];
+  (Array.isArray(rows)?rows:[]).forEach(function(r){
+    var d=(r&&typeof r==='object'&&typeof r.weekday==='number')?r.weekday:-1;   // a null or odd row is skipped, never read
+    if(Number.isInteger(d)&&d>=0&&d<=6&&/^\d\d:\d\d/.test(String(r.opens))&&/^\d\d:\d\d/.test(String(r.closes)))
+      by[d].push([String(r.opens).slice(0,5),String(r.closes).slice(0,5)]);
+  });
+  if(!by.some(function(a){return a.length;}))return [];
+  var order=[1,2,3,4,5,6,0];
+  var sig=order.map(function(d){
+    return by[d].sort(function(a,b){return a[0]<b[0]?-1:a[0]>b[0]?1:0;})
+      .map(function(s){return hfClock(s[0])+dash+hfClock(s[1]);}).join(', ');
+  });                                   // '' = a day they do not open
+  var groups=[];
+  order.forEach(function(d,i){
+    var g=groups[groups.length-1];
+    if(g&&g.sig===sig[i])g.to=d; else groups.push({from:d,to:d,sig:sig[i]});
+  });
+  if(groups.length===1&&groups[0].sig)return hero?['Open every day',groups[0].sig]:['Mon\u2013Sun '+groups[0].sig];
+  return groups.map(function(g){
+    return HF_WEEK[g.from]+(g.to===g.from?'':'\u2013'+HF_WEEK[g.to])+' '+(g.sig||'closed');
+  });
+}
+// The week as one sentence, for a paragraph: "Open every day, 12pm–11pm." ·
+// "Open Mon–Tue 2pm–11pm; Wed–Fri 1pm–11pm; Sat–Sun 12pm–2am." · "Open Tue–Sun 5pm–11pm; closed Mon."
+function hfHoursSentence(rows){
+  var lines=hfHoursLines(rows,'foot');
+  if(!lines.length)return '';
+  if(lines.length===1&&lines[0].indexOf('Mon\u2013Sun ')===0)return 'Open every day, '+lines[0].slice(8)+'.';
+  var open=[],shut=[];
+  lines.forEach(function(l){var m=/^(.*) closed$/.exec(l);if(m)shut.push(m[1]);else open.push(l);});
+  return (open.length?'Open '+open.join('; '):'')+(open.length&&shut.length?'; ':'')
+    +(shut.length?(open.length?'closed ':'Closed ')+shut.join(', '):'')+'.';
+}
+// The same, as the HTML that goes inside the element ('' until the hours are known).
+function hfHoursHtml(style){
+  if(!HF_HOURS.rows)return '';
+  if(style==='about')return hfEsc(hfHoursSentence(HF_HOURS.rows));
+  var lines=hfHoursLines(HF_HOURS.rows,style).map(hfEsc).join('<br>');
+  return (style==='hero'&&lines)?'<br>'+lines:lines;      // the hero's lines follow the address on a new line, as plain lines of text
+}
+function hfHoursFill(){
+  var els=document.querySelectorAll('[data-hf-hours]');
+  for(var i=0;i<els.length;i++){
+    var html=hfHoursHtml(els[i].getAttribute('data-hf-hours'));
+    els[i].innerHTML=html;
+    if(!els[i].hasAttribute('data-hf-keep'))els[i].style.display=html?'':'none';   // data-hf-keep: the page keeps its room
+  }
+}
+function hfHoursLoad(){
+  if(HF_HOURS.asked)return;
+  HF_HOURS.asked=true;
+  try{
+    var kept=JSON.parse(localStorage.getItem('hf_hours')||'null');
+    if(kept&&Array.isArray(kept.rows)){HF_HOURS.rows=kept.rows;hfHoursFill();}
+  }catch(e){}
+  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d||!Array.isArray(d.hours))return;
+      HF_HOURS.rows=d.hours;
+      try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,at:Date.now()}));}catch(e){}
+      hfHoursFill();
+    })
+    .catch(function(){});
+}
+(function(){
+  function start(){if(document.querySelector('[data-hf-hours]'))hfHoursLoad();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
