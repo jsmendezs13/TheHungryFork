@@ -22,6 +22,10 @@
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb, accessProblem } from './_lib/roles.js';
 import { hashToken, normalizeShortCode, newYorkDate } from './_lib/checkin.js';
+import {
+  REWARD_COLUMNS, PASS_COLUMNS, rewardOut, passOut, rewardStatus, passStatus, serviceDay,
+  cardAfterVisit, passForVisit,
+} from './_lib/loyalty.js';
 
 // Aimed at the six-character fallback code, which is the only guessable thing
 // here. A busy Saturday is nowhere near this; a machine walking through codes
@@ -86,7 +90,10 @@ export default async function handler(req, res) {
     query = `/check_in_tokens?short_code=eq.${short}&used_at=is.null`;
   }
 
-  const found = await sb(query + '&select=id,taster_id,expires_at,used_at&order=id.desc&limit=1');
+  // r31: a ticket can also be for a prize or an invite (migration 21). Before
+  // the migration those two columns are not there: ask without them.
+  let found = await sb(query + '&select=id,taster_id,expires_at,used_at,reward_id,pass_id&order=id.desc&limit=1');
+  if (!found.ok && found.status === 400) found = await sb(query + '&select=id,taster_id,expires_at,used_at&order=id.desc&limit=1');
   if (!found.ok) return res.status(502).json({ error: 'Could not check that code.' });
   if (!Array.isArray(found.data) || found.data.length === 0) {
     return res.status(404).json({ error: 'That code is not valid. Ask for a fresh one.' });
@@ -100,7 +107,7 @@ export default async function handler(req, res) {
     return res.status(410).json({ error: 'That code has expired. Ask them to tap Check In again — it takes a second.' });
   }
   if (Number(ticket.taster_id) === Number(staffId)) {
-    return res.status(403).json({ error: 'You cannot confirm your own visit.' });
+    return res.status(403).json({ error: ticket.reward_id || ticket.pass_id ? 'You cannot give yourself a reward.' : 'You cannot confirm your own visit.' });
   }
 
   // ── Who is it? ──────────────────────────────────────────────────────────
@@ -110,6 +117,14 @@ export default async function handler(req, res) {
   }
   const customer = who.data[0];
   const customerName = [customer.first_name, customer.last_name].filter(Boolean).join(' ') || 'This taster';
+
+  // r31: a prize or an invite, not a visit.
+  if (ticket.reward_id || ticket.pass_id) {
+    return give(res, ticket.reward_id ? 'reward' : 'invite', {
+      access, staffId, ticket, confirm: confirm === true,
+      customer: { name: customerName, username: customer.username || null },
+    });
+  }
 
   // One restaurant means no question to ask. Several means the waiter picks,
   // and the page shows the list.
@@ -175,12 +190,24 @@ export default async function handler(req, res) {
   // that — so there is nothing to undo and nothing to warn anyone about.
   if (!burned.ok) console.error('[checkin-confirm] could not mark token used', burned.status);
 
-  // "That is their fourth visit here" is the whole reward, for now. Cheap to
-  // count, and it is the thing a waiter actually enjoys saying out loud.
+  // "That is their fourth visit here" — cheap to count, and the thing a waiter
+  // enjoys saying out loud.
   const counted = await sb(
     `/check_ins?taster_id=eq.${ticket.taster_id}&restaurant_id=eq.${chosen.id}&select=id`
   );
   const visitsHere = Array.isArray(counted.data) ? counted.data.length : null;
+
+  // r31: the stamp this visit put on their card (the database did it), and the
+  // invite it gives them to share. Neither ever stops the visit itself.
+  let loyalty = null;
+  const visitId = !duplicate && Array.isArray(saved.data) && saved.data.length ? saved.data[0].id : null;
+  if (visitId) {
+    const [card, invite] = await Promise.all([
+      cardAfterVisit(visitId, ticket.taster_id, chosen.id),
+      passForVisit(visitId, ticket.taster_id, chosen.id),
+    ]);
+    if (card || invite) loyalty = { card, invite: !!invite };
+  }
 
   console.log('[checkin] staff', staffId, 'confirmed', ticket.taster_id, 'at', chosen.id, duplicate ? '(already today)' : '');
 
@@ -191,5 +218,70 @@ export default async function handler(req, res) {
     restaurant:   { id: chosen.id, name: chosen.name },
     visitDate:    duplicate ? newYorkDate() : (saved.data?.[0]?.visit_date || newYorkDate()),
     visitsHere,
+    loyalty,
   });
+}
+
+// ── A PRIZE OR AN INVITE, AT THE TABLE (r31) ─────────────────────────────────
+// Looking shows what it is and for whom. Giving it needs a manager or owner of
+// THAT restaurant — or crew whose manager ticked "Can give rewards" in Team
+// (restaurant_roles.can_issue_codes) — read from the database now. It is the
+// restaurant's offer; the site only keeps the record.
+async function give(res, kind, { access, staffId, ticket, confirm, customer }) {
+  const isReward = kind === 'reward';
+  const got = isReward
+    ? await sb(`/loyalty_rewards?id=eq.${Number(ticket.reward_id)}&select=${REWARD_COLUMNS}&limit=1`)
+    : await sb(`/loyalty_passes?id=eq.${Number(ticket.pass_id)}&select=${PASS_COLUMNS}&limit=1`);
+  if (!got.ok) return res.status(502).json({ error: 'Could not read that ' + (isReward ? 'reward.' : 'invite.') });
+  const item = Array.isArray(got.data) && got.data.length ? got.data[0] : null;
+  const owner = item ? Number(isReward ? item.taster_id : item.claimed_by) : null;
+  if (!item || owner !== Number(ticket.taster_id)) {
+    return res.status(404).json({ error: 'That ' + (isReward ? 'reward' : 'invite') + ' no longer exists.' });
+  }
+  const rid = Number(item.restaurant_id);
+  const place = await sb(`/restaurants?id=eq.${rid}&select=id,name&limit=1`);
+  const restaurant = place.ok && Array.isArray(place.data) && place.data.length ? place.data[0] : { id: rid, name: 'the restaurant' };
+  const level = levelAt(access, rid);
+  if (level < LEVEL.crew) {
+    return res.status(403).json({ error: 'This is for ' + restaurant.name + '. Only its team can give it.' });
+  }
+  const entry = (access.byRestaurant || {})[String(rid)] || (access.byRestaurant || {})[rid] || {};
+  const canGive = level >= LEVEL.manager || entry.canIssueCodes === true;
+  const names = { [rid]: restaurant.name };
+  let out;
+  if (isReward) out = rewardOut(item, names);
+  else {
+    out = passOut(item, names);
+    const from = await sb(`/tasters?id=eq.${Number(item.from_taster_id)}&select=first_name,last_name&limit=1`);
+    const f = from.ok && Array.isArray(from.data) && from.data.length ? from.data[0] : {};
+    out.from = [f.first_name, f.last_name].filter(Boolean).join(' ') || 'A guest';
+  }
+  const status = isReward ? rewardStatus(item) : passStatus(item);
+  const notToday = !isReward && serviceDay() < out.usableFrom;
+  const base = { success: true, kind, item: out, customer, restaurant: { id: restaurant.id, name: restaurant.name }, canGive };
+
+  if (!confirm) {
+    return res.status(200).json({ ...base, ...(canGive ? {} : { why: 'Only a manager can give it — or crew with “Can give rewards” ticked in Team.' }) });
+  }
+  if (!canGive) return res.status(403).json({ error: 'Only a manager can give it — or crew with “Can give rewards” ticked in Team.' });
+  if (status === 'used') return res.status(409).json({ error: 'This was already used.' });
+  if (status === 'expired') return res.status(410).json({ error: 'This has run out.' });
+  if (notToday) return res.status(409).json({ error: 'An invite works from the day after it was made.' });
+
+  const nowIso = new Date().toISOString();
+  const table = isReward ? 'loyalty_rewards' : 'loyalty_passes';
+  const done = await sb(`/${table}?id=eq.${Number(item.id)}&redeemed_at=is.null&expires_at=gt.${encodeURIComponent(nowIso)}`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ redeemed_at: nowIso, redeemed_by: Number(staffId), redeemed_by_name: access.firstName || null }),
+  });
+  if (!done.ok) return res.status(502).json({ error: 'Could not save that. Please try again.' });
+  if (!Array.isArray(done.data) || !done.data.length) return res.status(409).json({ error: 'Someone gave it a moment ago.' });
+  const burned = await sb(`/check_in_tokens?id=eq.${ticket.id}&used_at=is.null`, {
+    method: 'PATCH', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ used_at: nowIso, used_by: Number(staffId) }),
+  });
+  if (!burned.ok) console.error('[checkin-confirm:give] could not mark token used', burned.status);
+  console.log('[loyalty] staff', staffId, 'gave', kind, item.id, 'to', ticket.taster_id, 'at', rid);
+  const after = isReward ? rewardOut(done.data[0], names) : Object.assign(passOut(done.data[0], names), { from: out.from });
+  return res.status(200).json({ ...base, given: true, item: after });
 }
