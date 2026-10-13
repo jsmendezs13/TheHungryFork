@@ -424,6 +424,63 @@ export function answerEmail({ restaurant, timezone, at, staffName, guestName, li
   return { subject, html, text };
 }
 
+// r30: the restaurant wrote about a big-party request and the guest has no
+// account (one email per request, the first time). As with answerEmail, the
+// message itself is NOT in the email: the guest reads it in My Reservations
+// after logging in with the phone number they gave (or creating an account
+// with it, which takes a minute and costs nothing).
+export function requestMessageEmail({ restaurant, staffName, guestName, day, time, party, phoneShown, link, siteHost }) {
+  const first = greetingName(guestName);
+  const who = String(staffName || '').trim() || 'The team';
+  const subject = `${who} from ${restaurant.name} wrote to you about your request`;
+  const when = { long: day, time: time || (party + ' people') };
+  const html = layout({
+    preheader: `About your request for ${party} people on ${day}`,
+    restaurantName: restaurant.name,
+    heading: 'A message about your request',
+    intro: `${first ? escapeHtml(first) + ', ' : ''}${escapeHtml(who)} from ${escapeHtml(restaurant.name)} wrote to you about your request for ${escapeHtml(String(party))} people.`,
+    when,
+    rows: [],
+    write: {
+      lead: `To read it and answer, open My Reservations and log in with the phone number you gave${phoneShown ? ' (' + escapeHtml(phoneShown) + ')' : ''}. No account yet? Create one with that same number: the conversation is waiting there.`,
+      label: 'Read the message', href: link,
+    },
+    footer: `You asked ${escapeHtml(restaurant.name)} for a big table on ${escapeHtml(siteHost)}. We send this email once per request. Replies to it are not read: please answer on the page the button opens${restaurant.phone ? ', or call ' + escapeHtml(restaurant.phone) : ''}.`,
+  });
+  const text = [
+    `${who} from ${restaurant.name} wrote to you about your request for ${party} people on ${day}.`, '',
+    `To read it and answer, open ${link} and log in with the phone number you gave${phoneShown ? ' (' + phoneShown + ')' : ''}.`,
+    'No account yet? Create one with that same number: the conversation is waiting there.', '',
+    'We send this email once per request. Replies to it are not read.',
+  ].join('\n');
+  return { subject, html, text };
+}
+
+// r30: the 6-digit code that proves a new email address in My information is
+// the guest's own. Nothing else is in it.
+export function emailCodeEmail({ restaurant, code, guestName, siteHost }) {
+  const e = escapeHtml;
+  const first = greetingName(guestName);
+  const subject = `${code} is your code for ${restaurant.name}`;
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only"><title>${e(subject)}</title></head>
+<body style="margin:0;padding:0;background:${PAPER};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER};"><tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid ${LINE};border-radius:14px;overflow:hidden;">
+  <tr><td style="background:${HEAD};padding:18px 24px;text-align:center;font:600 22px/1.2 Georgia,'Times New Roman',serif;color:#FCF9F4;">${e(restaurant.name)}</td></tr>
+  <tr><td style="padding:26px 24px 28px;font:15px/1.5 Arial,Helvetica,sans-serif;color:${INK};">
+    <p style="margin:0 0 14px;">${first ? e(first) + ', this' : 'This'} is the code to confirm your email in My information:</p>
+    <p style="margin:0 0 14px;font:bold 34px/1.2 Arial,Helvetica,sans-serif;letter-spacing:.32em;color:${INK};">${e(code)}</p>
+    <p style="margin:0;color:${MUTED};font-size:13px;">It works for 10 minutes. If you did not ask for it, you can ignore this email: nothing changes.</p>
+  </td></tr>
+</table>
+<p style="max-width:480px;margin:14px auto 0;font:12px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};text-align:center;">Sent by ${e(siteHost)}.</p>
+</td></tr></table></body></html>`;
+  const text = `${first ? first + ', this' : 'This'} is the code to confirm your email in My information: ${code}\n\nIt works for 10 minutes. If you did not ask for it, you can ignore this email.`;
+  return { subject, html, text };
+}
+
 export function hostOf(settings) {
   try { return new URL((settings && settings.site_url) || 'https://thehungryfork.fun').host; }
   catch { return 'thehungryfork.fun'; }
