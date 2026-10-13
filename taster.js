@@ -176,7 +176,7 @@ const TASTER_MODAL_HTML = `
         <div class="t-choice-header">
           <span class="t-choice-icon">🍽️</span>
           <div class="t-choice-title">Welcome, Taster!</div>
-          <div class="t-choice-sub">Log in or create your free account to rate dishes and earn Fork's Lucky Bite!</div>
+          <div class="t-choice-sub">Log in or create your free account to rate dishes and take part in each restaurant's rewards.</div>
         </div>
         <div class="t-choice" style="margin-top:1.25rem;">
           <button class="t-btn" onclick="goTStep(1)">Log In</button>
@@ -1101,6 +1101,7 @@ var HF_VISITS_HTML =
 +     '</div>'
 +     '<div class="hf-v-body">'
 +       '<div class="hf-v-checkin" id="hf-v-checkin"></div>'
++       '<div id="hf-v-loyalty"></div>'
 +       '<div id="hf-v-calendar"></div>'
 +     '</div>'
 +   '</div>'
@@ -1110,7 +1111,9 @@ var HFV = {
   visits: [], places: [], today: '', place: 'all',
   year: 0, month: 0,           // the month on screen
   expiry: 0, refreshes: 0,
-  tick: null, loaded: false
+  tick: null, loaded: false,
+  showing: null,               // r31: the prize or invite whose QR is on screen
+  loyalty: null                // r31: what /api/checkins (loyalty) said
 };
 
 function openMyVisits(){
@@ -1119,6 +1122,7 @@ function openMyVisits(){
   if(!o)return;
   o.classList.add('open');
   hfvShowIdle();
+  hfvLoadLoyalty();
   hfvLoadCalendar();
 }
 function closeMyVisits(){
@@ -1154,6 +1158,7 @@ function hfvApi(path, body){
 // ── The check-in code ──
 function hfvShowIdle(){
   hfvStop();
+  HFV.showing=null;
   const box=document.getElementById('hf-v-checkin');
   if(!box)return;
   box.innerHTML=
@@ -1164,26 +1169,42 @@ function hfvShowIdle(){
 function hfvRequestCode(){
   const box=document.getElementById('hf-v-checkin');
   if(!box)return;
+  // r31: the same ticket, for a prize or a saved invite (HFV.showing).
+  const sh=HFV.showing;
   box.innerHTML='<div class="hf-v-qr-msg">Making your code…</div>';
-  hfvApi('/api/checkins',{action:'token'}).then(function(d){
+  hfvApi('/api/checkins',sh?{action:'show_reward',rewardId:sh.rewardId,passId:sh.passId}:{action:'token'}).then(function(d){
     // The SVG comes from our own server, but it goes into innerHTML, so it is
     // still checked for being what it claims to be before it gets there.
     const svg=(typeof d.svg==='string'&&d.svg.trim().slice(0,4)==='<svg')?d.svg:'';
     if(!svg)throw new Error('Could not draw your code.');
     HFV.expiry=new Date(d.expiresAt).getTime();
     box.innerHTML=
-      '<div class="hf-v-qr" id="hf-v-qr">'+svg+'</div>'
+      (sh?'<div class="hf-l-show"><div class="hf-l-eyebrow">'+(sh.passId?'Your invite':'Your reward')+'</div>'
+        +'<div class="hf-l-show-title">'+hfEsc(sh.title)+'</div>'
+        +'<div class="hf-l-show-sub">'+hfEsc(sh.sub||'')+'</div></div>':'')
+    + '<div class="hf-v-qr" id="hf-v-qr">'+svg+'</div>'
     + '<div class="hf-v-bar"><i id="hf-v-bar"></i></div>'
     + (d.shortCode
         ? '<div class="hf-v-code">'+hfEsc(d.shortCode)+'</div>'
           +'<div class="hf-v-code-note">If the camera will not read it, your waiter can type these six characters.</div>'
         : '')
-    + '<div class="hf-v-qr-msg" id="hf-v-msg" style="margin-top:.7rem;">Show this to your waiter.</div>';
+    + '<div class="hf-v-qr-msg" id="hf-v-msg" style="margin-top:.7rem;">Show this to your waiter.</div>'
+    + (sh?'<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>':'');
     hfvStartCountdown();
   }).catch(function(e){
+    // A prize the waiter just gave, or an invite just used: that is the
+    // happy ending, not an error.
+    if(sh && /already used/i.test(e.message||'')){
+      hfvStop(); HFV.showing=null;
+      box.innerHTML='<div class="hf-l-done">&#10003;</div><div class="hf-v-qr-msg">Used. Enjoy!</div>'
+        + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>';
+      hfvLoadLoyalty();
+      return;
+    }
     box.innerHTML=
       '<div class="t-err" style="display:block;">'+hfEsc(e.message||'Could not get a code.')+'</div>'
-    + '<button class="t-btn" onclick="hfvRequestCode()">Try again</button>';
+    + (sh?'<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>'
+         :'<button class="t-btn" onclick="hfvRequestCode()">Try again</button>');
   });
 }
 
@@ -1208,6 +1229,156 @@ function hfvStartCountdown(){
       '<div class="hf-v-qr-msg" style="margin-bottom:.8rem;">That code expired.</div>'
     + '<button class="t-btn" onclick="hfvRequestCode()">Show a new code</button>';
   },200);
+}
+
+// ── r31: LUCKY BITE · STAMPS · INVITES ──────────────────────────────────────
+// What each restaurant offers its guests, and what this guest has won. All of
+// it is decided on the server (the counting is in the database); this only
+// shows it, and asks for the 90-second QR when a prize or an invite is used.
+// Every reward is the restaurant's own: the note at the bottom says so.
+function hfvLoadLoyalty(){
+  const box=document.getElementById('hf-v-loyalty');
+  if(!box)return;
+  hfvApi('/api/checkins',{action:'loyalty'}).then(function(d){
+    HFV.loyalty=d;
+    hfvRenderLoyalty();
+  }).catch(function(){
+    // Rewards are a bonus on this screen: if they cannot be read, the check-in
+    // and the calendar still work, so nothing is shown rather than an error.
+    HFV.loyalty=null; box.innerHTML='';
+  });
+}
+
+function hfvOrdinal(n){
+  n=Number(n); const t=n%100, u=n%10;
+  return n.toLocaleString('en-US')+((t>=11&&t<=13)?'th':u===1?'st':u===2?'nd':u===3?'rd':'th');
+}
+
+function hfvDate(iso){
+  const d=new Date(String(iso).length===10?iso+'T12:00:00Z':iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'America/New_York'});
+}
+
+function hfvRenderLoyalty(){
+  const box=document.getElementById('hf-v-loyalty');
+  const L=HFV.loyalty;
+  if(!box)return;
+  if(!L||!L.ready){box.innerHTML='';return;}
+  const programs=L.programs||[], rewards=L.rewards||[], given=L.invitesGiven||[], received=L.invitesReceived||[];
+  if(!programs.length&&!rewards.length&&!received.length){box.innerHTML='';return;}
+  var html='<div class="hf-l">';
+  const ready=rewards.filter(function(r){return r.status==='ready';});
+  const mineToUse=received.filter(function(p){return p.status==='saved';});
+  if(ready.length||mineToUse.length){
+    // An invite saved today only works from tomorrow, so the heading says
+    // "Ready to use" only when everything under it works today.
+    const allToday=mineToUse.every(function(p){return p.usableToday;});
+    html+='<div class="hf-l-eyebrow">'+(allToday?'Ready to use':'Your rewards')+'</div>';
+    ready.forEach(function(r){
+      const sub=(r.kind==='lucky'?'Lucky Bite #'+r.luckyNumber:'Stamp card · '+r.visits+' visits')
+        +' · '+r.restaurant+' · until '+hfvDate(r.expiresAt);
+      html+='<div class="hf-l-prize"><div class="hf-l-prize-icon">'+(r.kind==='lucky'?'&#127881;':'&#9733;')+'</div>'
+        +'<div class="hf-l-prize-text"><b>'+hfEsc(r.title)+'</b><span>'+hfEsc(sub)+'</span></div>'
+        +'<button class="hf-l-btn" onclick="hfvShowPrize(\'reward\','+Number(r.id)+')">Show my reward</button></div>';
+    });
+    mineToUse.forEach(function(p){
+      const sub='Invite from a friend · '+p.restaurant+' · until '+hfvDate(p.expiresAt);
+      html+='<div class="hf-l-prize invite"><div class="hf-l-prize-icon">&#127873;</div>'
+        +'<div class="hf-l-prize-text"><b>'+hfEsc(p.discount)+'</b><span>'+hfEsc(sub)+'</span></div>'
+        +(p.usableToday
+           ?'<button class="hf-l-btn" onclick="hfvShowPrize(\'pass\','+Number(p.id)+')">Show my invite</button>'
+           :'<button class="hf-l-btn" disabled>From '+hfEsc(hfvDate(p.usableFrom))+'</button>')
+        +'</div>';
+    });
+  }
+  programs.forEach(function(g){
+    html+='<div class="hf-l-place"><div class="hf-l-eyebrow">'+hfEsc(g.restaurant)+'</div>';
+    if(g.lucky){
+      const lk=g.lucky, today=lk.today||[];
+      html+='<div class="hf-l-row"><div class="hf-l-title">Lucky Bite</div>'
+        +'<div class="hf-l-note">Every '+hfvOrdinal(lk.every)+' dish rated after a scanned visit is free for the person who rated it.</div>'
+        +'<div class="hf-l-next">Next: <b>#'+Number(lk.nextAt).toLocaleString('en-US')+'</b> &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div>'
+        +'<div class="hf-l-today">'+(g.visitedToday
+            ?(today.length?'Today your dishes are '+today.map(function(n){return '#'+n;}).join(', ')+'. ':'')
+              +(today.length<lk.maxPerVisit?'Rate what you ate: up to '+lk.maxPerVisit+' dishes count today.':'That is the most that count in one visit.')
+            :'Check in, then rate what you ate.')+'</div></div>';
+    }
+    if(g.stamps){
+      const st=g.stamps, n=Math.min(st.every,30);
+      var dots='';
+      for(var i=0;i<n;i++)dots+='<i class="'+(i<st.have?'on':'')+'"></i>';
+      html+='<div class="hf-l-row"><div class="hf-l-title">Stamp card <small>'+st.have+' of '+st.every+'</small></div>'
+        +(st.every<=30?'<div class="hf-l-stamps">'+dots+'</div>':'')
+        +'<div class="hf-l-note">'+hfEsc(st.reward)+' after '+st.every+' scanned visits.</div></div>';
+    }
+    if(g.invite){
+      const mine=given.filter(function(p){return String(p.restaurantId)===String(g.restaurantId);});
+      const open=mine.filter(function(p){return p.status==='open';});
+      html+='<div class="hf-l-row"><div class="hf-l-title">Invite a friend</div>'
+        +'<div class="hf-l-note">'+hfEsc(g.invite.discount)+' for a friend, from the day after your visit, for '+g.invite.days+' days. They save it with their own phone number.</div>';
+      open.forEach(function(p){
+        html+='<div class="hf-l-share"><span class="hf-l-code">'+hfEsc(p.code)+'</span>'
+          +'<button class="hf-l-btn" onclick="hfvShareInvite(\''+hfEsc(p.code)+'\')">Share</button></div>';
+      });
+      mine.filter(function(p){return p.status!=='open';}).slice(0,3).forEach(function(p){
+        html+='<div class="hf-l-past">'+(p.status==='used'?'Used by a friend &#10003;':'Saved by a friend')+' &middot; '+hfEsc(p.discount)+'</div>';
+      });
+      if(!open.length&&!mine.length)html+='<div class="hf-l-today">Every scanned visit gives you an invite to share.</div>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  const past=rewards.filter(function(r){return r.status!=='ready';})
+    .concat(received.filter(function(p){return p.status==='used'||p.status==='expired';}));
+  if(past.length){
+    html+='<details class="hf-l-old"><summary>Used and expired ('+past.length+')</summary>'
+      +past.map(function(x){
+        const used=x.status==='used';
+        return '<div class="hf-l-past">'+hfEsc(x.title||x.discount)+' &middot; '+hfEsc(x.restaurant)+' &middot; '
+          +(used?'used':'expired')+(x.redeemedAt||x.expiresAt?' '+hfvDate(used&&x.redeemedAt?x.redeemedAt:x.expiresAt):'')+'</div>';
+      }).join('')+'</details>';
+  }
+  html+='<div class="hf-l-legal">Rewards and discounts are offered and given by each restaurant. Seb&rsquo;s Analytics and Fork&rsquo;s Rating do not give or pay for them.</div>';
+  html+='</div>';
+  box.innerHTML=html;
+}
+
+function hfvShowPrize(kind, id){
+  const L=HFV.loyalty||{};
+  var title='', sub='';
+  if(kind==='reward'){
+    const r=(L.rewards||[]).find(function(x){return Number(x.id)===Number(id);});
+    if(!r)return;
+    title=r.title; sub=(r.kind==='lucky'?'Lucky Bite #'+r.luckyNumber:'Stamp card')+' · '+r.restaurant;
+    HFV.showing={rewardId:Number(id), title:title, sub:sub};
+  }else{
+    const p=(L.invitesReceived||[]).find(function(x){return Number(x.id)===Number(id);});
+    if(!p)return;
+    title=p.discount; sub='Invite from a friend · '+p.restaurant;
+    HFV.showing={passId:Number(id), title:title, sub:sub};
+  }
+  hfvStop();
+  const keep=HFV.showing;
+  HFV.refreshes=0;
+  HFV.showing=keep;
+  hfvRequestCode();
+  const box=document.getElementById('hf-v-checkin');
+  if(box&&box.scrollIntoView)box.scrollIntoView({block:'start',behavior:'smooth'});
+}
+
+function hfvShareInvite(code){
+  const L=HFV.loyalty||{};
+  const p=(L.invitesGiven||[]).find(function(x){return x.code===code;});
+  const link=location.origin+'/invite?c='+encodeURIComponent(code);
+  const text=(p?p.restaurant+': '+p.discount+' for you. ':'')+'Save it with your phone number, then show it at the restaurant.';
+  if(navigator.share){
+    navigator.share({title:p?p.restaurant:'An invite',text:text,url:link}).catch(function(){});
+    return;
+  }
+  const done=function(){showToast('Invite link copied. Paste it to a friend.');};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text+' '+link).then(done,function(){prompt('Copy this link',link);});
+  }else prompt('Copy this link',link);
 }
 
 // ── The calendars ──
