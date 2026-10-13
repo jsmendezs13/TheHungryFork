@@ -21,7 +21,7 @@
     --shadow-md: 0 10px 30px rgba(43,33,26,.10);
     --shadow-lg: 0 20px 50px rgba(43,33,26,.18);
   }
-  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.65; -webkit-font-smoothing:antialiased; padding-bottom:4rem; }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.65; -webkit-font-smoothing:antialiased; padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6.5rem); }   /* r29: room under the last card for the round chat button */
 
   .m-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
   .m-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
@@ -51,6 +51,9 @@
   .m-dish.is-hidden { opacity:.55; }
   .m-dish-head { display:flex; align-items:center; gap:.85rem; padding:.95rem 1rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .m-dish-emoji { font-size:1.6rem; line-height:1; flex:none; }
+  /* r29 (Sebastian, 12 Oct): the dish's own small photo instead of the emoji (the emoji comes back if the photo cannot be loaded) */
+  .m-dish-thumb { flex:none; width:54px; height:54px; border-radius:12px; overflow:hidden; background:var(--off-white); border:1px solid var(--border); display:block; }
+  .m-dish-thumb img { display:block; width:100%; height:100%; object-fit:cover; }
   .m-dish-id { flex:1; min-width:0; }
   .m-dish-name { font-family:var(--serif); font-size:1.15rem; font-weight:600; line-height:1.25; }
   .m-dish-meta { font-size:.74rem; color:var(--muted); margin-top:.1rem; }
@@ -78,7 +81,7 @@
 
   .m-field { margin-top:.95rem; }
   .m-field-label { font-size:.66rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.35rem; }
-  .m-input, .m-textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:.65rem .85rem; font-size:.9rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; transition:border-color .2s; }
+  .m-input, .m-textarea { min-width:0; max-width:100%; width:100%; border:1px solid var(--border); border-radius:10px; padding:.65rem .85rem; font-size:.9rem; font-family:var(--sans); color:var(--text); background:#fff; outline:none; transition:border-color .2s; }
   .m-input:focus, .m-textarea:focus { border-color:var(--red); }
   .m-textarea { resize:vertical; min-height:80px; line-height:1.6; }
   .m-count { font-size:.68rem; color:var(--muted); text-align:right; margin-top:.2rem; }
@@ -215,6 +218,12 @@
   .rv-name { font-weight:600; font-size:.98rem; margin-top:.05rem; line-height:1.35; overflow-wrap:anywhere; }
   .rv-meta { font-size:.76rem; color:var(--muted); margin-top:.05rem; }
   .rv-tel { color:var(--red); text-decoration:none; font-weight:500; white-space:nowrap; }
+  /* r29: "Write" next to Call on a big-party request, and what the card says about the guest's email */
+  .rv-contact { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem .8rem; margin-top:.4rem; font-size:.84rem; color:var(--muted); }
+  .rv-write { display:inline-flex; align-items:center; gap:.35rem; min-height:34px; padding:0 .8rem; border-radius:999px; border:1px solid var(--blue); background:var(--blue-light);
+              color:var(--blue); font-size:.74rem; font-weight:600; letter-spacing:.06em; text-decoration:none; -webkit-tap-highlight-color:transparent; }
+  .rv-write svg { flex:none; }
+  .rv-mail { margin-top:.3rem; }
   .rv-note { font-size:.74rem; color:var(--text); background:var(--off-white); border-radius:8px; padding:.3rem .5rem; margin-top:.35rem; overflow-wrap:anywhere; }
   .rv-chip { display:inline-block; font-size:.56rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; margin-left:.3rem; vertical-align:2px; white-space:nowrap; }
   .rv-chip.in { background:var(--blue-light); color:var(--blue); }
@@ -267,7 +276,12 @@
   .rv-rq { border:1px solid var(--border); border-radius:14px; padding:.85rem .9rem; margin-bottom:.7rem; background:#fff; }
   .rv-rq-when { font-size:.8rem; margin-top:.2rem; }
   .rv-rq-form { margin-top:.7rem; padding-top:.7rem; border-top:1px solid var(--border); }
-  .rv-form-row { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+  /* r29 (Sebastian, 12 Oct: "they look laid over each other"): minmax(0,1fr) and min-width:0 — a phone's date or time field
+     has a width of its own, and a plain 1fr column grows to hold it and runs under its neighbour. */
+  .rv-form-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.5rem; }
+  .rv-form-row > .m-field, .rv-room-grid > .m-field { min-width:0; }
+  .rv-public { margin:.55rem 0 .2rem; padding:.55rem .75rem; border-radius:10px; background:var(--blue-light); color:var(--text); font-size:.76rem; line-height:1.5; }
+  .rv-public b { color:var(--blue); font-weight:600; }
   .rv-form-row[hidden] { display:none; }   /* "Closed all day" hides Opens/Closes: the grid above would beat hidden */
   .rv-form-row .m-field { margin-top:.6rem; }
 
@@ -296,7 +310,7 @@
   .rv-hol small { display:block; color:var(--muted); font-size:.72rem; }
   .rv-hol small.warn { color:var(--red-dark); font-weight:500; }
   .rv-room { padding:.7rem 0; border-bottom:1px solid var(--border); }
-  .rv-room-grid { display:grid; grid-template-columns:1fr 70px 70px; gap:.4rem; align-items:end; }
+  .rv-room-grid { display:grid; grid-template-columns:minmax(0,1fr) 70px 70px; gap:.4rem; align-items:end; }
   .rv-room-grid .m-field { margin-top:0; }
   .rv-room-foot { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.5rem; font-size:.78rem; color:var(--muted); }
   .rv-readonly { font-size:.74rem; color:var(--muted); background:var(--off-white); border-radius:10px; padding:.6rem .8rem; margin-bottom:1rem; line-height:1.55; }
@@ -319,6 +333,11 @@
                border:none; background:var(--red); color:#fff; box-shadow:0 10px 26px rgba(176,16,21,.45); display:flex; align-items:center; justify-content:center;
                cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent; transition:transform .15s; }
   .mg-bubble:active { transform:scale(.94); }
+  /* r29 (Sebastian, 12 Oct: it covered the Tables field and a dish name): on a phone the button steps aside while the page
+     moves and while a field is being written in, and comes back a moment after. */
+  .mg-bubble { transition:transform .18s, opacity .18s; }
+  @media (max-width:700px) { .mg-bubble.away { transform:translateX(calc(100% + 24px)); opacity:0; pointer-events:none; } }
+  @media (prefers-reduced-motion:reduce) { .mg-bubble { transition:none; } }
   .mg-bubble[hidden] { display:none; }
   .mg-bubble svg { width:29px; height:29px; }
   .mg-bubble b { position:absolute; top:-3px; right:-3px; min-width:24px; height:24px; background:#fff; color:var(--red); border:2px solid var(--red); font-size:.74rem; }
@@ -614,7 +633,7 @@ async function loadDishes(){
     // Hidden dishes must appear here — hiding one on the public menu is not the
     // same as losing the switch that brings it back.
     const res = await fetch(SUPABASE_URL+'/rest/v1/dishes?restaurant_id=eq.'+RESTAURANT.id
-      +'&select=id,slug,name,emoji,price,description,about,modifications,wine,cocktail,ingredients,restaurant_category,is_chefs_pick,is_hidden,sold_out_until,sort_order'
+      +'&select=id,slug,name,emoji,image,image_open,price,description,about,modifications,wine,cocktail,ingredients,restaurant_category,is_chefs_pick,is_hidden,sold_out_until,sort_order'
       +'&order=sort_order.asc',
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     if(!res.ok) throw new Error('Could not load the menu ('+res.status+').');
@@ -678,6 +697,22 @@ function render(){
   rvRender();
 }
 
+
+// The dish's small photo (the plate picture, or the open-cut one if there is no plate), through Vercel's image
+// service like the menu; a photo that cannot be loaded gives the emoji back.
+function dishThumb(d){
+  const emoji = esc(d.emoji || '🍽️');
+  const file = String(d.image || d.image_open || '');
+  if(!file) return '<span class="m-dish-emoji">'+emoji+'</span>';
+  const src = typeof hfImgSrc === 'function' ? hfImgSrc(file, 54) : file;
+  return '<span class="m-dish-thumb" data-emoji="'+emoji+'"><img src="'+esc(src)+'" data-orig="'+esc(file)+'" alt="" width="54" height="54" loading="lazy" decoding="async" onerror="dishThumbBad(this)"></span>';
+}
+function dishThumbBad(img){
+  if(typeof hfImgBack === 'function' && hfImgBack(img)) return;          // the original file, once
+  const box = img.parentNode;
+  if(box){ box.className = 'm-dish-emoji'; box.textContent = box.getAttribute('data-emoji') || '🍽️'; }
+}
+
 function dishCard(d){
   const open = String(d.id)===String(openDishId);
   const soldOut = !!d.sold_out_until;
@@ -691,7 +726,7 @@ function dishCard(d){
 
   return '<div class="m-dish'+(open?' open':'')+(d.is_hidden?' is-hidden':'')+'" id="dish-'+d.id+'">'
     + '<div class="m-dish-head" onclick="toggleDish('+d.id+')">'
-    +   '<span class="m-dish-emoji">'+esc(d.emoji||'🍽️')+'</span>'
+    +   dishThumb(d)
     +   '<div class="m-dish-id">'
     +     '<div class="m-dish-name">'+esc(d.name)+'</div>'
     +     '<div class="m-dish-meta">$'+Number(d.price||0).toFixed(2)+' &middot; '+esc(d.restaurant_category||'')+'</div>'
@@ -1220,6 +1255,17 @@ function rvTel(phone){
   return '<a class="rv-tel" href="tel:'+esc(dial)+'">'+esc(shown)+'</a>';
 }
 function rvPeople(n){ return n+(n===1?' person':' people'); }
+// "Write", next to Call (r29): a text message from the manager's own phone to the number the guest gave, started with a
+// short first line. (An email from here would need an address, which the staff never see.)
+const WRITE_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.6A8 8 0 1 1 21 12z"/></svg>';
+function rvWrite(r){
+  const dial = String(r.phone||'').replace(/[^\d+]/g,'');
+  if(!dial) return '';
+  const first = String(r.name||'').trim().split(/\s+/)[0] || '';
+  const text = 'Hi'+(first ? ' '+first : '')+', this is '+((typeof RESTAURANT !== 'undefined' && RESTAURANT && RESTAURANT.name) || 'the restaurant')
+    + ' about your request for '+rvPeople(r.party)+' on '+rvShort(r.date)+'. ';
+  return '<a class="rv-write" href="sms:'+esc(dial)+'?&body='+encodeURIComponent(text)+'" aria-label="Write to '+esc(first || 'the guest')+' by text message">'+WRITE_ICON+'Write</a>';
+}
 
 // ── LOADING ──
 async function rvStart(){
@@ -2050,7 +2096,9 @@ function rvRequestCard(r){
     + '<div class="rv-rq-when">'+esc(rvShort(r.date))+' · '+(r.time ? esc(rvHm(r.time)) : 'no time given')+'</div>'
     + (r.occasion ? '<div class="rv-meta">Occasion: '+esc(r.occasion)+'</div>' : '')
     + (r.message ? '<div class="rv-note">&ldquo;'+esc(r.message)+'&rdquo;</div>' : '')
-    + '<div class="rv-meta" style="margin-top:.35rem;">Call '+rvTel(r.phone)+'</div>'
+    + '<div class="rv-contact"><span>Call '+rvTel(r.phone)+'</span>'+rvWrite(r)+'</div>'
+    // Whether there is an email, never which one: the staff do not see guests' addresses (privacy page).
+    + '<div class="rv-meta rv-mail">'+(r.hasEmail ? 'Email given. If you accept, the confirmation goes there.' : 'No email on this request. If you accept, call them to confirm.')+'</div>'
     + (RV.day.canEdit && !open ? '<div class="rv-acts">'
         + '<button type="button" class="rv-act go" onclick="RV.sheet.open={id:'+r.id+',mode:\'accept\'};rvPaintSheet()">Accept…</button>'
         + '<button type="button" class="rv-act no" onclick="RV.sheet.open={id:'+r.id+',mode:\'decline\'};rvPaintSheet()">Decline…</button></div>' : '')
@@ -2070,9 +2118,9 @@ async function rvAccept(id, btn){
     if(gen !== RV.gen) return;
     RV.sheetResult[id] = '<div class="rv-rq"><div class="rv-name">'+whoHtml(r.name, r.handle)+' <span class="rv-chip in">Booked</span></div>'
       + '<div class="rv-rq-when">'+esc(rvShort(data.date))+' · '+esc(data.label)+' · '+esc(data.code)+'</div>'
-      + '<div class="rv-meta" style="margin-top:.35rem;">'+(data.emailSent
-          ? 'We emailed '+whoHtml(r.name.split(' ')[0], r.handle)+' the confirmation.'
-          : 'No email went out. Call '+whoHtml(r.name.split(' ')[0], r.handle)+' to confirm: '+rvTel(r.phone))+'</div></div>';
+      // r29 (Sebastian, 12 Oct): the line "We emailed … the confirmation." is gone. Only when no email went out is the manager told, because then somebody must call.
+      + (data.emailSent ? '' : '<div class="rv-meta" style="margin-top:.35rem;">No email went out. Call '+whoHtml(r.name.split(' ')[0], r.handle)+' to confirm: '+rvTel(r.phone)+'</div>')
+      + '</div>';
     rvAfterAnswer(id, data.date);
   }catch(e){
     showToast(e.message);
@@ -2328,13 +2376,16 @@ function rvHolidaysHtml(S){
     : '<div class="m-sub" style="padding:.4rem 0;">No holidays coming up.</div>';
   const add = edit ? '<div class="rv-rq-form">'
     + '<div class="rv-form-row"><div class="m-field"><div class="m-field-label">Day</div><input class="m-input" type="date" id="rv-h-date" min="'+esc(S.today)+'"></div>'
-    + '<div class="m-field"><div class="m-field-label">Reason (optional)</div><input class="m-input" id="rv-h-reason" maxlength="80" placeholder="e.g. Thanksgiving"></div></div>'
+    + '<div class="m-field"><div class="m-field-label">Reason (guests see it)</div><input class="m-input" id="rv-h-reason" maxlength="80" placeholder="e.g. Thanksgiving"></div></div>'
     + '<label class="m-codes" style="margin-top:.6rem;font-size:.8rem;"><input type="checkbox" id="rv-h-allday" checked onchange="document.getElementById(\'rv-h-hours\').hidden=this.checked"> Closed all day</label>'
     + '<div class="rv-form-row" id="rv-h-hours" hidden><div class="m-field"><div class="m-field-label">Opens</div><input class="m-input" type="time" id="rv-h-opens" value="12:00"></div>'
     + '<div class="m-field"><div class="m-field-label">Closes</div><input class="m-input" type="time" id="rv-h-closes" value="17:00"></div></div>'
     + '<div class="m-actions"><button type="button" class="m-save" onclick="rvHolidayAdd(this)">Add the day</button></div></div>' : '';
   return '<div class="m-card"><div class="m-eyebrow">Holidays and special days</div>'
     + '<div class="m-sub" style="font-size:.74rem;">A day here replaces the usual hours: closed, or open with different hours. It does not cancel tables already booked.</div>'
+    // r29: the website shows these days (button "Our holidays", under the opening hours)
+    + '<div class="rv-public"><b>Guests see this list.</b> The website shows every coming day here, with its reason exactly as you write it, under the opening hours. '
+    +   'Write the reason as you want guests to read it (e.g. “Thanksgiving”, “Private event”). Leave it empty to show only the date.</div>'
     + list + add + '</div>';
 }
 async function rvHolidayAdd(btn){
@@ -2458,6 +2509,15 @@ function msgFromDay(day){
   else { MSG.known = true; MSG.unread = Number(day.messages.unread) || 0; }
   msgBubble();
 }
+// The round button steps aside (CSS: phones only) while the page scrolls and while a field has the cursor, and returns 0.9 s after.
+function msgBubbleAside(b){
+  let t = null;
+  const writing = () => { const a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
+  const back = () => { if(!writing()) b.classList.remove('away'); };
+  window.addEventListener('scroll', function(){ b.classList.add('away'); clearTimeout(t); t = setTimeout(back, 900); }, {passive:true});
+  document.addEventListener('focusin', function(e){ if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) b.classList.add('away'); });
+  document.addEventListener('focusout', function(){ clearTimeout(t); t = setTimeout(back, 300); });
+}
 function msgBubble(){
   let b = document.getElementById('mg-bubble');
   if(!b){
@@ -2465,6 +2525,7 @@ function msgBubble(){
     b.type = 'button'; b.id = 'mg-bubble'; b.className = 'mg-bubble'; b.hidden = true;
     b.addEventListener('click', function(){ msgOpen(); });
     document.body.appendChild(b);
+    msgBubbleAside(b);
   }
   b.hidden = !(currentSession && MSG.known && !MSG.open);
   b.innerHTML = MSG_ICON + (MSG.unread ? '<b>'+(MSG.unread>99?'99+':MSG.unread)+'</b>' : '');
