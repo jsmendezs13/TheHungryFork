@@ -224,6 +224,25 @@
               color:var(--blue); font-size:.74rem; font-weight:600; letter-spacing:.06em; text-decoration:none; -webkit-tap-highlight-color:transparent; }
   .rv-write svg { flex:none; }
   .rv-mail { margin-top:.3rem; }
+  /* r30 (Sebastian, 13 Oct): "Call (number)" and "Write SMS", the number and SMS in red, and the chat button at the
+     right of the same line, as on the day's cards. The name and its handle run on one line (.rv-name-text). */
+  .rv-rq .rv-contact { gap:.3rem 1rem; }
+  .rv-rq .rv-contact .rv-chat-sign { margin:0 0 0 auto; }
+  .rv-sms { letter-spacing:.04em; }
+  .rv-rq .rv-name { align-items:center; }
+  .rv-banner em { font-style:normal; font-weight:700; color:var(--red); white-space:nowrap; }
+  /* r30: a phone's date and time fields keep to their box (iPhones draw them wider than asked unless their own look is
+     switched off), and a date field never shares a line with another field on a phone. */
+  .m-input[type=date], .m-input[type=time] { -webkit-appearance:none; appearance:none; min-height:2.75rem; line-height:1.3; }
+  .m-input[type=date]::-webkit-date-and-time-value, .m-input[type=time]::-webkit-date-and-time-value { text-align:left; }
+  .rv-stack { display:grid; grid-template-columns:minmax(0,1fr); gap:.5rem; }
+  @media (max-width:560px) { .rv-form-row.has-date { grid-template-columns:minmax(0,1fr); } }
+  /* r30: the Menu tab in groups (Starters, Entrées, …) */
+  .m-dish-group { display:flex; align-items:center; gap:.7rem; margin:1.4rem 0 .6rem; font-family:var(--sans); font-size:.62rem; font-weight:600;
+                  letter-spacing:.2em; text-transform:uppercase; color:var(--red); }
+  .m-dish-group:first-child { margin-top:.2rem; }
+  .m-dish-group::after { content:''; flex:1; height:1px; background:var(--border); }
+  .m-dish-group small { font-size:.62rem; color:var(--muted); letter-spacing:.08em; font-weight:500; }
   .rv-note { font-size:.74rem; color:var(--text); background:var(--off-white); border-radius:8px; padding:.3rem .5rem; margin-top:.35rem; overflow-wrap:anywhere; }
   .rv-chip { display:inline-block; font-size:.56rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; margin-left:.3rem; vertical-align:2px; white-space:nowrap; }
   .rv-chip.in { background:var(--blue-light); color:var(--blue); }
@@ -344,6 +363,8 @@
   /* The window */
   .mg-sheet { height:min(88vh, 860px); max-height:none; display:flex; flex-direction:column; overflow:hidden; padding-bottom:calc(env(safe-area-inset-bottom,0px) + .8rem); }
   .mg-sheet > * { flex:none; }
+  #mg-sheet-host .rv-scrim { z-index:310; } #mg-sheet-host .rv-sheet { z-index:311; }   /* r30: a request's chat opens over the requests */
+  .mg-who { font-size:.74rem; color:var(--muted); background:var(--off-white); border-radius:10px; padding:.45rem .7rem; margin-top:.45rem; line-height:1.45; }
   .mg-tabs { display:flex; gap:.35rem; background:var(--off-white); border-radius:999px; padding:.25rem; margin-bottom:.4rem; }
   .mg-tab { flex:1; border:none; background:none; border-radius:999px; padding:.55rem .5rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.14em;
             text-transform:uppercase; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.4rem; }
@@ -689,7 +710,7 @@ function render(){
   if(TAB==='menu'){
     if(DISHES_ERROR){ wrap().innerHTML = top + '<div class="m-err">'+esc(DISHES_ERROR)+'</div>'; return; }
     if(!DISHES_LOADED){ wrap().innerHTML = top + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
-    wrap().innerHTML = top + (DISHES_ROWS.length ? DISHES_ROWS.map(dishCard).join('')
+    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS)
                                                  : '<div class="m-empty">This restaurant has no dishes yet.</div>');
     return;
   }
@@ -697,6 +718,23 @@ function render(){
   rvRender();
 }
 
+
+// r30 (Sebastian, 13 Oct: "not all mixed together"): the dishes in groups, in the menu's own order — Starters,
+// Entrées, Salads, Sides, Drinks — each under its heading with how many dishes it has. Inside a group the
+// menu's order (sort_order) stays. A category the menu does not know yet gets its own group at the end.
+const DISH_GROUPS = [['chefs-pick', "Chef's Pick"], ['starters', 'Starters'], ['appetizers', 'Appetizers'], ['entree', 'Entrées'], ['salads', 'Salads'],
+                     ['sides', 'Sides'], ['desserts', 'Desserts'], ['drinks', 'Drinks']];
+function dishGroupsHtml(rows){
+  const known = DISH_GROUPS.map(g => g[0]);
+  const keyOf = d => String(d.restaurant_category || '').trim().toLowerCase();
+  const extra = [...new Set(rows.map(keyOf).filter(k => known.indexOf(k) < 0))];
+  const label = k => k ? k.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Other';
+  return DISH_GROUPS.concat(extra.map(k => [k, label(k)])).map(function(g){
+    const list = rows.filter(d => keyOf(d) === g[0]);
+    if(!list.length) return '';
+    return '<div class="m-dish-group" role="heading" aria-level="3">'+esc(g[1])+' <small>'+list.length+'</small></div>' + list.map(dishCard).join('');
+  }).join('');
+}
 
 // The dish's small photo (the plate picture, or the open-cut one if there is no plate), through Vercel's image
 // service like the menu; a photo that cannot be loaded gives the emoji back.
@@ -1264,7 +1302,16 @@ function rvWrite(r){
   const first = String(r.name||'').trim().split(/\s+/)[0] || '';
   const text = 'Hi'+(first ? ' '+first : '')+', this is '+((typeof RESTAURANT !== 'undefined' && RESTAURANT && RESTAURANT.name) || 'the restaurant')
     + ' about your request for '+rvPeople(r.party)+' on '+rvShort(r.date)+'. ';
-  return '<a class="rv-write" href="sms:'+esc(dial)+'?&body='+encodeURIComponent(text)+'" aria-label="Write to '+esc(first || 'the guest')+' by text message">'+WRITE_ICON+'Write</a>';
+  // r30 (Sebastian, 13 Oct): written like Call — "Write SMS", with SMS in red as the number is — so it reads as a text message.
+  return '<span>Write <a class="rv-tel rv-sms" href="sms:'+esc(dial)+'?&body='+encodeURIComponent(text)+'" aria-label="Write to '+esc(first || 'the guest')+' by text message (SMS)">SMS</a></span>';
+}
+// r30: the chat button of a request (the messages inside the site), at the right of Call and Write SMS.
+// Red with the count when the guest wrote something nobody has read. Only for those who answer guests.
+function rqSign(r){
+  if(!r.chat) return '';
+  const n = Number(r.chat.unread) || 0;
+  return '<button type="button" class="rv-chat-sign'+(n ? ' new' : '')+'" onclick="rqChatOpen('+Number(r.id)+')" aria-label="Messages with '+esc(whoText(r.name, r.handle))
+    + (n ? ' ('+n+' new)' : (r.chat.count ? ' ('+r.chat.count+')' : ''))+'">'+MSG_ICON+(n ? '<b>'+(n>99?'99+':n)+'</b>' : '')+'</button>';
 }
 
 // ── LOADING ──
@@ -1646,8 +1693,10 @@ function rvPaintTop(){
     + '</div>';
   if(q.length){
     const r = q[0];
+    const unread = q.reduce((n, x) => n + ((x.chat && Number(x.chat.unread)) || 0), 0);
     html += '<div class="rv-banner"><span><b>'+whoHtml(r.name, r.handle)+'</b> asks for <b>'+rvPeople(r.party)+'</b> · '+esc(rvShort(r.date))
-      + (q.length>1 ? ' · +'+(q.length-1)+' more' : '')+'</span>'
+      + (q.length>1 ? ' · +'+(q.length-1)+' more' : '')
+      + (unread ? ' · <em>'+unread+' new message'+(unread===1?'':'s')+'</em>' : '')+'</span>'
       + '<button type="button" class="rv-act no" style="background:#fff;flex:none;" onclick="rvOpenRequests()">'+(d.canEdit?'Answer':'See')+'</button></div>';
   }
   if(!d.settings.enabled){
@@ -2073,7 +2122,7 @@ function rvRequestCard(r){
     const fits = a => a.seats >= r.party;
     const rooms = (RV.day.areas || []).slice().sort((a,b) => (fits(b) - fits(a)) || (fits(a) ? a.seats - b.seats : b.seats - a.seats));
     form = '<div class="rv-rq-form">'
-      + '<div class="rv-form-row">'
+      + '<div class="rv-form-row has-date">'
       +   '<div class="m-field"><div class="m-field-label">Day</div><input class="m-input" type="date" id="rq-date-'+r.id+'" value="'+esc(r.date)+'" min="'+esc(RV.today)+'"></div>'
       +   '<div class="m-field"><div class="m-field-label">Time</div><input class="m-input" type="time" id="rq-time-'+r.id+'" value="'+esc(r.time||'19:00')+'" step="300"></div>'
       + '</div>'
@@ -2091,12 +2140,13 @@ function rvRequestCard(r){
       + '<div class="m-actions"><button type="button" class="m-save" onclick="rvDecline('+r.id+', this)">Decline the request</button>'
       + '<button type="button" class="m-revert" onclick="RV.sheet.open=null;rvPaintSheet()">Back</button></div></div>';
   }
-  return '<div class="rv-rq">'
-    + '<div class="rv-name">'+whoHtml(r.name, r.handle)+' <span class="rv-chip big">'+rvPeople(r.party)+'</span></div>'
+  return '<div class="rv-rq" data-rq="'+Number(r.id)+'">'
+    // r30: one line, the handle right after the name (it floated above it before: the name line is a flex row)
+    + '<div class="rv-name"><span class="rv-name-text">'+whoHtml(r.name, r.handle)+' <span class="rv-chip big">'+rvPeople(r.party)+'</span></span></div>'
     + '<div class="rv-rq-when">'+esc(rvShort(r.date))+' · '+(r.time ? esc(rvHm(r.time)) : 'no time given')+'</div>'
     + (r.occasion ? '<div class="rv-meta">Occasion: '+esc(r.occasion)+'</div>' : '')
     + (r.message ? '<div class="rv-note">&ldquo;'+esc(r.message)+'&rdquo;</div>' : '')
-    + '<div class="rv-contact"><span>Call '+rvTel(r.phone)+'</span>'+rvWrite(r)+'</div>'
+    + '<div class="rv-contact"><span>Call '+rvTel(r.phone)+'</span>'+rvWrite(r)+rqSign(r)+'</div>'
     // Whether there is an email, never which one: the staff do not see guests' addresses (privacy page).
     + '<div class="rv-meta rv-mail">'+(r.hasEmail ? 'Email given. If you accept, the confirmation goes there.' : 'No email on this request. If you accept, call them to confirm.')+'</div>'
     + (RV.day.canEdit && !open ? '<div class="rv-acts">'
@@ -2375,7 +2425,8 @@ function rvHolidaysHtml(S){
           + (RV.armed && RV.armed.hol===c.date ? 'Sure?' : 'Remove')+'</button>' : '')+'</div>').join('')
     : '<div class="m-sub" style="padding:.4rem 0;">No holidays coming up.</div>';
   const add = edit ? '<div class="rv-rq-form">'
-    + '<div class="rv-form-row"><div class="m-field"><div class="m-field-label">Day</div><input class="m-input" type="date" id="rv-h-date" min="'+esc(S.today)+'"></div>'
+    // r30 (Sebastian, 13 Oct: Reason still lay over Day on his iPhone): one field per line.
+    + '<div class="rv-stack"><div class="m-field"><div class="m-field-label">Day</div><input class="m-input" type="date" id="rv-h-date" min="'+esc(S.today)+'"></div>'
     + '<div class="m-field"><div class="m-field-label">Reason (guests see it)</div><input class="m-input" id="rv-h-reason" maxlength="80" placeholder="e.g. Thanksgiving"></div></div>'
     + '<label class="m-codes" style="margin-top:.6rem;font-size:.8rem;"><input type="checkbox" id="rv-h-allday" checked onchange="document.getElementById(\'rv-h-hours\').hidden=this.checked"> Closed all day</label>'
     + '<div class="rv-form-row" id="rv-h-hours" hidden><div class="m-field"><div class="m-field-label">Opens</div><input class="m-input" type="time" id="rv-h-opens" value="12:00"></div>'
@@ -2383,9 +2434,6 @@ function rvHolidaysHtml(S){
     + '<div class="m-actions"><button type="button" class="m-save" onclick="rvHolidayAdd(this)">Add the day</button></div></div>' : '';
   return '<div class="m-card"><div class="m-eyebrow">Holidays and special days</div>'
     + '<div class="m-sub" style="font-size:.74rem;">A day here replaces the usual hours: closed, or open with different hours. It does not cancel tables already booked.</div>'
-    // r29: the website shows these days (button "Our holidays", under the opening hours)
-    + '<div class="rv-public"><b>Guests see this list.</b> The website shows every coming day here, with its reason exactly as you write it, under the opening hours. '
-    +   'Write the reason as you want guests to read it (e.g. “Thanksgiving”, “Private event”). Leave it empty to show only the date.</div>'
     + list + add + '</div>';
 }
 async function rvHolidayAdd(btn){
@@ -2485,7 +2533,8 @@ async function rvRoomAdd(btn){
 // and open it again at any time in the 90 days it is kept. Owners, managers and
 // Sebastian answer; crew only when a manager has switched it on in Team. The
 // server checks all of that again on every request (api/_lib/messages.js).
-const MSG = { known: null, unread: 0, open: false, view: 'list', tab: 'open', date: null, today: null, data: null, error: null,
+// kind: 'table' (a booking's conversation) or 'request' (r30: a big-party request's, opened from its card).
+const MSG = { known: null, unread: 0, open: false, view: 'list', kind: 'table', tab: 'open', date: null, today: null, data: null, error: null,
               threadId: null, thread: null, threadError: null, seq: 0, gen: 0, timer: null, lastList: 0, sending: false, busy: false,
               asking: 0, askedAt: 0, wokeAt: 0, stripDates: null, stripToday: null, stripAim: null, stripTouch: false, stripMoved: 0, stripWatch: null, stripChose: null };
 const MSG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
@@ -2565,18 +2614,29 @@ async function msgOpenFromHash(){
 function msgOpen(){
   if(!RESTAURANT || !currentSession) return;
   // The server picks the day: today, or the day of the newest message waiting.
-  MSG.open = true; MSG.view = 'list'; MSG.date = null; MSG.tab = 'open'; MSG.data = null;
+  MSG.open = true; MSG.view = 'list'; MSG.kind = 'table'; MSG.date = null; MSG.tab = 'open'; MSG.data = null;
   msgBubble(); msgPaint();
   msgLoadList();
   msgTimer();
 }
 function msgOpenThread(id){
   if(!RESTAURANT || !currentSession) return;
-  MSG.open = true; MSG.view = 'thread'; MSG.threadId = Number(id); MSG.thread = null; MSG.threadError = null;
+  MSG.open = true; MSG.view = 'thread'; MSG.kind = 'table'; MSG.threadId = Number(id); MSG.thread = null; MSG.threadError = null;
   msgBubble(); msgPaint();
   msgLoadThread(true);
   msgTimer();
 }
+// r30 (Sebastian, 13 Oct): a big-party request's own conversation, from the chat button on its card. It opens over
+// the requests; closing it goes back to them.
+function rqChatOpen(id){
+  if(!RESTAURANT || !currentSession) return;
+  MSG.open = true; MSG.view = 'thread'; MSG.kind = 'request'; MSG.threadId = Number(id); MSG.thread = null; MSG.threadError = null;
+  msgBubble(); msgPaint();
+  msgLoadThread(true);
+  msgTimer();
+}
+// The table or the request a conversation is about (the two answers name it differently).
+function msgSubject(t){ return t ? (t.booking || t.request || null) : null; }
 // Closing the window: the day behind it catches up (chat signs, counts).
 function msgClose(){ msgHide(); if(TAB==='reservations' && RV.day && RV.view==='day') rvLoadDay(RV.date, {quiet:true}); }
 
@@ -2654,9 +2714,10 @@ async function msgLoadThread(first){
   const seq = ++MSG.seq, gen = MSG.gen, id = MSG.threadId;
   MSG.asking = seq; MSG.askedAt = Date.now();
   try{
-    const data = await rvApi({action:'staff_msg_thread', id: id});
+    const kind = MSG.kind;
+    const data = await rvApi(kind === 'request' ? {action:'staff_req_thread', requestId: id} : {action:'staff_msg_thread', id: id});
     if(MSG.asking === seq) MSG.asking = 0;
-    if(seq !== MSG.seq || gen !== MSG.gen || id !== MSG.threadId || MSG.sending) return;
+    if(seq !== MSG.seq || gen !== MSG.gen || id !== MSG.threadId || kind !== MSG.kind || MSG.sending) return;
     const changed = JSON.stringify(data) !== JSON.stringify(MSG.thread);
     msgAnnounce(MSG.thread, data);
     MSG.thread = data; MSG.threadError = null;
@@ -2675,6 +2736,11 @@ async function msgLoadThread(first){
 // Opened: that card's chat sign has nothing unread any more, and the bubble's count drops.
 function msgSignRead(id){
   if(!RV.day) return;
+  if(MSG.kind === 'request'){
+    const q = (RV.day.requests || []).find(x => x.id === Number(id));
+    if(q && q.chat && q.chat.unread){ q.chat = Object.assign({}, q.chat, {unread: 0}); if(RV.sheet) rvPaintSheet(); rvPaintTop(); }
+    return;
+  }
   const b = RV.day.bookings.find(x => x.id === Number(id));
   if(!b || !b.chat || !b.chat.unread) return;
   MSG.unread = Math.max(0, MSG.unread - b.chat.unread);
@@ -2692,7 +2758,8 @@ function msgPaint(first){
   // A conversation already on screen: only its top and its messages change.
   // The answer box is left exactly as it is — rebuilding it would close the
   // keyboard on a phone in the middle of a sentence.
-  if(MSG.view === 'thread' && MSG.thread && host.dataset.view === 't'+MSG.threadId && host.querySelector('.mg-form')){
+  const key = (MSG.kind === 'request' ? 'r' : 't') + MSG.threadId;
+  if(MSG.view === 'thread' && MSG.thread && host.dataset.view === key && host.querySelector('.mg-form')){
     host.querySelector('.mg-top').innerHTML = msgTopHtml(MSG.thread);
     host.querySelector('.mg-msgs').innerHTML = msgBubblesHtml(MSG.thread);
     if(first || atEnd) scroller.scrollTop = scroller.scrollHeight;
@@ -2705,7 +2772,7 @@ function msgPaint(first){
     + '<div class="rv-sheet mg-sheet" role="dialog" aria-modal="true" aria-label="Guest messages"><div class="rv-grab"></div>'
     + (MSG.view === 'thread' ? msgThreadHtml() : msgListHtml())
     + '</div>';
-  host.dataset.view = MSG.view === 'thread' ? (MSG.thread ? 't'+MSG.threadId : '') : 'list';
+  host.dataset.view = MSG.view === 'thread' ? (MSG.thread ? key : '') : 'list';
   host.dataset.date = String(MSG.date);
   const sc = host.querySelector('.mg-scroll');
   if(sc && MSG.view === 'thread') sc.scrollTop = sc.scrollHeight;
@@ -2718,7 +2785,7 @@ function msgPaint(first){
 
 // A screen reader hears a new message once, not the whole conversation again.
 function msgAnnounce(before, after){
-  if(!before || !after || before.booking.id !== after.booking.id) return;
+  if(!before || !after || !msgSubject(before) || !msgSubject(after) || msgSubject(before).id !== msgSubject(after).id) return;
   const fresh = after.messages.filter(m => m.fromGuest && !before.messages.some(x => x.id === m.id));
   const live = document.querySelector('#mg-sheet-host .mg-live');
   if(fresh.length && live) live.textContent = 'New message from '+whoText(fresh[fresh.length-1].who, fresh[fresh.length-1].handle)+': '+fresh[fresh.length-1].body;
@@ -2726,7 +2793,8 @@ function msgAnnounce(before, after){
 
 function msgHead(title, back){
   return '<div class="rv-sheet-head"><div style="min-width:0;">'
-    + (back ? '<button type="button" class="mg-back" onclick="msgBackToList()">&#8249; All conversations</button>' : '')
+    + (back === 'requests' ? '<button type="button" class="mg-back" onclick="msgClose()">&#8249; Big-party requests</button>'
+       : back ? '<button type="button" class="mg-back" onclick="msgBackToList()">&#8249; All conversations</button>' : '')
     + '<div class="m-h">'+title+'</div></div>'
     + '<button type="button" class="rv-x" aria-label="Close" onclick="msgClose()">&times;</button></div>';
 }
@@ -2942,6 +3010,7 @@ function msgRow(t){
 }
 
 function msgTopHtml(t){
+  if(t.kind === 'request') return rqTopHtml(t);
   const b = t.booking;
   const first = String(b.name || '').trim().split(/\s+/)[0] || 'The guest';
   const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+' · '+rvTel(b.phone);
@@ -2952,19 +3021,31 @@ function msgTopHtml(t){
       + '<button type="button" class="rv-mini" onclick="msgReopenThread(this)">Reopen the conversation</button></div>';
   return '<div class="mg-sub">'+sub+'</div>' + state;
 }
+// The top of a request's conversation: the day asked for, the people, the phone, and where the guest reads it.
+function rqTopHtml(t){
+  const q = t.request;
+  const first = String(q.name || '').trim().split(/\s+/)[0] || 'The guest';
+  const sub = esc(q.day)+' · '+(q.time ? esc(q.time) : 'no time given')+' · '+rvPeople(q.party)+' · Request · '+rvTel(q.phone);
+  const where = !t.open ? 'This request has been answered.'
+    : t.guestReads === 'account' ? whoHtml(first, q.handle)+' reads this in My Reservations on the website.'
+    : whoHtml(first, q.handle)+' has no account yet: we email '+(first ? 'them' : 'the guest')+' once to say you wrote, and '
+      + 'they read it by logging in with '+rvTel(q.phone)+'.';
+  return '<div class="mg-sub">'+sub+'</div><div class="mg-who">'+where+'</div>';
+}
 function msgBubblesHtml(t){
   return t.messages.map(m => '<div class="mg-bub '+(m.fromGuest?'guest':'staff')+'"><span class="mg-bub-who">'+(m.who==='You' ? 'You' : whoHtml(m.who, m.handle))+' <i>· '+esc(m.label)+'</i></span>'
     + esc(m.body)+'</div>').join('');
 }
 function msgThreadHtml(){
-  const t = MSG.thread;
-  if(!t) return msgHead('Messages', true) + (MSG.threadError ? '<div class="m-err">'+esc(MSG.threadError)+'</div>' : '<div class="m-skel"></div>');
-  return msgHead(whoHtml(t.booking.name, t.booking.handle), true)
+  const t = MSG.thread, back = MSG.kind === 'request' ? 'requests' : true;
+  if(!t) return msgHead('Messages', back) + (MSG.threadError ? '<div class="m-err">'+esc(MSG.threadError)+'</div>' : '<div class="m-skel"></div>');
+  const who = msgSubject(t), isReq = t.kind === 'request';
+  return msgHead(whoHtml(who.name, who.handle), back)
     + '<div class="mg-top">'+msgTopHtml(t)+'</div>'
     + '<div class="mg-scroll"><div class="mg-msgs">'+msgBubblesHtml(t)+'</div>'
-    + '<p class="mg-foot">Kept until '+esc(t.keptUntil)+' (90 days after the table), then deleted.</p></div>'
+    + '<p class="mg-foot">Kept until '+esc(t.keptUntil)+' (90 days after the '+(isReq ? 'day asked for' : 'table')+'), then deleted.</p></div>'
     + '<p class="mg-live" aria-live="polite"></p>'
-    + '<div class="mg-form"><textarea class="mg-input" rows="1" maxlength="1000" aria-label="Your answer" placeholder="Write your answer…"'
+    + '<div class="mg-form"'+(isReq && !t.open ? ' hidden' : '')+'><textarea class="mg-input" rows="1" maxlength="1000" aria-label="Your answer" placeholder="Write your answer…"'
     + ' oninput="msgGrow(this)" onkeydown="if(event.key===\'Enter\'&&(event.ctrlKey||event.metaKey)){event.preventDefault();msgSend();}"></textarea>'
     + '<button type="button" class="mg-send" aria-label="Send" onclick="msgSend()">'+MSG_SEND+'</button></div>';
 }
@@ -2999,7 +3080,7 @@ async function msgSend(){
   MSG.sending = true; send.disabled = true;
   const gen = MSG.gen, id = MSG.threadId;
   try{
-    const data = await rvApi({action:'staff_msg_send', id: id, body: text});
+    const data = await rvApi(MSG.kind === 'request' ? {action:'staff_req_send', requestId: id, body: text} : {action:'staff_msg_send', id: id, body: text});
     if(gen !== MSG.gen || id !== MSG.threadId) return;
     MSG.seq += 1;                                   // an older answer still on its way is not drawn
     MSG.thread = data;
