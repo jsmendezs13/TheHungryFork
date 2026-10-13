@@ -215,3 +215,24 @@
   .hf-v-tally b { display:block; font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); line-height:1.1; }
   .hf-v-tally span { font-family:var(--sans); font-size:.62rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
   .hf-v-empty { font-family:var(--sans); font-size:.85rem; font-weight:300; color:var(--muted); text-align:center; padding:1.4rem 0; line-height:1.6; }
+
+  /* ── OUR HOLIDAYS (r29, Sebastian 12 Oct, picture B) ──
+     A pill under the hours; tapping it opens the list in the same place. Light
+     letters on the dark footers and on the dark top of Reservations. */
+  .hf-hol-btn { display:inline-flex; align-items:center; gap:7px; margin:10px auto 0; padding:0 14px; min-height:38px; border:1px solid rgba(252,249,244,.4);
+    border-radius:999px; background:transparent; color:rgba(252,249,244,.92); font-family:var(--sans, 'Inter', system-ui, sans-serif); font-size:.8rem;
+    font-weight:500; letter-spacing:.02em; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .hf-hol-btn:hover, .hf-hol-btn:focus-visible { border-color:rgba(252,249,244,.75); outline:none; }
+  .hf-hol-btn svg { flex:none; display:block; }
+  .hf-hol-chev { transition:transform .2s; }
+  .hf-hol-btn.open { border-color:var(--red-bright, #E23B2E); }
+  .hf-hol-btn.open .hf-hol-chev { transform:rotate(180deg); }
+  .hf-hol-panel { margin:12px auto 0; max-width:440px; text-align:left; background:rgba(252,249,244,.06); border:1px solid rgba(252,249,244,.16);
+    border-radius:14px; padding:2px 14px; font-family:var(--sans, 'Inter', system-ui, sans-serif); letter-spacing:0; }
+  .hf-hol-panel[hidden] { display:none; }
+  .hf-hol-row { padding:10px 0; border-bottom:1px solid rgba(252,249,244,.12); }
+  .hf-hol-day { color:#FCF9F4; font-size:.86rem; line-height:1.35; overflow-wrap:anywhere; }
+  .hf-hol-day b { font-weight:600; }
+  .hf-hol-note { color:rgba(252,249,244,.66); font-size:.78rem; line-height:1.35; margin-top:2px; }
+  .hf-hol-rest { padding:10px 0 11px; color:rgba(252,249,244,.62); font-size:.76rem; line-height:1.4; text-align:center; }
+  @media (prefers-reduced-motion: reduce) { .hf-hol-chev { transition:none; } }
