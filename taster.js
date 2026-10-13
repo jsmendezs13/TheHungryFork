@@ -99,6 +99,65 @@ function tasterPhoneEdited(flow){
   tasterHideConfirm(flow);
 }
 
+// ── THE PHONE BOX (r30, Sebastian 13 Oct) ──
+// "+1 (555) 000-0000" stays in the box, and the digits take the places of the
+// grey ones as they are typed: "+1 (518) 55" then "5) 000-0000" in grey. The +1
+// is fixed (accounts are US numbers: someone without one sees it and does not
+// try), so only the ten digits are typed, and they are easier to check than ten
+// digits in a row. A pasted or saved number in any shape ("+1 518-554-0137",
+// "15185540137") is put in the same shape.
+var HF_PHONE_REST='(555) 000-0000';
+function hfPhoneTen(value){
+  var raw=String(value||''), d=raw.replace(/\D/g,'');
+  if(/^\s*\+\s*1/.test(raw))d=d.slice(1);          // "+1 518…": the country code
+  else if(d.length===11&&d[0]==='1')d=d.slice(1);  // "1 518…" in full
+  d=d.replace(/^1/,'');                            // an area code never starts with 1: a 1 typed first is the country code
+  return d.slice(0,10);
+}
+function hfPhoneShape(d){
+  if(!d)return '';
+  return '('+d.slice(0,3)+(d.length>=3?') '+d.slice(3,6):'')+(d.length>=6?'-'+d.slice(6,10):'');
+}
+function hfPhonePaint(box){
+  var g=box&&box.parentNode&&box.parentNode.querySelector('.hf-phone-ghost');
+  if(!g)return;
+  g.firstChild.textContent=box.value;
+  g.lastChild.textContent=HF_PHONE_REST.slice(box.value.length);
+}
+// Puts a number in a phone box from code (the "Log in instead" link), shaped.
+function hfPhoneSet(id,value){
+  var box=document.getElementById(id);
+  if(!box)return;
+  box.value=hfPhoneShape(hfPhoneTen(value));box._hfPrev=box.value;hfPhonePaint(box);
+}
+function hfPhoneBox(box){
+  if(!box||box._hfPhone)return;
+  box._hfPhone=true;
+  var wrap=document.createElement('span');
+  wrap.className='hf-phone';
+  box.parentNode.insertBefore(wrap,box);
+  wrap.innerHTML='<span class="hf-phone-cc" aria-hidden="true">+1</span><span class="hf-phone-ghost" aria-hidden="true"><i></i><em></em></span>';
+  wrap.appendChild(box);
+  box.setAttribute('inputmode','tel');
+  box.removeAttribute('placeholder');
+  box._hfPrev='';
+  box.addEventListener('input',function(e){
+    var prev=box._hfPrev||'', d=hfPhoneTen(box.value);
+    // A bracket, space or dash deleted with Backspace takes the digit before it with it.
+    if(e&&e.inputType&&e.inputType.indexOf('delete')===0&&box.value.length<prev.length&&d.length>=hfPhoneTen(prev).length)d=d.slice(0,-1);
+    var shaped=hfPhoneShape(d);
+    if(box.value!==shaped){
+      box.value=shaped;
+      try{box.setSelectionRange(shaped.length,shaped.length);}catch(err){}
+    }
+    box._hfPrev=shaped;
+    hfPhonePaint(box);
+  });
+  hfPhonePaint(box);
+}
+// Ten digits typed: the number the server will read.
+function hfPhoneFull(id){var b=document.getElementById(id);return !!b&&hfPhoneTen(b.value).length===10;}
+
 // ── MODAL MARKUP ──
 // Injected rather than duplicated in both pages. Appended to <body>; the modal
 // is a fixed-position overlay, so its position in the document does not matter.
@@ -129,7 +188,7 @@ const TASTER_MODAL_HTML = `
       <div class="t-step" id="t-step-1">
         <div class="t-label">Log In</div>
         <div class="t-sub">Enter your phone number and 6-digit PIN.</div>
-        <input class="t-input" id="login-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel">
+        <input class="t-input" id="login-phone" type="tel" autocomplete="tel-national" aria-label="Phone number (US)">
         <input class="t-input" id="login-pin" type="password" placeholder="6-digit PIN" maxlength="6" inputmode="numeric">
         <div class="t-err" id="login-err">Invalid phone or PIN. Please try again.</div>
         <button class="t-btn" onclick="doLogin()">Log In</button>
@@ -141,7 +200,7 @@ const TASTER_MODAL_HTML = `
       <div class="t-step" id="t-step-20">
         <div class="t-label">Reset your PIN</div>
         <div class="t-sub">Enter your phone number and we'll send you a verification code.</div>
-        <input class="t-input" id="reset-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel" oninput="tasterPhoneEdited('reset')">
+        <input class="t-input" id="reset-phone" type="tel" autocomplete="tel-national" aria-label="Phone number (US)" oninput="tasterPhoneEdited('reset')">
         <div class="t-hint">US numbers only — we can't text other countries yet.</div>
         <div class="t-err" id="reset-phone-err"></div>
         <div id="ts-reset" style="margin:0 0 .75rem;"></div>
@@ -178,7 +237,7 @@ const TASTER_MODAL_HTML = `
       <div class="t-step" id="t-step-10">
         <div class="t-label">Step 1 of 3 — Verify your number</div>
         <div class="t-sub">We'll send a 4-digit code to confirm it's really you.</div>
-        <input class="t-input" id="signup-phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel" oninput="tasterPhoneEdited('signup')">
+        <input class="t-input" id="signup-phone" type="tel" autocomplete="tel-national" aria-label="Phone number (US)" oninput="tasterPhoneEdited('signup')">
         <div class="t-hint">US numbers only — we can't text other countries yet.</div>
         <div class="t-err" id="signup-phone-err">Please enter a valid phone number.</div>
         <div id="ts-signup" style="margin:0 0 .75rem;"></div>
@@ -293,6 +352,7 @@ const TASTER_MODAL_HTML = `
   const sb=document.getElementById('t-success-btn');
   if(sb&&TASTER.successLabel)sb.textContent=TASTER.successLabel;
   hfPinBoxes();
+  ['login-phone','reset-phone','signup-phone'].forEach(function(id){hfPhoneBox(document.getElementById(id));});
 })();
 
 // ── PIN BOXES: the number keypad only (Sebastian, 7 Oct) ──
@@ -305,11 +365,11 @@ const TASTER_MODAL_HTML = `
 // what screen readers and password managers treat as secret (review, 8 Oct).
 // Either way anything that is not a digit is dropped as it is typed or
 // pasted, and only six digits are kept.
-function hfPinBoxes(){
+function hfPinBoxes(ids){
   var ua=navigator.userAgent||'';
   var ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);   // iPads say "Macintosh"
   var dots=ios&&!!(window.CSS&&CSS.supports&&CSS.supports('-webkit-text-security','disc'));
-  ['login-pin','reset-pin','reset-pin2','signup-pin','signup-pin2'].forEach(function(id){
+  (ids||['login-pin','reset-pin','reset-pin2','signup-pin','signup-pin2']).forEach(function(id){
     var box=document.getElementById(id);
     if(!box)return;
     box.setAttribute('inputmode','numeric');
@@ -318,7 +378,7 @@ function hfPinBoxes(){
     // marked "new-password": that is what makes browsers offer a long strong
     // password, which a six-digit box cannot take (review, 8 Oct). If Safari
     // suggests one anyway, passwordrules keeps it to six digits.
-    if(id==='login-pin')box.setAttribute('autocomplete','current-password');
+    if(id==='login-pin'||id==='me-pin-cur'||id==='me-phone-pin')box.setAttribute('autocomplete','current-password');
     else box.setAttribute('passwordrules','minlength: 6; maxlength: 6; required: digit; allowed: digit;');
     box.removeAttribute('maxlength');           // so a pasted "12 34 56" still fits
     if(dots){
@@ -348,7 +408,7 @@ function loadSession(){
     }
   }catch(e){}
 }
-function logout(){localStorage.removeItem('hf_taster');try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof HF_INBOX!=='undefined'){HF_INBOX.data=null;HF_INBOX.problem=null;HF_INBOX.who=undefined;}currentTaster=null;currentSession=null;updateNavBtn();showToast('Logged out. See you next time!');}
+function logout(){localStorage.removeItem('hf_taster');try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof HF_INBOX!=='undefined'){HF_INBOX.data=null;HF_INBOX.problem=null;HF_INBOX.who=undefined;}currentTaster=null;currentSession=null;if(typeof closeMyInfo==='function')closeMyInfo();updateNavBtn();showToast('Logged out. See you next time!');}
 
 // ── CORNER ACCOUNT MENU ──
 //
@@ -411,6 +471,8 @@ function toggleCornerMenu(){
   if(root.classList.contains('open'))closeCornerMenu();else openCornerMenu();
 }
 
+var HF_ME_ICON='<svg class="hf-me-ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>';
+var HF_ME_CHEV='<svg class="hf-me-ch" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 // Kept under its old name because saveSession, loadSession and logout all call
 // it, on both pages.
 function updateNavBtn(){
@@ -421,7 +483,8 @@ function updateNavBtn(){
   const items=[];
   if(currentTaster){
     // r28 (Sebastian, 12 Oct): the handle is always beside the name: "Hi, Johan (Johan_I)".
-    items.push({label:'Hi, '+(currentTaster.first_name||'there')+(currentTaster.username?' ('+currentTaster.username+')':''), kind:'label', cls:'hf-corner-name'});
+    // r30 (Sebastian, 12 Oct, picture A): tapping it opens My information. Its letters are blue; no other sign.
+    items.push({label:'Hi, '+(currentTaster.first_name||'there')+(currentTaster.username?' ('+currentTaster.username+')':''), act:'me', cls:'hf-corner-name', aria:'My information'});
     // Sebastian's order (7 Oct): My Reservations first, then My Tastings,
     // then My Visits, then Log Out. My Reservations goes straight to the
     // booking page's own list rather than a fourth overlay copied onto every
@@ -442,6 +505,7 @@ function updateNavBtn(){
     const text=hfEsc(it.label);
     if(it.kind==='label')return '<div class="'+cls+'"'+style+'>'+text+'</div>';
     if(it.href)return '<a class="'+cls+'" href="'+it.href+'"'+style+'>'+text+'</a>';
+    if(it.act==='me')return '<button type="button" class="'+cls+'" data-act="me"'+style+' aria-label="'+hfEsc(it.label)+' — '+it.aria+'">'+HF_ME_ICON+'<span>'+text+'</span>'+HF_ME_CHEV+'</button>';
     return '<button type="button" class="'+cls+'" data-act="'+it.act+'"'+style+'>'+text+'</button>';
   }).join('');
 
@@ -693,6 +757,12 @@ function hfBellRender(){
     return;
   }
   panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
+    // r30: the restaurant wrote about a big-party request
+    if(b.requestId)return '<a class="hf-bell-item" href="/reservations#req='+Number(b.requestId)+'">'
+      +'<b>'+hfEsc(b.who)+(b.handle?' ('+hfEsc(b.handle)+')':'')+' · '+hfEsc(b.restaurant)+' wrote about your request</b>'
+      +'<span>Your request: '+hfEsc(b.table)+'</span>'
+      +'<small>'+hfEsc(b.label)+(b.count>1?' · '+Number(b.count)+' messages':'')+'</small>'
+      +'</a>';
     return '<a class="hf-bell-item" href="/reservations#chat='+Number(b.reservationId)+'">'
       +'<b>'+hfEsc(b.who)+(b.handle?' ('+hfEsc(b.handle)+')':'')+' · '+hfEsc(b.restaurant)+' answered you</b>'
       +'<span>Your table: '+hfEsc(b.table)+'</span>'
@@ -749,6 +819,7 @@ document.addEventListener('click',function(e){
     else if(act==='tastings'){if(typeof openMyTastings==='function')openMyTastings();}
     else if(act==='visits'){if(typeof openMyVisits==='function')openMyVisits();}
     else if(act==='logout'){if(confirm('Log out?'))logout();}
+    else if(act==='me')openMyInfo();
     return;
   }
   if(t.closest('#hf-corner-toggle')){toggleCornerMenu();return;}
@@ -757,8 +828,9 @@ document.addEventListener('click',function(e){
   if(bellItem){
     hfBellClose();
     // Already on that address: the page will not hear a change, so open it here.
-    var m=/#chat=(\d+)$/.exec(bellItem.getAttribute('href')||'');
+    var m=/#chat=(\d+)$/.exec(bellItem.getAttribute('href')||''), q=/#req=(\d+)$/.exec(bellItem.getAttribute('href')||'');
     if(m&&/^\/reservations(\.html)?$/.test(location.pathname)&&location.hash==='#chat='+m[1]&&typeof openMine==='function'){e.preventDefault();openMine(Number(m[1]));}
+    if(q&&/^\/reservations(\.html)?$/.test(location.pathname)&&location.hash==='#req='+q[1]&&typeof openMine==='function'){e.preventDefault();openMine('r'+Number(q[1]));}
     return;
   }
   if(!t.closest('#hf-bell-panel'))hfBellClose();
@@ -819,6 +891,7 @@ async function doLogin(){
   const err=document.getElementById('login-err');
   err.style.display='none';
   if(!phone||!pin){err.textContent='Please enter your phone and PIN.';err.style.display='block';return;}
+  if(!hfPhoneFull('login-phone')){err.textContent='Please type the 10 digits of your phone number.';err.style.display='block';return;}
   const btn=document.querySelector('#t-step-1 .t-btn');
   btn.disabled=true;btn.textContent='Logging in…';
   try{
@@ -871,6 +944,7 @@ async function sendResetOtp(){
   const err=document.getElementById('reset-phone-err');
   err.style.display='none';
   if(!phone){err.textContent='Please enter your phone number.';err.style.display='block';return;}
+  if(!hfPhoneFull('reset-phone')){err.textContent='Please type the 10 digits of your phone number.';err.style.display='block';return;}
   if(!tsTokens.reset){err.textContent='Please complete the verification check above.';err.style.display='block';return;}
   if(!tasterPhoneAgreed('reset',phone,err))return;
   const btn=document.getElementById('reset-send-btn');
@@ -929,6 +1003,7 @@ async function sendSignupOtp(){
   const err=document.getElementById('signup-phone-err');
   err.style.display='none';
   if(!phone){err.textContent='Please enter a phone number.';err.style.display='block';return;}
+  if(!hfPhoneFull('signup-phone')){err.textContent='Please type the 10 digits of your phone number.';err.style.display='block';return;}
   if(!tsTokens.signup){err.textContent='Please complete the verification check above.';err.style.display='block';return;}
   if(!tasterPhoneAgreed('signup',phone,err))return;
   const btn=document.getElementById('signup-send-btn');
@@ -938,7 +1013,7 @@ async function sendSignupOtp(){
     const d=await res.json();
     if(d.success){document.getElementById('signup-sent-to').textContent='We sent a 4-digit code to '+phone+'.';goTStep(11);}
     else if(d.code==='ALREADY_REGISTERED'){
-      err.innerHTML='This phone number already has an account. <a onclick="document.getElementById(\'login-phone\').value=\''+phone+'\';goTStep(1);" style="text-decoration:underline;cursor:pointer;">Log in instead</a>';
+      err.innerHTML='This phone number already has an account. <a onclick="hfPhoneSet(\'login-phone\',\''+hfPhoneShape(hfPhoneTen(phone))+'\');goTStep(1);" style="text-decoration:underline;cursor:pointer;">Log in instead</a>';
       err.style.display='block';
     }
     else{err.textContent=d.error||'Could not send code. Check the number.';err.style.display='block';}
@@ -1457,3 +1532,247 @@ document.addEventListener('click',function(e){
   if(!t||!t.closest)return;
   if(t.closest('.hf-hol-btn')){HF_HOL.open=!HF_HOL.open;hfHolApply();}
 });
+
+// ── MY INFORMATION (r30, Sebastian 12–13 Oct: picture A, everything on one page) ──
+//
+// Opened by tapping "Hi, Name (Handle)" in the corner menu. What the site keeps
+// about the guest, and what they may change: the names, the email (kept once
+// the 6-digit code sent to it is typed back), the phone (it is the login: a
+// text with a code, and the current PIN), the birthday, the gender, the three
+// promotion switches and the PIN. The handle never changes. The server checks
+// all of it again (api/_lib/profile.js).
+var HF_ME={data:null,busy:false,phoneTicket:null};
+var HF_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function hfMeHtml(){
+  var y=new Date().getFullYear(), years='', days='', months='';
+  for(var i=y-13;i>=1920;i--)years+='<option value="'+i+'">'+i+'</option>';
+  for(var d=1;d<=31;d++)days+='<option value="'+(d<10?'0':'')+d+'">'+d+'</option>';
+  HF_MONTHS.forEach(function(m,k){months+='<option value="'+(k<9?'0':'')+(k+1)+'">'+m+'</option>';});
+  return '<div class="t-overlay" id="me-modal" role="dialog" aria-modal="true" aria-labelledby="me-title">'
+  +'<div class="t-box me-box">'
+  +  '<div class="t-header"><h3 id="me-title">My information</h3><button type="button" class="t-close" aria-label="Close" onclick="closeMyInfo()">✕</button></div>'
+  +  '<div class="t-body">'
+  +   '<div class="me-loading" id="me-loading">Loading your information…</div>'
+  +   '<div id="me-form" hidden>'
+  +    '<div class="me-row">'
+  +     '<div class="me-field"><label class="me-lbl" for="me-first">First name</label><input class="t-input" id="me-first" type="text" autocomplete="given-name" maxlength="60"></div>'
+  +     '<div class="me-field"><label class="me-lbl" for="me-last">Last name</label><input class="t-input" id="me-last" type="text" autocomplete="family-name" maxlength="60"></div>'
+  +    '</div>'
+  +    '<label class="me-lbl" for="me-email">Email</label>'
+  +    '<input class="t-input" id="me-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com">'
+  +    '<div class="t-hint">Your confirmations and QR codes go here. A new email gets a 6-digit code to check it is yours.</div>'
+  +    '<div class="me-code" id="me-code" hidden><div class="me-code-q" id="me-code-q"></div>'
+  +     '<input class="t-input t-input-code" id="me-email-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" aria-label="The 6-digit code"></div>'
+  +    '<div class="me-lbl">Phone · you log in with it</div>'
+  +    '<div class="me-phone"><span id="me-phone-now">—</span><button type="button" class="me-pill" id="me-phone-btn" onclick="hfMePhoneToggle()">Change</button></div>'
+  +    '<div class="t-hint">A new number gets a text with a code first.</div>'
+  +    '<div class="me-panel" id="me-phone-panel" hidden>'
+  +     '<label class="me-lbl" for="me-phone-new">New number</label><input class="t-input" id="me-phone-new" type="tel" autocomplete="off" aria-label="New phone number (US)">'
+  +     '<label class="me-lbl" for="me-phone-pin">Your current PIN</label><input class="t-input" id="me-phone-pin" type="password" maxlength="6" inputmode="numeric">'
+  +     '<div class="me-code" id="me-phone-code-box" hidden><div class="me-code-q" id="me-phone-code-q"></div>'
+  +      '<input class="t-input t-input-code" id="me-phone-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="0000" aria-label="The 4-digit code"></div>'
+  +     '<div class="t-err" id="me-phone-err"></div>'
+  +     '<button type="button" class="t-btn-ghost" id="me-phone-go" onclick="hfMePhoneGo()">Send the code</button>'
+  +    '</div>'
+  +    '<div class="me-lbl">Date of birth</div>'
+  +    '<div class="me-row me-dob"><select class="t-select" id="me-dob-m" aria-label="Month"><option value="">Month</option>'+months+'</select>'
+  +     '<select class="t-select" id="me-dob-d" aria-label="Day"><option value="">Day</option>'+days+'</select>'
+  +     '<select class="t-select" id="me-dob-y" aria-label="Year"><option value="">Year</option>'+years+'</select></div>'
+  +    '<label class="me-lbl" for="me-gender">Gender</label>'
+  +    '<select class="t-select" id="me-gender"><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option>'
+  +     '<option value="non-binary">Non-binary</option><option value="other">Other</option></select>'
+  +    '<div class="me-promos" role="group" aria-labelledby="me-promos-h">'
+  +     '<div class="me-promos-h" id="me-promos-h">Promotions and special offers</div>'
+  +     '<div class="me-promos-sub">Choose how you would like to hear from us. Turn all three off to receive none.</div>'
+  +     hfMeSwitch('me-promo-web','On the website','Offers shown to you while you browse the site.')
+  +     hfMeSwitch('me-promo-email','By email','Offers sent to your email address. You can turn this off at any time.')
+  +     hfMeSwitch('me-promo-sms','By text message','By turning this on, you agree to receive recurring promotional text messages from The Hungry Fork at the number on your account. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help.')
+  +     '<div class="t-hint me-promo-note" id="me-promo-note" hidden></div>'
+  +    '</div>'
+  +    '<div class="me-pin"><span>PIN · ••••••</span><button type="button" class="me-pill" onclick="hfMePinToggle()">Change PIN</button></div>'
+  +    '<div class="me-panel" id="me-pin-panel" hidden>'
+  +     '<label class="me-lbl" for="me-pin-cur">Current PIN</label><input class="t-input" id="me-pin-cur" type="password" maxlength="6" inputmode="numeric">'
+  +     '<label class="me-lbl" for="me-pin-new">New PIN</label><input class="t-input" id="me-pin-new" type="password" maxlength="6" inputmode="numeric">'
+  +     '<label class="me-lbl" for="me-pin-new2">New PIN again</label><input class="t-input" id="me-pin-new2" type="password" maxlength="6" inputmode="numeric">'
+  +     '<div class="t-err" id="me-pin-err"></div>'
+  +     '<button type="button" class="t-btn-ghost" onclick="hfMePinSave(this)">Save the new PIN</button>'
+  +    '</div>'
+  +    '<div class="t-err" id="me-err"></div>'
+  +    '<button type="button" class="t-btn" id="me-save" onclick="hfMeSave(this)">Save changes</button>'
+  +    '<div class="me-foot" id="me-foot"></div>'
+  +   '</div>'
+  +  '</div>'
+  +'</div></div>';
+}
+function hfMeSwitch(id,label,sub){
+  return '<label class="me-switch" for="'+id+'"><span class="me-switch-text"><b>'+label+'</b><small>'+sub+'</small></span>'
+    +'<input type="checkbox" role="switch" id="'+id+'"><span class="me-switch-ui" aria-hidden="true"></span></label>';
+}
+(function(){
+  var host=document.createElement('div');
+  host.innerHTML=hfMeHtml();
+  while(host.firstChild)document.body.appendChild(host.firstChild);
+  hfPinBoxes(['me-pin-cur','me-pin-new','me-pin-new2','me-phone-pin']);
+  hfPhoneBox(document.getElementById('me-phone-new'));
+  ['me-email-code','me-phone-code'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b)b.addEventListener('input',function(){var d=b.value.replace(/\D/g,'').slice(0,Number(b.getAttribute('maxlength'))||6);if(b.value!==d)b.value=d;});
+  });
+  var e=document.getElementById('me-email');
+  if(e)e.addEventListener('input',function(){hfMeEmailState();});
+})();
+function hfMeEl(id){return document.getElementById(id);}
+function hfMeSay(id,text){var el=hfMeEl(id);if(!el)return;el.textContent=text||'';el.style.display=text?'block':'none';}
+// "+15185540137" → "+1 (518) 554-0137"
+function hfMePhoneShow(p){var d=hfPhoneTen(p);return d.length===10?'+1 '+hfPhoneShape(d):String(p||'');}
+async function hfMeApi(body){
+  var res=await fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify(body)});
+  var data={};try{data=await res.json();}catch(e){}
+  if(!res.ok){var err=new Error(data.error||'Something went wrong. Please try again.');err.status=res.status;err.data=data;throw err;}
+  return data;
+}
+function openMyInfo(){
+  if(!currentTaster||!currentSession){openTasterModal();return;}
+  closeCornerMenu();
+  var m=hfMeEl('me-modal');
+  if(!m)return;
+  m.classList.add('open');
+  hfMeEl('me-form').hidden=true;
+  hfMeEl('me-loading').hidden=false;
+  hfMeEl('me-loading').textContent='Loading your information…';
+  ['me-err','me-pin-err','me-phone-err'].forEach(function(id){hfMeSay(id,'');});
+  hfMeEl('me-code').hidden=true;hfMeEl('me-email-code').value='';
+  hfMeEl('me-pin-panel').hidden=true;hfMeEl('me-phone-panel').hidden=true;
+  hfMeLoad();
+}
+function closeMyInfo(){var m=hfMeEl('me-modal');if(m)m.classList.remove('open');}
+async function hfMeLoad(){
+  try{
+    var d=await hfMeApi({action:'me'});
+    hfMeFill(d);
+    hfMeEl('me-loading').hidden=true;
+    hfMeEl('me-form').hidden=false;
+  }catch(e){
+    hfMeEl('me-loading').textContent=e.status===401?'Your session has ended. Log out and in again.':e.message;
+  }
+}
+function hfMeFill(d){
+  HF_ME.data=d.me;
+  var me=d.me;
+  hfMeEl('me-first').value=me.firstName||'';
+  hfMeEl('me-last').value=me.lastName||'';
+  hfMeEl('me-email').value=me.email||'';
+  hfMeEl('me-phone-now').textContent=hfMePhoneShow(me.phone);
+  var b=/^(\d{4})-(\d{2})-(\d{2})$/.exec(me.birthday||'');
+  hfMeEl('me-dob-y').value=b?b[1]:'';hfMeEl('me-dob-m').value=b?b[2]:'';hfMeEl('me-dob-d').value=b?b[3]:'';
+  hfMeEl('me-gender').value=me.gender||'';
+  hfMeEl('me-promo-web').checked=!!me.promoWeb;
+  hfMeEl('me-promo-email').checked=!!me.promoEmail;
+  hfMeEl('me-promo-sms').checked=!!me.promoSms;
+  ['me-promo-email','me-promo-sms'].forEach(function(id){hfMeEl(id).disabled=!me.promoReady;});
+  hfMeEl('me-foot').textContent=(me.memberSince?'Member since '+me.memberSince:'')+(me.handle?(me.memberSince?' · ':'')+me.handle:'');
+  hfMeEmailState();
+  if(d.taster&&currentSession)saveSession(Object.assign({},currentTaster||{},d.taster),currentSession);
+}
+// Offers by email need an address: without one the switch says so.
+function hfMeEmailState(){
+  var has=!!hfMeEl('me-email').value.trim(), note=hfMeEl('me-promo-note');
+  if(!HF_ME.data)return;
+  if(!HF_ME.data.promoReady){note.hidden=false;note.textContent='Offers by email and by text message can be chosen after the next update of the site.';return;}
+  note.hidden=has;note.textContent=has?'':'Add your email above to get offers by email.';
+}
+async function hfMeSave(btn){
+  hfMeSay('me-err','');
+  var y=hfMeEl('me-dob-y').value,m=hfMeEl('me-dob-m').value,dd=hfMeEl('me-dob-d').value;
+  if((y||m||dd)&&!(y&&m&&dd)){hfMeSay('me-err','Please choose the month, the day and the year of your birthday.');return;}
+  var body={action:'me_save',firstName:hfMeEl('me-first').value,lastName:hfMeEl('me-last').value,
+    birthday:y&&m&&dd?y+'-'+m+'-'+dd:'',gender:hfMeEl('me-gender').value,email:hfMeEl('me-email').value.trim(),
+    promoWeb:hfMeEl('me-promo-web').checked,promoEmail:hfMeEl('me-promo-email').checked,promoSms:hfMeEl('me-promo-sms').checked};
+  var code=hfMeEl('me-email-code').value.trim();
+  if(!hfMeEl('me-code').hidden&&code)body.emailCode=code;
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    var d=await hfMeApi(body);
+    hfMeFill(d);
+    if(d.emailPending){
+      hfMeEl('me-email').value=d.emailPending;
+      hfMeEl('me-code-q').textContent=d.message||('We sent a 6-digit code to '+d.emailPending+'. Type it here, then Save changes.');
+      hfMeEl('me-code').hidden=false;hfMeEl('me-email-code').value='';
+      try{hfMeEl('me-email-code').focus();}catch(e){}
+      showToast('Saved. Now the code from your email.');
+    }else{
+      hfMeEl('me-code').hidden=true;hfMeEl('me-email-code').value='';
+      if(d.note){var n=hfMeEl('me-promo-note');n.hidden=false;n.textContent=d.note;}
+      showToast('Saved');
+    }
+  }catch(e){
+    if(e.data&&e.data.saved&&e.data.me)hfMeFill(e.data);
+    hfMeSay('me-err',e.message);
+    var f=e.data&&e.data.field?{firstName:'me-first',lastName:'me-last',email:'me-email',emailCode:'me-email-code',birthday:'me-dob-m',gender:'me-gender'}[e.data.field]:null;
+    if(f&&hfMeEl(f))try{hfMeEl(f).focus();}catch(x){}
+  }
+  btn.disabled=false;btn.textContent='Save changes';
+}
+function hfMePinToggle(){var p=hfMeEl('me-pin-panel');p.hidden=!p.hidden;hfMeSay('me-pin-err','');if(!p.hidden)try{hfMeEl('me-pin-cur').focus();}catch(e){}}
+async function hfMePinSave(btn){
+  var cur=hfMeEl('me-pin-cur').value,a=hfMeEl('me-pin-new').value,b=hfMeEl('me-pin-new2').value;
+  hfMeSay('me-pin-err','');
+  if(cur.length!==6){hfMeSay('me-pin-err','Type your current 6-digit PIN.');return;}
+  if(a.length!==6||a!==b){hfMeSay('me-pin-err','The new PIN must be 6 digits, the same twice.');return;}
+  btn.disabled=true;
+  try{
+    var d=await hfMeApi({action:'me_pin',currentPin:cur,newPin:a});
+    ['me-pin-cur','me-pin-new','me-pin-new2'].forEach(function(id){hfMeEl(id).value='';});
+    hfMeEl('me-pin-panel').hidden=true;
+    showToast(d.message||'Your new PIN is saved');
+  }catch(e){hfMeSay('me-pin-err',e.message);}
+  btn.disabled=false;
+}
+function hfMePhoneToggle(){
+  var p=hfMeEl('me-phone-panel');p.hidden=!p.hidden;
+  HF_ME.phoneTicket=null;hfMeEl('me-phone-code-box').hidden=true;hfMeEl('me-phone-code').value='';
+  hfMeEl('me-phone-go').textContent='Send the code';hfMeSay('me-phone-err','');
+  hfMeEl('me-phone-btn').textContent=p.hidden?'Change':'Cancel';
+  if(!p.hidden)try{hfMeEl('me-phone-new').focus();}catch(e){}
+}
+// Two steps on one button: send the code to the new number, then check it and
+// move the account to it (with the current PIN, asked once and sent with both).
+async function hfMePhoneGo(){
+  var btn=hfMeEl('me-phone-go'), num=hfMeEl('me-phone-new').value, pin=hfMeEl('me-phone-pin').value;
+  hfMeSay('me-phone-err','');
+  if(!hfPhoneFull('me-phone-new')){hfMeSay('me-phone-err','Please type the 10 digits of the new number.');return;}
+  if(pin.length!==6){hfMeSay('me-phone-err','Type your current 6-digit PIN.');return;}
+  btn.disabled=true;
+  try{
+    if(hfMeEl('me-phone-code-box').hidden){
+      btn.textContent='Sending…';
+      var res=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify({phone:num,purpose:'change',currentPin:pin})});
+      var d=await res.json().catch(function(){return {};});
+      if(!res.ok||!d.success)throw new Error(d.error||'Could not send the code.');
+      hfMeEl('me-phone-code-q').textContent='We sent a 4-digit code to +1 '+num+'. Type it here.';
+      hfMeEl('me-phone-code-box').hidden=false;
+      try{hfMeEl('me-phone-code').focus();}catch(e){}
+      btn.textContent='Confirm the new number';
+    }else{
+      var code=hfMeEl('me-phone-code').value;
+      if(code.length!==4)throw new Error('Type the 4-digit code from the text message.');
+      btn.textContent='Checking…';
+      var r2=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify({phone:num,code:code,purpose:'change'})});
+      var v=await r2.json().catch(function(){return {};});
+      if(!r2.ok||!v.verificationTicket)throw new Error(v.error||'That code is not right.');
+      var done=await hfMeApi({action:'me_phone',verificationTicket:v.verificationTicket,currentPin:pin});
+      hfMeFill(done);
+      ['me-phone-new','me-phone-pin','me-phone-code'].forEach(function(id){hfMeEl(id).value='';});
+      hfPhonePaint(hfMeEl('me-phone-new'));
+      hfMeEl('me-phone-panel').hidden=true;hfMeEl('me-phone-btn').textContent='Change';hfMeEl('me-phone-code-box').hidden=true;
+      showToast(done.message||'Your new number is saved');
+      btn.textContent='Send the code';
+    }
+  }catch(e){
+    hfMeSay('me-phone-err',e.message);
+    btn.textContent=hfMeEl('me-phone-code-box').hidden?'Send the code':'Confirm the new number';
+  }
+  btn.disabled=false;
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMyInfo();});
+document.addEventListener('click',function(e){var m=hfMeEl('me-modal');if(m&&e.target===m)closeMyInfo();});
