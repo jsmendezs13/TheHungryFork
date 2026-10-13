@@ -12,17 +12,24 @@
 // parameter to tamper with.
 
 import { tableQrSvg } from './_lib/qr.js';
-import { makeLimiter, allow, keyFor } from './_lib/auth.js';
+import { makeLimiter, allow, keyFor, clientIp } from './_lib/auth.js';
 import { tasterIdFromRequest, sb } from './_lib/roles.js';
 import {
   TOKEN_SECONDS, makeToken, hashToken, makeShortCode, siteUrl, newYorkDate,
 } from './_lib/checkin.js';
+import {
+  guestLoyalty, afterRating, rewardForGuest, previewPass, claimPass, passForGuest,
+} from './_lib/loyalty.js';
 
 // The screen refreshes itself every ninety seconds while it is open, so a
 // customer waiting five minutes for a table legitimately asks for a few. This
 // is loose enough never to interrupt that and tight enough that nobody farms
 // tokens.
 const issueLimiter = makeLimiter({ requests: 60, window: '10 m', prefix: 'checkin:issue' });
+// r31: the invite page asks about a code before anyone logs in. Codes are eight
+// characters from 31 (about 850 billion), so this only stops a machine.
+const previewLimiter = makeLimiter({ requests: 40, window: '10 m', prefix: 'loyalty:preview' });
+const loyaltyLimiter = makeLimiter({ requests: 120, window: '10 m', prefix: 'loyalty:read' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -30,16 +37,58 @@ export default async function handler(req, res) {
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const action = String(body.action || 'token');
 
+  // r31: the one thing anyone may ask without an account — what an invite is.
+  if (action === 'pass_preview') return loyaltyCall(res, async () => {
+    if (!(await allow(previewLimiter, keyFor('ip' + clientIp(req)), { failOpen: true }))) {
+      throw Object.assign(new Error('Too many tries. Wait a few minutes.'), { status: 429 });
+    }
+    return { invite: await previewPass(body.code) };
+  });
+
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
 
   if (action === 'token') return issueToken(req, res, tasterId);
   if (action === 'list')  return listVisits(req, res, tasterId);
+  // r31: Lucky Bite, stamps and invites (api/_lib/loyalty.js).
+  if (action === 'loyalty' || action === 'after_rating' || action === 'pass_claim') {
+    return loyaltyCall(res, async () => {
+      if (!(await allow(loyaltyLimiter, keyFor(tasterId), { failOpen: true }))) {
+        throw Object.assign(new Error('Too many requests. Wait a minute.'), { status: 429 });
+      }
+      if (action === 'loyalty') return await guestLoyalty(tasterId);
+      if (action === 'after_rating') return await afterRating(tasterId, body.reviewId);
+      return { invite: await claimPass(tasterId, body.code) };
+    });
+  }
+  // A prize or a saved invite, shown at the table: the same 90-second ticket as
+  // a check-in, tied to that prize or invite. Checked first: it must be theirs,
+  // unused, not run out (and an invite not on the day it was made).
+  if (action === 'show_reward') {
+    let extra;
+    try {
+      if (body.rewardId != null) extra = { reward_id: Number((await rewardForGuest(tasterId, body.rewardId)).id) };
+      else extra = { pass_id: Number((await passForGuest(tasterId, body.passId)).id) };
+    } catch (e) {
+      return res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not open that.' });
+    }
+    return issueToken(req, res, tasterId, extra);
+  }
   return res.status(400).json({ error: 'Unknown action.' });
 }
 
+async function loyaltyCall(res, fn) {
+  try {
+    const out = await fn();
+    return res.status(200).json({ success: true, ...out });
+  } catch (e) {
+    if (!e.status) console.error('[checkins:loyalty]', e && e.message);
+    return res.status(e.status || 500).json({ error: e.status ? e.message : 'Something went wrong. Please try again.' });
+  }
+}
+
 // ── "I AM HERE" ───────────────────────────────────────────────────────────────
-async function issueToken(req, res, tasterId) {
+async function issueToken(req, res, tasterId, extra = null) {
   if (!(await allow(issueLimiter, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many codes at once. Wait a minute and try again.' });
   }
@@ -69,6 +118,7 @@ async function issueToken(req, res, tasterId) {
       taster_id:  tasterId,
       short_code: shortCode,
       expires_at: expiresAt.toISOString(),
+      ...(extra || {}),
     }),
   });
   if (!created.ok) {
@@ -91,6 +141,12 @@ async function issueToken(req, res, tasterId) {
       `/check_in_tokens?taster_id=eq.${tasterId}&expires_at=lt.${encodeURIComponent(cutoff)}`,
       { method: 'DELETE' }
     );
+    // A new ticket for the same prize or invite: the older ones stop working,
+    // so only the QR on the screen right now can be used.
+    if (extra) {
+      const key = extra.reward_id ? 'reward_id' : 'pass_id';
+      await sb(`/check_in_tokens?${key}=eq.${extra[key]}&used_at=is.null&token_hash=neq.${hashToken(token)}`, { method: 'DELETE' });
+    }
   } catch (e) {
     console.error('[checkins:token] sweep failed', e?.message);
   }
