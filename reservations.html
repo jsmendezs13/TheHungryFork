@@ -186,15 +186,28 @@ window.hfEarlySlots = (function () {
   .rv-empty b { color:var(--white); font-weight:600; }
 
   /* ── the bar at the bottom: what is chosen, and Book ── */
-  .rv-bar { flex:none; display:flex; align-items:center; gap:12px; padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 12px);
+  .rv-bar { flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 12px);
     background:rgba(20,13,10,.97); border-top:1px solid rgba(252,249,244,.16); }
-  .rv-bar-sum { flex:1; min-width:0; line-height:1.25; }
+  .rv-bar-sum { flex:1 1 100%; min-width:0; line-height:1.25; }
   .rv-bar-sum b { display:block; font-family:var(--serif); font-size:1.15rem; font-weight:600; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .rv-bar-sum small { display:block; font-size:.68rem; color:rgba(252,249,244,.62); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rv-bar-go { flex:none; background:var(--red-bright); color:#fff; border:none; border-radius:999px; padding:.85rem 1.4rem;
+  .rv-bar-go { flex:1 1 0; min-width:0; min-height:44px; background:var(--red-bright); color:#fff; border:none; border-radius:999px; padding:.6rem .8rem;
     font-family:inherit; font-size:.74rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer;
     box-shadow:0 8px 20px rgba(226,59,46,.35); -webkit-tap-highlight-color:transparent; transition:opacity .2s, transform .12s; }
-  .rv-bar-mine { display:none; }          /* r27: only in the desktop version (below) */
+  /* r28 (Sebastian, 12 Oct): "My reservations" must be on the phone too. Phone: the day and time keep a row of their own
+     (never cut), and the two buttons share the row under it, the same height. */
+  .rv-bar-mine { flex:1 1 0; min-width:0; min-height:44px; display:inline-flex; align-items:center; justify-content:center; text-align:center;
+    background:#3A6BC4; color:#fff; border:none; border-radius:999px; padding:.5rem .8rem; font-family:inherit; font-size:.8rem; font-weight:600;
+    line-height:1.18; white-space:nowrap; cursor:pointer; box-shadow:0 8px 20px rgba(58,107,196,.35); -webkit-tap-highlight-color:transparent; transition:filter .15s, transform .12s; }
+  .rv-bar-mine br { display:none; }
+  .rv-bar-mine:active { transform:translateY(1px); }
+  /* wide enough (a phone on its side, a tablet): everything on one row, as it always was, with the blue button beside Book */
+  @media (min-width:520px) {
+    .rv-bar { flex-wrap:nowrap; gap:12px; }
+    .rv-bar-sum { flex:1; }
+    .rv-bar-go { flex:none; min-height:0; padding:.85rem 1.4rem; }
+    .rv-bar-mine { flex:none; min-height:0; padding:.46rem .8rem; font-size:.72rem; letter-spacing:.02em; }
+  }
   .rv-bar-go:active { transform:translateY(1px); }
   .rv-bar-go:disabled { opacity:.45; box-shadow:none; cursor:default; }
 
@@ -308,6 +321,7 @@ window.hfEarlySlots = (function () {
   .rv-bub.them .rv-bub-who { color:#9A3324; }
   .rv-bub.me .rv-bub-who { color:rgba(255,255,255,.85); text-align:right; }
   .rv-bub-who i { font-style:normal; font-weight:400; opacity:.75; }
+  .rv-bub-who .rv-bub-h { font-weight:500; letter-spacing:.02em; }
   .rv-chat-note { font-size:.78rem; line-height:1.5; color:rgba(252,249,244,.82); background:rgba(252,249,244,.07); border:1px solid rgba(252,249,244,.12);
     border-radius:10px; padding:.45rem .6rem; margin:.5rem 0 0; }
   .rv-chat-note[hidden], .rv-chat-form[hidden] { display:none; }
@@ -382,6 +396,7 @@ window.hfEarlySlots = (function () {
     .rv-bar-mine { flex:none; display:inline-flex; align-items:center; justify-content:center; text-align:center; background:#3A6BC4; color:#fff; border:none; border-radius:999px;
       padding:.46rem .8rem; font-family:inherit; font-size:.72rem; font-weight:600; letter-spacing:.02em; line-height:1.18; white-space:nowrap; cursor:pointer;
       box-shadow:0 8px 20px rgba(58,107,196,.35); -webkit-tap-highlight-color:transparent; transition:filter .15s, transform .12s; }
+    .rv-bar-mine br { display:inline; }                                /* two short lines on the desktop card */
     .rv-bar-mine:active { transform:translateY(1px); }
 
     /* things a mouse can do */
@@ -481,7 +496,7 @@ window.hfEarlySlots = (function () {
 
     <div class="rv-bar" id="rv-bar">
       <div class="rv-bar-sum" aria-live="polite"><b id="rv-bar-when">—</b><small id="rv-bar-what"></small></div>
-      <button type="button" class="rv-bar-mine" id="rv-bar-mine" aria-label="My reservations">My<br>reservations</button>
+      <button type="button" class="rv-bar-mine" id="rv-bar-mine" aria-label="My reservations">My <br>reservations</button>
       <button type="button" class="rv-bar-go" id="rv-bar-go" disabled>Book</button>
     </div>
   </section>
@@ -1939,6 +1954,14 @@ async function chatLoad(key, first) {
   if (n) { n.remove(); btn.setAttribute('aria-label', 'Messages with the restaurant'); if (typeof hfInboxSeen === 'function') hfInboxSeen(); }
 }
 
+// Who wrote it: "You", or "Ana (Ana_L) · The Hungry Fork" (r28: the guest sees
+// the handle too, so they know exactly who is texting them). A server that sends
+// only the whole line (who) is shown as it comes.
+function bubWho(m) {
+  if (m.mine || typeof m.name !== 'string') return esc(m.who);
+  return esc(m.name) + (m.handle ? ' <span class="rv-bub-h">(' + esc(m.handle) + ')</span>' : '') + (m.place ? ' · ' + esc(m.place) : '');
+}
+
 function chatPaint(key, first) {
   const box = el('chat-' + key), c = state.chats[key];
   if (!box || !c || !c.data) return;
@@ -1947,7 +1970,7 @@ function chatPaint(key, first) {
   const atEnd = first || list.scrollHeight - list.scrollTop - list.clientHeight < 40;
   list.innerHTML = d.messages.length
     ? d.messages.map((m) => '<div class="rv-bub ' + (m.mine ? 'me' : 'them') + '">'
-        + '<span class="rv-bub-who">' + esc(m.who) + ' <i>· ' + esc(m.label) + '</i></span>' + esc(m.body) + '</div>').join('')
+        + '<span class="rv-bub-who">' + bubWho(m) + ' <i>· ' + esc(m.label) + '</i></span>' + esc(m.body) + '</div>').join('')
     : '<p class="rv-chat-empty">Write here instead of calling: running late, an allergy, something you left behind. '
       + esc(d.restaurant) + ' answers you here' + (d.canWrite ? '.' : '') + '</p>';
   const note = box.querySelector('.rv-chat-note');
