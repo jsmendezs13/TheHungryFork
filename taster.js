@@ -420,7 +420,8 @@ function updateNavBtn(){
 
   const items=[];
   if(currentTaster){
-    items.push({label:'Hi, '+(currentTaster.first_name||'there'), kind:'label', cls:'hf-corner-name'});
+    // r28 (Sebastian, 12 Oct): the handle is always beside the name: "Hi, Johan (Johan_I)".
+    items.push({label:'Hi, '+(currentTaster.first_name||'there')+(currentTaster.username?' ('+currentTaster.username+')':''), kind:'label', cls:'hf-corner-name'});
     // Sebastian's order (7 Oct): My Reservations first, then My Tastings,
     // then My Visits, then Log Out. My Reservations goes straight to the
     // booking page's own list rather than a fourth overlay copied onto every
@@ -693,7 +694,7 @@ function hfBellRender(){
   }
   panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
     return '<a class="hf-bell-item" href="/reservations#chat='+Number(b.reservationId)+'">'
-      +'<b>'+hfEsc(b.who)+' · '+hfEsc(b.restaurant)+' answered you</b>'
+      +'<b>'+hfEsc(b.who)+(b.handle?' ('+hfEsc(b.handle)+')':'')+' · '+hfEsc(b.restaurant)+' answered you</b>'
       +'<span>Your table: '+hfEsc(b.table)+'</span>'
       +'<small>'+hfEsc(b.label)+(b.count>1?' · '+Number(b.count)+' messages':'')+'</small>'
       +'</a>';
@@ -825,7 +826,7 @@ async function doLogin(){
     const d=await res.json();
     if(res.ok&&d.success){
       saveSession(d.taster,d.session);
-      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+'!';
+      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+(d.taster.username?' ('+d.taster.username+')':'')+'!';
       goTStep(99);
     }else{
       err.textContent=d.error||'Invalid phone or PIN. Please try again.';
@@ -915,7 +916,7 @@ async function doResetPin(){
     if(res.ok&&d.success){
       pendingResetTicket=null;
       saveSession(d.taster,d.session);
-      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+'!';
+      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+(d.taster.username?' ('+d.taster.username+')':'')+'!';
       goTStep(99);
     }else{err.textContent=d.error||'Could not reset PIN.';err.style.display='block';}
   }catch(e){err.textContent='Network error. Please try again.';err.style.display='block';}
@@ -994,7 +995,7 @@ async function doSignup(){
     if(res.ok&&d.success){
       pendingVerificationTicket=null;
       saveSession(d.taster,d.session);
-      document.getElementById('t-welcome-msg').textContent='Welcome, '+first+'! 🍴';
+      document.getElementById('t-welcome-msg').textContent='Welcome, '+first+(d.taster&&d.taster.username?' ('+d.taster.username+')':'')+'! 🍴';
       goTStep(99);
     }else{
       err.textContent=d.error||'Could not create account. Please try again.';
