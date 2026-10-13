@@ -147,20 +147,29 @@ async function slots(req, res, body) {
   const timezone = booking.timezone || 'America/New_York';
   const today = todayIn(timezone);
 
+  // r29: the Reservations page also says the opening hours and the holidays at
+  // the top. It used to ask for them in a second request, which Vercel often
+  // starts on a second cold server; now they ride in this answer
+  // (withHours: true), read at the same time as the free times.
+  const hoursAsked = body.withHours === true ? publicHours(restaurantId, timezone) : null;
+
   // Switched off, or migration 14 ran and the manager has not been in yet:
   // the page turns this into "call the restaurant", not into an error.
   if (!booking.enabled) {
+    const extra = hoursAsked ? await hoursAsked : null;
     return res.status(200).json({
       success: true, restaurant: loaded.restaurant, booking: { ...booking, today }, slots: [],
+      ...(extra || {}),
     });
   }
 
   const date = cleanDate(body.date) || today;
   const party = cleanParty(body.party, booking.maxPartyInstant) || 2;
 
-  const [open, free] = await Promise.all([
+  const [open, free, extra] = await Promise.all([
     isOpenOn(restaurantId, date),
     freeSlots(restaurantId, date, party, timezone),
+    hoursAsked,
   ]);
 
   if (!free.ok) {
@@ -180,6 +189,7 @@ async function slots(req, res, body) {
     party,
     closed:     open === false,          // a holiday, or a day they never open
     slots:      free.slots,
+    ...(extra || {}),
   });
 }
 
@@ -196,15 +206,46 @@ async function hours(req, res, body) {
     return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
   }
   const restaurantId = Number(body.restaurantId) || DEFAULT_RESTAURANT_ID;
-  const got = await sb(`/restaurant_hours?restaurant_id=eq.${restaurantId}&select=weekday,opens_at,closes_at&order=weekday.asc,opens_at.asc&limit=28`);
-  if (!got.ok || !Array.isArray(got.data)) {
-    console.error('[reservations:hours] read failed', got.status);
+  const got = await publicHours(restaurantId, null);
+  if (!got) {
+    console.error('[reservations:hours] read failed');
     return res.status(502).json({ error: 'Could not read the opening hours.' });
   }
-  return res.status(200).json({
-    success: true,
-    hours: got.data.map((h) => ({ weekday: h.weekday, opens: String(h.opens_at).slice(0, 5), closes: String(h.closes_at).slice(0, 5) })),
-  });
+  return res.status(200).json({ success: true, ...got });
+}
+
+// The week and the coming holidays, as a guest may see them (r29: "Our holidays",
+// Sebastian 12 Oct, picture B). Both come from what the manager saved — the
+// week in Reservations → Opening hours, the days in Reservations → Holidays and
+// special days — so the website never says anything the manager did not decide.
+// A holiday's Reason is shown to guests as written; the manager's editor says so.
+// Only days from today on (the restaurant's today, not the server's), the
+// nearest twelve. If the holidays cannot be read the hours still go out: a
+// guest is better off without the list than without the hours.
+async function publicHours(restaurantId, timezone) {
+  const [wk, hol, tz] = await Promise.all([
+    sb(`/restaurant_hours?restaurant_id=eq.${restaurantId}&select=weekday,opens_at,closes_at&order=weekday.asc,opens_at.asc&limit=28`),
+    // one day looser than "today" in the query, exact below once the timezone is known
+    sb(`/restaurant_closures?restaurant_id=eq.${restaurantId}&closure_date=gte.${new Date(Date.now() - 36 * 3600 * 1000).toISOString().slice(0, 10)}`
+       + '&select=closure_date,opens_at,closes_at,reason&order=closure_date.asc&limit=60'),
+    timezone ? Promise.resolve(null) : sb(`/restaurant_booking_settings?restaurant_id=eq.${restaurantId}&select=timezone&limit=1`),
+  ]);
+  if (!wk.ok || !Array.isArray(wk.data)) return null;
+  const zone = timezone || (tz && tz.ok && Array.isArray(tz.data) && tz.data[0] && tz.data[0].timezone) || 'America/New_York';
+  const today = todayIn(zone);
+  const holidays = (hol.ok && Array.isArray(hol.data) ? hol.data : [])
+    .filter((c) => typeof c.closure_date === 'string' && c.closure_date >= today)
+    .slice(0, 12)
+    .map((c) => ({
+      date: c.closure_date,
+      opens: c.opens_at ? String(c.opens_at).slice(0, 5) : null,
+      closes: c.closes_at ? String(c.closes_at).slice(0, 5) : null,
+      reason: c.reason ? String(c.reason) : null,
+    }));
+  return {
+    hours: wk.data.map((h) => ({ weekday: h.weekday, opens: String(h.opens_at).slice(0, 5), closes: String(h.closes_at).slice(0, 5) })),
+    holidays, today, timezone: zone,
+  };
 }
 
 // ── TAKING THE TABLE ──────────────────────────────────────────────────────────
