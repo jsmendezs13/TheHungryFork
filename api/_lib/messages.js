@@ -278,7 +278,7 @@ function whoKey(req, body) {
 }
 
 export async function guest(req, res, body, action, helpers = {}) {
-  if (action === 'inbox') return inbox(req, res, body);
+  if (action === 'inbox') return inbox(req, res, body, helpers);
 
   if (!(await allow(guestRead, keyFor(whoKey(req, body)), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
@@ -358,7 +358,7 @@ export async function chatSummaries(rows, now = Date.now()) {
 // ── THE BELL ──────────────────────────────────────────────────────────────────
 // What is new for this account: the restaurants' answers it has not read, and,
 // for staff (asked with staff:true), how many guest messages wait for them.
-async function inbox(req, res, body) {
+async function inbox(req, res, body, helpers = {}) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
   if (!(await allow(guestRead, keyFor('i' + tasterId), { failOpen: true }))) {
@@ -401,9 +401,15 @@ async function inbox(req, res, body) {
           table: tableDay(tz, r.reserved_at) + ' · ' + clockIn(tz, r.reserved_at).label,
         });
       });
-      bell.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
     }
   }
+  // r30: the restaurants' messages about this account's big-party requests
+  // (api/_lib/requestchat.js); none before migration 20.
+  if (typeof helpers.requestBell === 'function') {
+    try { bell.push(...(await helpers.requestBell(match))); }
+    catch (err) { console.error('[messages] request bell', err && err.message); }
+  }
+  bell.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   let staff = null;
   if (body.staff) {
@@ -435,7 +441,7 @@ async function inbox(req, res, body) {
 // ── THE RESTAURANT ────────────────────────────────────────────────────────────
 // Who may read and answer at this restaurant. Answers the request itself and
 // returns null when they may not.
-async function msgAccess(res, tasterId, restaurantId, { hide } = {}) {
+export async function msgAccess(res, tasterId, restaurantId, { hide } = {}) {
   const rid = Number(restaurantId);
   if (!Number.isInteger(rid) || rid < 1) { res.status(400).json({ error: 'Which restaurant?' }); return null; }
   const access = await loadAccess(tasterId);
