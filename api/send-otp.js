@@ -7,7 +7,9 @@ import {
   normalizeUsPhone,
   clientIp,
   verifyTurnstile,
+  verifyPin,
 } from './_lib/auth.js';
+import { tasterIdFromRequest } from './_lib/roles.js';
  
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
  
@@ -36,6 +38,13 @@ const globalSignupLimiter = makeLimiter({
 const globalResetLimiter = makeLimiter({
   requests: 15, window: '1 h', prefix: 'sendotp:global:reset',
 });
+
+// r30 · a new number in My information ("change"). Only a logged-in account,
+// with its current PIN, can ask, three times a day; the number must not have an
+// account already. Turnstile is not asked here: the account and the PIN are a
+// stronger gate than the widget, and the account itself was made with one.
+const changeAccountLimiter = makeLimiter({ requests: 3, window: '24 h', prefix: 'sendotp:change:acct' });
+const globalChangeLimiter = makeLimiter({ requests: 20, window: '1 h', prefix: 'sendotp:global:change' });
  
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -44,6 +53,7 @@ export default async function handler(req, res) {
   if (!phone) return res.status(400).json({ error: 'Phone number is required' });
  
   const isReset = purpose === 'reset';
+  const isChange = purpose === 'change';
  
   // ---- Gate 1: US only, free ---------------------------------------------
   //
@@ -67,7 +77,31 @@ export default async function handler(req, res) {
   // the page, which is the only thing the rate limits could not do on their
   // own: the August flood came from an attacker calling this endpoint
   // directly, and a limit of 50/hour still means 50 messages sent.
-  const turnstile = await verifyTurnstile(turnstileToken, clientIp(req));
+  let changeFor = null;
+  if (isChange) {
+    changeFor = tasterIdFromRequest(req);
+    if (!changeFor) return res.status(401).json({ error: 'Please log in again.' });
+    const [accountOk, globalOk] = await Promise.all([
+      allow(changeAccountLimiter, keyFor('a' + changeFor), { failOpen: false }),
+      allow(globalChangeLimiter, 'all', { failOpen: false }),
+    ]);
+    if (!accountOk || !globalOk) return res.status(429).json({ error: 'Too many codes today. Please try again tomorrow.' });
+    let hash = null;
+    try {
+      const me = await fetch(`${SUPABASE_URL}/rest/v1/tasters?id=eq.${Number(changeFor)}&select=pin_hash`, {
+        headers: { 'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY, 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY },
+      });
+      const rows = me.ok ? await me.json() : null;
+      hash = Array.isArray(rows) && rows.length ? rows[0].pin_hash : null;
+      if (!me.ok) throw new Error('lookup ' + me.status);
+    } catch (e) {
+      console.error('[send-otp] change: account lookup failed', e?.message);
+      return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
+    }
+    const pin = String((req.body && req.body.currentPin) || '').replace(/\D/g, '');
+    if (!(await verifyPin(pin, hash))) return res.status(400).json({ error: 'Your current PIN is not right.', code: 'BAD_PIN' });
+  }
+  const turnstile = isChange ? { ok: true } : await verifyTurnstile(turnstileToken, clientIp(req));
   if (!turnstile.ok) {
     if (turnstile.reason === 'unconfigured' || turnstile.reason === 'unavailable') {
       // Our problem, not theirs — 503 so the browser offers a retry rather
@@ -85,7 +119,7 @@ export default async function handler(req, res) {
   // failOpen: false everywhere. If Redis is unreachable we refuse to send. An
   // SMS endpoint running with no limits is worse than one that is briefly
   // unavailable — that is exactly how the August bill happened.
-  const globalLimiter = isReset ? globalResetLimiter : globalSignupLimiter;
+  const globalLimiter = isReset ? globalResetLimiter : isChange ? globalChangeLimiter : globalSignupLimiter;
  
   const [globalOk, phoneOk, ipOk] = await Promise.all([
     allow(globalLimiter, 'all', { failOpen: false }),
@@ -96,12 +130,13 @@ export default async function handler(req, res) {
   if (!globalOk) {
     // Worth alerting on: either real growth or an attack in progress.
     console.error('[send-otp] GLOBAL LIMIT TRIPPED', {
-      flow: isReset ? 'reset' : 'signup',
+      flow: isReset ? 'reset' : isChange ? 'change' : 'signup',
       ip: clientIp(req),
     });
     return res.status(503).json({
       error: isReset
         ? 'PIN reset is temporarily unavailable. Please try again later.'
+        : isChange ? 'Changing numbers is temporarily unavailable. Please try again later.'
         : 'Signup is temporarily unavailable. Please try again later.',
     });
   }
@@ -142,7 +177,10 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'No account found with this phone number.', code: 'NOT_REGISTERED' });
     }
   } else if (exists) {
-    return res.status(409).json({ error: 'This phone number already has an account.', code: 'ALREADY_REGISTERED' });
+    return res.status(409).json({
+      error: isChange ? 'That number already has an account.' : 'This phone number already has an account.',
+      code: 'ALREADY_REGISTERED',
+    });
   }
  
   // ---- Gate 5: send ------------------------------------------------------
