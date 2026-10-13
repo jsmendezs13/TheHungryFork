@@ -311,6 +311,20 @@
   .rv-nums th:first-child, .rv-nums td:first-child { text-align:left; white-space:nowrap; }
   .rv-nums td { padding:.45rem .2rem; border-top:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; }
   .rv-nums td b { font-weight:600; }
+  /* r31: the rewards card */
+  .rv-l-group { background:var(--off-white); border-radius:10px; padding:.2rem .8rem .6rem; margin:.1rem 0 .7rem; }
+  .rv-l-group .rv-rule:last-child { border-bottom:none; }
+  .rv-l-text { margin:.5rem 0 .2rem; }
+  .rv-l-stat { font-size:.78rem; color:var(--muted); line-height:1.6; padding-top:.3rem; }
+  .rv-l-stat b { color:var(--text); }
+  .rv-l-list { margin-top:.8rem; border-top:1px solid var(--border); }
+  .rv-l-item { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.6rem 0; border-bottom:1px solid var(--border); font-size:.8rem; }
+  .rv-l-item b { display:block; font-weight:500; }
+  .rv-l-item span { display:block; color:var(--muted); font-size:.74rem; }
+  .rv-l-item em { font-style:normal; font-size:.66rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; padding:.25rem .55rem; border-radius:999px; background:var(--off-white); color:var(--muted); }
+  .rv-l-item em.rv-l-ready { background:var(--red-light); color:var(--red-dark); }
+  .rv-l-item em.rv-l-used { background:#E4EFE4; color:#2F5A2F; }
+  .rv-l-legal { font-size:.7rem; margin-top:.8rem; }
   .rv-rule { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.6rem 0; border-bottom:1px solid var(--border); }
   .rv-rule:last-of-type { border-bottom:none; }
   .rv-rule label { font-size:.84rem; line-height:1.4; }
@@ -980,8 +994,8 @@ function peopleSection(){
             : '')
       +   (p.role==='crew'
             ? '<label class="m-codes"><input type="checkbox"'+(p.canIssueCodes?' checked':'')
-              + ' onchange="setCodes('+p.id+',this.checked)"> can give out loyalty codes '
-              + '<span style="opacity:.7;">(not active yet)</span></label>'
+              + ' onchange="setCodes('+p.id+',this.checked)"> <span>Can give rewards '
+              + '<span style="opacity:.7;">(Lucky Bite, full cards, invites)</span></span></label>'
             : '')
       + '</div>'
       + '<button class="m-person-x" onclick="removePerson('+Number(p.id)+')"'
@@ -1088,7 +1102,7 @@ async function setCodes(roleId, on){
       body:JSON.stringify({action:'codes', restaurantId:RESTAURANT.id, roleId, canIssueCodes:on})
     });
     if(!res.ok) showToast(data.error||'Could not save that.');
-    else showToast(on?'Can give out codes':'Cannot give out codes');
+    else showToast(on?'Can give rewards':'Cannot give rewards');
   }catch(e){ showToast(e.message||'Network error.'); }
 }
 
@@ -2047,7 +2061,8 @@ function rvScanHtml(){
   const b = Object.assign({}, sc.booking, live ? { status: live.status, seatedLabel: live.seatedLabel } : {});
   const who = '<b>'+whoHtml(b.name, b.handle)+'</b> · '+rvPeople(b.party);
   const when = (sc.date === RV.today ? 'Today' : esc(rvShort(sc.date))) + ' · ' + esc(b.label) + (b.areaName ? ' · '+esc(b.areaName) : '');
-  if(sc.done) return '<div class="rv-scan done"><span><b>Arrived ✓</b> '+who+'<br>'+when+'</span>'+x+'</div>';
+  if(sc.done) return '<div class="rv-scan done"><span><b>Arrived ✓</b> '+who+'<br>'+when
+    + (sc.visit && sc.visit.recorded ? ' · visit counted' : '')+'</span>'+x+'</div>';
   if(b.status === 'seated' || b.status === 'done')
     return '<div class="rv-scan warn"><span>'+who+'<br><b>Already arrived'+(b.seatedLabel ? ' at '+esc(b.seatedLabel) : '')+'.</b> This QR code has been used.</span>'+x+'</div>';
   if(b.status === 'cancelled')
@@ -2075,6 +2090,7 @@ async function rvScanArrive(btn){
     const data = await rvApi({action:'staff_mark', id: sc.booking.id, to: 'seated', token: sc.token});
     if(gen !== RV.gen) return;
     sc.done = true; sc.booking = Object.assign({}, sc.booking, data.booking, { canArrive: false });
+    sc.visit = data.visit || null;      // r31: the scan was also a visit (a stamp, an invite)
     showToast('Arrived · '+whoText(data.booking.name, data.booking.handle));
     if(RV.day && RV.day.bookings.some(b => b.id === data.booking.id)){
       rvApply(data.booking);
@@ -2214,7 +2230,7 @@ document.addEventListener('change', rvMarkTyped, true);
 // survives the whole page being redrawn when the phone is picked up again.
 function rvMarkTyped(e){
   const t = e.target;
-  if(t && t.id && /^rv-(r|a|h)-/.test(t.id) && t.closest && t.closest('#rv-root')) RV.typed[t.id] = t.type==='checkbox' ? t.checked : t.value;
+  if(t && t.id && /^rv-(r|a|h|l)-/.test(t.id) && t.closest && t.closest('#rv-root')) RV.typed[t.id] = t.type==='checkbox' ? t.checked : t.value;
 }
 // RV.forget: names ending in "-" are a whole section (rv-r-, rv-h-); any other
 // name is one exact field (rv-a-seats-5 is not rv-a-seats-52).
@@ -2252,6 +2268,7 @@ async function rvLoadSettings(keepDraft){
     // hours someone else saved meanwhile are what this screen shows and saves.
     const edited = RV.settings && RV.hoursDraft && JSON.stringify(RV.hoursDraft) !== JSON.stringify(RV.settings.hours);
     RV.settings = data; RV.settingsError = null;
+    if(!keepDraft) RV.loyaltyDraft = null;      // r31: switches not saved yet are kept only on a quiet refresh
     if(!keepDraft || !edited){
       RV.hoursDraft = data.hours.map(h => Object.assign({}, h));
       RV.hoursBase = data.hours.map(h => Object.assign({}, h));
@@ -2268,7 +2285,88 @@ function rvSettingsHtml(){
   return back
     + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
-    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S);
+    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S);
+}
+
+// ── r31: LUCKY BITE · STAMP CARD · INVITES ──
+// The restaurant's own rewards, chosen here and counted by the database: a dish
+// rated after a scanned visit gets a number (every Nth is free), a scanned
+// visit is a stamp (a full card is the reward written here), and a scanned
+// visit gives the guest an invite to share (the discount written here). The
+// restaurant offers and pays for all of it; the site keeps the count.
+function rvLoyaltyDraft(L){
+  if(!RV.loyaltyDraft) RV.loyaltyDraft = { luckyOn: L.luckyOn, stampsOn: L.stampsOn, inviteOn: L.inviteOn };
+  return RV.loyaltyDraft;
+}
+function rvLoyaltyHtml(S){
+  const L = S.loyalty, edit = S.canEdit;
+  if(!L) return '';
+  const head = '<div class="m-eyebrow">Lucky Bite · stamps · invites</div>';
+  if(!L.ready) return '<div class="m-card">'+head+'<div class="m-sub">'+esc(L.error || 'Not set up yet: migration 21 has not been run.')+'</div></div>';
+  const D = rvLoyaltyDraft(L), dis = edit ? '' : ' disabled';
+  const n = (v) => Number(v).toLocaleString('en-US');
+  const sw = (key, label, note) => '<div class="m-switch-row"><div><div class="m-switch-label">'+label+'</div><div class="m-switch-note">'+note+'</div></div>'
+    + '<button type="button" class="m-switch'+(D[key]?' on':'')+'" role="switch" aria-checked="'+(D[key]?'true':'false')+'" aria-label="'+label+'" id="rv-l-sw-'+key+'"'
+    + (edit ? ' onclick="rvLoySwitch(\''+key+'\')"' : ' disabled')+'></button></div>';
+  const num = (id, label, unit, v, min, max) => '<div class="rv-rule"><label for="'+id+'">'+label+'<small>'+unit+'</small></label>'
+    + '<input class="m-input" type="number" inputmode="numeric" id="'+id+'" min="'+min+'" max="'+max+'" step="1" value="'+Number(v)+'"'+dis+'></div>';
+  const txt = (id, label, v, ph) => '<div class="m-field rv-l-text"><div class="m-field-label">'+label+'</div>'
+    + '<input class="m-input" id="'+id+'" maxlength="80" value="'+esc(v||'')+'" placeholder="'+esc(ph)+'"'+dis+'></div>';
+  var html = '<div class="m-card" id="rv-loyalty">'+head
+    + '<div class="m-h" style="font-size:1.2rem;">Rewards for your guests</div>'
+    + sw('luckyOn', 'Lucky Bite', 'Every Nth dish rated after a scanned visit is free for the guest who rated it. Up to '+n(L.maxPerVisit)+' dishes per guest per visit count; your team does not take part.');
+  if(D.luckyOn) html += '<div class="rv-l-group">' + num('rv-l-luckyEvery', 'The free dish is every', 'dishes', L.luckyEvery, 2, 100000)
+    + '<div class="rv-l-stat">Counted so far: <b>'+n(L.luckyCount)+'</b> &middot; next free: <b>#'+n(L.nextAt)+'</b> ('+n(L.toGo)+' to go)</div></div>';
+  html += sw('stampsOn', 'Stamp card', 'Every scanned visit is a stamp. A full card is a reward you choose.');
+  if(D.stampsOn) html += '<div class="rv-l-group">' + num('rv-l-stampsEvery', 'A full card is', 'visits', L.stampsEvery, 2, 100)
+    + txt('rv-l-stampsReward', 'The reward', L.stampsReward, 'e.g. A free dessert') + '</div>';
+  html += sw('inviteOn', 'Invite a friend', 'Every scanned visit gives the guest one invite to share. The friend saves it with their phone number and uses it once, from the next day.');
+  if(D.inviteOn) html += '<div class="rv-l-group">' + txt('rv-l-inviteDiscount', 'The friend gets', L.inviteDiscount, 'e.g. 10% off your meal')
+    + num('rv-l-inviteDays', 'An invite lasts', 'days', L.inviteDays, 1, 30) + '</div>';
+  html += num('rv-l-rewardDays', 'A Lucky Bite or a full card lasts', 'days', L.rewardDays, 1, 365);
+  if(edit) html += '<div class="m-actions"><button type="button" class="m-save" onclick="rvSaveLoyalty(this)">Save the rewards</button></div>';
+  const st = L.stats || {}, iv = L.invites || {};
+  html += '<div class="rv-l-stat" style="margin-top:.9rem;">Rewards: <b>'+n(st.waiting||0)+'</b> waiting &middot; <b>'+n(st.given||0)+'</b> given &middot; <b>'+n(st.expired||0)+'</b> expired'
+    + '<br>Invites: <b>'+n(iv.made||0)+'</b> made &middot; <b>'+n(iv.saved||0)+'</b> saved by a friend &middot; <b>'+n(iv.used||0)+'</b> used</div>';
+  if((L.recent||[]).length){
+    html += '<div class="rv-l-list">' + L.recent.map(r => {
+      const when = new Date(r.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      const state = r.status==='used' ? 'given'+(r.redeemedAt ? ' '+new Date(r.redeemedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '')+(r.givenBy?' by '+esc(r.givenBy):'')
+                  : r.status==='expired' ? 'expired' : 'waiting';
+      return '<div class="rv-l-item"><div><b>'+whoHtml(r.guest.name, r.guest.handle)+'</b><span>'
+        + esc(r.title)+' &middot; '+(r.kind==='lucky' ? 'Lucky Bite #'+n(r.luckyNumber) : 'stamp card')+' &middot; '+when+'</span></div>'
+        + '<em class="rv-l-'+r.status+'">'+state+'</em></div>';
+    }).join('') + '</div>';
+  }
+  html += '<div class="m-sub rv-l-legal">These rewards are offered and paid for by '+esc(S.restaurant.name)+'. Seb&rsquo;s Analytics and Fork&rsquo;s Rating only keep the count.</div>';
+  return html + '</div>';
+}
+function rvLoySwitch(key){
+  const L = RV.settings && RV.settings.loyalty;
+  if(!L || !RV.settings.canEdit) return;
+  const D = rvLoyaltyDraft(L);
+  D[key] = !D[key];
+  rvRender();
+}
+async function rvSaveLoyalty(btn){
+  const gen = RV.gen, L = RV.settings.loyalty, D = rvLoyaltyDraft(L);
+  const val = (id, fallback) => { const el = document.getElementById(id); return el ? el.value : fallback; };
+  const body = {
+    luckyOn: !!D.luckyOn, luckyEvery: val('rv-l-luckyEvery', L.luckyEvery),
+    stampsOn: !!D.stampsOn, stampsEvery: val('rv-l-stampsEvery', L.stampsEvery), stampsReward: val('rv-l-stampsReward', L.stampsReward),
+    inviteOn: !!D.inviteOn, inviteDiscount: val('rv-l-inviteDiscount', L.inviteDiscount), inviteDays: val('rv-l-inviteDays', L.inviteDays),
+    rewardDays: val('rv-l-rewardDays', L.rewardDays),
+  };
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const data = await rvApi({action:'staff_loyalty_save', loyalty: body});
+    if(gen !== RV.gen) return;
+    RV.forget = ['rv-l-'];
+    RV.settings.loyalty = data.loyalty;
+    RV.loyaltyDraft = null;
+    showToast('Rewards saved');
+    rvRender();
+  }catch(e){ showToast(e.message); btn.disabled = false; btn.textContent = 'Save the rewards'; }
 }
 
 function rvNumbersHtml(S){
