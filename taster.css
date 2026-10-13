@@ -236,3 +236,55 @@
   .hf-hol-note { color:rgba(252,249,244,.66); font-size:.78rem; line-height:1.35; margin-top:2px; }
   .hf-hol-rest { padding:10px 0 11px; color:rgba(252,249,244,.62); font-size:.76rem; line-height:1.4; text-align:center; }
   @media (prefers-reduced-motion: reduce) { .hf-hol-chev { transition:none; } }
+
+/* ═══ r30 · THE PHONE BOX: "+1 (555) 000-0000", filled in as it is typed ═══
+   The +1 stays (dark); the grey digits behind the box (.hf-phone-ghost) give way to the typed ones. The ghost has the
+   box's own padding, border and letters, so the typed digits sit exactly on the grey ones. */
+  .hf-phone { position:relative; display:block; margin-bottom:.85rem; }
+  .hf-phone > .t-input { position:relative; z-index:1; margin-bottom:0; background:transparent; padding-left:2.55rem; }
+  .hf-phone-ghost, .hf-phone-cc { position:absolute; top:0; bottom:0; display:flex; align-items:center; pointer-events:none;
+                                  font-family:var(--sans); font-size:.9rem; line-height:normal; white-space:pre; }
+  .hf-phone-ghost { left:0; right:0; z-index:0; padding:0 1rem 0 2.55rem; border:1px solid transparent; border-radius:10px; background:#fff; overflow:hidden; }
+  .hf-phone-ghost i { font-style:normal; color:transparent; }
+  .hf-phone-ghost em { font-style:normal; color:#ADA195; }
+  .hf-phone-cc { left:calc(1rem + 1px); z-index:2; color:var(--text); font-weight:500; }
+
+/* ═══ r30 · MY INFORMATION (picture A) ═══ */
+  .hf-corner-name { cursor:pointer; color:#8FB4F2; display:flex; align-items:center; gap:.45rem; text-align:left; font-family:inherit; }
+  .hf-corner-name:hover, .hf-corner-name:focus-visible { background:#2E2722; color:#A9C6FF; }
+  .hf-corner-name svg { flex:none; }
+  .hf-corner-name span { min-width:0; }
+  .me-box { max-width:440px; }
+  .me-box .t-header h3 { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.45rem; font-weight:600; }
+  .me-loading { font-family:var(--sans); font-size:.88rem; color:var(--muted); padding:1rem 0; }
+  .me-lbl { display:block; font-family:var(--sans); font-size:.64rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--red); margin:0 0 .4rem; }
+  .me-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.6rem; }
+  .me-row.me-dob { grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr); gap:.45rem; }
+  .me-field { min-width:0; }
+  .me-phone, .me-pin { display:flex; align-items:center; justify-content:space-between; gap:.6rem; border:1px solid var(--border); border-radius:10px;
+                       padding:.55rem .6rem .55rem 1rem; font-family:var(--sans); font-size:.92rem; color:var(--text); margin-bottom:.45rem; background:var(--off-white); }
+  .me-pin { margin:1.1rem 0 .6rem; background:transparent; border:none; padding:0; }
+  .me-pill { flex:none; min-height:34px; padding:0 .95rem; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--text);
+             font-family:var(--sans); font-size:.66rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
+  .me-panel { border-left:2px solid var(--border); padding:.2rem 0 .3rem .8rem; margin:.2rem 0 .9rem; }
+  .me-code { background:var(--off-white); border-radius:10px; padding:.7rem .8rem .1rem; margin:-.2rem 0 .9rem; }
+  .me-code-q { font-family:var(--sans); font-size:.8rem; color:var(--text); margin-bottom:.5rem; line-height:1.45; }
+  .me-promos { border-top:1px solid var(--border); margin-top:.4rem; padding-top:1rem; }
+  .me-promos-h { font-family:var(--sans); font-size:.92rem; font-weight:600; color:var(--text); }
+  .me-promos-sub { font-family:var(--sans); font-size:.76rem; color:var(--muted); margin:.15rem 0 .6rem; line-height:1.45; }
+  .me-switch { display:flex; align-items:flex-start; justify-content:space-between; gap:.9rem; padding:.6rem 0; border-top:1px solid var(--border); cursor:pointer; }
+  .me-switch:first-of-type { border-top:none; }
+  .me-switch-text { min-width:0; font-family:var(--sans); }
+  .me-switch-text b { display:block; font-size:.88rem; font-weight:500; color:var(--text); }
+  .me-switch-text small { display:block; font-size:.7rem; color:var(--muted); line-height:1.45; margin-top:.15rem; }
+  .me-switch input { position:absolute; opacity:0; width:1px; height:1px; }
+  .me-switch-ui { flex:none; position:relative; width:46px; height:28px; border-radius:999px; background:#D9CFC2; transition:background .2s; margin-top:.1rem; }
+  .me-switch-ui::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .2s; }
+  .me-switch input:checked + .me-switch-ui { background:#2E7D4F; }
+  .me-switch input:checked + .me-switch-ui::after { transform:translateX(18px); }
+  .me-switch input:focus-visible + .me-switch-ui { box-shadow:0 0 0 3px rgba(46,125,79,.3); }
+  .me-switch input:disabled + .me-switch-ui { opacity:.45; }
+  .me-promo-note { margin-top:.2rem; }
+  .me-foot { font-family:var(--sans); font-size:.74rem; color:var(--muted); text-align:center; margin-top:.8rem; }
+  #me-err { margin-top:.4rem; }
+  @media (prefers-reduced-motion:reduce) { .me-switch-ui, .me-switch-ui::after { transition:none; } }
