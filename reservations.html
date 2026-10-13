@@ -17,14 +17,42 @@
 (function () {
   try { if (/^#(?:mine|chat=\d{1,12})$/.test(window.location.hash || '')) document.documentElement.className += ' rv-mine-first'; } catch (e) { /* the page then starts as before */ }
 })();
-window.hfEarlySlots = (function () {
+// r29 (Sebastian, 12 Oct: "My Reservations opens, but slower"): a page opened on
+// #mine (or on a table from the bell) asks for the guest's tables here, in the
+// first line, like the free times — not at the bottom of the page, after the
+// stylesheet and the scripts, which on a phone is more than a second later.
+// The free times then wait for the tables (see start()): a Vercel server that
+// has just answered is awake for the next question.
+window.hfEarlyMine = (function () {
   try {
-    return { rid: 1, ask: fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'slots', restaurantId: 1 }) })
+    if (!/^#(?:mine|chat=\d{1,12})$/.test(window.location.hash || '')) return null;
+    var raw = JSON.parse(window.localStorage.getItem('hf_taster') || 'null');
+    var token = raw && typeof raw.session === 'string' ? raw.session : '';
+    if (!token) return null;               // logged out: nothing to ask, the page says "log in"
+    return { token: token, ask: fetch('/api/reservations', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'mine', restaurantId: 1 }) })
       .then(function (r) { return r.json().then(function (d) { return r.ok ? d : null; }); })
       .catch(function () { return null; }) };
   } catch (e) { return null; }
 })();
+// withHours: the opening hours and the holidays ride in the same answer (taster.js
+// reads window.hfHoursAsk), so the page needs one request, not two.
+window.hfEarlySlots = (function () {
+  if (window.hfEarlyMine) return null;     // the tables first; the free times are asked for right after (start)
+  try {
+    return { rid: 1, ask: fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'slots', restaurantId: 1, withHours: true }) })
+      .then(function (r) { return r.json().then(function (d) { return r.ok ? d : null; }); })
+      .catch(function () { return null; }) };
+  } catch (e) { return null; }
+})();
+window.hfHoursAsk = window.hfEarlySlots ? window.hfEarlySlots.ask : null;
+// A page opened on #mine asks for the free times after the tables: the hours wait for that answer too (start() gives it).
+if (window.hfEarlyMine) {
+  window.hfHoursAsk = new Promise(function (give) { window.hfHoursGive = give; });
+  setTimeout(function () { if (window.hfHoursGive) { var g = window.hfHoursGive; window.hfHoursGive = null; g(null); } }, 12000);   // never waits for ever: the hours are then asked for on their own
+}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,6 +150,11 @@ window.hfEarlySlots = (function () {
   /* r27: the hours the manager chose. Two lines of room are kept from the first paint (the usual week is two lines),
      so the page does not move when they arrive. */
   .rv-hero-line .hf-hours:empty { display:block; min-height:2.8em; }     /* until the hours arrive, so the page does not move; then they are plain lines of the text */
+  /* r29: "Our holidays" — the button under the hours, and its list, which opens under the whole top (the plate stays above it) */
+  .rv-hol-btn { margin-top:10px; }
+  .rv-hol-btn .hf-hol-btn { margin:0; min-height:34px; padding:0 12px; font-size:.74rem; }
+  .rv-hol-list { padding:12px 16px 0; }
+  .rv-hol-list .hf-hol-panel { margin:0; max-width:none; background:rgba(252,249,244,.06); }
   .rv-plate { position:absolute; z-index:0; top:34px; right:max(-46px, -11.7vw); width:min(238px, 62vw); height:auto;
     filter:drop-shadow(0 14px 18px rgba(0,0,0,.6)); pointer-events:none; }
   .rv-body { padding:0 16px 20px; }
@@ -227,7 +260,8 @@ window.hfEarlySlots = (function () {
   .rv-input:focus, .rv-area:focus { border-color:var(--red-bright); box-shadow:0 0 0 3px rgba(226,59,46,.18); }
   .rv-area { min-height:76px; resize:vertical; }
   .rv-row { display:flex; gap:10px; }
-  .rv-row > * { flex:1; }
+  .rv-row > * { flex:1 1 0; min-width:0; }       /* r29: min-width:0 — a phone's date or time field has a width of its own and must not run under its neighbour */
+  .rv-input, .rv-area { min-width:0; max-width:100%; }
   .rv-btn { width:100%; background:var(--red-bright); color:#fff; border:none; border-radius:999px; padding:.95rem;
     font-family:inherit; font-size:.8rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; cursor:pointer;
     box-shadow:0 10px 24px rgba(226,59,46,.3); transition:transform .12s, opacity .2s; }
@@ -366,6 +400,9 @@ window.hfEarlySlots = (function () {
     .rv-hero h1 { font-size:clamp(2.2rem, calc(var(--L) / 13), 3.3rem); margin:.7rem 0 .8rem; }
     .rv-hero-line { font-size:.95rem; line-height:1.55; }
     .rv-hero-line .hf-hours:empty { min-height:3.1em; }
+    .rv-hol-btn .hf-hol-btn { min-height:38px; font-size:.82rem; }
+    .rv-hol-list { padding:14px 0 0; }
+    .rv-hol-list .hf-hol-panel { max-width:560px; }
     .rv-plate { top:50%; right:-56px; width:var(--plate); transform:translateY(-50%); }
     .rv-maps { gap:10px; padding:20px 0 0; }
     .rv-flag { width:38px; }
@@ -435,11 +472,15 @@ window.hfEarlySlots = (function () {
           <h1>The Hungry Fork</h1>
           <!-- The address and the hours are the ones on the home page (index.html, the footer). -->
           <div class="rv-hero-line">123 Stone St<br>Manhattan, NY<span class="hf-hours" data-hf-hours="hero" data-hf-keep></span></div>
+          <!-- r29: "Our holidays" — the button under the hours; its list opens right under the top (below) -->
+          <div class="rv-hol-btn" data-hf-hol="btn" style="display:none"></div>
         </div>
         <img class="rv-plate" src="/_vercel/image?url=%2Fsliced-steak-plate.png&w=640&q=75" data-orig="/sliced-steak-plate.png"
              onerror="this.onerror=null;this.src=this.dataset.orig" width="1700" height="1000" decoding="async" fetchpriority="low"
              alt="A plate of sliced steak with vegetables and mashed potatoes">
       </div>
+      <!-- r29: the list of holidays opens here, right under the top (never over the plate) -->
+      <div class="rv-hol-list" data-hf-hol="panel" style="display:none"></div>
 
       <div class="rv-body">
         <!-- The same three apps, with the same logos and the same links, as the home page's "Open location in…". -->
@@ -1397,7 +1438,13 @@ async function openMine(chatId) {
   }
   box.innerHTML = '<p class="rv-sub">Looking for your tables…</p>';
   try {
-    const data = await api({ action: 'mine', restaurantId: RESTAURANT_ID });
+    // The answer asked for in the page's first line, when it is for this login and a good one;
+    // otherwise the usual way, with the usual error message.
+    const early = window.hfEarlyMine;
+    window.hfEarlyMine = null;
+    let data = null;
+    if (early && early.token === currentSession) data = await early.ask;
+    if (!data) data = await api({ action: 'mine', restaurantId: RESTAURANT_ID });
     const up = data.upcoming || [], past = data.past || [];
     // The countdown runs on the server's clock: a phone set five minutes wrong
     // would count to the wrong moment.
@@ -2141,7 +2188,13 @@ async function firstSlots() {
     const d = await early.ask;
     if (d && d.booking && d.restaurant) return d;
   }
-  return api({ action: 'slots', restaurantId: RESTAURANT_ID });
+  return api({ action: 'slots', restaurantId: RESTAURANT_ID, withHours: true });
+}
+// r29: the answer (or its failure) goes to the page's own hours reader (taster.js), which then uses it or asks for itself.
+function giveHours(data) {
+  const give = window.hfHoursGive;
+  window.hfHoursGive = null;
+  if (typeof give === 'function') give(data || null);
 }
 
 (async function start() {
@@ -2153,9 +2206,12 @@ async function firstSlots() {
   // r27: from the corner menu or the bell the guest's tables open at once, not
   // after the free times (which are still asked for, for the "Book a table" button).
   const wantsMine = !fromEmail && mineHash();
-  if (wantsMine) openMine(wantsMine.chat);
+  // r29: the free times are asked for after the tables (the tables are what is on
+  // screen), but never later than six seconds even if the tables are slow.
+  if (wantsMine) await Promise.race([openMine(wantsMine.chat), new Promise((done) => setTimeout(done, 6000))]);
   try {
     const data = await firstSlots();
+    giveHours(data);
     state.booking = data.booking;
     state.restaurant = data.restaurant;
     state.date = data.date || data.booking.today;
@@ -2177,6 +2233,7 @@ async function firstSlots() {
     if (state.closed) state.closedDays[state.date] = true;
     renderTimes();
   } catch (e) {
+    giveHours(null);
     el('off-text').textContent = e.message;
     el('off-phone').textContent = 'Please try again in a moment.';
     if (!fromEmail && !wantsMine) show('off');
