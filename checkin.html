@@ -195,7 +195,7 @@ function renderConfirm(){
   + '<div class="c-who">'
   +   '<div class="m-eyebrow">Confirm this visit</div>'
   +   '<div class="c-name">'+esc(PREVIEW.customer.name)+'</div>'
-  +   (PREVIEW.customer.username ? '<div class="c-handle">['+esc(PREVIEW.customer.username)+']</div>' : '')
+  +   (PREVIEW.customer.username ? '<div class="c-handle">('+esc(PREVIEW.customer.username)+')</div>' : '')
   + '</div>'
   + picker
   + (PREVIEW.alreadyToday
@@ -235,6 +235,7 @@ async function confirmVisit(){
   +   '<div class="c-mark done">&#10003;</div>'
   +   '<div class="m-eyebrow">'+(data.alreadyToday?'Already marked today':'Visit confirmed')+'</div>'
   +   '<div class="c-name">'+esc(data.customer.name)+'</div>'
+  +   (data.customer.username ? '<div class="c-handle">('+esc(data.customer.username)+')</div>' : '')
   +   (data.restaurant ? '<div class="c-handle">'+esc(data.restaurant.name)+'</div>' : '')
   + '</div>'
   + (nth ? '<div class="c-note">'+esc(nth)+'</div>' : '')
