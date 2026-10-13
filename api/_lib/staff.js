@@ -229,6 +229,15 @@ async function day(req, res, body, tasterId) {
   const now = Date.now();
 
   const requestRows = requests.ok && Array.isArray(requests.data) ? requests.data : [];
+  // r29 (Sebastian, 12 Oct: "add the information of the email of the client"): the card says whether the
+  // request came with an email, never which one — staff do not see guests' addresses. The address is not
+  // selected here: the question is asked of the database ("which of these are not null") and only ids come back.
+  let withEmail = new Set();
+  if (requestRows.length) {
+    const ids = requestRows.map((q) => Number(q.id)).filter(Number.isInteger);
+    const got = ids.length ? await sb(`/reservation_requests?id=in.(${ids.join(',')})&guest_email=not.is.null&select=id`) : null;
+    if (got && got.ok && Array.isArray(got.data)) withEmail = new Set(got.data.map((x) => Number(x.id)));
+  }
   await addHandles([...bookings.data, ...requestRows]);
   const dressed = bookings.data
     .filter((r) => inServiceDay(r, date))
@@ -280,7 +289,7 @@ async function day(req, res, body, tasterId) {
     },
     bookings: dressed,
     areas: areaList.filter((a) => a.is_active).map((a) => ({ id: a.id, name: a.name, seats: a.seats })),
-    requests: requestRows.map((q) => dressRequest(q)),
+    requests: requestRows.map((q) => dressRequest(q, withEmail.has(Number(q.id)))),
   });
 }
 
@@ -318,9 +327,10 @@ export function dressBooking(r, timezone, areaName, now, canEdit, serviceDate) {
   };
 }
 
-function dressRequest(q) {
+function dressRequest(q, hasEmail) {
   return {
     id: q.id, name: q.guest_name, handle: q.handle || null, phone: q.guest_phone, party: q.party_size,
+    hasEmail: hasEmail === true,                 // whether, never which (r29)
     date: q.wanted_date, time: q.wanted_time ? String(q.wanted_time).slice(0, 5) : null,
     occasion: q.occasion || null, message: q.message || null, status: q.status, createdAt: q.created_at,
   };
