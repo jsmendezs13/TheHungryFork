@@ -111,7 +111,7 @@ export async function staff(req, res, body, action, helpers = {}) {
 
   switch (action) {
     case 'staff_days':       return days(req, res, body, tasterId);
-    case 'staff_day':        return day(req, res, body, tasterId);
+    case 'staff_day':        return day(req, res, body, tasterId, helpers);
     case 'staff_scan':       return scan(req, res, body, tasterId);
     case 'staff_mark':       return mark(req, res, body, tasterId);
     case 'staff_answer':     return answer(req, res, body, tasterId, helpers);
@@ -202,7 +202,7 @@ function dressDay(r) {
 }
 
 // ── ONE DAY: THE BOOKINGS, THE ROOMS, THE REQUESTS ────────────────────────────
-async function day(req, res, body, tasterId) {
+async function day(req, res, body, tasterId, helpers = {}) {
   const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
@@ -267,6 +267,13 @@ async function day(req, res, body, tasterId) {
       messages = { unread: waiting.length, conversations: Object.keys(count).length };
     }
   }
+  // r30 (Sebastian, 13 Oct): the chat button on each big-party request — how
+  // many messages it has and how many from the guest nobody has read. Only for
+  // those who answer guests; null per request before migration 20.
+  let requestChats = {};
+  if (canMessage && requestRows.length && typeof helpers.requestSummaries === 'function') {
+    requestChats = await helpers.requestSummaries(requestRows.map((q) => q.id));
+  }
   return res.status(200).json({
     success: true,
     today, date, timezone: s.timezone, now: new Date(now).toISOString(),
@@ -289,7 +296,7 @@ async function day(req, res, body, tasterId) {
     },
     bookings: dressed,
     areas: areaList.filter((a) => a.is_active).map((a) => ({ id: a.id, name: a.name, seats: a.seats })),
-    requests: requestRows.map((q) => dressRequest(q, withEmail.has(Number(q.id)))),
+    requests: requestRows.map((q) => dressRequest(q, withEmail.has(Number(q.id)), canMessage ? (requestChats[q.id] || null) : null)),
   });
 }
 
@@ -327,8 +334,9 @@ export function dressBooking(r, timezone, areaName, now, canEdit, serviceDate) {
   };
 }
 
-function dressRequest(q, hasEmail) {
+function dressRequest(q, hasEmail, chat = null) {
   return {
+    chat,                                        // r30: { count, unread } or null (cannot answer here, or no migration 20)
     id: q.id, name: q.guest_name, handle: q.handle || null, phone: q.guest_phone, party: q.party_size,
     hasEmail: hasEmail === true,                 // whether, never which (r29)
     date: q.wanted_date, time: q.wanted_time ? String(q.wanted_time).slice(0, 5) : null,
@@ -557,6 +565,15 @@ async function answer(req, res, body, tasterId, helpers) {
       });
     } catch (err) {
       console.error('[staff:answer] confirmation threw', result.reservation_id, err && err.message);
+    }
+  }
+  // r30: what was said about the request goes on with the table. Never fails the booking.
+  if (typeof helpers.moveToTable === 'function') {
+    try {
+      await helpers.moveToTable(requestId, { id: result.reservation_id, restaurant_id: q.restaurant_id, at: at.toISOString(),
+                                             serviceDate: time < DAY_STARTS ? addDays(date, -1) : date });
+    } catch (err) {
+      console.error('[staff:answer] moving the conversation threw', requestId, err && err.message);
     }
   }
   console.log('[staff:answer] taster', tasterId, 'accepted request', requestId, 'as', result.code);
