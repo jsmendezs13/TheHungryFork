@@ -25,7 +25,7 @@
 // has just answered is awake for the next question.
 window.hfEarlyMine = (function () {
   try {
-    if (!/^#(?:mine|chat=\d{1,12})$/.test(window.location.hash || '')) return null;
+    if (!/^#(?:mine|chat=\d{1,12}|req=\d{1,12})$/.test(window.location.hash || '')) return null;
     var raw = JSON.parse(window.localStorage.getItem('hf_taster') || 'null');
     var token = raw && typeof raw.session === 'string' ? raw.session : '';
     if (!token) return null;               // logged out: nothing to ask, the page says "log in"
@@ -261,6 +261,14 @@ if (window.hfEarlyMine) {
   .rv-area { min-height:76px; resize:vertical; }
   .rv-row { display:flex; gap:10px; }
   .rv-row > * { flex:1 1 0; min-width:0; }       /* r29: min-width:0 — a phone's date or time field has a width of its own and must not run under its neighbour */
+  /* r30: iPhones draw date and time fields wider than asked unless their own look is switched off; and on a phone the
+     day gets a line of its own. */
+  .rv-input[type=date], .rv-input[type=time] { -webkit-appearance:none; appearance:none; min-height:2.9rem; line-height:1.3; }
+  .rv-input[type=date]::-webkit-date-and-time-value, .rv-input[type=time]::-webkit-date-and-time-value { text-align:left; }
+  @media (max-width:480px) { .rv-row.has-date { flex-direction:column; gap:0; } }
+  /* r30: a big-party request in My Reservations, with its own conversation */
+  .rv-chip.wait { background:rgba(90,140,230,.16); color:#A9C6FF; border:1px solid rgba(90,140,230,.5); }
+  .rv-req-note { font-size:.78rem; color:rgba(252,249,244,.62); margin-top:.4rem; line-height:1.45; }
   .rv-input, .rv-area { min-width:0; max-width:100%; }
   .rv-btn { width:100%; background:var(--red-bright); color:#fff; border:none; border-radius:999px; padding:.95rem;
     font-family:inherit; font-size:.8rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; cursor:pointer;
@@ -594,7 +602,7 @@ if (window.hfEarlyMine) {
         <p id="req-intro">Tell the restaurant what you need and they will answer you.</p>
       </div>
       <p class="rv-err" id="req-err"></p>
-      <div class="rv-row">
+      <div class="rv-row has-date">
         <div class="rv-field"><label for="req-people">People</label>
           <input class="rv-input" id="req-people" type="number" min="9" max="40" inputmode="numeric" placeholder="12"></div>
         <div class="rv-field"><label for="req-date">Day</label>
@@ -1377,7 +1385,9 @@ async function sendRequest() {
       message:  el('req-message').value.trim(),
     });
     el('sent-text').textContent = state.restaurant.name + ' has your request for ' + party + ' people on '
-      + dayLabels(date).long + '. They will call you on ' + phone + '.';
+      + dayLabels(date).long + '. They will call you on ' + phone
+      // r30: logged in, the request (and anything the restaurant writes about it) is in My Reservations.
+      + (typeof currentSession !== 'undefined' && currentSession ? ', or write to you in My Reservations.' : '.');
     show('sent');
   } catch (e) {
     say(el('req-err'), e.message);
@@ -1426,6 +1436,21 @@ function mineCard(r, upcoming, open) {
     + '</div>';
 }
 
+// r30: a big-party request still waiting for the restaurant's answer, with its own conversation (key 'r<id>').
+function requestCard(q) {
+  const when = dayLabels(q.date).long + (q.time ? ' · ' + q.time : '');
+  const bits = [q.party + ' people'];
+  if (q.occasion) bits.push(q.occasion);
+  bits.push(q.restaurant);
+  return '<div class="rv-card rv-req-card">'
+    + '<span class="rv-chip wait">Request · waiting for an answer</span>'
+    + '<div class="rv-card-when">' + esc(when) + '</div>'
+    + '<div class="rv-card-what">' + bits.map(esc).join(' · ') + '</div>'
+    + '<div class="rv-req-note">The restaurant answers you here, or calls you' + (q.phone ? ' · ' + esc(q.phone) : '') + '</div>'
+    + (q.chat ? chatBlock('r' + Number(q.id), q.chat) : '')
+    + '</div>';
+}
+
 async function openMine(chatId) {
   show('mine');
   const box = el('mine-body');
@@ -1445,25 +1470,27 @@ async function openMine(chatId) {
     let data = null;
     if (early && early.token === currentSession) data = await early.ask;
     if (!data) data = await api({ action: 'mine', restaurantId: RESTAURANT_ID });
-    const up = data.upcoming || [], past = data.past || [];
+    const up = data.upcoming || [], past = data.past || [], asks = data.requests || [];
     // The countdown runs on the server's clock: a phone set five minutes wrong
     // would count to the wrong moment.
     const serverNow = Date.parse(data.now || '');
     state.skew = Number.isNaN(serverNow) ? 0 : serverNow - Date.now();
     state.mine = {};
     up.forEach((r) => { state.mine[r.id] = r; });
-    if (!up.length && !past.length) {
+    if (!up.length && !past.length && !asks.length) {
       box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">No tables yet</h2>'
         + '<p class="rv-sub" style="margin-top:.6rem;">When you book one, it will be here with its code.</p></div>';
       return;
     }
     box.innerHTML =
-      (up.length ? '<p class="rv-mine-head">Coming up</p>' + up.map((r, i) => mineCard(r, true, i === 0)).join('') : '')
+      (asks.length ? '<p class="rv-mine-head">Your requests</p>' + asks.map(requestCard).join('') : '')
+      + (up.length ? '<p class="rv-mine-head">Coming up</p>' + up.map((r, i) => mineCard(r, true, i === 0)).join('') : '')
       + (past.length ? '<p class="rv-mine-head">Before</p>' + past.map((r) => mineCard(r, false)).join('') : '');
     startCounts();
     prepareCards();
-    // From the bell: that table's conversation, open.
-    if (chatId && el('chat-t' + Number(chatId))) chatOpen('t' + Number(chatId), true);
+    // From the bell: that table's conversation, open (or a request's, r30: 'r<id>').
+    const key = typeof chatId === 'string' && /^r\d+$/.test(chatId) ? chatId : chatId ? 't' + Number(chatId) : null;
+    if (key && el('chat-' + key)) chatOpen(key, true);
   } catch (e) {
     box.innerHTML = '<p class="rv-sub">' + esc(e.message) + '</p>';
   }
@@ -1910,7 +1937,12 @@ function chatBlock(key, chat) {
     +   '<p class="rv-chat-foot"></p>'
     + '</div>';
 }
-function chatTarget(key) { return key === 'link' ? { token: state.linkToken } : { id: Number(key.slice(1)) }; }
+function chatTarget(key) {
+  if (key === 'link') return { token: state.linkToken };
+  return key[0] === 'r' ? { requestId: Number(key.slice(1)) } : { id: Number(key.slice(1)) };
+}
+// r30: a request's conversation has its own two actions.
+function chatAction(key, what) { return (key[0] === 'r' ? 'req_msg_' : 'msg_') + what; }
 
 function chatOpen(key, open) {
   const box = el('chat-' + key);
@@ -1957,8 +1989,11 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) chatWake(); });
 window.hfOnInbox = function (data) {
   if (!data || !Array.isArray(data.bell)) return;
   const fresh = {};
-  data.bell.forEach((b) => { fresh['t' + Number(b.reservationId)] = Number(b.count) || 0; });
-  document.querySelectorAll('.rv-msg-btn[data-chat^="t"]').forEach((btn) => {
+  data.bell.forEach((b) => {
+    if (b.requestId) fresh['r' + Number(b.requestId)] = Number(b.count) || 0;
+    else fresh['t' + Number(b.reservationId)] = Number(b.count) || 0;
+  });
+  document.querySelectorAll('.rv-msg-btn[data-chat^="t"], .rv-msg-btn[data-chat^="r"]').forEach((btn) => {
     const key = btn.dataset.chat, n = fresh[key] || 0;
     // Open and on screen: read it now. Open but behind another step (Book a
     // table): not read where nobody can see it; the count waits on Message.
@@ -1977,7 +2012,7 @@ async function chatLoad(key, first) {
   c.seq = seq;
   let data;
   c.asking = seq; c.askedAt = Date.now();
-  try { data = await api(Object.assign({ action: 'msg_list' }, chatTarget(key))); }
+  try { data = await api(Object.assign({ action: chatAction(key, 'list') }, chatTarget(key))); }
   catch (e) {
     if (c.asking === seq) c.asking = 0;
     if (seq !== c.seq) return;
@@ -2018,13 +2053,13 @@ function chatPaint(key, first) {
   list.innerHTML = d.messages.length
     ? d.messages.map((m) => '<div class="rv-bub ' + (m.mine ? 'me' : 'them') + '">'
         + '<span class="rv-bub-who">' + bubWho(m) + ' <i>· ' + esc(m.label) + '</i></span>' + esc(m.body) + '</div>').join('')
-    : '<p class="rv-chat-empty">Write here instead of calling: running late, an allergy, something you left behind. '
-      + esc(d.restaurant) + ' answers you here' + (d.canWrite ? '.' : '') + '</p>';
+    : '<p class="rv-chat-empty">' + (d.empty ? esc(d.empty) : 'Write here instead of calling: running late, an allergy, something you left behind. '
+      + esc(d.restaurant) + ' answers you here' + (d.canWrite ? '.' : '')) + '</p>';
   const note = box.querySelector('.rv-chat-note');
   note.hidden = !d.note;
   note.textContent = d.note || '';
   box.querySelector('.rv-chat-form').hidden = !d.canWrite;
-  box.querySelector('.rv-chat-foot').textContent = 'Messages are kept until ' + d.keptUntil + ' (90 days after your table), then deleted.';
+  box.querySelector('.rv-chat-foot').textContent = d.foot || ('Messages are kept until ' + d.keptUntil + ' (90 days after your table), then deleted.');
   if (atEnd) list.scrollTop = list.scrollHeight;
 }
 
@@ -2036,7 +2071,7 @@ async function chatSend(key) {
   if (!text) { input.focus(); return; }
   c.sending = true; send.disabled = true;
   try {
-    const data = await api(Object.assign({ action: 'msg_send', body: text }, chatTarget(key)));
+    const data = await api(Object.assign({ action: chatAction(key, 'send'), body: text }, chatTarget(key)));
     c.seq = (c.seq || 0) + 1;                     // an older answer still on its way is not drawn
     c.data = data;
     input.value = ''; chatGrow(input);
@@ -2137,7 +2172,10 @@ function mineHash() {
   const h = window.location.hash || '';
   if (h === '#mine') return { chat: null };
   const m = /^#chat=(\d{1,12})$/.exec(h);
-  return m ? { chat: Number(m[1]) } : null;
+  if (m) return { chat: Number(m[1]) };
+  // r30: #req=<request>, from the bell or the email: that request's conversation.
+  const q = /^#req=(\d{1,12})$/.exec(h);
+  return q ? { chat: 'r' + Number(q[1]) } : null;
 }
 window.addEventListener('hashchange', () => {
   const mine = mineHash();
