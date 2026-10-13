@@ -944,6 +944,9 @@
   <p>123 Stone St, Manhattan, NY</p>
   <!-- r27: the hours the manager chose (Reservations → Opening hours); empty and hidden until taster.js has them -->
   <p class="hf-hours" data-hf-hours="foot" style="display:none;margin-top:4px;"></p>
+  <!-- r29: "Our holidays" — a button under the hours that opens the manager's list of coming holidays (taster.js) -->
+  <div data-hf-hol="btn" style="display:none"></div>
+  <div data-hf-hol="panel" style="display:none"></div>
   <p style="margin-top:8px;">Powered by <a href="/">Seb's Analytics LLC</a></p>
   <p style="margin-top:10px;"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></p>
 </footer>
@@ -1425,6 +1428,8 @@ function caveFootHTML(){
     + '<div class="cave-foot-line">123 Stone St, Manhattan, NY</div>'
     // r27: the hours the manager chose (taster.js fills it, and fills it again if they arrive later)
     + (function(){const h=typeof hfHoursHtml==='function'?hfHoursHtml('foot'):'';return '<div class="cave-foot-line" data-hf-hours="foot"'+(h?'':' style="display:none"')+'>'+h+'</div>';})()
+    // r29: "Our holidays" under the hours (taster.js fills it, and again if the list arrives later)
+    + (function(){const b=typeof hfHolHtml==='function'?hfHolHtml('btn'):'',l=typeof hfHolHtml==='function'?hfHolHtml('panel'):'';return '<div data-hf-hol="btn"'+(b?'':' style="display:none"')+'>'+b+'</div><div data-hf-hol="panel"'+(l?'':' style="display:none"')+'>'+l+'</div>';})()
     + '<div class="cave-foot-line">Powered by <a href="/">Seb\'s Analytics LLC</a></div>'
     + '<div class="cave-foot-line"><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Service</a></div>'
     + '</div>';
