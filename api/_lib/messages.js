@@ -221,7 +221,7 @@ async function guestTable(req, body, helpers) {
   return { row, tasterId };
 }
 
-function guestView(row, thread, list, place, timezone, now = Date.now()) {
+function guestView(row, thread, list, place, timezone, now = Date.now(), handles = {}) {
   const restaurant = (place && place.name) || 'The restaurant';
   const right = guestRight(row, thread, now);
   let note = null;
@@ -244,7 +244,15 @@ function guestView(row, thread, list, place, timezone, now = Date.now()) {
     messages: list.map((m) => ({
       id: m.id,
       mine: !!m.from_guest,
-      who: m.from_guest ? 'You' : `${m.author_name || 'The team'} · ${restaurant}`,
+      // r28 (Sebastian, 12 Oct): the guest sees who is writing, handle and all:
+      // "Ana (Ana_L) · The Hungry Fork". name / handle / place are the same
+      // thing in pieces, so the page can give the handle its own style; who is
+      // the whole line, for a page that shows it as it comes.
+      name: m.from_guest ? 'You' : (m.author_name || 'The team'),
+      handle: m.from_guest ? null : (handles[m.author_id] || null),
+      place: m.from_guest ? null : restaurant,
+      who: m.from_guest ? 'You'
+        : `${m.author_name || 'The team'}${handles[m.author_id] ? ` (${handles[m.author_id]})` : ''} · ${restaurant}`,
       body: m.body,
       at: new Date(m.created_at).toISOString(),
       label: whenLabel(timezone, m.created_at, now),
@@ -258,7 +266,8 @@ async function guestReply(res, row, timezone, place) {
   const list = t.thread ? await messagesOf(row.id) : [];
   if (list === null) return res.status(502).json({ error: 'Could not read the messages. Please try again in a moment.' });
   if (t.thread) await markRead(row.id, list, true);
-  return res.status(200).json(guestView(row, t.thread, list, place, timezone));
+  const handles = await handlesById(list.filter((m) => !m.from_guest).map((m) => m.author_id));
+  return res.status(200).json(guestView(row, t.thread, list, place, timezone, Date.now(), handles));
 }
 
 function whoKey(req, body) {
@@ -366,14 +375,16 @@ async function inbox(req, res, body) {
   const tables = mine.ok && Array.isArray(mine.data) ? mine.data : [];
   if (tables.length) {
     const unread = await sb(`/reservation_messages?reservation_id=in.(${tables.map((r) => Number(r.id)).join(',')})` +
-                            '&from_guest=is.false&read_at=is.null&select=reservation_id,author_name,created_at&order=id.desc&limit=200');
+                            '&from_guest=is.false&read_at=is.null&select=reservation_id,author_id,author_name,created_at&order=id.desc&limit=200');
     const list = unread.ok && Array.isArray(unread.data) ? unread.data : [];
     if (list.length) {
       const byTable = {};
       list.forEach((m) => {
-        const b = byTable[m.reservation_id] || (byTable[m.reservation_id] = { count: 0, who: m.author_name, at: m.created_at });
+        const b = byTable[m.reservation_id] || (byTable[m.reservation_id] = { count: 0, who: m.author_name, by: m.author_id, at: m.created_at });
         b.count += 1;
       });
+      // r28: the handle of whoever wrote the newest answer, beside the name.
+      const handles = await handlesById(Object.values(byTable).map((b) => b.by));
       const tableOf = {};
       tables.forEach((r) => { tableOf[r.id] = r; });
       const rids = [...new Set(Object.keys(byTable).map((id) => tableOf[id].restaurant_id))];
@@ -385,7 +396,7 @@ async function inbox(req, res, body) {
         const tz = (l && l.settings && l.settings.timezone) || 'America/New_York';
         bell.push({
           reservationId: Number(id), count: b.count,
-          who: b.who || 'The team', restaurant: (l && l.restaurant && l.restaurant.name) || 'The restaurant',
+          who: b.who || 'The team', handle: handles[b.by] || null, restaurant: (l && l.restaurant && l.restaurant.name) || 'The restaurant',
           at: new Date(b.at).toISOString(), label: whenLabel(tz, b.at),
           table: tableDay(tz, r.reserved_at) + ' · ' + clockIn(tz, r.reserved_at).label,
         });
@@ -444,7 +455,7 @@ async function msgAccess(res, tasterId, restaurantId, { hide } = {}) {
   // Sebastian (platform admin) can open any restaurant's messages, but reading
   // them as a visitor must not take the "new" away from that restaurant's staff.
   const own = !!(access.byRestaurant && (access.byRestaurant[rid] || access.byRestaurant[String(rid)]));
-  return { rid, level, access, name: staffName(access.firstName), marksRead: level < LEVEL.platform || own };
+  return { rid, level, access, name: staffName(access.firstName), handle: access.handle || null, marksRead: level < LEVEL.platform || own };
 }
 
 export async function staffMessages(req, res, body, action, helpers = {}) {
@@ -519,7 +530,8 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
     let emailed = false;
     if (!t.thread.first_reply_emailed_at && typeof helpers.answerByEmail === 'function') {
       try {
-        emailed = await helpers.answerByEmail({ reservationId: id, staffName: who.name, loaded, timezone });
+        // r28: "Ana (Ana_L)": the guest with no account is told who answered, handle and all.
+        emailed = await helpers.answerByEmail({ reservationId: id, staffName: who.name + (who.handle ? ` (${who.handle})` : ''), loaded, timezone });
       } catch (err) {
         console.error('[messages] answer email threw', id, err && err.message);
       }
