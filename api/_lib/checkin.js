@@ -1,216 +1,59 @@
-// api/checkins.js
+// api/_lib/checkin.js
 //
-// The check-in code a guest shows at the table, and the calendar of visits
-// behind it. These were two files, api/checkin-token.js and api/my-checkins.js,
-// and they are one now because Vercel's free plan allows twelve serverless
-// functions in a deployment — the reservation screen needed the room. Nothing
-// about how either one works has changed: same checks, same answers, same
-// limits. Only the address moved, to /api/checkins with an "action".
-//
-// Both refuse to say anything about anyone but the account that asked. The
-// taster id comes from the signed token and from nowhere else, so there is no
-// parameter to tamper with.
+// The small pieces the three check-in endpoints share: the ticket itself, and
+// what day it is in New York.
 
-import { tableQrSvg } from './_lib/qr.js';
-import { makeLimiter, allow, keyFor, clientIp } from './_lib/auth.js';
-import { tasterIdFromRequest, sb } from './_lib/roles.js';
-import {
-  TOKEN_SECONDS, makeToken, hashToken, makeShortCode, siteUrl, newYorkDate,
-} from './_lib/checkin.js';
-import {
-  guestLoyalty, afterRating, rewardForGuest, previewPass, claimPass, passForGuest,
-} from './_lib/loyalty.js';
+import crypto from 'crypto';
 
-// The screen refreshes itself every ninety seconds while it is open, so a
-// customer waiting five minutes for a table legitimately asks for a few. This
-// is loose enough never to interrupt that and tight enough that nobody farms
-// tokens.
-const issueLimiter = makeLimiter({ requests: 60, window: '10 m', prefix: 'checkin:issue' });
-// r31: the invite page asks about a code before anyone logs in. Codes are eight
-// characters from 31 (about 850 billion), so this only stops a machine.
-const previewLimiter = makeLimiter({ requests: 40, window: '10 m', prefix: 'loyalty:preview' });
-const loyaltyLimiter = makeLimiter({ requests: 120, window: '10 m', prefix: 'loyalty:read' });
+// How long a QR on a customer's screen is worth anything. Long enough that the
+// waiter can walk over; short enough that a screenshot sent to a friend on the
+// other side of the city is already dead when it arrives.
+export const TOKEN_SECONDS = 90;
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const body = req.body && typeof req.body === 'object' ? req.body : {};
-  const action = String(body.action || 'token');
-
-  // r31: the one thing anyone may ask without an account — what an invite is.
-  if (action === 'pass_preview') return loyaltyCall(res, async () => {
-    if (!(await allow(previewLimiter, keyFor('ip' + clientIp(req)), { failOpen: true }))) {
-      throw Object.assign(new Error('Too many tries. Wait a few minutes.'), { status: 429 });
-    }
-    return { invite: await previewPass(body.code) };
-  });
-
-  const tasterId = tasterIdFromRequest(req);
-  if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
-
-  if (action === 'token') return issueToken(req, res, tasterId);
-  if (action === 'list')  return listVisits(req, res, tasterId);
-  // r31: Lucky Bite, stamps and invites (api/_lib/loyalty.js).
-  if (action === 'loyalty' || action === 'after_rating' || action === 'pass_claim') {
-    return loyaltyCall(res, async () => {
-      if (!(await allow(loyaltyLimiter, keyFor(tasterId), { failOpen: true }))) {
-        throw Object.assign(new Error('Too many requests. Wait a minute.'), { status: 429 });
-      }
-      if (action === 'loyalty') return await guestLoyalty(tasterId);
-      if (action === 'after_rating') return await afterRating(tasterId, body.reviewId);
-      return { invite: await claimPass(tasterId, body.code) };
-    });
-  }
-  // A prize or a saved invite, shown at the table: the same 90-second ticket as
-  // a check-in, tied to that prize or invite. Checked first: it must be theirs,
-  // unused, not run out (and an invite not on the day it was made).
-  if (action === 'show_reward') {
-    let extra;
-    try {
-      if (body.rewardId != null) extra = { reward_id: Number((await rewardForGuest(tasterId, body.rewardId)).id) };
-      else extra = { pass_id: Number((await passForGuest(tasterId, body.passId)).id) };
-    } catch (e) {
-      return res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not open that.' });
-    }
-    return issueToken(req, res, tasterId, extra);
-  }
-  return res.status(400).json({ error: 'Unknown action.' });
+// 32 random bytes, url-safe. Not a counter, not a hash of the account id —
+// there is nothing in it to guess or increment.
+export function makeToken() {
+  return crypto.randomBytes(32).toString('base64url');
 }
 
-async function loyaltyCall(res, fn) {
-  try {
-    const out = await fn();
-    return res.status(200).json({ success: true, ...out });
-  } catch (e) {
-    if (!e.status) console.error('[checkins:loyalty]', e && e.message);
-    return res.status(e.status || 500).json({ error: e.status ? e.message : 'Something went wrong. Please try again.' });
-  }
+// The database stores this, never the token. See migration 7.
+export function hashToken(token) {
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
 }
 
-// ── "I AM HERE" ───────────────────────────────────────────────────────────────
-async function issueToken(req, res, tasterId, extra = null) {
-  if (!(await allow(issueLimiter, keyFor(tasterId), { failOpen: true }))) {
-    return res.status(429).json({ error: 'Too many codes at once. Wait a minute and try again.' });
-  }
-
-  const token = makeToken();
-  const expiresAt = new Date(Date.now() + TOKEN_SECONDS * 1000);
-
-  // The short code has to be unique among the codes that are still alive. Six
-  // characters from an alphabet of 31 is about a billion combinations against
-  // at most a handful of live tokens, so a clash is a curiosity rather than a
-  // risk — but "a curiosity" is not "impossible", and a clash would check in
-  // the wrong person. Three tries, then the QR alone.
-  let shortCode = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const candidate = makeShortCode();
-    const clash = await sb(
-      `/check_in_tokens?short_code=eq.${candidate}&used_at=is.null` +
-      `&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id&limit=1`
-    );
-    if (clash.ok && Array.isArray(clash.data) && clash.data.length === 0) { shortCode = candidate; break; }
-  }
-
-  const created = await sb('/check_in_tokens', {
-    method: 'POST',
-    body: JSON.stringify({
-      token_hash: hashToken(token),
-      taster_id:  tasterId,
-      short_code: shortCode,
-      expires_at: expiresAt.toISOString(),
-      ...(extra || {}),
-    }),
-  });
-  if (!created.ok) {
-    console.error('[checkins:token] insert failed', created.status, created.data?.message);
-    return res.status(500).json({
-      error: 'Could not create your check-in code (the database answered ' + created.status + '). '
-           + (created.status === 404
-               ? 'That usually means migration 7 has not been run yet.'
-               : 'If that is a 401 or 403, service_role is missing its grant on check_in_tokens.'),
-    });
-  }
-
-  // Housekeeping, here rather than in a scheduled job: this table is pure
-  // litter an hour later, and the person who just made a row is the right
-  // person to sweep up their own. Failure is ignored — a stale row nobody can
-  // use is not a reason to refuse somebody a check-in code.
-  try {
-    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    await sb(
-      `/check_in_tokens?taster_id=eq.${tasterId}&expires_at=lt.${encodeURIComponent(cutoff)}`,
-      { method: 'DELETE' }
-    );
-    // A new ticket for the same prize or invite: the older ones stop working,
-    // so only the QR on the screen right now can be used.
-    if (extra) {
-      const key = extra.reward_id ? 'reward_id' : 'pass_id';
-      await sb(`/check_in_tokens?${key}=eq.${extra[key]}&used_at=is.null&token_hash=neq.${hashToken(token)}`, { method: 'DELETE' });
-    }
-  } catch (e) {
-    console.error('[checkins:token] sweep failed', e?.message);
-  }
-
-  const url = `${siteUrl()}/checkin?t=${encodeURIComponent(token)}`;
-
-  // Drawn on the server, as an SVG. No QR library in the browser, no request to
-  // a QR website, and nothing about this customer ever leaves our own servers
-  // to have a picture made of it.
-  //
-  // r23 (Sebastian, 8 Oct: "the QR code for My Visits should look like the new
-  // ones"): the same look as the table's QR — the steak-on-a-fork logo in the
-  // middle, black dots, a red frame (api/_lib/qr.js). The logo hides some dots,
-  // so it carries the most error correction (H) instead of M; tested with four
-  // QR readers, sharp and damaged, like the table's.
-  let svg;
-  try {
-    svg = tableQrSvg(url);
-  } catch (e) {
-    console.error('[checkins:token] qr failed', e?.message);
-    return res.status(500).json({ error: 'Could not draw your check-in code.' });
-  }
-
-  return res.status(200).json({
-    success:   true,
-    svg,
-    shortCode,
-    expiresAt: expiresAt.toISOString(),
-    seconds:   TOKEN_SECONDS,
-  });
+// The six characters printed under the QR, for the night the camera will not
+// focus. No O/0, no I/1, no S/5 — the point is that somebody reads them aloud
+// across a noisy dining room and somebody else types them correctly.
+const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRTUVWXYZ';
+export function makeShortCode() {
+  const bytes = crypto.randomBytes(6);
+  let out = '';
+  for (let i = 0; i < 6; i++) out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  return out;
 }
 
-// ── THE TWO CALENDARS ─────────────────────────────────────────────────────────
-async function listVisits(req, res, tasterId) {
-  const rows = await sb(
-    `/check_ins?taster_id=eq.${tasterId}&select=restaurant_id,visit_date&order=visit_date.desc&limit=2000`
-  );
-  if (!rows.ok || !Array.isArray(rows.data)) {
-    console.error('[checkins:list] read failed', rows.status, rows.data?.message);
-    return res.status(502).json({
-      error: 'Could not read your visits (the database answered ' + rows.status + '). '
-           + (rows.status === 404
-               ? 'That usually means migration 7 has not been run yet.'
-               : 'If that is a 401 or 403, service_role is missing its grant on check_ins.'),
-    });
-  }
+// What the waiter typed, turned into what we stored. Lower case, spaces and
+// the dash people insert in the middle all have to survive this.
+export function normalizeShortCode(input) {
+  const cleaned = String(input || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  return /^[0-9A-Z]{6}$/.test(cleaned) ? cleaned : null;
+}
 
-  // Names for the restaurant picker. Only the ones they have actually been to
-  // — a list of every restaurant on the platform would be a list of places
-  // they have never been, which is not a calendar.
-  const ids = [...new Set(rows.data.map((r) => r.restaurant_id))];
-  let names = {};
-  if (ids.length) {
-    const places = await sb(`/restaurants?id=in.(${ids.join(',')})&select=id,name`);
-    (Array.isArray(places.data) ? places.data : []).forEach((p) => { names[p.id] = p.name; });
-  }
+// Today, in the only timezone that matters here: the one the restaurant is
+// standing in. Used for display and for "have they already been in today?" —
+// the visit_date column itself is filled by the database with the same rule, so
+// the two can never drift.
+export function newYorkDate(d = new Date()) {
+  // en-CA gives YYYY-MM-DD, which is what Postgres wants and what sorts.
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(d);
+}
 
-  return res.status(200).json({
-    success: true,
-    today:   newYorkDate(),   // the browser's clock may be in another timezone
-    visits:  rows.data.map((r) => ({
-      restaurantId: r.restaurant_id,
-      date:         r.visit_date,     // YYYY-MM-DD, already New York
-    })),
-    restaurants: ids.map((id) => ({ id, name: names[id] || 'Restaurant' })),
-  });
+// Where the QR points. Set SITE_URL in Vercel if the domain ever changes;
+// the fallback is the live site so nothing breaks if it is missing.
+export function siteUrl() {
+  const raw = process.env.SITE_URL || 'https://thehungryfork.fun';
+  return raw.replace(/\/+$/, '');
 }
