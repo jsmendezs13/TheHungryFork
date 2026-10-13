@@ -8,6 +8,7 @@ import {
   normalizeUsPhone,
   clientIp,
 } from './_lib/auth.js';
+import { tasterIdFromRequest } from './_lib/roles.js';
 
 // Twilio caps attempts per verification, but nothing stopped someone from
 // requesting endless fresh verifications and guessing at each one.
@@ -43,7 +44,12 @@ export default async function handler(req, res) {
   // The ticket records what the user actually asked to do. Previously every
   // ticket said 'signup', so a ticket created while signing up was also
   // accepted by reset-pin.js to change an existing account's PIN.
-  const ticketPurpose = purpose === 'reset' ? 'reset' : 'signup';
+  const ticketPurpose = purpose === 'reset' ? 'reset' : purpose === 'change' ? 'change' : 'signup';
+  // r30: a new number for My information. The ticket names the account that
+  // asked, and only that account can use it (api/_lib/profile.js). The claim is
+  // "account", not "taster_id", so a ticket can never be used as a login.
+  const changeFor = ticketPurpose === 'change' ? tasterIdFromRequest(req) : null;
+  if (ticketPurpose === 'change' && !changeFor) return res.status(401).json({ error: 'Please log in again.' });
 
   try {
     const response = await fetch(
@@ -67,7 +73,7 @@ export default async function handler(req, res) {
     }
 
     const verificationTicket = jwt.sign(
-      { phone: normalized, purpose: ticketPurpose },
+      changeFor ? { phone: normalized, purpose: ticketPurpose, account: changeFor } : { phone: normalized, purpose: ticketPurpose },
       process.env.SUPABASE_JWT_SECRET,
       { expiresIn: '10m', algorithm: 'HS256' }
     );
