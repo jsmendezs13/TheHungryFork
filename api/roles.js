@@ -213,7 +213,7 @@ export default async function handler(req, res) {
     if (Number(target.restaurant_id) !== restId) {
       return res.status(403).json({ error: 'That role belongs to another restaurant.' });
     }
-    if (target.role !== 'crew') return res.status(400).json({ error: 'Only crew issue codes.' });
+    if (target.role !== 'crew') return res.status(400).json({ error: 'Managers and owners always give rewards; this switch is for crew.' });
     if (myLevel < LEVEL.manager) return res.status(403).json({ error: 'Not allowed.' });
 
     const saved = await sb(`/restaurant_roles?id=eq.${rowId}`, {
