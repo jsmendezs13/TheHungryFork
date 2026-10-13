@@ -2945,7 +2945,6 @@ async function msgSend(){
     input.value = ''; msgGrow(input);
     MSG.sending = false;
     msgPaint(true);
-    if(data.emailed) showToast('Sent. '+(String(data.booking.name).split(' ')[0])+' has no account, so we emailed them once.');
   }catch(e){ showToast(e.message); }
   finally{ MSG.sending = false; const again = document.querySelector('#mg-sheet-host .mg-send'); if(again) again.disabled = false; }
 }
