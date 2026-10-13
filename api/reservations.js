@@ -31,6 +31,10 @@
 // from manager.html, and the bell in the header says what is new. A guest with
 // no account gets one email, at the restaurant's first answer (answerByEmail
 // below). The daily cron deletes conversations 90 days after the table.
+//
+// r30: messages about a big-party request (api/_lib/requestchat.js, actions
+// req_msg_* and staff_req_*), and "My information" (api/_lib/profile.js,
+// actions me, me_save, me_pin, me_phone). Migration 20.
 
 import crypto from 'node:crypto';
 import { makeLimiter, allow, keyFor, clientIp, normalizeUsPhone, validateName } from './_lib/auth.js';
@@ -41,10 +45,15 @@ import {
 } from './_lib/booking.js';
 import {
   emailReady, senderFor, newLinkToken, saveLink, cancelUrl, talkUrl, cleanToken, hashToken,
-  sendEmail, confirmationEmail, reminderEmail, answerEmail, hostOf, sendableAddress, mailboxKey,
+  sendEmail, confirmationEmail, reminderEmail, answerEmail, hostOf, sendableAddress, mailboxKey, requestMessageEmail,
 } from './_lib/email.js';
 import { staff } from './_lib/staff.js';
 import { guest, staffMessages, chatSummaries, KEEP_MS } from './_lib/messages.js';
+import {
+  guestRequestChat, staffRequestChat, guestRequests, requestBell, requestSummaries, moveToTable,
+  forgetOldRequestMessages, dayLabel, timeLabel, hasAccount,
+} from './_lib/requestchat.js';
+import { profile } from './_lib/profile.js';
 import { arrivalTokens, qrDataUrl, qrAttachment, QR_CID } from './_lib/qr.js';
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
@@ -96,12 +105,18 @@ export default async function handler(req, res) {
     return guest(req, res, body, action, {
       findByLink: (t) => { const clean = cleanToken(t); return clean ? findByLink(clean) : null; },
       linkGone: LINK_GONE,
+      requestBell,
     });
   }
+  // r30: a big-party request's own conversation, and My information.
+  if (action === 'req_msg_list' || action === 'req_msg_send') return guestRequestChat(req, res, body, action);
+  if (action === 'staff_req_thread' || action === 'staff_req_send') return staffRequestChat(req, res, body, action, { requestByEmail });
+  if (action === 'me' || action === 'me_save' || action === 'me_pin' || action === 'me_phone') return profile(req, res, body, action);
   if (action.startsWith('staff_msg')) return staffMessages(req, res, body, action, { answerByEmail });
   // The confirmation email is lent to the staff side, so a big party the
   // manager says yes to hears about it the same way an online booking does.
-  if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail });
+  // r30: and the request's conversation follows the table it becomes.
+  if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
 }
 
@@ -684,6 +699,49 @@ async function answerByEmail({ reservationId, staffName, loaded, timezone }) {
   return false;
 }
 
+// r30: the restaurant wrote about a big-party request and the guest has no
+// account: ONE email per request, saying so (never the words), and how to read
+// it — log in with the number they gave. Same caps as every email here.
+async function requestByEmail({ requestId, staffName, loaded, timezone }) {
+  const settings = loaded && !loaded.error ? loaded.settings : null;
+  if (!emailReady(settings)) return false;
+  const found = await sb(`/reservation_requests?id=eq.${Number(requestId)}&select=id,taster_id,guest_name,guest_phone,guest_email,party_size,wanted_date,wanted_time&limit=1`);
+  const q = found.ok && Array.isArray(found.data) && found.data.length ? found.data[0] : null;
+  if (!q || !q.guest_email || (await hasAccount(q))) return false;
+  const to = sendableAddress(q.guest_email);
+  if (!to) return false;
+  const claimed = await sb(`/reservation_requests?id=eq.${Number(q.id)}&chat_emailed_at=is.null`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ chat_emailed_at: new Date().toISOString() }),
+  });
+  if (!claimed.ok || !Array.isArray(claimed.data) || !claimed.data.length) return false;      // already sent (or being sent)
+  const giveBack = async () => {
+    await sb(`/reservation_requests?id=eq.${Number(q.id)}`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ chat_emailed_at: null }),
+    });
+  };
+  if (!(await allow(emailAddrLimiter, keyFor(mailboxKey(to)), { failOpen: false }))
+      || !(await allow(emailDayLimiter, keyFor('all'), { failOpen: false }))) {
+    await giveBack();
+    return false;
+  }
+  const us = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(String(q.guest_phone || ''));
+  const sender = senderFor(settings, loaded.restaurant);
+  const mail = requestMessageEmail({
+    restaurant: loaded.restaurant, staffName, guestName: q.guest_name, day: dayLabel(q.wanted_date), time: timeLabel(q.wanted_time),
+    party: q.party_size, phoneShown: us ? `(${us[1]}) ${us[2]}-${us[3]}` : q.guest_phone,
+    link: `${(settings && settings.site_url) || 'https://thehungryfork.fun'}/reservations#req=${Number(q.id)}`, siteHost: hostOf(settings),
+  });
+  const sent = await sendEmail({
+    from: sender.from, replyTo: null, to, subject: mail.subject, html: mail.html, text: mail.text,
+    idempotencyKey: `request-chat-${q.id}`, tags: [{ name: 'kind', value: 'request-chat' }], timeoutMs: 4000,
+  });
+  if (sent.ok || sent.duplicate) return !!sent.ok;
+  console.error('[reservations:email] request message email not sent', q.id, sent.error);
+  if (!sent.timedOut) await giveBack();
+  return false;
+}
+
 // ── NINE OR MORE, AND PRIVATE EVENTS ──────────────────────────────────────────
 // A big table is not a slot on a grid — it is a conversation about the back room,
 // a set menu and whether anyone is bringing a cake. So nothing is booked here:
@@ -885,8 +943,14 @@ async function mine(req, res, body) {
   // Coming up: tables still to start, and a booked one still inside its time
   // (the guest a few minutes late, at the door, needs it first).
   const stillOn = (r) => r.status !== 'cancelled' && (new Date(r.at).getTime() >= now || lateIds.has(r.id));
+  // r30: the big-party requests still waiting for their answer, each with its
+  // conversation. Never fails the tables.
+  let requests = [];
+  try { requests = await guestRequests(match, timezone); }
+  catch (err) { console.error('[reservations:mine] requests', err && err.message); }
   return res.status(200).json({
     success:  true,
+    requests,
     today:    todayIn(timezone),
     now:      new Date().toISOString(),        // the countdown runs on the server's clock (taken as it answers)
     upcoming: dressed.filter(stillOn).sort((a, b) => new Date(a.at) - new Date(b.at)),
@@ -1144,7 +1208,11 @@ async function forgetOldMessages() {
     if (!gone.ok) { console.error('[reservations:forget] failed', gone.status); return null; }
     const n = Array.isArray(gone.data) ? gone.data.length : 0;
     if (n) console.log('[reservations:forget] deleted', n, 'conversations older than 90 days after their table');
-    return n;
+    // r30: and the messages about big-party requests whose day is 90 days gone (0 before migration 20).
+    let r = 0;
+    try { r = await forgetOldRequestMessages(); } catch (err) { console.error('[reservations:forget] requests threw', err && err.message); }
+    if (r) console.log('[reservations:forget] deleted', r, 'request messages older than 90 days after their day');
+    return n + r;
   } catch (err) {
     console.error('[reservations:forget] threw', err && err.message);
     return null;
