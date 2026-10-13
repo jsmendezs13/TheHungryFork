@@ -28,6 +28,7 @@ import crypto from 'node:crypto';
 import { loadBooking, todayIn, clockIn, cleanDate, cleanText } from './booking.js';
 import { cleanArrivalToken } from './qr.js';
 import { waitingOnly, addHandles } from './guests.js';
+import { staffLoyalty, cleanLoyalty, visitFromTable, undoVisitFromTable } from './loyalty.js';
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -120,6 +121,7 @@ export async function staff(req, res, body, action, helpers = {}) {
     case 'staff_save_hours': return saveHours(req, res, body, tasterId);
     case 'staff_closure':    return closure(req, res, body, tasterId);
     case 'staff_area':       return area(req, res, body, tasterId);
+    case 'staff_loyalty_save': return saveLoyalty(req, res, body, tasterId);
     default:                 return res.status(400).json({ error: 'Unknown action.' });
   }
 }
@@ -141,7 +143,7 @@ async function gate(res, tasterId, restaurantId, need) {
     });
     return null;
   }
-  return { rid, level, canEdit: level >= LEVEL.manager };
+  return { rid, level, canEdit: level >= LEVEL.manager, firstName: access.firstName || null };
 }
 
 // Who answers guest messages at a restaurant (Sebastian, 8 Oct): owners,
@@ -456,9 +458,16 @@ async function mark(req, res, body, tasterId) {
   }
   console.log('[staff:mark] taster', tasterId, 'set', row.code, 'to', to);
   await arrivalClosesChat(id, to, scanned, tasterId, stamp, row.status);
+  // r31 (Sebastian, 13 Oct): the table's QR scanned at the door is a visit —
+  // a stamp on the guest's card and an invite to share, like a check-in. A tap
+  // on Arrived without the scan is not. Undo takes the visit back.
+  let visit = null;
+  if (to === 'seated' && scanned) visit = await visitFromTable({ ...row, restaurant_id: row.restaurant_id }, tasterId, who.firstName);
+  else if (to === 'booked' && row.status === 'seated') await undoVisitFromTable(id);
   done.data[0].handle = row.handle || null;
   // Crew get the card back without buttons, as on their list.
-  return res.status(200).json({ success: true, booking: dressBooking(done.data[0], timezone, {}, Date.now(), who.canEdit) });
+  return res.status(200).json({ success: true, booking: dressBooking(done.data[0], timezone, {}, Date.now(), who.canEdit),
+                                ...(visit ? { visit } : {}) });
 }
 
 // The guest is here: their conversation closes by itself (Sebastian, 8 Oct),
@@ -607,6 +616,27 @@ function offsetAt(ms, timezone) {
 }
 
 // ── SETTINGS: EVERYTHING THE MANAGER OWNS, AND THE NUMBERS ────────────────────
+// ── LUCKY BITE · STAMPS · INVITES (r31) ───────────────────────────────────────
+// The restaurant's own rules for its own rewards. Managers and owners choose;
+// crew see them. The count of dishes so far is never touched from here.
+async function saveLoyalty(req, res, body, tasterId) {
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  if (!who) return;
+  const clean = cleanLoyalty(body.loyalty);
+  if (clean.error) return res.status(400).json({ error: clean.error });
+  const saved = await sb('/loyalty_settings?on_conflict=restaurant_id', {
+    method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({ restaurant_id: who.rid, ...clean.row, updated_at: new Date().toISOString(), updated_by: tasterId }),
+  });
+  if (!saved.ok) {
+    return res.status(saved.status === 404 ? 409 : 502).json({
+      error: saved.status === 404 ? 'Rewards are not set up yet: migration 21 has not been run.' : 'Could not save that. Please try again.',
+    });
+  }
+  console.log('[staff:loyalty] taster', tasterId, 'saved rewards for', who.rid, JSON.stringify(clean.row));
+  return res.status(200).json({ success: true, loyalty: await staffLoyalty(who.rid) });
+}
+
 async function settingsRead(req, res, body, tasterId) {
   const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew);
   if (!who) return;
@@ -648,8 +678,9 @@ async function settingsRead(req, res, body, tasterId) {
   }), { tables: 0, people: 0, arrived: 0, noShows: 0, cancelled: 0 });
 
   const st = s.settings;
+  const loyalty = await staffLoyalty(who.rid).catch(() => ({ ready: false }));
   return res.status(200).json({
-    success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone,
+    success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone, loyalty,
     restaurant: { id: s.loaded.restaurant.id, name: s.loaded.restaurant.name },
     rules: rulesOut(st),
     email: { ready: !!st.email_from_address, from: st.email_from_address || null },
