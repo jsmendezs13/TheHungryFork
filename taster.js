@@ -1344,25 +1344,116 @@ function hfHoursFill(){
     els[i].innerHTML=html;
     if(!els[i].hasAttribute('data-hf-keep'))els[i].style.display=html?'':'none';   // data-hf-keep: the page keeps its room
   }
+  hfHolFill();
+}
+// The answer of the server (the `hours` action, or the `slots` answer that
+// carries the same things when a page asks with withHours): the week, the coming
+// holidays and the restaurant's time zone. Returns false when it is not one.
+function hfHoursApply(d){
+  if(!d||!Array.isArray(d.hours))return false;
+  HF_HOURS.rows=d.hours;
+  HF_HOURS.holidays=Array.isArray(d.holidays)?d.holidays:[];
+  HF_HOURS.tz=typeof d.timezone==='string'?d.timezone:null;
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,at:Date.now()}));}catch(e){}
+  hfHoursFill();
+  return true;
+}
+function hfHoursFetch(){
+  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(hfHoursApply)
+    .catch(function(){});
 }
 function hfHoursLoad(){
   if(HF_HOURS.asked)return;
   HF_HOURS.asked=true;
   try{
     var kept=JSON.parse(localStorage.getItem('hf_hours')||'null');
-    if(kept&&Array.isArray(kept.rows)){HF_HOURS.rows=kept.rows;hfHoursFill();}
-  }catch(e){}
-  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      if(!d||!Array.isArray(d.hours))return;
-      HF_HOURS.rows=d.hours;
-      try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,at:Date.now()}));}catch(e){}
+    if(kept&&Array.isArray(kept.rows)){
+      HF_HOURS.rows=kept.rows;
+      HF_HOURS.holidays=Array.isArray(kept.holidays)?kept.holidays:[];
+      HF_HOURS.tz=typeof kept.tz==='string'?kept.tz:null;
       hfHoursFill();
-    })
-    .catch(function(){});
+    }
+  }catch(e){}
+  // r29: the Reservations page asks for the free times in its first line and
+  // asks them to carry the hours too (window.hfHoursAsk is that answer). One
+  // request instead of two, and the hours appear with the times. If that answer
+  // does not carry them (an error, booking switched off), they are asked for here.
+  var ride=window.hfHoursAsk;
+  if(ride&&typeof ride.then==='function'){ride.then(function(d){if(!hfHoursApply(d))hfHoursFetch();});return;}
+  hfHoursFetch();
 }
 (function(){
   function start(){if(document.querySelector('[data-hf-hours]'))hfHoursLoad();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
+
+// ── OUR HOLIDAYS (r29, Sebastian 12 Oct, picture B) ──
+// Under the hours, a button; tapping it opens the list of the coming holidays
+// and special days in the same place, tapping again folds it. The list is the
+// manager's (Reservations → Holidays and special days), like the hours: the
+// server sends the coming ones and this page drops the ones that have passed
+// since, by the restaurant's own date. No holidays coming, no button.
+// Two kinds of element take part: data-hf-hol="btn" gets the button and
+// data-hf-hol="panel" gets the list; they sit together (the footers) or apart
+// (the Reservations top, where the list needs the room under the whole top).
+var HF_HOL={open:false};
+function hfHolToday(){
+  try{return new Intl.DateTimeFormat('en-CA',{timeZone:HF_HOURS.tz||'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+  catch(e){return new Date().toISOString().slice(0,10);}
+}
+function hfHolidays(){
+  var today=hfHolToday(), out=[];
+  (Array.isArray(HF_HOURS.holidays)?HF_HOURS.holidays:[]).forEach(function(h){
+    if(h&&typeof h==='object'&&/^\d{4}-\d\d-\d\d$/.test(String(h.date))&&String(h.date)>=today)out.push(h);   // an odd or past row is skipped, never read
+  });
+  out.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+  return out.slice(0,12);
+}
+// "2026-11-26" -> "Thu, Nov 26" (with the year when it is not this year's)
+function hfHolDay(date,today){
+  var p=date.split('-'), t=new Date(Date.UTC(Number(p[0]),Number(p[1])-1,Number(p[2])));
+  var o={timeZone:'UTC',weekday:'short',month:'short',day:'numeric'};
+  if(p[0]!==today.slice(0,4))o.year='numeric';
+  try{return new Intl.DateTimeFormat('en-US',o).format(t);}catch(e){return date;}
+}
+var HF_HOL_CAL='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+var HF_HOL_CHEV='<svg class="hf-hol-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+function hfHolHtml(part){
+  var list=hfHolidays();
+  if(!list.length)return '';
+  if(part==='btn')return '<button type="button" class="hf-hol-btn'+(HF_HOL.open?' open':'')+'" aria-expanded="'+(HF_HOL.open?'true':'false')+'">'+HF_HOL_CAL+'<span>Our holidays</span>'+HF_HOL_CHEV+'</button>';
+  if(part!=='panel')return '';
+  var today=hfHolToday();
+  var rows=list.map(function(h){
+    var note=(typeof h.opens==='string'&&typeof h.closes==='string'&&h.opens&&h.closes)
+      ?'Open '+hfClock(h.opens)+' \u2013 '+hfClock(h.closes):'Closed all day';
+    return '<div class="hf-hol-row"><div class="hf-hol-day"><b>'+hfEsc(hfHolDay(h.date,today))+'</b>'
+      +(h.reason?' \u00b7 '+hfEsc(String(h.reason)):'')+'</div><div class="hf-hol-note">'+hfEsc(note)+'</div></div>';
+  }).join('');
+  var rest=hfHoursLines(HF_HOURS.rows,'foot');
+  return '<div class="hf-hol-panel" role="region" aria-label="Our holidays"'+(HF_HOL.open?'':' hidden')+'>'+rows
+    +(rest.length?'<div class="hf-hol-rest">Every other day: '+rest.map(hfEsc).join(' \u00b7 ')+'</div>':'')+'</div>';
+}
+// open or folded, on every button and list of the page at once, without
+// replacing them (a button the finger is on keeps its focus)
+function hfHolApply(){
+  var b=document.querySelectorAll('.hf-hol-btn'), p=document.querySelectorAll('.hf-hol-panel'), i;
+  for(i=0;i<b.length;i++){b[i].setAttribute('aria-expanded',HF_HOL.open?'true':'false');b[i].classList.toggle('open',HF_HOL.open);}
+  for(i=0;i<p.length;i++)p[i].hidden=!HF_HOL.open;
+}
+function hfHolFill(){
+  var els=document.querySelectorAll('[data-hf-hol]');
+  for(var i=0;i<els.length;i++){
+    var html=hfHolHtml(els[i].getAttribute('data-hf-hol'));
+    els[i].innerHTML=html;
+    els[i].style.display=html?'':'none';
+  }
+  hfHolApply();
+}
+document.addEventListener('click',function(e){
+  var t=e.target;
+  if(!t||!t.closest)return;
+  if(t.closest('.hf-hol-btn')){HF_HOL.open=!HF_HOL.open;hfHolApply();}
+});
