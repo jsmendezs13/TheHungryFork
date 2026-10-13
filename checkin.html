@@ -55,6 +55,17 @@
   .c-note.c-warn { background:var(--red-light); color:var(--red-dark); border:1px solid rgba(176,16,21,.25); font-weight:400; }
   .c-code-input { width:100%; border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem; font-size:1.5rem; letter-spacing:.35em; text-align:center; font-weight:600; font-family:var(--sans); text-transform:uppercase; color:var(--text); background:#fff; outline:none; margin-bottom:1rem; }
   .c-code-input:focus { border-color:var(--red); }
+  /* r31: a prize or an invite at the table */
+  .c-gift { width:66px; height:66px; border-radius:50%; margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; font-size:2rem; background:var(--red-light); }
+  .c-what { font-family:var(--serif); font-size:1.9rem; font-weight:600; line-height:1.15; margin-top:.2rem; }
+  .c-kind { font-size:.8rem; color:var(--muted); margin-top:.25rem; }
+  .c-for { font-size:.86rem; color:var(--text); margin:1rem 0 .2rem; }
+  .c-card { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; font-size:.84rem; color:var(--text); margin-bottom:1rem; text-align:center; line-height:1.55; }
+  .c-card.win { background:#E4EFE4; color:#2F5A2F; border:1px solid rgba(76,122,76,.3); }
+  .c-stamps { display:flex; justify-content:center; flex-wrap:wrap; gap:5px; margin:.45rem 0 .2rem; }
+  .c-stamps i { width:16px; height:16px; border-radius:50%; border:1.5px solid var(--border); background:#fff; }
+  .c-stamps i.on { background:var(--red); border-color:var(--red); }
+  .c-legal { font-size:.68rem; color:var(--muted); font-weight:300; text-align:center; margin-top:.9rem; line-height:1.5; }
   .m-skel { height:150px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:14px; border:1px solid var(--border); }
   @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 </style>
@@ -141,7 +152,7 @@ function askForCode(err){
   + (err ? '<div class="m-err">'+esc(err)+'</div>' : '')
   + '<div class="m-eyebrow">Confirm a visit</div>'
   + '<div class="m-h">Type their code</div>'
-  + '<div class="m-sub" style="margin-bottom:1.1rem;">Ask the customer to tap <strong>Check In</strong> on their account. Six characters appear under their QR code.</div>'
+  + '<div class="m-sub" style="margin-bottom:1.1rem;">Ask the customer to tap <strong>Check In</strong> on their account — or <strong>Show my reward</strong> / <strong>Show my invite</strong>. Six characters appear under their QR code.</div>'
   + '<input class="c-code-input" id="c-code" maxlength="8" autocomplete="off" autocapitalize="characters" '
   +        'autocorrect="off" spellcheck="false" placeholder="A2C4E6" aria-label="Check-in code">'
   + '<button class="m-btn" onclick="submitCode()">Find</button>'
@@ -174,9 +185,84 @@ async function lookUp(body){
 
   PREVIEW = data;
   PREVIEW.body = body;
+  // r31: the code was for a prize or an invite, not a visit.
+  if(data.kind==='reward' || data.kind==='invite'){ renderGive(); return; }
   CHOSEN = data.restaurantId != null ? String(data.restaurantId)
          : (data.restaurants && data.restaurants.length===1 ? String(data.restaurants[0].id) : null);
   renderConfirm();
+}
+
+// ── r31: GIVE A PRIZE OR AN INVITE ──
+function cDay(iso){
+  return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'America/New_York'});
+}
+function giveLines(d){
+  const it=d.item, reward=d.kind==='reward';
+  return '<div class="c-gift">'+(reward?(it.kind==='lucky'?'&#127881;':'&#9733;'):'&#127873;')+'</div>'
+    + '<div class="m-eyebrow">'+(reward?'Give a reward':'Give an invite')+'</div>'
+    + '<div class="c-what">'+esc(reward?it.title:it.discount)+'</div>'
+    + '<div class="c-kind">'+esc(reward?(it.kind==='lucky'?'Lucky Bite #'+it.luckyNumber:'Stamp card · '+it.visits+' visits')
+                                       :'Invite from '+(it.from||'a guest'))+'</div>'
+    + '<div class="c-for">For <b>'+esc(d.customer.name)+'</b>'+(d.customer.username?' <span class="c-handle" style="display:inline;">('+esc(d.customer.username)+')</span>':'')+'</div>'
+    + '<div class="c-handle">'+esc(d.restaurant.name)+'</div>';
+}
+function renderGive(){
+  const d=PREVIEW, it=d.item;
+  var block='';
+  if(it.status==='used') block='<div class="c-note c-warn">This was already used'+(it.redeemedAt?' on '+esc(cDay(it.redeemedAt)):'')+'.</div>';
+  else if(it.status==='expired') block='<div class="c-note c-warn">This ran out on '+esc(cDay(it.expiresAt))+'.</div>';
+  else if(d.kind==='invite' && !it.usableToday) block='<div class="c-note c-warn">An invite works from the day after it was made: from '+esc(cDay(it.usableFrom+'T12:00:00Z'))+'.</div>';
+  else if(!d.canGive) block='<div class="c-note c-warn">'+esc(d.why||'Only a manager can give it.')+'</div>';
+  else block='<div class="c-note">Good until '+esc(cDay(it.expiresAt))+'. Once given, it cannot be used again.</div>'
+           + '<button class="m-btn" id="c-go" onclick="giveIt()">Give it</button>';
+  wrap().innerHTML =
+    '<div class="m-card"><div class="c-who">'+giveLines(d)+'</div>'
+  + block
+  + '<button class="m-btn-ghost" onclick="askForCode()">Another code</button>'
+  + '<div class="c-legal">Offered and given by '+esc(d.restaurant.name)+'.</div>'
+  + '</div>';
+}
+async function giveIt(){
+  const btn=document.getElementById('c-go');
+  if(btn){ btn.disabled=true; btn.textContent='Giving…'; }
+  let data, res;
+  try{
+    ({res, data} = await callApi('/api/checkin-confirm', Object.assign({}, PREVIEW.body, { confirm:true })));
+    if(!res.ok) throw new Error(data.error||'Could not give it.');
+  }catch(e){
+    wrap().innerHTML='<div class="m-card"><div class="m-err">'+esc(e.message)+'</div>'
+      + '<button class="m-btn" onclick="askForCode()">Try another code</button></div>';
+    return;
+  }
+  wrap().innerHTML =
+    '<div class="m-card"><div class="c-who">'
+  + '<div class="c-mark done">&#10003;</div>'
+  + '<div class="m-eyebrow">Given</div>'
+  + '<div class="c-what">'+esc(data.kind==='reward'?data.item.title:data.item.discount)+'</div>'
+  + '<div class="c-for">For <b>'+esc(data.customer.name)+'</b></div>'
+  + '<div class="c-handle">'+esc(data.restaurant.name)+'</div>'
+  + '</div>'
+  + '<button class="m-btn" onclick="askForCode()">Next customer</button>'
+  + '<button class="m-btn-ghost" onclick="location.href=\'/\'">Done</button>'
+  + '</div>';
+}
+
+// ── r31: what this visit did for their card and invites ──
+function loyaltyNote(l){
+  if(!l) return '';
+  var out='';
+  const c=l.card;
+  if(c && c.earned){
+    out+='<div class="c-card win"><b>Card full!</b> '+esc(c.earned.title)+' is now in their My Visits.</div>';
+  }else if(c && c.stamps && c.stamps.counted){
+    var dots=''; const n=Math.min(c.stamps.every,20);
+    for(var i=0;i<n;i++) dots+='<i class="'+(i<c.stamps.have?'on':'')+'"></i>';
+    out+='<div class="c-card">Stamp card: <b>'+c.stamps.have+' of '+c.stamps.every+'</b>'
+       + (c.stamps.every<=20?'<div class="c-stamps">'+dots+'</div>':'')
+       + esc(c.stamps.reward)+' when it is full.</div>';
+  }
+  if(l.invite) out+='<div class="c-card">They got an invite to share with a friend.</div>';
+  return out;
 }
 
 function renderConfirm(){
@@ -239,6 +325,7 @@ async function confirmVisit(){
   +   (data.restaurant ? '<div class="c-handle">'+esc(data.restaurant.name)+'</div>' : '')
   + '</div>'
   + (nth ? '<div class="c-note">'+esc(nth)+'</div>' : '')
+  + loyaltyNote(data.loyalty)
   + '<button class="m-btn" onclick="askForCode()">Next customer</button>'
   + '<button class="m-btn-ghost" onclick="location.href=\'/\'">Done</button>'
   + '</div>';
