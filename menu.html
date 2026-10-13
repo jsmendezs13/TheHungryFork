@@ -236,6 +236,8 @@
   .lucky-title { font-family:var(--serif); font-size:1.8rem; font-weight:600; color:var(--red); margin-bottom:.5rem; line-height:1.2; }
   .lucky-number { font-size:3rem; font-weight:700; color:var(--red); font-family:var(--serif); margin:1rem 0; }
   .lucky-sub { font-family:var(--sans); font-weight:300; font-size:.9rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.7; }
+  .lucky-later-btn { width:100%; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.8rem; margin-top:.6rem; font-size:.76rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
+  .lucky-legal { font-family:var(--sans); font-size:.66rem; color:var(--muted); font-weight:300; line-height:1.5; margin-top:1rem; }
   .lucky-claim-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:1rem; font-size:.82rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
 
   @media (max-width: 600px) {
@@ -1095,10 +1097,12 @@
 <div class="lucky-overlay" id="lucky-overlay">
   <div class="lucky-box">
     <span class="lucky-emoji">🎉</span>
-    <div class="lucky-title">You Won Fork's Lucky Bite!</div>
-    <div class="lucky-number" id="lucky-number">#1000</div>
-    <div class="lucky-sub">Show this screen to your waiter to claim your <strong>free dish</strong>! Tap below to confirm you received it.</div>
-    <button class="lucky-claim-btn" onclick="claimLuckyBite()">I Received My Free Meal ✓</button>
+    <div class="lucky-title">You won the Lucky Bite!</div>
+    <div class="lucky-number" id="lucky-number">#100</div>
+    <div class="lucky-sub"><strong id="lucky-dish">This dish</strong> is free for you at <span id="lucky-place">the restaurant</span>. Show it to your waiter from <strong>My Visits</strong> — it is good until <span id="lucky-until"></span>.</div>
+    <button class="lucky-claim-btn" onclick="claimLuckyBite()">Show my reward</button>
+    <button class="lucky-later-btn" onclick="closeLuckyBite()">Later</button>
+    <div class="lucky-legal">Offered and given by <span id="lucky-legal-place">the restaurant</span>. Seb&rsquo;s Analytics and Fork&rsquo;s Rating do not give or pay for it.</div>
   </div>
 </div>
 
@@ -1951,24 +1955,21 @@ async function submitRating(){
         showToast('Your rating was updated! Thank you');
       }
     }else{
-      const{data:countData}=await sbFetch('/rest/v1/reviews?select=id');
-      const globalNum=(Array.isArray(countData)?countData.length:0)+1;
-      payload.global_rating_number=globalNum;
+      // r31: the old Lucky Bite (every 1000th review on the whole site, counted
+      // here in the browser) is gone. Each restaurant now runs its own, and the
+      // database counts it when the rating is saved (migration 21).
       ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
       if(ok){
         closeRatingModal();
-        if(globalNum%1000===0){
-          showToast('Review #'+globalNum+' — LUCKY BITE! 🎉');
-          showLuckyBite(globalNum);
-        }else{
-          showToast('Review #'+globalNum+' posted! '+(1000-globalNum%1000)+' to the next Lucky Bite');
-        }
+        showToast('Thank you for your rating!');
       }
     }
     if(ok){
       loadOverallRating();
       caveRatings={};
       if(document.getElementById('cave').classList.contains('open'))renderCave();
+      const savedId=updateReviewId||(Array.isArray(data)&&data[0]&&data[0].id);
+      if(savedId)luckyAfterRating(savedId);
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
       if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
@@ -2436,15 +2437,42 @@ function viewTastingDish(dishId){
   caveOpenDish(dishId);
 }
 
-// ── LUCKY BITE ──
-function showLuckyBite(num){
-  document.getElementById('lucky-number').textContent='#'+num;
+// ── LUCKY BITE (r31) ──
+// After a rating is saved, ask whether it counted. The answer comes from what
+// the database already did: this cannot change it. Only a scanned visit that
+// day (a check-in, or the table's QR at the door) makes a rating count.
+async function luckyAfterRating(reviewId){
+  if(!currentSession)return;
+  let d=null;
+  try{
+    const res=await fetch('/api/checkins',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'after_rating',reviewId:reviewId})});
+    if(!res.ok)return;
+    d=await res.json();
+  }catch(e){return;}
+  const L=d&&d.ready&&d.lucky;
+  if(!L||!L.on)return;
+  if(L.won&&L.reward){showLuckyBite(L.reward);return;}
+  if(L.counted){
+    showToast('Dish #'+Number(L.number).toLocaleString('en-US')+' counted. #'+Number(L.nextAt).toLocaleString('en-US')+' is free — '+Number(L.toGo).toLocaleString('en-US')+' to go.');
+  }else if(L.reason==='visit'){
+    showToast('Thank you! Check in at the restaurant before you rate, and your dishes count for the Lucky Bite.');
+  }
+}
+function showLuckyBite(r){
+  const until=new Date(r.expiresAt).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'America/New_York'});
+  document.getElementById('lucky-number').textContent='#'+Number(r.luckyNumber).toLocaleString('en-US');
+  document.getElementById('lucky-dish').textContent=String(r.title||'').replace(/, free$/,'');
+  document.getElementById('lucky-place').textContent=r.restaurant||'the restaurant';
+  document.getElementById('lucky-until').textContent=until;
+  document.getElementById('lucky-legal-place').textContent=r.restaurant||'the restaurant';
   document.getElementById('lucky-overlay').classList.add('open');
 }
-async function claimLuckyBite(){
+function claimLuckyBite(){
   document.getElementById('lucky-overlay').classList.remove('open');
-  showToast('🎉 Lucky Bite claimed! Enjoy your free dish!');
+  if(typeof openMyVisits==='function')openMyVisits();
 }
+function closeLuckyBite(){document.getElementById('lucky-overlay').classList.remove('open');}
 
 // ── MAPS ──
 function showMapsChooser(e){e.preventDefault();document.getElementById('maps-modal').classList.add('open');}
