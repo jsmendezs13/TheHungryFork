@@ -214,6 +214,38 @@
   .hf-v-tally div { flex:1; background:var(--off-white); border-radius:12px; padding:.75rem .5rem; text-align:center; }
   .hf-v-tally b { display:block; font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); line-height:1.1; }
   .hf-v-tally span { font-family:var(--sans); font-size:.62rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  /* r31: Lucky Bite, stamps and invites, between the check-in and the calendar */
+  .hf-l { padding-bottom:1.3rem; border-bottom:1px solid var(--border); margin-bottom:1.3rem; display:flex; flex-direction:column; gap:.75rem; }
+  .hf-l-eyebrow { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--red); }
+  .hf-l-prize { display:flex; align-items:center; gap:.75rem; background:var(--red-light, #F7E3E1); border:1px solid rgba(176,16,21,.22); border-radius:14px; padding:.8rem .85rem; }
+  .hf-l-prize.invite { background:#EEF3EA; border-color:rgba(76,122,76,.28); }
+  .hf-l-prize-icon { font-size:1.5rem; line-height:1; flex:none; }
+  .hf-l-prize-text { flex:1; min-width:0; }
+  .hf-l-prize-text b { display:block; font-family:var(--serif); font-size:1.08rem; font-weight:600; color:var(--text); line-height:1.25; }
+  .hf-l-prize-text span { display:block; font-family:var(--sans); font-size:.72rem; color:var(--muted); line-height:1.45; margin-top:.15rem; }
+  .hf-l-btn { flex:none; background:var(--ink, #2B211A); color:#fff; border:none; border-radius:999px; padding:.55rem .85rem; font-family:var(--sans);
+              font-size:.66rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
+  .hf-l-btn:disabled { background:var(--border); color:var(--muted); cursor:default; }
+  .hf-l-place { background:var(--off-white); border-radius:14px; padding:.9rem .95rem; display:flex; flex-direction:column; gap:.7rem; }
+  .hf-l-row + .hf-l-row { border-top:1px solid var(--border); padding-top:.7rem; }
+  .hf-l-title { font-family:var(--serif); font-size:1.05rem; font-weight:600; color:var(--text); }
+  .hf-l-title small { font-family:var(--sans); font-size:.7rem; font-weight:500; color:var(--muted); margin-left:.35rem; letter-spacing:.04em; }
+  .hf-l-note, .hf-l-today, .hf-l-past { font-family:var(--sans); font-size:.76rem; color:var(--muted); font-weight:300; line-height:1.55; margin-top:.15rem; }
+  .hf-l-today { color:var(--text); font-weight:400; }
+  .hf-l-next { font-family:var(--sans); font-size:.8rem; color:var(--text); margin-top:.3rem; }
+  .hf-l-next b { color:var(--red); }
+  .hf-l-stamps { display:flex; flex-wrap:wrap; gap:6px; margin:.45rem 0 .1rem; }
+  .hf-l-stamps i { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border); background:#fff; }
+  .hf-l-stamps i.on { background:var(--red); border-color:var(--red); box-shadow:inset 0 0 0 3px #fff; }
+  .hf-l-share { display:flex; align-items:center; justify-content:space-between; gap:.6rem; background:#fff; border:1px dashed var(--border); border-radius:10px; padding:.5rem .6rem .5rem .8rem; margin-top:.5rem; }
+  .hf-l-code { font-family:var(--sans); font-size:1rem; font-weight:600; letter-spacing:.22em; color:var(--text); }
+  .hf-l-old summary { font-family:var(--sans); font-size:.74rem; color:var(--muted); cursor:pointer; }
+  .hf-l-legal { font-family:var(--sans); font-size:.66rem; color:var(--muted); font-weight:300; line-height:1.5; text-align:center; }
+  .hf-l-show { margin-bottom:.8rem; }
+  .hf-l-show-title { font-family:var(--serif); font-size:1.35rem; font-weight:600; color:var(--text); line-height:1.2; margin-top:.2rem; }
+  .hf-l-show-sub { font-family:var(--sans); font-size:.74rem; color:var(--muted); margin-top:.15rem; }
+  .hf-l-back { margin-top:.8rem; }
+  .hf-l-done { width:58px; height:58px; border-radius:50%; margin:0 auto .7rem; display:flex; align-items:center; justify-content:center; font-size:1.7rem; background:#E4EFE4; color:#4C7A4C; }
   .hf-v-empty { font-family:var(--sans); font-size:.85rem; font-weight:300; color:var(--muted); text-align:center; padding:1.4rem 0; line-height:1.6; }
 
   /* ── OUR HOLIDAYS (r29, Sebastian 12 Oct, picture B) ──
