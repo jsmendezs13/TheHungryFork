@@ -32,6 +32,8 @@
   .i-gift { width:64px; height:64px; border-radius:50%; margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; font-size:1.9rem; background:var(--red-light); }
   .i-gift.ok { background:#E4EFE4; color:var(--green); }
   .i-what { font-family:var(--serif); font-size:2.1rem; font-weight:600; line-height:1.15; }
+  .i-dish-img { width:100%; max-width:300px; aspect-ratio:4/3; object-fit:cover; border-radius:14px; display:block; margin:0 auto 1rem; background:var(--off-white); }
+  .i-off { display:inline-block; margin-top:.5rem; background:var(--red-light); color:var(--red-dark); border-radius:999px; padding:.3rem .85rem; font-size:.86rem; font-weight:600; }
   .i-where { font-family:var(--serif); font-size:1.25rem; color:var(--muted); margin-top:.2rem; }
   .i-from { font-size:.86rem; color:var(--text); margin-top:1rem; }
   .i-when { background:var(--off-white); border-radius:10px; padding:.8rem 1rem; font-size:.82rem; color:var(--text); margin:1.1rem 0 1.2rem; line-height:1.55; }
@@ -80,6 +82,18 @@ async function api(body, auth){
   let data=null; try{data=await res.json();}catch(e){}
   return {res, data:data||{}};
 }
+// r32: an invite is for a dish the friend recommends: its photo, its name, and
+// the restaurant's discount on it. Invites made before r32 have no dish.
+function dishImg(v){
+  if(!v.dishImage) return '';
+  // The menu's own way (hfImgSrc in taster.js): Vercel's copy, or the photo itself.
+  return '<img class="i-dish-img" src="'+esc(hfImgSrc(v.dishImage,300))+'" data-orig="'+esc(v.dishImage)+'" alt="'+esc(v.dishName||'')+'" onerror="if(!hfImgBack(this))this.remove()">';
+}
+function what(v){
+  return v.dishName
+    ? '<div class="i-what">'+esc(v.dishName)+'</div><div class="i-off">'+esc(v.discount)+' on this dish</div>'
+    : '<div class="i-what">'+esc(v.discount)+'</div>';
+}
 function legal(name){
   return '<div class="i-legal">This discount is offered and given by '+esc(name||'the restaurant')
     +'. Seb&rsquo;s Analytics and Fork&rsquo;s Rating do not give or pay for it.</div>';
@@ -108,9 +122,9 @@ function render(note){
              : (v.saved ? 'This invite is already saved to an account. If it is yours, open My Visits.' : '');
   wrap().innerHTML=
     '<div class="m-card">'
-  + '<div class="i-gift">&#127873;</div>'
-  + '<div class="m-eyebrow">'+esc(v.from)+' invited you</div>'
-  + '<div class="i-what">'+esc(v.discount)+'</div>'
+  + (v.dishImage ? dishImg(v) : '<div class="i-gift">&#127873;</div>')
+  + '<div class="m-eyebrow">'+esc(v.from)+(v.dishName?' recommends':' invited you')+'</div>'
+  + what(v)
   + '<div class="i-where">at '+esc(v.restaurant)+'</div>'
   + '<div class="i-when">Use it once, from <b>'+esc(day(v.usableFrom))+'</b> until <b>'+esc(day(v.expiresAt))+'</b>. '
   +   'Save it to your account, then show it to your waiter from <b>My Visits</b>.</div>'
@@ -137,7 +151,7 @@ async function save(){
     '<div class="m-card">'
   + '<div class="i-gift ok">&#10003;</div>'
   + '<div class="m-eyebrow">Saved to your account</div>'
-  + '<div class="i-what">'+esc(v.discount)+'</div>'
+  + what(v)
   + '<div class="i-where">at '+esc(v.restaurant)+'</div>'
   + '<div class="i-when">'+(v.usableToday?'It works today':'It works from <b>'+esc(day(v.usableFrom))+'</b>')
   +   ' until <b>'+esc(day(v.expiresAt))+'</b>. At the restaurant, open <b>My Visits</b> and tap <b>Show my invite</b>.</div>'
