@@ -18,7 +18,8 @@ import {
   TOKEN_SECONDS, makeToken, hashToken, makeShortCode, siteUrl, newYorkDate,
 } from './_lib/checkin.js';
 import {
-  guestLoyalty, afterRating, rewardForGuest, previewPass, claimPass, passForGuest,
+  guestLoyalty, rewardForGuest, previewPass, claimPass, passForGuest,
+  ticketStatus, inviteDishes, makeInvite, inviteForGiver,
 } from './_lib/loyalty.js';
 
 // The screen refreshes itself every ninety seconds while it is open, so a
@@ -30,6 +31,9 @@ const issueLimiter = makeLimiter({ requests: 60, window: '10 m', prefix: 'checki
 // characters from 31 (about 850 billion), so this only stops a machine.
 const previewLimiter = makeLimiter({ requests: 40, window: '10 m', prefix: 'loyalty:preview' });
 const loyaltyLimiter = makeLimiter({ requests: 120, window: '10 m', prefix: 'loyalty:read' });
+// r32: while the check-in QR is up, the guest's screen asks every 3 seconds
+// whether the waiter has confirmed it (90 seconds = 30 asks per code).
+const statusLimiter = makeLimiter({ requests: 300, window: '10 m', prefix: 'checkin:status' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -51,16 +55,31 @@ export default async function handler(req, res) {
   if (action === 'token') return issueToken(req, res, tasterId);
   if (action === 'list')  return listVisits(req, res, tasterId);
   // r31: Lucky Bite, stamps and invites (api/_lib/loyalty.js).
-  if (action === 'loyalty' || action === 'after_rating' || action === 'pass_claim') {
+  if (action === 'loyalty' || action === 'pass_claim' || action === 'invite_dishes' || action === 'invite_make' || action === 'invite_qr') {
     return loyaltyCall(res, async () => {
       if (!(await allow(loyaltyLimiter, keyFor(tasterId), { failOpen: true }))) {
         throw Object.assign(new Error('Too many requests. Wait a minute.'), { status: 429 });
       }
       if (action === 'loyalty') return await guestLoyalty(tasterId);
-      if (action === 'after_rating') return await afterRating(tasterId, body.reviewId);
-      return { invite: await claimPass(tasterId, body.code) };
+      if (action === 'pass_claim') return { invite: await claimPass(tasterId, body.code) };
+      // r32: after a visit, the guest picks a dish; the invite is a QR a friend
+      // scans at the table (or a link sent to a friend who isn't there).
+      if (action === 'invite_dishes') return await inviteDishes(tasterId, body.restaurantId);
+      const invite = action === 'invite_make'
+        ? await makeInvite(tasterId, body.restaurantId, body.dishId)
+        : await inviteForGiver(tasterId, body.passId);
+      const link = `${siteUrl()}/invite?c=${encodeURIComponent(invite.code)}`;
+      return { invite, link, svg: tableQrSvg(link) };
     });
   }
+  // r32: has the waiter confirmed this check-in code yet? Then: what did the
+  // visit do (Lucky Bite number, stamp, invite).
+  if (action === 'visit_status') return loyaltyCall(res, async () => {
+    if (!(await allow(statusLimiter, keyFor(tasterId), { failOpen: true }))) {
+      throw Object.assign(new Error('Too many requests. Wait a minute.'), { status: 429 });
+    }
+    return await ticketStatus(tasterId, body.ticketId);
+  });
   // A prize or a saved invite, shown at the table: the same 90-second ticket as
   // a check-in, tied to that prize or invite. Checked first: it must be theirs,
   // unused, not run out (and an invite not on the day it was made).
@@ -113,6 +132,7 @@ async function issueToken(req, res, tasterId, extra = null) {
 
   const created = await sb('/check_in_tokens', {
     method: 'POST',
+    headers: { Prefer: 'return=representation' },
     body: JSON.stringify({
       token_hash: hashToken(token),
       taster_id:  tasterId,
@@ -172,6 +192,7 @@ async function issueToken(req, res, tasterId, extra = null) {
 
   return res.status(200).json({
     success:   true,
+    ticketId:  Array.isArray(created.data) && created.data.length ? created.data[0].id : null,   // r32: to ask "confirmed yet?"
     svg,
     shortCode,
     expiresAt: expiresAt.toISOString(),
