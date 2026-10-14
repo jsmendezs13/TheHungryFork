@@ -24,7 +24,7 @@ import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb, accessProblem } fr
 import { hashToken, normalizeShortCode, newYorkDate } from './_lib/checkin.js';
 import {
   REWARD_COLUMNS, PASS_COLUMNS, rewardOut, passOut, rewardStatus, passStatus, serviceDay,
-  cardAfterVisit, passForVisit,
+  visitSummary,
 } from './_lib/loyalty.js';
 
 // Aimed at the six-character fallback code, which is the only guessable thing
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many attempts. Wait a few minutes.' });
   }
 
-  const { token, code, confirm, restaurantId } = req.body || {};
+  const { token, code, confirm, restaurantId, giveReward } = req.body || {};
 
   // ── Where does this member of staff work? ───────────────────────────────
   const access = await loadAccess(staffId);
@@ -79,6 +79,10 @@ export default async function handler(req, res) {
              'Ask your manager to add you, then scan the code again.',
     });
   }
+
+  // r32: the Lucky Bite this visit just won, given at the table right away
+  // (the waiter's confirm screen shows "Give it").
+  if (giveReward != null) return giveNow(res, { access, staffId, rewardId: giveReward });
 
   // ── Find the ticket ─────────────────────────────────────────────────────
   let query;
@@ -197,16 +201,18 @@ export default async function handler(req, res) {
   );
   const visitsHere = Array.isArray(counted.data) ? counted.data.length : null;
 
-  // r31: the stamp this visit put on their card (the database did it), and the
-  // invite it gives them to share. Neither ever stops the visit itself.
+  // r31/r32: what this visit did — its Lucky Bite number (a winner is given
+  // right here), the stamp on the card, and whether the guest can now make an
+  // invite. The database did all of it; this only reads. Never stops the visit.
   let loyalty = null;
   const visitId = !duplicate && Array.isArray(saved.data) && saved.data.length ? saved.data[0].id : null;
   if (visitId) {
-    const [card, invite] = await Promise.all([
-      cardAfterVisit(visitId, ticket.taster_id, chosen.id),
-      passForVisit(visitId, ticket.taster_id, chosen.id),
-    ]);
-    if (card || invite) loyalty = { card, invite: !!invite };
+    const sum = await visitSummary({ ...saved.data[0], taster_id: ticket.taster_id, restaurant_id: chosen.id });
+    if (sum && (sum.card || sum.lucky || sum.invite)) {
+      const entry = (access.byRestaurant || {})[String(chosen.id)] || (access.byRestaurant || {})[chosen.id] || {};
+      const canGive = levelAt(access, chosen.id) >= LEVEL.manager || entry.canIssueCodes === true;
+      loyalty = { card: sum.card, lucky: sum.lucky, invite: !!(sum.invite && sum.invite.canMake), canGive, staffGuest: sum.staff };
+    }
   }
 
   console.log('[checkin] staff', staffId, 'confirmed', ticket.taster_id, 'at', chosen.id, duplicate ? '(already today)' : '');
@@ -284,4 +290,36 @@ async function give(res, kind, { access, staffId, ticket, confirm, customer }) {
   console.log('[loyalty] staff', staffId, 'gave', kind, item.id, 'to', ticket.taster_id, 'at', rid);
   const after = isReward ? rewardOut(done.data[0], names) : Object.assign(passOut(done.data[0], names), { from: out.from });
   return res.status(200).json({ ...base, given: true, item: after });
+}
+
+// ── r32: A LUCKY BITE WON BY THIS VISIT, GIVEN AT THE TABLE ──────────────────
+// The visit's confirm screen shows the prize and "Give it". The same rules as a
+// prize scanned from My Visits: someone at that restaurant, a manager or owner
+// (or crew with "Can give rewards"), and only once.
+async function giveNow(res, { access, staffId, rewardId }) {
+  const id = Number(rewardId);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Which prize?' });
+  const got = await sb(`/loyalty_rewards?id=eq.${id}&select=${REWARD_COLUMNS}&limit=1`);
+  if (!got.ok) return res.status(502).json({ error: 'Could not read that prize.' });
+  const item = Array.isArray(got.data) && got.data.length ? got.data[0] : null;
+  if (!item || item.kind !== 'lucky' || !item.check_in_id) return res.status(404).json({ error: 'That prize no longer exists.' });
+  const rid = Number(item.restaurant_id);
+  if (levelAt(access, rid) < LEVEL.crew) return res.status(403).json({ error: 'Only this restaurant’s team can give it.' });
+  if (Number(item.taster_id) === Number(staffId)) return res.status(403).json({ error: 'You cannot give yourself a reward.' });
+  const entry = (access.byRestaurant || {})[String(rid)] || (access.byRestaurant || {})[rid] || {};
+  if (!(levelAt(access, rid) >= LEVEL.manager || entry.canIssueCodes === true)) {
+    return res.status(403).json({ error: 'Only a manager can give it — or crew with “Can give rewards” ticked in Team.' });
+  }
+  const status = rewardStatus(item);
+  if (status === 'used') return res.status(409).json({ error: 'This was already given.' });
+  if (status === 'expired') return res.status(410).json({ error: 'This has run out.' });
+  const nowIso = new Date().toISOString();
+  const done = await sb(`/loyalty_rewards?id=eq.${id}&redeemed_at=is.null&expires_at=gt.${encodeURIComponent(nowIso)}`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ redeemed_at: nowIso, redeemed_by: Number(staffId), redeemed_by_name: access.firstName || null }),
+  });
+  if (!done.ok) return res.status(502).json({ error: 'Could not save that. Please try again.' });
+  if (!Array.isArray(done.data) || !done.data.length) return res.status(409).json({ error: 'Someone gave it a moment ago.' });
+  console.log('[loyalty] staff', staffId, 'gave Lucky Bite', id, 'at the visit, to', item.taster_id, 'at', rid);
+  return res.status(200).json({ success: true, given: true, item: rewardOut(done.data[0]) });
 }
