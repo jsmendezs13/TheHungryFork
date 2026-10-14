@@ -278,6 +278,7 @@
              border-radius:12px; padding:.65rem .75rem .65rem .85rem; margin-bottom:.8rem; font-size:.84rem; line-height:1.45; }
   .rv-scan b { font-weight:600; }
   .rv-scan.done { background:var(--blue-light); }
+  .rv-scan-lucky { color:var(--red); }
   .rv-scan.warn { background:var(--amber-light); border-color:#E6D2A8; color:var(--amber); }
   .rv-scan.bad { background:var(--red-light); border-color:rgba(176,16,21,.35); color:var(--red-dark); }
   .rv-scan-go { flex:none; background:var(--blue); border:none; color:#fff; border-radius:999px; padding:.65rem 1.05rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
@@ -2061,8 +2062,14 @@ function rvScanHtml(){
   const b = Object.assign({}, sc.booking, live ? { status: live.status, seatedLabel: live.seatedLabel } : {});
   const who = '<b>'+whoHtml(b.name, b.handle)+'</b> · '+rvPeople(b.party);
   const when = (sc.date === RV.today ? 'Today' : esc(rvShort(sc.date))) + ' · ' + esc(b.label) + (b.areaName ? ' · '+esc(b.areaName) : '');
+  // r32: the visit's Lucky Bite number; a winner gets the prize in this visit
+  // (given by scanning "Show my reward" in the guest's My Visits).
+  const lk = sc.visit && sc.visit.recorded && sc.visit.lucky;
+  const lucky = lk && lk.won ? '<br><b class="rv-scan-lucky">🎉 Lucky Bite #'+Number(lk.won.luckyNumber).toLocaleString('en-US')+': '+esc(lk.won.title)+'</b>'
+                 + ' — give it now: scan “Show my reward” in their My Visits.'
+              : lk && lk.number ? ' · Lucky Bite #'+Number(lk.number).toLocaleString('en-US') : '';
   if(sc.done) return '<div class="rv-scan done"><span><b>Arrived ✓</b> '+who+'<br>'+when
-    + (sc.visit && sc.visit.recorded ? ' · visit counted' : '')+'</span>'+x+'</div>';
+    + (sc.visit && sc.visit.recorded ? ' · visit counted' : '')+lucky+'</span>'+x+'</div>';
   if(b.status === 'seated' || b.status === 'done')
     return '<div class="rv-scan warn"><span>'+who+'<br><b>Already arrived'+(b.seatedLabel ? ' at '+esc(b.seatedLabel) : '')+'.</b> This QR code has been used.</span>'+x+'</div>';
   if(b.status === 'cancelled')
@@ -2289,11 +2296,12 @@ function rvSettingsHtml(){
 }
 
 // ── r31: LUCKY BITE · STAMP CARD · INVITES ──
-// The restaurant's own rewards, chosen here and counted by the database: a dish
-// rated after a scanned visit gets a number (every Nth is free), a scanned
-// visit is a stamp (a full card is the reward written here), and a scanned
-// visit gives the guest an invite to share (the discount written here). The
-// restaurant offers and pays for all of it; the site keeps the count.
+// The restaurant's own rewards, chosen here and counted by the database. r32:
+// every visit the team confirms gets a number (every Nth wins the prize written
+// here, given in that visit), a visit is a stamp (a full card is the reward
+// written here), and after a visit the guest can invite a friend to a dish they
+// pick (the discount written here). The restaurant offers and pays for all of
+// it; the site keeps the count.
 function rvLoyaltyDraft(L){
   if(!RV.loyaltyDraft) RV.loyaltyDraft = { luckyOn: L.luckyOn, stampsOn: L.stampsOn, inviteOn: L.inviteOn };
   return RV.loyaltyDraft;
@@ -2302,7 +2310,7 @@ function rvLoyaltyHtml(S){
   const L = S.loyalty, edit = S.canEdit;
   if(!L) return '';
   const head = '<div class="m-eyebrow">Lucky Bite · stamps · invites</div>';
-  if(!L.ready) return '<div class="m-card">'+head+'<div class="m-sub">'+esc(L.error || 'Not set up yet: migration 21 has not been run.')+'</div></div>';
+  if(!L.ready) return '<div class="m-card">'+head+'<div class="m-sub">'+esc(L.error || 'Not set up yet: migration 22 has not been run.')+'</div></div>';
   const D = rvLoyaltyDraft(L), dis = edit ? '' : ' disabled';
   const n = (v) => Number(v).toLocaleString('en-US');
   const sw = (key, label, note) => '<div class="m-switch-row"><div><div class="m-switch-label">'+label+'</div><div class="m-switch-note">'+note+'</div></div>'
@@ -2314,16 +2322,17 @@ function rvLoyaltyHtml(S){
     + '<input class="m-input" id="'+id+'" maxlength="80" value="'+esc(v||'')+'" placeholder="'+esc(ph)+'"'+dis+'></div>';
   var html = '<div class="m-card" id="rv-loyalty">'+head
     + '<div class="m-h" style="font-size:1.2rem;">Rewards for your guests</div>'
-    + sw('luckyOn', 'Lucky Bite', 'Every Nth dish rated after a scanned visit is free for the guest who rated it. Up to '+n(L.maxPerVisit)+' dishes per guest per visit count; your team does not take part.');
-  if(D.luckyOn) html += '<div class="rv-l-group">' + num('rv-l-luckyEvery', 'The free dish is every', 'dishes', L.luckyEvery, 2, 100000)
-    + '<div class="rv-l-stat">Counted so far: <b>'+n(L.luckyCount)+'</b> &middot; next free: <b>#'+n(L.nextAt)+'</b> ('+n(L.toGo)+' to go)</div></div>';
+    + sw('luckyOn', 'Lucky Bite', 'Every visit your team confirms gets the next number. Every Nth visit wins the prize you write, given right there in that visit. Your team does not take part.');
+  if(D.luckyOn) html += '<div class="rv-l-group">' + num('rv-l-luckyEvery', 'The prize goes to every', 'visits', L.luckyEvery, 2, 100000)
+    + txt('rv-l-luckyReward', 'The prize', L.luckyReward, 'e.g. A free entrée')
+    + '<div class="rv-l-stat">Visits counted so far: <b>'+n(L.luckyCount)+'</b> &middot; next winner: <b>#'+n(L.nextAt)+'</b> ('+n(L.toGo)+' to go)</div></div>';
   html += sw('stampsOn', 'Stamp card', 'Every scanned visit is a stamp. A full card is a reward you choose.');
   if(D.stampsOn) html += '<div class="rv-l-group">' + num('rv-l-stampsEvery', 'A full card is', 'visits', L.stampsEvery, 2, 100)
     + txt('rv-l-stampsReward', 'The reward', L.stampsReward, 'e.g. A free dessert') + '</div>';
-  html += sw('inviteOn', 'Invite a friend', 'Every scanned visit gives the guest one invite to share. The friend saves it with their phone number and uses it once, from the next day.');
-  if(D.inviteOn) html += '<div class="rv-l-group">' + txt('rv-l-inviteDiscount', 'The friend gets', L.inviteDiscount, 'e.g. 10% off your meal')
+  html += sw('inviteOn', 'Invite a friend', 'After a confirmed visit, the guest picks a dish and shows a QR code to a friend (or sends the link). The friend saves it with their phone number and uses it once, on that dish, from the next day.');
+  if(D.inviteOn) html += '<div class="rv-l-group">' + txt('rv-l-inviteDiscount', 'The friend gets, on that dish', L.inviteDiscount, 'e.g. 10% off')
     + num('rv-l-inviteDays', 'An invite lasts', 'days', L.inviteDays, 1, 30) + '</div>';
-  html += num('rv-l-rewardDays', 'A Lucky Bite or a full card lasts', 'days', L.rewardDays, 1, 365);
+  html += num('rv-l-rewardDays', 'A full stamp card lasts', 'days', L.rewardDays, 1, 365);
   if(edit) html += '<div class="m-actions"><button type="button" class="m-save" onclick="rvSaveLoyalty(this)">Save the rewards</button></div>';
   const st = L.stats || {}, iv = L.invites || {};
   html += '<div class="rv-l-stat" style="margin-top:.9rem;">Rewards: <b>'+n(st.waiting||0)+'</b> waiting &middot; <b>'+n(st.given||0)+'</b> given &middot; <b>'+n(st.expired||0)+'</b> expired'
@@ -2352,7 +2361,7 @@ async function rvSaveLoyalty(btn){
   const gen = RV.gen, L = RV.settings.loyalty, D = rvLoyaltyDraft(L);
   const val = (id, fallback) => { const el = document.getElementById(id); return el ? el.value : fallback; };
   const body = {
-    luckyOn: !!D.luckyOn, luckyEvery: val('rv-l-luckyEvery', L.luckyEvery),
+    luckyOn: !!D.luckyOn, luckyEvery: val('rv-l-luckyEvery', L.luckyEvery), luckyReward: val('rv-l-luckyReward', L.luckyReward),
     stampsOn: !!D.stampsOn, stampsEvery: val('rv-l-stampsEvery', L.stampsEvery), stampsReward: val('rv-l-stampsReward', L.stampsReward),
     inviteOn: !!D.inviteOn, inviteDiscount: val('rv-l-inviteDiscount', L.inviteDiscount), inviteDays: val('rv-l-inviteDays', L.inviteDays),
     rewardDays: val('rv-l-rewardDays', L.rewardDays),
