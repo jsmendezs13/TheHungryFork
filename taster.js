@@ -1113,7 +1113,8 @@ var HFV = {
   expiry: 0, refreshes: 0,
   tick: null, loaded: false,
   showing: null,               // r31: the prize or invite whose QR is on screen
-  loyalty: null                // r31: what /api/checkins (loyalty) said
+  loyalty: null,               // r31: what /api/checkins (loyalty) said
+  ticketId: null, poll: null, asking: false   // r32: "has the waiter confirmed it yet?"
 };
 
 function openMyVisits(){
@@ -1134,7 +1135,8 @@ function closeMyVisits(){
 // behind a closed dialog would keep asking the server for codes nobody can see.
 function hfvStop(){
   if(HFV.tick){clearInterval(HFV.tick);HFV.tick=null;}
-  HFV.expiry=0;HFV.refreshes=0;
+  if(HFV.poll){clearInterval(HFV.poll);HFV.poll=null;}
+  HFV.expiry=0;HFV.refreshes=0;HFV.ticketId=null;HFV.asking=false;
 }
 
 function hfvApi(path, body){
@@ -1178,6 +1180,11 @@ function hfvRequestCode(){
     const svg=(typeof d.svg==='string'&&d.svg.trim().slice(0,4)==='<svg')?d.svg:'';
     if(!svg)throw new Error('Could not draw your code.');
     HFV.expiry=new Date(d.expiresAt).getTime();
+    // r32: while the QR is up, ask every 3 seconds whether the waiter has
+    // confirmed it, so the guest sees the result (their Lucky Bite number,
+    // the stamp, the invite) without touching anything.
+    HFV.ticketId=d.ticketId||null;
+    if(HFV.ticketId&&!HFV.poll)HFV.poll=setInterval(hfvPollStatus,3000);
     box.innerHTML=
       (sh?'<div class="hf-l-show"><div class="hf-l-eyebrow">'+(sh.passId?'Your invite':'Your reward')+'</div>'
         +'<div class="hf-l-show-title">'+hfEsc(sh.title)+'</div>'
@@ -1231,6 +1238,154 @@ function hfvStartCountdown(){
   },200);
 }
 
+// ── r32: THE WAITER CONFIRMED IT ────────────────────────────────────────────
+function hfvPollStatus(){
+  if(!HFV.ticketId||HFV.asking)return;
+  if(document.hidden)return;          // the phone is locked or on another app: ask again when it is back
+  HFV.asking=true;
+  hfvApi('/api/checkins',{action:'visit_status',ticketId:HFV.ticketId}).then(function(d){
+    HFV.asking=false;
+    if(!d||!d.used)return;
+    hfvStop(); HFV.showing=null;
+    const box=document.getElementById('hf-v-checkin');
+    if(!box)return;
+    if(d.kind==='visit'){ hfvShowVisitResult(d.visit); }
+    else{
+      box.innerHTML='<div class="hf-l-done">&#10003;</div><div class="hf-v-qr-msg">'+(d.kind==='invite'?'Your invite was used.':'Your reward was given.')+' Enjoy!</div>'
+        + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>';
+    }
+    hfvLoadLoyalty(); hfvLoadCalendar();
+  }).catch(function(){ HFV.asking=false; });
+}
+
+function hfvStampDots(have,every){
+  var dots=''; const n=Math.min(every,30);
+  for(var i=0;i<n;i++)dots+='<i class="'+(i<have?'on':'')+'"></i>';
+  return every<=30?'<div class="hf-l-stamps">'+dots+'</div>':'';
+}
+
+// What the visit did, the moment it was confirmed.
+function hfvShowVisitResult(v){
+  const box=document.getElementById('hf-v-checkin');
+  if(!box)return;
+  var html='<div class="hf-l-done">&#10003;</div>'
+    + '<div class="hf-l-vr-title">Visit confirmed</div>'
+    + (v&&v.restaurant?'<div class="hf-l-vr-place">'+hfEsc(v.restaurant)+'</div>':'');
+  if(v&&v.staff){
+    html+='<div class="hf-l-staff">You’re on '+hfEsc(v.restaurant)+'’s team, so your visits here don’t earn rewards.</div>';
+  }else if(v){
+    const lk=v.lucky;
+    if(lk&&lk.won){
+      const given=lk.won.status==='used';
+      html+='<div class="hf-l-vr-card win"><div class="hf-l-eyebrow">Lucky Bite</div>'
+        + '<div class="hf-l-vr-head">&#127881; You won!</div>'
+        + '<div class="hf-l-vr-big">#'+Number(lk.won.luckyNumber||lk.number).toLocaleString('en-US')+'</div>'
+        + '<div class="hf-l-vr-prize">'+hfEsc(lk.won.title)+'</div>'
+        + '<div class="hf-l-vr-sub">'+(given?'Given &#10003;':'Your waiter gives it to you now, in this visit.')+'</div></div>';
+    }else if(lk&&lk.number){
+      html+='<div class="hf-l-vr-card"><div class="hf-l-eyebrow">Lucky Bite</div>'
+        + '<div class="hf-l-vr-line">Your number: <b>#'+Number(lk.number).toLocaleString('en-US')+'</b></div>'
+        + '<div class="hf-l-vr-sub">#'+Number(lk.nextAt).toLocaleString('en-US')+' wins '+hfEsc(lk.prize)+' &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div></div>';
+    }
+    const c=v.card;
+    if(c&&c.stamps){
+      html+='<div class="hf-l-vr-card"><div class="hf-l-eyebrow">Stamp card</div>'
+        + (c.earned
+            ? '<div class="hf-l-vr-line"><b>Card full!</b> '+hfEsc(c.earned.title)+' is in your rewards below.</div>'
+            : '<div class="hf-l-vr-line">'+c.stamps.have+' of '+c.stamps.every+'</div>'+hfvStampDots(c.stamps.have,c.stamps.every)
+              +'<div class="hf-l-vr-sub">'+hfEsc(c.stamps.reward)+' after '+c.stamps.every+' visits.</div>')
+        + '</div>';
+    }
+    const iv=v.invite;
+    if(iv&&iv.canMake){
+      html+='<button class="t-btn" onclick="hfvInviteStart('+Number(v.restaurantId)+')">Invite a friend: pick a dish</button>'
+        + '<div class="hf-v-qr-msg">'+hfEsc(iv.discount)+' on the dish you pick, for one friend.</div>';
+    }
+  }
+  html+='<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Done</button>';
+  box.innerHTML=html;
+  hfvToTop();
+}
+
+// The check-in box is the first thing under My Visits' header (which stays at
+// the top while the list scrolls): what changes there is brought into view by
+// scrolling the list back to the top, so the header never covers it.
+function hfvToTop(){
+  const b=document.querySelector('#hf-v-overlay .hf-v-box');
+  if(!b)return;
+  try{b.scrollTo({top:0,behavior:'smooth'});}catch(e){b.scrollTop=0;}
+}
+
+// ── r32: INVITE A FRIEND — pick a dish, then a QR the friend scans ──────────
+function hfvDishThumb(img){
+  if(!img)return '<span class="hf-l-dish-img none">&#127869;</span>';
+  // The menu's own way (hfImgSrc): Vercel's small copy, or the photo itself.
+  return '<img class="hf-l-dish-img" src="'+hfEsc(hfImgSrc(img,40))+'" data-orig="'+hfEsc(img)+'" alt="" loading="lazy" onerror="if(!hfImgBack(this))this.style.visibility=\'hidden\'">';
+}
+function hfvInviteStart(rid){
+  hfvStop(); HFV.showing=null;
+  const box=document.getElementById('hf-v-checkin');
+  if(!box)return;
+  box.innerHTML='<div class="hf-v-qr-msg">Opening the menu…</div>';
+  hfvToTop();
+  hfvApi('/api/checkins',{action:'invite_dishes',restaurantId:rid}).then(function(d){
+    const list=d.dishes||[];
+    var last=null, items='';
+    list.forEach(function(x){
+      if(x.category&&x.category!==last){ last=x.category; items+='<div class="hf-l-dish-cat">'+hfEsc(String(x.category).replace(/-/g,' '))+'</div>'; }
+      items+='<label class="hf-l-dish"><input type="radio" name="hf-l-dish" value="'+Number(x.id)+'" onchange="document.getElementById(\'hf-l-make\').disabled=false">'
+        + hfvDishThumb(x.image)+'<span>'+hfEsc(x.name)+'</span></label>';
+    });
+    box.innerHTML='<div class="hf-l-eyebrow">Invite a friend</div>'
+      + '<div class="hf-l-pick-title">Which dish do you recommend?</div>'
+      + '<div class="hf-v-qr-msg">Your friend gets '+hfEsc(d.discount)+' on it, from tomorrow, for '+Number(d.days)+' days.</div>'
+      + '<div class="hf-l-dishes">'+(items||'<div class="hf-v-qr-msg">The menu is empty.</div>')+'</div>'
+      + '<button class="t-btn" id="hf-l-make" disabled onclick="hfvInviteMake('+Number(rid)+')">Show the invite QR</button>'
+      + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Cancel</button>';
+  }).catch(function(e){
+    box.innerHTML='<div class="t-err" style="display:block;">'+hfEsc(e.message||'Could not open the menu.')+'</div>'
+      + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>';
+  });
+}
+function hfvInviteMake(rid){
+  const pick=document.querySelector('input[name="hf-l-dish"]:checked');
+  if(!pick)return;
+  const btn=document.getElementById('hf-l-make');
+  if(btn){btn.disabled=true;btn.textContent='Making it…';}
+  hfvApi('/api/checkins',{action:'invite_make',restaurantId:rid,dishId:Number(pick.value)}).then(function(d){
+    hfvInviteShow(d); hfvLoadLoyalty();
+  }).catch(function(e){
+    const box=document.getElementById('hf-v-checkin');
+    if(box)box.innerHTML='<div class="t-err" style="display:block;">'+hfEsc(e.message||'Could not make the invite.')+'</div>'
+      + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>';
+  });
+}
+function hfvInviteOpen(passId){
+  hfvStop(); HFV.showing=null;
+  const box=document.getElementById('hf-v-checkin');
+  if(box)box.innerHTML='<div class="hf-v-qr-msg">Making your code…</div>';
+  hfvApi('/api/checkins',{action:'invite_qr',passId:passId}).then(hfvInviteShow).catch(function(e){
+    if(box)box.innerHTML='<div class="t-err" style="display:block;">'+hfEsc(e.message||'Could not open it.')+'</div>'
+      + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Back</button>';
+  });
+}
+function hfvInviteShow(d){
+  const box=document.getElementById('hf-v-checkin');
+  if(!box)return;
+  const iv=d.invite||{};
+  const svg=(typeof d.svg==='string'&&d.svg.trim().slice(0,4)==='<svg')?d.svg:'';
+  HFV.lastInvite={code:iv.code,link:d.link,dish:iv.dishName,discount:iv.discount,restaurant:iv.restaurant};
+  box.innerHTML='<div class="hf-l-show"><div class="hf-l-eyebrow">Your invite</div>'
+    + '<div class="hf-l-show-title">'+hfEsc(iv.dishName||iv.discount)+'</div>'
+    + '<div class="hf-l-show-sub">'+hfEsc(iv.discount)+(iv.dishName?' on this dish':'')+' &middot; '+hfEsc(iv.restaurant||'')+'</div></div>'
+    + (svg?'<div class="hf-v-qr" id="hf-v-qr">'+svg+'</div>':'')
+    + '<div class="hf-v-code">'+hfEsc(iv.code||'')+'</div>'
+    + '<div class="hf-v-code-note">Your friend scans this with their phone camera and saves it with their own number. One friend, one time.</div>'
+    + '<button class="t-btn" onclick="hfvShareInvite(\''+hfEsc(iv.code||'')+'\')">Send it as a link</button>'
+    + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Done</button>';
+  hfvToTop();
+}
+
 // ── r31: LUCKY BITE · STAMPS · INVITES ──────────────────────────────────────
 // What each restaurant offers its guests, and what this guest has won. All of
 // it is decided on the server (the counting is in the database); this only
@@ -1282,7 +1437,7 @@ function hfvRenderLoyalty(){
         +'<button class="hf-l-btn" onclick="hfvShowPrize(\'reward\','+Number(r.id)+')">Show my reward</button></div>';
     });
     mineToUse.forEach(function(p){
-      const sub='Invite from a friend · '+p.restaurant+' · until '+hfvDate(p.expiresAt);
+      const sub=(p.dishName?'On '+p.dishName+' · ':'')+'Invite from a friend · '+p.restaurant+' · until '+hfvDate(p.expiresAt);
       html+='<div class="hf-l-prize invite"><div class="hf-l-prize-icon">&#127873;</div>'
         +'<div class="hf-l-prize-text"><b>'+hfEsc(p.discount)+'</b><span>'+hfEsc(sub)+'</span></div>'
         +(p.usableToday
@@ -1293,37 +1448,38 @@ function hfvRenderLoyalty(){
   }
   programs.forEach(function(g){
     html+='<div class="hf-l-place"><div class="hf-l-eyebrow">'+hfEsc(g.restaurant)+'</div>';
+    // r32: the restaurant's own team never earns rewards there; say so plainly.
+    if(g.staff)html+='<div class="hf-l-staff">You’re on '+hfEsc(g.restaurant)+'’s team, so your visits here don’t earn rewards.</div>';
     if(g.lucky){
-      const lk=g.lucky, today=lk.today||[];
+      const lk=g.lucky;
       html+='<div class="hf-l-row"><div class="hf-l-title">Lucky Bite</div>'
-        +'<div class="hf-l-note">Every '+hfvOrdinal(lk.every)+' dish rated after a scanned visit is free for the person who rated it.</div>'
-        +'<div class="hf-l-next">Next: <b>#'+Number(lk.nextAt).toLocaleString('en-US')+'</b> &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div>'
-        +'<div class="hf-l-today">'+(g.visitedToday
-            ?(today.length?'Today your dishes are '+today.map(function(n){return '#'+n;}).join(', ')+'. ':'')
-              +(today.length<lk.maxPerVisit?'Rate what you ate: up to '+lk.maxPerVisit+' dishes count today.':'That is the most that count in one visit.')
-            :'Check in, then rate what you ate.')+'</div></div>';
+        +'<div class="hf-l-note">Every '+hfvOrdinal(lk.every)+' visit wins: '+hfEsc(lk.prize)+'. Every visit the staff confirm gets a number.</div>'
+        +'<div class="hf-l-next">Next winner: <b>#'+Number(lk.nextAt).toLocaleString('en-US')+'</b> &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div>'
+        +'<div class="hf-l-today">'+(lk.today
+            ?'Today you are #'+Number(lk.today).toLocaleString('en-US')+'.'
+            :(lk.last?'Your last number: #'+Number(lk.last).toLocaleString('en-US')+'. ':'')+'Check in at the restaurant to get a number.')+'</div></div>';
     }
     if(g.stamps){
-      const st=g.stamps, n=Math.min(st.every,30);
-      var dots='';
-      for(var i=0;i<n;i++)dots+='<i class="'+(i<st.have?'on':'')+'"></i>';
+      const st=g.stamps;
       html+='<div class="hf-l-row"><div class="hf-l-title">Stamp card <small>'+st.have+' of '+st.every+'</small></div>'
-        +(st.every<=30?'<div class="hf-l-stamps">'+dots+'</div>':'')
+        +hfvStampDots(st.have,st.every)
         +'<div class="hf-l-note">'+hfEsc(st.reward)+' after '+st.every+' scanned visits.</div></div>';
     }
     if(g.invite){
       const mine=given.filter(function(p){return String(p.restaurantId)===String(g.restaurantId);});
       const open=mine.filter(function(p){return p.status==='open';});
       html+='<div class="hf-l-row"><div class="hf-l-title">Invite a friend</div>'
-        +'<div class="hf-l-note">'+hfEsc(g.invite.discount)+' for a friend, from the day after your visit, for '+g.invite.days+' days. They save it with their own phone number.</div>';
+        +'<div class="hf-l-note">After a visit, pick a dish you recommend: a friend gets '+hfEsc(g.invite.discount)+' on it, from the next day, for '+g.invite.days+' days. They save it with their own phone number.</div>';
+      if(g.invite.canMake)html+='<button class="hf-l-btn hf-l-make" onclick="hfvInviteStart('+Number(g.restaurantId)+')">Invite a friend: pick a dish</button>';
       open.forEach(function(p){
-        html+='<div class="hf-l-share"><span class="hf-l-code">'+hfEsc(p.code)+'</span>'
-          +'<button class="hf-l-btn" onclick="hfvShareInvite(\''+hfEsc(p.code)+'\')">Share</button></div>';
+        html+='<div class="hf-l-share"><span class="hf-l-share-text"><b>'+hfEsc(p.dishName||p.discount)+'</b><span class="hf-l-code">'+hfEsc(p.code)+'</span></span>'
+          +'<span class="hf-l-share-btns"><button class="hf-l-btn" onclick="hfvInviteOpen('+Number(p.id)+')">QR</button>'
+          +'<button class="hf-l-btn ghost" onclick="hfvShareInvite(\''+hfEsc(p.code)+'\')">Share</button></span></div>';
       });
       mine.filter(function(p){return p.status!=='open';}).slice(0,3).forEach(function(p){
-        html+='<div class="hf-l-past">'+(p.status==='used'?'Used by a friend &#10003;':'Saved by a friend')+' &middot; '+hfEsc(p.discount)+'</div>';
+        html+='<div class="hf-l-past">'+(p.status==='used'?'Used by a friend &#10003;':'Saved by a friend')+' &middot; '+hfEsc(p.dishName||p.discount)+'</div>';
       });
-      if(!open.length&&!mine.length)html+='<div class="hf-l-today">Every scanned visit gives you an invite to share.</div>';
+      if(!g.invite.canMake&&!mine.length&&!g.staff)html+='<div class="hf-l-today">After each confirmed visit you can invite a friend.</div>';
       html+='</div>';
     }
     html+='</div>';
@@ -1354,7 +1510,7 @@ function hfvShowPrize(kind, id){
   }else{
     const p=(L.invitesReceived||[]).find(function(x){return Number(x.id)===Number(id);});
     if(!p)return;
-    title=p.discount; sub='Invite from a friend · '+p.restaurant;
+    title=p.dishName?p.discount+' · '+p.dishName:p.discount; sub='Invite from a friend · '+p.restaurant;
     HFV.showing={passId:Number(id), title:title, sub:sub};
   }
   hfvStop();
@@ -1363,14 +1519,16 @@ function hfvShowPrize(kind, id){
   HFV.showing=keep;
   hfvRequestCode();
   const box=document.getElementById('hf-v-checkin');
-  if(box&&box.scrollIntoView)box.scrollIntoView({block:'start',behavior:'smooth'});
+  hfvToTop();
 }
 
 function hfvShareInvite(code){
   const L=HFV.loyalty||{};
-  const p=(L.invitesGiven||[]).find(function(x){return x.code===code;});
+  const p=(L.invitesGiven||[]).find(function(x){return x.code===code;})
+        ||(HFV.lastInvite&&HFV.lastInvite.code===code?{restaurant:HFV.lastInvite.restaurant,discount:HFV.lastInvite.discount,dishName:HFV.lastInvite.dish}:null);
   const link=location.origin+'/invite?c='+encodeURIComponent(code);
-  const text=(p?p.restaurant+': '+p.discount+' for you. ':'')+'Save it with your phone number, then show it at the restaurant.';
+  const text=(p?p.restaurant+': '+(p.dishName?'try the '+p.dishName+', '+p.discount+' on it':p.discount)+', for you. ':'')
+    +'Save it with your phone number, then show it at the restaurant.';
   if(navigator.share){
     navigator.share({title:p?p.restaurant:'An invite',text:text,url:link}).catch(function(){});
     return;
