@@ -1310,12 +1310,21 @@ async function caveDishRating(dbId){
   }catch(e){caveRatings[dbId]={avg:0,count:0};}
   return caveRatings[dbId];
 }
+// r34 (Sebastian, 15 Oct): the sanitary inspection grade is the one the manager
+// chose in Settings — A, B or C — or none, and then no grade is shown. taster.js
+// has it (it rides with the opening hours) and fills it in again if it arrives
+// after the card is drawn.
+function caveGradeBlock(){
+  const g=typeof hfGrade==='function'?hfGrade():null;
+  const html=typeof hfGradeHtml==='function'?hfGradeHtml('Sanitary Inspection Grade'):'';
+  return '<div class="cave-grade" data-hf-grade="Sanitary Inspection Grade" data-hf-grade-now="'+(g||'')+'"'+(html?'':' style="display:none"')+'>'+html+'</div>';
+}
 function renderCave(animClass,mediaOnly){
   const card=document.getElementById('cave-card');
   const hdots=document.getElementById('cave-hdots');
   if(!card)return;
   if(!caveDishes.length){
-    card.innerHTML=`<div class="cave-grade"><img src="/_vercel/image?url=%2Fgrade-a.png&w=256&q=75" data-orig="/grade-a.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div><div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
+    card.innerHTML=`${caveGradeBlock()}<div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
     caveScrollBar();
@@ -1359,7 +1368,7 @@ function renderCave(animClass,mediaOnly){
   card.scrollTop=0;                      // a new dish starts at its photo (phones scroll the whole card)
   card.innerHTML=`
     <section class="cave-sec cave-sec-media">
-      <div class="cave-grade"><img src="/_vercel/image?url=%2Fgrade-a.png&w=256&q=75" data-orig="/grade-a.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="Sanitary grade A"><div class="cave-grade-label">Sanitary Inspection Grade</div></div>
+      ${caveGradeBlock()}
       <button class="cave-pin${pinned?' pinned':''}" onclick="cavePin(event,'${d.id}')" aria-label="Save this dish" title="Save this dish">${PIN_SVG}</button>
       ${caveSwipeHint('up')}
       <div class="cave-photo-row">
