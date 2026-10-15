@@ -345,3 +345,13 @@
   .me-foot { font-family:var(--sans); font-size:.74rem; color:var(--muted); text-align:center; margin-top:.8rem; }
   #me-err { margin-top:.4rem; }
   @media (prefers-reduced-motion:reduce) { .me-switch-ui, .me-switch-ui::after { transition:none; } }
+
+/* ── r33: "Terms and conditions apply" (each reward's own terms, on the
+   restaurant's rewards page) and the prize's icon ── */
+.hf-l-terms { display:inline-block; font-family:var(--sans); font-size:.72rem; font-weight:600; color:#2F5DA8; text-decoration:underline; text-underline-offset:2px; padding:.25rem 0; }
+.hf-l-terms:hover { color:#1F4482; }
+.hf-l-prize-text .hf-l-terms { display:block; padding:.15rem 0 0; }
+.hf-l-row > .hf-l-terms { margin-top:.15rem; }
+.hf-prize-ico { flex:none; vertical-align:-3px; margin-right:.35rem; }
+.hf-l-vr-prize .hf-prize-ico { vertical-align:-4px; }
+
