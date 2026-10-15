@@ -42,6 +42,7 @@
   .m-btn { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:1rem 1.6rem; font-size:.82rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); }
   .m-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
   .m-btn-ghost { display:block; width:100%; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); margin-top:.6rem; text-decoration:none; }
+  .i-terms { display:inline-block; margin:-.4rem 0 1rem; font-size:.78rem; font-weight:600; color:#2F5DA8; text-decoration:underline; text-underline-offset:2px; padding:.2rem 0; }
   .i-legal { font-size:.68rem; color:var(--muted); font-weight:300; line-height:1.5; text-align:center; padding:0 .5rem; }
   .m-skel { height:260px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:16px; border:1px solid var(--border); }
   @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -94,6 +95,10 @@ function what(v){
     ? '<div class="i-what">'+esc(v.dishName)+'</div><div class="i-off">'+esc(v.discount)+' on this dish</div>'
     : '<div class="i-what">'+esc(v.discount)+'</div>';
 }
+// r33: the restaurant's own terms for its invites (rewards.html).
+function termsLink(v){
+  return '<a class="i-terms" href="/rewards?r='+Number(v.restaurantId)+'#invite">Terms and conditions apply</a>';
+}
 function legal(name){
   return '<div class="i-legal">This discount is offered and given by '+esc(name||'the restaurant')
     +'. Seb&rsquo;s Analytics and Fork&rsquo;s Rating do not give or pay for it.</div>';
@@ -128,6 +133,7 @@ function render(note){
   + '<div class="i-where">at '+esc(v.restaurant)+'</div>'
   + '<div class="i-when">Use it once, from <b>'+esc(day(v.usableFrom))+'</b> until <b>'+esc(day(v.expiresAt))+'</b>. '
   +   'Save it to your account, then show it to your waiter from <b>My Visits</b>.</div>'
+  + termsLink(v)
   + (note?'<div class="m-err">'+esc(note)+'</div>':'')
   + (dead
       ? '<div class="m-sub" style="margin-bottom:1rem;">'+esc(dead)+'</div>'
@@ -155,6 +161,7 @@ async function save(){
   + '<div class="i-where">at '+esc(v.restaurant)+'</div>'
   + '<div class="i-when">'+(v.usableToday?'It works today':'It works from <b>'+esc(day(v.usableFrom))+'</b>')
   +   ' until <b>'+esc(day(v.expiresAt))+'</b>. At the restaurant, open <b>My Visits</b> and tap <b>Show my invite</b>.</div>'
+  + termsLink(v)
   + '<button class="m-btn" onclick="openMyVisits()">Open My Visits</button>'
   + '<a class="m-btn-ghost" href="/">See the restaurant</a>'
   + '</div>'
