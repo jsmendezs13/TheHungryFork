@@ -211,7 +211,8 @@ export default async function handler(req, res) {
     if (sum && (sum.card || sum.lucky || sum.invite)) {
       const entry = (access.byRestaurant || {})[String(chosen.id)] || (access.byRestaurant || {})[chosen.id] || {};
       const canGive = levelAt(access, chosen.id) >= LEVEL.manager || entry.canIssueCodes === true;
-      loyalty = { card: sum.card, lucky: sum.lucky, invite: !!(sum.invite && sum.invite.canMake), canGive, staffGuest: sum.staff };
+      loyalty = { card: sum.card, lucky: sum.lucky, invite: !!(sum.invite && sum.invite.canMake), canGive, staffGuest: sum.staff,
+                  inviteTerms: sum.invite ? sum.invite.terms || null : null };
     }
   }
 
@@ -262,6 +263,12 @@ async function give(res, kind, { access, staffId, ticket, confirm, customer }) {
     const f = from.ok && Array.isArray(from.data) && from.data.length ? from.data[0] : {};
     out.from = [f.first_name, f.last_name].filter(Boolean).join(' ') || 'A guest';
   }
+  // r33: the restaurant's terms for this reward, shown to the waiter with it.
+  try {
+    const t = await sb(`/loyalty_settings?restaurant_id=eq.${rid}&select=lucky_terms,stamps_terms,invite_terms&limit=1`);
+    const row = t.ok && Array.isArray(t.data) && t.data.length ? t.data[0] : null;
+    out.terms = row ? (isReward ? (item.kind === 'lucky' ? row.lucky_terms : row.stamps_terms) : row.invite_terms) || null : null;
+  } catch (e) { out.terms = null; }
   const status = isReward ? rewardStatus(item) : passStatus(item);
   const notToday = !isReward && serviceDay() < out.usableFrom;
   const base = { success: true, kind, item: out, customer, restaurant: { id: restaurant.id, name: restaurant.name }, canGive };
@@ -288,7 +295,7 @@ async function give(res, kind, { access, staffId, ticket, confirm, customer }) {
   });
   if (!burned.ok) console.error('[checkin-confirm:give] could not mark token used', burned.status);
   console.log('[loyalty] staff', staffId, 'gave', kind, item.id, 'to', ticket.taster_id, 'at', rid);
-  const after = isReward ? rewardOut(done.data[0], names) : Object.assign(passOut(done.data[0], names), { from: out.from });
+  const after = Object.assign(isReward ? rewardOut(done.data[0], names) : Object.assign(passOut(done.data[0], names), { from: out.from }), { terms: out.terms });
   return res.status(200).json({ ...base, given: true, item: after });
 }
 
