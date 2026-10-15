@@ -122,6 +122,7 @@ export async function staff(req, res, body, action, helpers = {}) {
     case 'staff_closure':    return closure(req, res, body, tasterId);
     case 'staff_area':       return area(req, res, body, tasterId);
     case 'staff_loyalty_save': return saveLoyalty(req, res, body, tasterId);
+    case 'staff_grade_save': return saveGrade(req, res, body, tasterId);       // r34
     default:                 return res.status(400).json({ error: 'Unknown action.' });
   }
 }
@@ -637,6 +638,48 @@ async function saveLoyalty(req, res, body, tasterId) {
   return res.status(200).json({ success: true, loyalty: await staffLoyalty(who.rid) });
 }
 
+// ── THE SANITARY INSPECTION GRADE (r34) ───────────────────────────────────────
+// Sebastian, 15 Oct: the restaurant sets its letter itself, A, B or C, or none
+// (then the menu shows no grade). Seb's Analytics does not check it; the Terms
+// say so, and that the card at the restaurant's door is the official one.
+// Managers and owners choose; crew see it. Before migration 24 there is no
+// column: { ready: false }, and Settings says so.
+export const GRADES = ['A', 'B', 'C'];
+export async function gradeOf(rid, timezone = 'America/New_York') {
+  const got = await sb(`/restaurants?id=eq.${Number(rid)}&select=sanitary_grade,sanitary_grade_at,sanitary_grade_by`);
+  if (!got.ok || !Array.isArray(got.data) || !got.data[0]) return { ready: false };
+  const r = got.data[0];
+  let by = null;
+  if (r.sanitary_grade_by) {
+    const t = await sb(`/tasters?id=eq.${Number(r.sanitary_grade_by)}&select=first_name`);
+    by = t.ok && Array.isArray(t.data) && t.data[0] ? (String(t.data[0].first_name || '').trim().split(/\s+/)[0] || null) : null;
+  }
+  const on = r.sanitary_grade_at
+    ? new Intl.DateTimeFormat('en-US', { timeZone: timezone, month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(r.sanitary_grade_at))
+    : null;
+  return { ready: true, grade: GRADES.includes(r.sanitary_grade) ? r.sanitary_grade : null, changedOn: on, changedBy: by };
+}
+
+async function saveGrade(req, res, body, tasterId) {
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  if (!who) return;
+  const grade = body.grade === null || body.grade === '' || body.grade === 'none' ? null : body.grade;
+  if (grade !== null && !(typeof grade === 'string' && GRADES.includes(grade))) return res.status(400).json({ error: 'The grade is A, B, C, or none.' });
+  const saved = await sb(`/restaurants?id=eq.${who.rid}`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ sanitary_grade: grade, sanitary_grade_at: new Date().toISOString(), sanitary_grade_by: tasterId }),
+  });
+  if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) {
+    return res.status(saved.status === 400 ? 409 : 502).json({
+      error: saved.status === 400 ? 'The grade is not set up yet: migration 24 has not been run.' : 'Could not save the grade. Please try again.',
+    });
+  }
+  console.log('[staff:grade] taster', tasterId, 'set the grade of', who.rid, 'to', grade || 'none');
+  const s = await loadBooking(who.rid).catch(() => null);
+  const tz = (s && s.settings && s.settings.timezone) || 'America/New_York';
+  return res.status(200).json({ success: true, grade: await gradeOf(who.rid, tz) });
+}
+
 async function settingsRead(req, res, body, tasterId) {
   const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew);
   if (!who) return;
@@ -678,9 +721,12 @@ async function settingsRead(req, res, body, tasterId) {
   }), { tables: 0, people: 0, arrived: 0, noShows: 0, cancelled: 0 });
 
   const st = s.settings;
-  const loyalty = await staffLoyalty(who.rid).catch(() => ({ ready: false }));
+  const [loyalty, grade] = await Promise.all([
+    staffLoyalty(who.rid).catch(() => ({ ready: false })),
+    gradeOf(who.rid, s.timezone).catch(() => ({ ready: false })),
+  ]);
   return res.status(200).json({
-    success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone, loyalty,
+    success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone, loyalty, grade,
     restaurant: { id: s.loaded.restaurant.id, name: s.loaded.restaurant.name },
     rules: rulesOut(st),
     email: { ready: !!st.email_from_address, from: st.email_from_address || null },
