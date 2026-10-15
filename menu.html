@@ -440,7 +440,7 @@
   .rv-summary { display:flex; gap:1.1rem; align-items:center; margin-bottom:.7rem; }
   /* The period for the score. A single segmented bar rather than separate
      pills: it is a third kind of control on this panel — the sort chips order
-     the list, Full Fork opens it out, and this changes the number itself. */
+     the list, Full Rating opens it out, and this changes the number itself. */
   .rv-window { display:flex; background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:3px; margin-bottom:1rem; }
   .rv-win { flex:1; background:none; border:none; border-radius:999px; padding:.42rem .2rem; font-family:var(--sans); font-size:.72rem; color:var(--quiet); cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
   .rv-win.active { background:#fff; color:var(--text); font-weight:600; box-shadow:0 1px 2px rgba(43,33,26,.14); }
@@ -467,16 +467,21 @@
   .rv-star.on { color:#C01108; }
   .rv-star .star-glyph { width:16px; height:16px; }
   /* Newest / Highest / Lowest are a SORT — choosing one cancels the others.
-     Full Fork is a VIEW — it stays on while any sort is chosen. Putting them
-     shoulder to shoulder in one row would say they are the same kind of thing,
-     so the sorts keep their own group and Full Fork sits apart: pushed to the
-     far end on a wide screen, dropped onto its own line on a narrow one. */
-  .rv-filters { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.9rem; align-items:center; }
-  .rv-sorts { display:flex; gap:.5rem; }
-  .rv-chip { background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.45rem 1rem; font-family:var(--sans); font-size:.76rem; color:var(--muted); cursor:pointer; }
+     Full Rating is a VIEW — it stays on while any sort is chosen. r33
+     (Sebastian, 14 Oct): it sits on the same line as the sorts, at the far
+     end, in blue so it still reads as a different kind of button. The chips
+     tighten on a narrow phone so the four always fit on one line. */
+  .rv-filters { display:flex; flex-wrap:nowrap; gap:.45rem; margin-bottom:.9rem; align-items:center; }
+  .rv-sorts { display:flex; gap:.45rem; min-width:0; }
+  .rv-chip { background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.45rem .9rem; font-family:var(--sans); font-size:.76rem; color:var(--muted); cursor:pointer; white-space:nowrap; }
   .rv-chip.active { background:var(--red); border-color:var(--red); color:#fff; }
-  .rv-chip-view { display:inline-flex; align-items:center; gap:.35rem; border-style:dashed; margin-left:auto; }
-  .rv-chip-view.active { background:var(--ink); border-color:var(--ink); border-style:solid; color:#fff; }
+  .rv-chip-view { flex:none; display:inline-flex; align-items:center; gap:.35rem; margin-left:auto; background:#E4ECF8; border-color:rgba(47,93,168,.4); color:#2F5DA8; font-weight:600; }
+  .rv-chip-view.active { background:#2F5DA8; border-color:#2F5DA8; color:#fff; }
+  @media (max-width:400px){
+    .rv-filters, .rv-sorts { gap:.3rem; }
+    .rv-chip { padding:.45rem .62rem; font-size:.72rem; }
+    .rv-chip-view svg { display:none; }
+  }
   .rv-full { margin-top:8px; padding:.7rem .85rem; background:#fff; border:1px solid var(--border); border-radius:10px; font-family:var(--sans); }
   /* Label on the left taking the room, then the stars at a fixed size, then
      the number. Stars must not stretch to fill the row the way the old bar
@@ -492,13 +497,16 @@
      between the scores and the words that go with them. */
   .rv-full-group + .rv-full-group { margin-top:.75rem; padding-top:.75rem; border-top:1px solid var(--border); }
   .rv-full-note-label { display:block; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:.45rem; }
-  /* The guest's comment inside Full Fork — same treatment as in the list. */
+  /* The guest's comment inside Full Rating — same treatment as in the list. */
   .rv-full-note { margin-top:.4rem; font-size:.8rem; font-weight:400; color:var(--text); line-height:1.55; }
-  /* Full Fork on the dish itself, above the list. Off-white rather than white
+  /* Full Rating on the dish itself, above the list. Off-white rather than white
      so it reads as part of the summary, not as one more review. */
   .rv-full-summary { background:var(--off-white); border-color:var(--border); margin:0 0 1rem; }
   .rv-full-head { display:flex; align-items:baseline; justify-content:space-between; gap:.6rem; font-size:.64rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-bottom:.55rem; }
   .rv-full-head-n { font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); font-size:.7rem; }
+  /* r33: the restaurant half counts every rating of the restaurant, not only
+     this dish's; the line under its title says how many. */
+  .rv-full-scope { margin:-.25rem 0 .45rem; font-size:.68rem; color:var(--muted); }
   .cave-sec { width:100%; padding:1rem .9rem; }
   .cave-sec-media { position:relative; padding-top:2.6rem; border-bottom:1px solid var(--border); }
   .cave-sec-info { display:flex; flex-direction:column; align-items:center; gap:.35rem; border-bottom:1px solid var(--border); }
@@ -1028,7 +1036,7 @@
         <button class="rv-win active" data-days="365" onclick="rvSetWindow(365,this)">12 months</button>
         <button class="rv-win" data-days="0"   onclick="rvSetWindow(0,this)">All time</button>
       </div>
-      <!-- Full Fork for the dish as a whole. Follows the period above. -->
+      <!-- Full Rating for the dish as a whole. Follows the period above. -->
       <div id="rv-full-summary"></div>
       <div id="rv-your"></div>
       <div class="rv-filters">
@@ -1039,7 +1047,7 @@
         </div>
         <button class="rv-chip rv-chip-view" id="rv-full-btn" onclick="rvToggleFull(this)" aria-pressed="false">
           <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M7 2v7a3 3 0 0 0 2 2.83V22h2V11.83A3 3 0 0 0 13 9V2h-1.5v6h-1V2h-1v6h-1V2H7zm9 0c-1.1 0-2 1.79-2 4v6h1.5v10H17V2h-1z"/></svg>
-          Full Fork
+          Full Rating
         </button>
       </div>
       <div class="reviews-list" id="rv-list" style="max-height:280px;"></div>
@@ -1843,7 +1851,7 @@ function paintStarRow(row){
 // One star in the menu card's colours: place i (0 = the darkest, 4 = the
 // brightest red) when it is lit, the card's pale colour when it is not — the
 // .on class on its span decides which shows. Used by the stars you tap to rate
-// and by the reviews panel; the Full Fork rows draw the same colours with
+// and by the reviews panel; the Full Rating rows draw the same colours with
 // forkStarRow (stars.js). Its own gradient name every time, for the same
 // reason as forkStarRow's. With an older stars.js still live (files go up one
 // at a time), it falls back to the old glyph, so nothing breaks.
@@ -2106,7 +2114,11 @@ async function postReply(reviewId,dishId,restaurantId,listId,labelId){
 
 // ── REVIEWS PANEL ──
 let rvData=[],rvSort='new';
-// Full Fork: the whole rating, opened out. Not a sort — a view. It stays on
+// r33 (Sebastian, 14 Oct): the restaurant half of Full Rating is the whole
+// restaurant's rating (every rating, every dish — the home page's box), not
+// only the ratings given with this dish. null = could not be read: this dish's.
+let rvRestData=null;
+// Full Rating: the whole rating, opened out. Not a sort — a view. It stays on
 // while the list is re-sorted, which is why it is not in the same group.
 let rvFull=false;
 function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
@@ -2163,7 +2175,7 @@ function rvFullBlock(r){
   }).join('')}</div>`;
 }
 
-// The same two halves, averaged across every rating on the dish — Full Fork
+// The same two halves, averaged across every rating on the dish — Full Rating
 // applied to the dish's general rating rather than to one guest's. The big
 // number at the top is the three dish scores averaged together; this says
 // which of the five is carrying it and which is dragging it down, which is the
@@ -2171,13 +2183,17 @@ function rvFullBlock(r){
 function rvFullSummary(rows){
   if(!rows.length) return '';
   const n=rows.length;
-  const groups=FULL_FORK_GROUPS.map(g=>{
+  const restRows=rvRestData ? rvRestData.filter(r=>ratingInWindow(r, rvWindow)) : null;
+  const groups=FULL_FORK_GROUPS.map((g,i)=>{
+    const whole = i===1 && restRows;                 // the restaurant half: the whole restaurant
+    const from = whole ? restRows : rows;
     const cells=g.rows.map(([key,label])=>{
-      const vals=rows.map(r=>Number(r[key])).filter(v=>Number.isFinite(v)&&v>0);
+      const vals=from.map(r=>Number(r[key])).filter(v=>Number.isFinite(v)&&v>0);
       const avg=vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:NaN;
       return rvFullRow(label,avg,Number.isFinite(avg)?avg.toFixed(1):'');
     }).join('');
-    return `<div class="rv-full-group"><div class="rv-full-note-label">${g.title}</div>${cells}</div>`;
+    const scope = whole ? `<div class="rv-full-scope">The whole restaurant &middot; ${from.length} rating${from.length===1?'':'s'}</div>` : '';
+    return `<div class="rv-full-group"><div class="rv-full-note-label">${g.title}</div>${scope}${cells}</div>`;
   }).join('');
   return `<div class="rv-full rv-full-summary">
     <div class="rv-full-head">This dish, score by score<span class="rv-full-head-n">${n} rating${n===1?'':'s'}</span></div>
@@ -2199,7 +2215,7 @@ function reviewerLabel(r){
   return hfEsc(name) + (handle ? '<wbr><span class="reviewer-handle">(' + hfEsc(handle) + ')</span>' : '');
 }
 // "Your rating" and each review's own stars. Same size and spacing as always;
-// each star now wears the menu card's colour for its place, like the Full Fork
+// each star now wears the menu card's colour for its place, like the Full Rating
 // rows — Sebastian asked for every star to match (21 Sep). Whole stars: a
 // review's header shows its score rounded, as before.
 function rvStarsInline(n){let out='';for(let i=1;i<=5;i++){out+=`<span class="rv-star${i<=n?' on':''}">${rateStarGlyph(i-1)}</span>`;}return out;}
@@ -2211,6 +2227,10 @@ async function openReviewsPanel(){
   document.getElementById('reviews-modal').classList.add('open');
   document.getElementById('rv-list').innerHTML='<div class="no-reviews">Loading…</div>';
   const dbId=DISH_ID_MAP[d.id]||1;
+  // The restaurant's own ratings, asked at the same time (r33: Full Rating's
+  // restaurant half), fresh each time the panel opens.
+  const rest = sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe,created_at`)
+    .then(r=>(r.ok&&Array.isArray(r.data))?r.data:null).catch(()=>null);
   try{
     let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);
     if(!ok||!Array.isArray(data)){
@@ -2218,11 +2238,12 @@ async function openReviewsPanel(){
     }
     rvData=(ok&&Array.isArray(data))?data:[];
   }catch(e){rvData=[];}
+  rvRestData = await rest;
   rvRender();
 }
 function closeReviewsPanel(){document.getElementById('reviews-modal').classList.remove('open');}
 // Only the SORT chips are cleared. This used to clear every .rv-chip, which
-// would have switched Full Fork off every time somebody re-sorted.
+// would have switched Full Rating off every time somebody re-sorted.
 function rvSetSort(s,btn){rvSort=s;document.querySelectorAll('.rv-chip-sort').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rvRenderList();}
 function rvToggleFull(btn){
   rvFull=!rvFull;
@@ -2240,7 +2261,7 @@ function rvSetWindow(days,btn){
   rvRenderSummary();
 }
 
-// The number, its count, the five bars, and — with Full Fork on — the dish's
+// The number, its count, the five bars, and — with Full Rating on — the dish's
 // score-by-score breakdown. All of it from the chosen period only.
 function rvRenderSummary(){
   const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
