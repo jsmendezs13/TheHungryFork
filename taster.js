@@ -1264,6 +1264,27 @@ function hfvStampDots(have,every){
   return every<=30?'<div class="hf-l-stamps">'+dots+'</div>':'';
 }
 
+// ── r33: THE PRIZE'S ICON, AND "TERMS AND CONDITIONS APPLY" ─────────────────
+// The restaurant picks the prize (Meal, Drink, Shot, Dessert or its own words)
+// and writes each reward's terms; every reward on screen links to them, on the
+// restaurant's own terms page (rewards.html), at that reward.
+const HF_PRIZE_ICONS={
+  meal:'<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 21V3c-2 0-3.5 2.5-3.5 6s1.5 4.5 3.5 4.5"/>',
+  drink:'<path d="M6.5 8h11l-1.4 12.2a1 1 0 0 1-1 .8H8.9a1 1 0 0 1-1-.8L6.5 8z"/><path d="M7 12.5h10"/><path d="M13.5 8l2-5H19"/>',
+  shot:'<path d="M6 4h12l-2 16H8L6 4z"/><path d="M6.8 10h10.4"/>',
+  dessert:'<path d="M4 20h16"/><path d="M5 20v-8l14-5v13"/><path d="M5 15.5h14"/><circle cx="17" cy="4.5" r="1.3"/>',
+  other:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>'
+};
+function hfPrizeIcon(kind,size){
+  const p=HF_PRIZE_ICONS[kind];
+  if(!p)return '';
+  const n=Number(size)||20;
+  return '<svg class="hf-prize-ico" width="'+n+'" height="'+n+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+function hfTermsLink(rid,which,short){
+  return '<a class="hf-l-terms" href="/rewards?r='+Number(rid)+'#'+which+'">'+(short?'Terms apply':'Terms and conditions apply')+'</a>';
+}
+
 // What the visit did, the moment it was confirmed.
 function hfvShowVisitResult(v){
   const box=document.getElementById('hf-v-checkin');
@@ -1280,12 +1301,14 @@ function hfvShowVisitResult(v){
       html+='<div class="hf-l-vr-card win"><div class="hf-l-eyebrow">Lucky Bite</div>'
         + '<div class="hf-l-vr-head">&#127881; You won!</div>'
         + '<div class="hf-l-vr-big">#'+Number(lk.won.luckyNumber||lk.number).toLocaleString('en-US')+'</div>'
-        + '<div class="hf-l-vr-prize">'+hfEsc(lk.won.title)+'</div>'
-        + '<div class="hf-l-vr-sub">'+(given?'Given &#10003;':'Your waiter gives it to you now, in this visit.')+'</div></div>';
+        + '<div class="hf-l-vr-prize">'+hfPrizeIcon(lk.kind,22)+hfEsc(lk.won.title)+'</div>'
+        + '<div class="hf-l-vr-sub">'+(given?'Given &#10003;':'Your waiter gives it to you now, in this visit.')+'</div>'
+        + hfTermsLink(v.restaurantId,'lucky')+'</div>';
     }else if(lk&&lk.number){
       html+='<div class="hf-l-vr-card"><div class="hf-l-eyebrow">Lucky Bite</div>'
         + '<div class="hf-l-vr-line">Your number: <b>#'+Number(lk.number).toLocaleString('en-US')+'</b></div>'
-        + '<div class="hf-l-vr-sub">#'+Number(lk.nextAt).toLocaleString('en-US')+' wins '+hfEsc(lk.prize)+' &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div></div>';
+        + '<div class="hf-l-vr-sub">#'+Number(lk.nextAt).toLocaleString('en-US')+' wins '+hfEsc(lk.prize)+' &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div>'
+        + hfTermsLink(v.restaurantId,'lucky')+'</div>';
     }
     const c=v.card;
     if(c&&c.stamps){
@@ -1294,12 +1317,12 @@ function hfvShowVisitResult(v){
             ? '<div class="hf-l-vr-line"><b>Card full!</b> '+hfEsc(c.earned.title)+' is in your rewards below.</div>'
             : '<div class="hf-l-vr-line">'+c.stamps.have+' of '+c.stamps.every+'</div>'+hfvStampDots(c.stamps.have,c.stamps.every)
               +'<div class="hf-l-vr-sub">'+hfEsc(c.stamps.reward)+' after '+c.stamps.every+' visits.</div>')
-        + '</div>';
+        + hfTermsLink(v.restaurantId,'stamps')+'</div>';
     }
     const iv=v.invite;
     if(iv&&iv.canMake){
       html+='<button class="t-btn" onclick="hfvInviteStart('+Number(v.restaurantId)+')">Invite a friend: pick a dish</button>'
-        + '<div class="hf-v-qr-msg">'+hfEsc(iv.discount)+' on the dish you pick, for one friend.</div>';
+        + '<div class="hf-v-qr-msg">'+hfEsc(iv.discount)+' on the dish you pick, for one friend. '+hfTermsLink(v.restaurantId,'invite',true)+'</div>';
     }
   }
   html+='<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Done</button>';
@@ -1433,13 +1456,13 @@ function hfvRenderLoyalty(){
       const sub=(r.kind==='lucky'?'Lucky Bite #'+r.luckyNumber:'Stamp card · '+r.visits+' visits')
         +' · '+r.restaurant+' · until '+hfvDate(r.expiresAt);
       html+='<div class="hf-l-prize"><div class="hf-l-prize-icon">'+(r.kind==='lucky'?'&#127881;':'&#9733;')+'</div>'
-        +'<div class="hf-l-prize-text"><b>'+hfEsc(r.title)+'</b><span>'+hfEsc(sub)+'</span></div>'
+        +'<div class="hf-l-prize-text"><b>'+hfEsc(r.title)+'</b><span>'+hfEsc(sub)+'</span>'+hfTermsLink(r.restaurantId,r.kind==='lucky'?'lucky':'stamps',true)+'</div>'
         +'<button class="hf-l-btn" onclick="hfvShowPrize(\'reward\','+Number(r.id)+')">Show my reward</button></div>';
     });
     mineToUse.forEach(function(p){
       const sub=(p.dishName?'On '+p.dishName+' · ':'')+'Invite from a friend · '+p.restaurant+' · until '+hfvDate(p.expiresAt);
       html+='<div class="hf-l-prize invite"><div class="hf-l-prize-icon">&#127873;</div>'
-        +'<div class="hf-l-prize-text"><b>'+hfEsc(p.discount)+'</b><span>'+hfEsc(sub)+'</span></div>'
+        +'<div class="hf-l-prize-text"><b>'+hfEsc(p.discount)+'</b><span>'+hfEsc(sub)+'</span>'+hfTermsLink(p.restaurantId,'invite',true)+'</div>'
         +(p.usableToday
            ?'<button class="hf-l-btn" onclick="hfvShowPrize(\'pass\','+Number(p.id)+')">Show my invite</button>'
            :'<button class="hf-l-btn" disabled>From '+hfEsc(hfvDate(p.usableFrom))+'</button>')
@@ -1453,23 +1476,26 @@ function hfvRenderLoyalty(){
     if(g.lucky){
       const lk=g.lucky;
       html+='<div class="hf-l-row"><div class="hf-l-title">Lucky Bite</div>'
-        +'<div class="hf-l-note">Every '+hfvOrdinal(lk.every)+' visit wins: '+hfEsc(lk.prize)+'. Every visit the staff confirm gets a number.</div>'
+        +'<div class="hf-l-note">'+hfPrizeIcon(lk.kind,16)+'Every '+hfvOrdinal(lk.every)+' visit wins: '+hfEsc(lk.prize)+'. Every visit the staff confirm gets a number.</div>'
         +'<div class="hf-l-next">Next winner: <b>#'+Number(lk.nextAt).toLocaleString('en-US')+'</b> &middot; '+Number(lk.toGo).toLocaleString('en-US')+' to go</div>'
         +'<div class="hf-l-today">'+(lk.today
             ?'Today you are #'+Number(lk.today).toLocaleString('en-US')+'.'
-            :(lk.last?'Your last number: #'+Number(lk.last).toLocaleString('en-US')+'. ':'')+'Check in at the restaurant to get a number.')+'</div></div>';
+            :(lk.last?'Your last number: #'+Number(lk.last).toLocaleString('en-US')+'. ':'')+'Check in at the restaurant to get a number.')+'</div>'
+        +hfTermsLink(g.restaurantId,'lucky')+'</div>';
     }
     if(g.stamps){
       const st=g.stamps;
       html+='<div class="hf-l-row"><div class="hf-l-title">Stamp card <small>'+st.have+' of '+st.every+'</small></div>'
         +hfvStampDots(st.have,st.every)
-        +'<div class="hf-l-note">'+hfEsc(st.reward)+' after '+st.every+' scanned visits.</div></div>';
+        +'<div class="hf-l-note">'+hfPrizeIcon(st.kind,16)+hfEsc(st.reward)+' after '+st.every+' scanned visits.</div>'
+        +hfTermsLink(g.restaurantId,'stamps')+'</div>';
     }
     if(g.invite){
       const mine=given.filter(function(p){return String(p.restaurantId)===String(g.restaurantId);});
       const open=mine.filter(function(p){return p.status==='open';});
       html+='<div class="hf-l-row"><div class="hf-l-title">Invite a friend</div>'
-        +'<div class="hf-l-note">After a visit, pick a dish you recommend: a friend gets '+hfEsc(g.invite.discount)+' on it, from the next day, for '+g.invite.days+' days. They save it with their own phone number.</div>';
+        +'<div class="hf-l-note">After a visit, pick a dish you recommend: a friend gets '+hfEsc(g.invite.discount)+' on it, from the next day, for '+g.invite.days+' days. They save it with their own phone number.</div>'
+        +hfTermsLink(g.restaurantId,'invite');
       if(g.invite.canMake)html+='<button class="hf-l-btn hf-l-make" onclick="hfvInviteStart('+Number(g.restaurantId)+')">Invite a friend: pick a dish</button>';
       open.forEach(function(p){
         html+='<div class="hf-l-share"><span class="hf-l-share-text"><b>'+hfEsc(p.dishName||p.discount)+'</b><span class="hf-l-code">'+hfEsc(p.code)+'</span></span>'
