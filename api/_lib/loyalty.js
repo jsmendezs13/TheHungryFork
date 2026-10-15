@@ -31,7 +31,12 @@ export const LIMITS = {
   rewardDays:  [1, 365],
   rewardText:  80,
   inviteDays:  [1, 30],
+  termsText:   1000,
 };
+// r33 (Sebastian, 14 Oct): the prize is picked, not written. "Other" is the
+// manager's own words; the rest are these, word for word.
+export const PRIZE_KINDS = { meal: 'A free meal', drink: 'A free drink', shot: 'A free shot', dessert: 'A free dessert' };
+const KINDS = ['meal', 'drink', 'shot', 'dessert', 'other'];
 export const DEFAULTS = { luckyEvery: 100, stampsEvery: 10, rewardDays: 60, inviteDays: 7, luckyReward: 'A free dish' };
 
 // The restaurant's day starts at 5 AM (New York), like the reservations': a
@@ -86,7 +91,7 @@ export function rewardOut(r, names = {}) {
 }
 
 const SETTINGS_COLUMNS = 'restaurant_id,lucky_on,lucky_every,lucky_count,lucky_reward,stamps_on,stamps_every,stamps_reward,reward_days,'
-                       + 'invite_on,invite_discount,invite_days';
+                       + 'invite_on,invite_discount,invite_days,lucky_kind,stamps_kind,lucky_terms,stamps_terms,invite_terms,terms_updated_at';
 export const PASS_COLUMNS = 'id,restaurant_id,from_taster_id,check_in_id,code,discount_text,dish_id,dish_name,made_day,created_at,expires_at,claimed_by,claimed_at,redeemed_at,redeemed_by_name';
 
 // ── INVITES ───────────────────────────────────────────────────────────────────
@@ -293,13 +298,13 @@ function programOut(s, name, mine) {
   const rid = s.restaurant_id;
   const staff = !!mine.staff[rid];
   const lucky = s.lucky_on ? {
-    every: Number(s.lucky_every), counted: Number(s.lucky_count), prize: s.lucky_reward || 'A free dish',
+    every: Number(s.lucky_every), counted: Number(s.lucky_count), prize: s.lucky_reward || 'A free dish', kind: s.lucky_kind || null,
     ...nextLucky(s.lucky_count, s.lucky_every),
     last: mine.lastNumber[rid] || null,            // their newest number here
     today: mine.todayNumber[rid] || null,          // the number of today's visit
   } : null;
   const stamps = s.stamps_on && s.stamps_reward ? {
-    every: Number(s.stamps_every), reward: s.stamps_reward, have: Math.min(mine.stamps[rid] || 0, Number(s.stamps_every)),
+    every: Number(s.stamps_every), reward: s.stamps_reward, kind: s.stamps_kind || null, have: Math.min(mine.stamps[rid] || 0, Number(s.stamps_every)),
   } : null;
   const invite = s.invite_on && s.invite_discount ? {
     discount: s.invite_discount, days: Number(s.invite_days) || DEFAULTS.inviteDays,
@@ -309,6 +314,33 @@ function programOut(s, name, mine) {
     restaurantId: rid, restaurant: name || 'The restaurant', staff,
     visitedToday: !!mine.todayVisit[rid], lucky, stamps, invite, rewardDays: Number(s.reward_days),
   };
+}
+
+// ── r33: THE RESTAURANT'S REWARD TERMS (a public page, /rewards) ──────────
+// Only what is on, in the restaurant's own words. No account needed.
+export async function rewardTerms(restaurantId) {
+  const rid = Number(restaurantId);
+  if (!Number.isInteger(rid) || rid < 1) throw Object.assign(new Error('Which restaurant?'), { status: 400 });
+  const [s, names] = await Promise.all([
+    sb(`/loyalty_settings?restaurant_id=eq.${rid}&select=${SETTINGS_COLUMNS}&limit=1`),
+    namesOf([rid]),
+  ]);
+  if (notReady(s)) throw Object.assign(new Error('Rewards are not set up yet.'), { status: 404 });
+  if (!s.ok) throw Object.assign(new Error('Could not read the rewards.'), { status: 502 });
+  if (!names[rid]) throw Object.assign(new Error('That restaurant is not on this site.'), { status: 404 });
+  const set = Array.isArray(s.data) && s.data.length ? s.data[0] : null;
+  const programs = [];
+  if (set && set.lucky_on) {
+    programs.push({ kind: 'lucky', every: Number(set.lucky_every), prize: set.lucky_reward || 'A free dish', prizeKind: set.lucky_kind || null, terms: set.lucky_terms || '' });
+  }
+  if (set && set.stamps_on && set.stamps_reward) {
+    programs.push({ kind: 'stamps', every: Number(set.stamps_every), prize: set.stamps_reward, prizeKind: set.stamps_kind || null,
+                    days: Number(set.reward_days) || DEFAULTS.rewardDays, terms: set.stamps_terms || '' });
+  }
+  if (set && set.invite_on && set.invite_discount) {
+    programs.push({ kind: 'invite', discount: set.invite_discount, days: Number(set.invite_days) || DEFAULTS.inviteDays, terms: set.invite_terms || '' });
+  }
+  return { restaurantId: rid, restaurant: names[rid], updatedAt: set ? set.terms_updated_at || null : null, programs };
 }
 
 // ── THE GUEST: My Visits ──────────────────────────────────────────────────────
@@ -389,15 +421,15 @@ export async function visitSummary(visit, { forGuest = false } = {}) {
     const n = num.ok && Array.isArray(num.data) && num.data.length ? Number(num.data[0].number) : null;
     const won = prize.ok && Array.isArray(prize.data) && prize.data.length ? rewardOut(prize.data[0], names) : null;
     const lucky = set.lucky_on ? {
-      every: Number(set.lucky_every), prize: set.lucky_reward || 'A free dish', number: n,
-      ...nextLucky(set.lucky_count, set.lucky_every), won,
+      every: Number(set.lucky_every), prize: set.lucky_reward || 'A free dish', kind: set.lucky_kind || null, number: n,
+      ...nextLucky(set.lucky_count, set.lucky_every), won, terms: set.lucky_terms || null,
     } : (won ? { number: n, won } : null);
     const made = pass.ok && Array.isArray(pass.data) && pass.data.length ? pass.data[0] : null;
     const today = visitDays().includes(visit.visit_date);
     const invite = set.invite_on && set.invite_discount ? {
       discount: set.invite_discount, days: Number(set.invite_days) || DEFAULTS.inviteDays,
       made: made ? passOut(made, names, forGuest ? tid : null) : null,
-      canMake: !staff && !made && today,
+      canMake: !staff && !made && today, terms: set.invite_terms || null,
     } : null;
     const card = await cardAfterVisit(vid, tid, rid);
     return { ...base, lucky, card, invite };
@@ -473,6 +505,9 @@ export async function staffLoyalty(restaurantId) {
     ready: true,
     luckyOn: !!(row && row.lucky_on), luckyEvery, luckyCount, ...nextLucky(luckyCount, luckyEvery),
     luckyReward: row ? row.lucky_reward || '' : '',
+    luckyKind: row ? row.lucky_kind || null : null, stampsKind: row ? row.stamps_kind || null : null,
+    luckyTerms: row ? row.lucky_terms || '' : '', stampsTerms: row ? row.stamps_terms || '' : '',
+    inviteTerms: row ? row.invite_terms || '' : '', termsUpdatedAt: row ? row.terms_updated_at || null : null,
     stampsOn: !!(row && row.stamps_on), stampsEvery: row ? Number(row.stamps_every) : DEFAULTS.stampsEvery,
     stampsReward: row ? row.stamps_reward || '' : '',
     rewardDays: row ? Number(row.reward_days) : DEFAULTS.rewardDays,
@@ -495,20 +530,37 @@ export function cleanLoyalty(input) {
   if (!within(rewardDays, LIMITS.rewardDays)) return { error: `A reward lasts from ${LIMITS.rewardDays[0]} to ${LIMITS.rewardDays[1]} days.` };
   if (!within(inviteDays, LIMITS.inviteDays)) return { error: `An invite lasts from ${LIMITS.inviteDays[0]} to ${LIMITS.inviteDays[1]} days.` };
   const words = (v) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
-  const text = words(x.stampsReward), discount = words(x.inviteDiscount), prize = words(x.luckyReward);
+  // r33: the prize is picked (Meal, Drink, Shot, Dessert), or Other = the
+  // manager's words. A page from before r33 sends no kind: its words stand.
+  const kindOf = (v) => (KINDS.includes(v) ? v : null);
+  const luckyKind = kindOf(x.luckyKind), stampsKind = kindOf(x.stampsKind);
+  const picked = (kind, written) => (kind && kind !== 'other' ? PRIZE_KINDS[kind] : words(written));
+  const text = picked(stampsKind, x.stampsReward), discount = words(x.inviteDiscount), prize = picked(luckyKind, x.luckyReward);
+  // The terms keep their lines (a list reads better), each line tidied.
+  const termsOf = (v) => String(v == null ? '' : v).replace(/\r\n?/g, '\n').split('\n')
+    .map((l) => l.replace(/[ \t]+/g, ' ').trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  const luckyTerms = termsOf(x.luckyTerms), stampsTerms = termsOf(x.stampsTerms), inviteTerms = termsOf(x.inviteTerms);
   if (text.length > LIMITS.rewardText) return { error: `The reward is ${LIMITS.rewardText} characters at most.` };
   if (discount.length > LIMITS.rewardText) return { error: `The discount is ${LIMITS.rewardText} characters at most.` };
   if (prize.length > LIMITS.rewardText) return { error: `The Lucky Bite prize is ${LIMITS.rewardText} characters at most.` };
-  if (/[<>]/.test(text + discount + prize)) return { error: 'The words cannot contain < or >.' };
+  if ([luckyTerms, stampsTerms, inviteTerms].some((t) => t.length > LIMITS.termsText)) return { error: `Terms and conditions are ${LIMITS.termsText.toLocaleString('en-US')} characters at most.` };
+  if (/[<>]/.test(text + discount + prize + luckyTerms + stampsTerms + inviteTerms)) return { error: 'The words cannot contain < or >.' };
   const stampsOn = x.stampsOn === true, inviteOn = x.inviteOn === true, luckyOn = x.luckyOn === true;
   if (luckyOn && !prize) return { error: 'Write the Lucky Bite prize, for example "A free entrée".' };
   if (stampsOn && !text) return { error: 'Write the reward for a full card, for example "A free dessert".' };
   if (inviteOn && !discount) return { error: 'Write the discount for a friend, for example "10% off your meal".' };
+  // r33 (Sebastian, 14 Oct): no reward is on without the restaurant's own
+  // terms and conditions. The database refuses it too (migration 23).
+  if (luckyOn && !luckyTerms) return { error: 'Write the terms and conditions of the Lucky Bite: it can’t be switched on without them.' };
+  if (stampsOn && !stampsTerms) return { error: 'Write the terms and conditions of the stamp card: it can’t be switched on without them.' };
+  if (inviteOn && !inviteTerms) return { error: 'Write the terms and conditions of Invite a friend: it can’t be switched on without them.' };
   return { row: {
     lucky_on: luckyOn, lucky_every: luckyEvery, lucky_reward: prize || null,
     stamps_on: stampsOn, stamps_every: stampsEvery, stamps_reward: text || null,
     reward_days: rewardDays,
     invite_on: inviteOn, invite_discount: discount || null, invite_days: inviteDays,
+    lucky_kind: luckyKind, stamps_kind: stampsKind,
+    lucky_terms: luckyTerms || null, stamps_terms: stampsTerms || null, invite_terms: inviteTerms || null,
   } };
 }
 
@@ -575,7 +627,8 @@ export async function cardAfterVisit(checkInId, tasterId, restaurantId) {
     }
     const open = await sb(`/loyalty_stamps?taster_id=eq.${Number(tasterId)}&restaurant_id=eq.${Number(restaurantId)}&reward_id=is.null&select=check_in_id`);
     const have = open.ok && Array.isArray(open.data) ? open.data.length : 0;
-    return { stamps: { have, every: Number(set.stamps_every), reward: set.stamps_reward, counted: !!mine }, earned };
+    return { stamps: { have, every: Number(set.stamps_every), reward: set.stamps_reward, kind: set.stamps_kind || null, counted: !!mine },
+             earned, terms: set.stamps_terms || null };
   } catch (e) {
     console.error('[loyalty:card] failed', e && e.message);
     return null;
