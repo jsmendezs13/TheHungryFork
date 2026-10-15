@@ -1775,6 +1775,32 @@ function hfHoursFill(){
     if(!els[i].hasAttribute('data-hf-keep'))els[i].style.display=html?'':'none';   // data-hf-keep: the page keeps its room
   }
   hfHolFill();
+  hfGradeFill();
+}
+
+// ── THE SANITARY INSPECTION GRADE (r34, Sebastian 15 Oct) ──
+// The letter the manager chose in Settings (A, B or C), or none: then nothing
+// is shown. It rides in the same answer as the hours (the `hours` action, or
+// the `slots` answer with withHours), and is kept with them in the browser.
+// An answer without it (an older server, or migration 24 not run) means none.
+// Elements with data-hf-grade get the card's picture, and the attribute's
+// words under it when there are any ("Sanitary Inspection Grade").
+var HF_GRADES={A:1,B:1,C:1};
+function hfGrade(){ return HF_GRADES[HF_HOURS.grade]?HF_HOURS.grade:null; }
+function hfGradeHtml(label){
+  var g=hfGrade();
+  if(!g)return '';
+  var f='grade-'+g.toLowerCase()+'.png';
+  return '<img src="/_vercel/image?url=%2F'+f+'&w=256&q=75" data-orig="/'+f+'" onerror="this.onerror=null;this.src=this.dataset.orig" alt="Sanitary inspection grade '+g+'">'
+    +(label?'<div class="cave-grade-label">'+hfEsc(label)+'</div>':'');
+}
+function hfGradeFill(){
+  var els=document.querySelectorAll('[data-hf-grade]');
+  for(var i=0;i<els.length;i++){
+    var html=hfGradeHtml(els[i].getAttribute('data-hf-grade'));
+    if(els[i].getAttribute('data-hf-grade-now')!==(hfGrade()||'')){ els[i].innerHTML=html; els[i].setAttribute('data-hf-grade-now',hfGrade()||''); }
+    els[i].style.display=html?'':'none';
+  }
 }
 // The answer of the server (the `hours` action, or the `slots` answer that
 // carries the same things when a page asks with withHours): the week, the coming
@@ -1784,7 +1810,8 @@ function hfHoursApply(d){
   HF_HOURS.rows=d.hours;
   HF_HOURS.holidays=Array.isArray(d.holidays)?d.holidays:[];
   HF_HOURS.tz=typeof d.timezone==='string'?d.timezone:null;
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,at:Date.now()}));}catch(e){}
+  HF_HOURS.grade=HF_GRADES[d.grade]?d.grade:null;           // r34
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,at:Date.now()}));}catch(e){}
   hfHoursFill();
   return true;
 }
@@ -1803,6 +1830,7 @@ function hfHoursLoad(){
       HF_HOURS.rows=kept.rows;
       HF_HOURS.holidays=Array.isArray(kept.holidays)?kept.holidays:[];
       HF_HOURS.tz=typeof kept.tz==='string'?kept.tz:null;
+      HF_HOURS.grade=HF_GRADES[kept.grade]?kept.grade:null;  // r34
       hfHoursFill();
     }
   }catch(e){}
@@ -1815,7 +1843,7 @@ function hfHoursLoad(){
   hfHoursFetch();
 }
 (function(){
-  function start(){if(document.querySelector('[data-hf-hours]'))hfHoursLoad();}
+  function start(){if(document.querySelector('[data-hf-hours],[data-hf-grade]'))hfHoursLoad();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 
