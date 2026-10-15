@@ -66,6 +66,9 @@
   .c-lucky-head { font-family:var(--serif); font-size:1.45rem; font-weight:700; color:var(--red); }
   .c-lucky-prize { font-family:var(--serif); font-size:1.2rem; font-weight:600; color:var(--text); margin:.1rem 0 .4rem; }
   .c-lucky-why { font-size:.8rem; color:var(--text); margin-bottom:.6rem; }
+  /* r33: the restaurant's own terms for the reward, for the waiter to check. */
+  .c-terms { background:#fff; border:1px solid var(--border); border-radius:8px; padding:.55rem .75rem; margin:.2rem 0 .7rem; font-size:.76rem; line-height:1.5; color:var(--text); text-align:left; white-space:pre-line; overflow-wrap:anywhere; }
+  .c-terms b { display:block; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.15rem; }
   .c-stamps { display:flex; justify-content:center; flex-wrap:wrap; gap:5px; margin:.45rem 0 .2rem; }
   .c-stamps i { width:16px; height:16px; border-radius:50%; border:1.5px solid var(--border); background:#fff; }
   .c-stamps i.on { background:var(--red); border-color:var(--red); }
@@ -208,7 +211,8 @@ function giveLines(d){
     + '<div class="c-kind">'+esc(reward?(it.kind==='lucky'?'Lucky Bite #'+it.luckyNumber:'Stamp card · '+it.visits+' visits')
                                        :(it.dishName?it.discount+' on this dish · ':'')+'Invite from '+(it.from||'a guest'))+'</div>'
     + '<div class="c-for">For <b>'+esc(d.customer.name)+'</b>'+(d.customer.username?' <span class="c-handle" style="display:inline;">('+esc(d.customer.username)+')</span>':'')+'</div>'
-    + '<div class="c-handle">'+esc(d.restaurant.name)+'</div>';
+    + '<div class="c-handle">'+esc(d.restaurant.name)+'</div>'
+    + (it.terms ? '<div class="c-terms" style="margin-top:.8rem;"><b>Terms and conditions</b>'+esc(it.terms)+'</div>' : '');
 }
 function renderGive(){
   const d=PREVIEW, it=d.item;
@@ -262,6 +266,7 @@ function loyaltyNote(l){
     const given=lk.won.status==='used';
     out+='<div class="c-card lucky" id="c-lucky"><div class="c-lucky-head">&#127881; Lucky Bite #'+Number(lk.won.luckyNumber||lk.number).toLocaleString('en-US')+'</div>'
        + '<div class="c-lucky-prize">'+esc(lk.won.title)+'</div>'
+       + (lk.terms ? '<div class="c-terms"><b>Terms and conditions</b>'+esc(lk.terms)+'</div>' : '')
        + (given ? '<div>Given &#10003;</div>'
           : l.canGive ? '<div class="c-lucky-why">Give it to them now, in this visit.</div><button class="m-btn" id="c-lucky-go" onclick="giveLucky('+Number(lk.won.id)+')">Give it</button>'
                         + '<div class="m-err" id="c-lucky-err" style="display:none;margin:.6rem 0 0;"></div>'
