@@ -19,7 +19,7 @@ import {
 } from './_lib/checkin.js';
 import {
   guestLoyalty, rewardForGuest, previewPass, claimPass, passForGuest,
-  ticketStatus, inviteDishes, makeInvite, inviteForGiver,
+  ticketStatus, inviteDishes, makeInvite, inviteForGiver, rewardTerms,
 } from './_lib/loyalty.js';
 
 // The screen refreshes itself every ninety seconds while it is open, so a
@@ -34,6 +34,8 @@ const loyaltyLimiter = makeLimiter({ requests: 120, window: '10 m', prefix: 'loy
 // r32: while the check-in QR is up, the guest's screen asks every 3 seconds
 // whether the waiter has confirmed it (90 seconds = 30 asks per code).
 const statusLimiter = makeLimiter({ requests: 300, window: '10 m', prefix: 'checkin:status' });
+// r33: the restaurant's reward terms, a public page (no account).
+const termsLimiter = makeLimiter({ requests: 60, window: '10 m', prefix: 'loyalty:terms' });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -47,6 +49,14 @@ export default async function handler(req, res) {
       throw Object.assign(new Error('Too many tries. Wait a few minutes.'), { status: 429 });
     }
     return { invite: await previewPass(body.code) };
+  });
+
+  // r33: the terms of a restaurant's rewards, in its own words (/rewards).
+  if (action === 'reward_terms') return loyaltyCall(res, async () => {
+    if (!(await allow(termsLimiter, keyFor('ip' + clientIp(req)), { failOpen: true }))) {
+      throw Object.assign(new Error('Too many tries. Wait a few minutes.'), { status: 429 });
+    }
+    return await rewardTerms(body.restaurantId);
   });
 
   const tasterId = tasterIdFromRequest(req);
