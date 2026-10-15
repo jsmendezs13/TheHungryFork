@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>Reward terms · The Hungry Fork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --red:#B01015; --red-dark:#7E0A0E; --red-light:#F7E3E1;
+    --white:#FCF9F4; --off-white:#F5EEE3; --text:#2B211A;
+    --muted:#75675A; --border:#E9E0D3; --ink:#2B211A; --blue:#2F5DA8;
+    --serif:'Cormorant Garamond', Georgia, serif;
+    --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  html { scroll-padding-top:72px; }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.65; -webkit-font-smoothing:antialiased; }
+  .p-topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .p-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .p-topbar-title { font-family:var(--serif); font-size:1.1rem; font-weight:600; color:var(--white); }
+  .p-spacer { width:56px; }
+  .r-wrap { max-width:560px; margin:0 auto; padding:1.4rem 1rem 3.5rem; }
+  .r-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:1.3rem 1.25rem; margin-bottom:.9rem; }
+  .r-eyebrow { font-size:.66rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--red); }
+  h1 { font-family:var(--serif); font-size:1.85rem; font-weight:600; line-height:1.15; margin:.2rem 0 .5rem; }
+  .r-intro { font-size:.86rem; color:#5E5146; }
+  .r-updated { font-size:.76rem; color:var(--muted); margin-top:.5rem; }
+  .r-head { display:flex; align-items:center; gap:.6rem; }
+  .r-head svg { flex:none; color:var(--red); }
+  h2 { font-family:var(--serif); font-size:1.4rem; font-weight:600; line-height:1.2; }
+  .r-what { font-size:.9rem; font-weight:600; margin:.55rem 0 .35rem; }
+  .r-terms { font-size:.88rem; color:#3E342C; white-space:pre-line; overflow-wrap:anywhere; }
+  .r-terms-label { font-size:.62rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:.7rem; }
+  .r-card.r-here { border-color:var(--blue); box-shadow:0 0 0 2px rgba(47,93,168,.18); }
+  .r-foot { font-size:.78rem; color:var(--muted); padding:0 .3rem; }
+  .r-foot a { color:var(--blue); }
+  .m-err { background:#F6E2E1; border:1px solid rgba(176,16,21,.25); color:var(--red-dark); border-radius:10px; padding:.85rem 1rem; font-size:.85rem; }
+  .m-skel { height:220px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:16px; border:1px solid var(--border); }
+  @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+<div class="p-topbar">
+  <a href="/" class="p-home">&#8249; Site</a>
+  <div class="p-topbar-title">Reward terms</div>
+  <span class="p-spacer"></span>
+</div>
+<main class="r-wrap" id="r-wrap"><div class="m-skel"></div></main>
+<script>
+// ── rewards.html (r33) ──
+//
+// Each restaurant's own terms and conditions for its rewards (Sebastian,
+// 14 Oct): the Lucky Bite, the stamp card and the invites. The restaurant
+// writes them in Settings, and a reward cannot be on without them. Every
+// "Terms and conditions apply" link on the site opens this page, at the
+// reward it is about (/rewards?r=1#lucky). Nothing here needs an account.
+const DEFAULT_RESTAURANT_ID = 1;
+const ICONS = {
+  meal:    '<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 21V3c-2 0-3.5 2.5-3.5 6s1.5 4.5 3.5 4.5"/>',
+  drink:   '<path d="M6.5 8h11l-1.4 12.2a1 1 0 0 1-1 .8H8.9a1 1 0 0 1-1-.8L6.5 8z"/><path d="M7 12.5h10"/><path d="M13.5 8l2-5H19"/>',
+  shot:    '<path d="M6 4h12l-2 16H8L6 4z"/><path d="M6.8 10h10.4"/>',
+  dessert: '<path d="M4 20h16"/><path d="M5 20v-8l14-5v13"/><path d="M5 15.5h14"/><circle cx="17" cy="4.5" r="1.3"/>',
+  other:   '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
+  stamps:  '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/>',
+  invite:  '<path d="M4 11h16v9H4z"/><path d="M3 7h18v4H3z"/><path d="M12 7v13"/><path d="M12 7c-1.5-3-5-3.5-5-1s5 1 5 1zM12 7c1.5-3 5-3.5 5-1s-5 1-5 1z"/>',
+};
+function icon(k){
+  return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + (ICONS[k] || ICONS.other) + '</svg>';
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function ordinal(n){ n=Number(n); const t=n%100, u=n%10; return n.toLocaleString('en-US')+((t>=11&&t<=13)?'th':u===1?'st':u===2?'nd':u===3?'rd':'th'); }
+function wrap(){ return document.getElementById('r-wrap'); }
+
+function section(p, name){
+  var id, title, what, ic;
+  if(p.kind==='lucky'){
+    id='lucky'; title='Lucky Bite'; ic=icon(p.prizeKind||'other');
+    what='Every '+ordinal(p.every)+' visit our staff confirm wins: '+esc(p.prize)+'.';
+  }else if(p.kind==='stamps'){
+    id='stamps'; title='Stamp card'; ic=icon(p.prizeKind||'stamps');
+    what='A full card of '+Number(p.every).toLocaleString('en-US')+' visits wins: '+esc(p.prize)+'. It lasts '+Number(p.days)+' days.';
+  }else{
+    id='invite'; title='Invite a friend'; ic=icon('invite');
+    what='After a visit, you pick a dish you recommend; one friend gets '+esc(p.discount)+' on it, from the next day, for '+Number(p.days)+' days.';
+  }
+  return '<section class="r-card" id="'+id+'">'
+    + '<div class="r-head">'+ic+'<h2>'+title+'</h2></div>'
+    + '<p class="r-what">'+what+'</p>'
+    + '<div class="r-terms-label">Terms and conditions</div>'
+    + '<p class="r-terms">'+esc(p.terms)+'</p>'
+    + '</section>';
+}
+
+async function boot(){
+  const q = new URLSearchParams(location.search);
+  const rid = Number(q.get('r')) || DEFAULT_RESTAURANT_ID;
+  let res, data = {};
+  try{
+    res = await fetch('/api/checkins', { method:'POST', headers:{'Content-Type':'application/json'},
+                                         body: JSON.stringify({ action:'reward_terms', restaurantId: rid }) });
+    try{ data = await res.json(); }catch(e){}
+  }catch(e){ res = { ok:false }; data = { error:'Could not reach the server. Check your connection and try again.' }; }
+  if(!res.ok){ wrap().innerHTML = '<div class="m-err">'+esc(data.error || 'Could not open the reward terms.')+'</div>'; return; }
+  document.title = 'Reward terms · '+(data.restaurant||'The restaurant');
+  const name = esc(data.restaurant || 'The restaurant');
+  const when = data.updatedAt ? new Date(data.updatedAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'America/New_York'}) : '';
+  const progs = data.programs || [];
+  wrap().innerHTML =
+      '<div class="r-card"><div class="r-eyebrow">'+name+'</div>'
+    + '<h1>The terms of our rewards</h1>'
+    + '<p class="r-intro">Written by '+name+'. Every reward is offered, paid for and given by the restaurant. Seb&rsquo;s Analytics and Fork&rsquo;s Rating do not give or pay for any reward.</p>'
+    + (when ? '<p class="r-updated">Last updated '+esc(when)+'</p>' : '')
+    + '</div>'
+    + (progs.length ? progs.map(function(p){ return section(p, name); }).join('')
+                    : '<div class="r-card"><p class="r-intro">'+name+' has no rewards running right now.</p></div>')
+    + '<p class="r-foot">These terms apply together with the site&rsquo;s <a href="/terms">Terms of Service</a>.</p>';
+  // The link came with #lucky (or #stamps, #invite): bring that reward into view
+  // now that it exists, and mark it (CSS :target does not see a section that
+  // arrives after the page).
+  markHere(true);
+}
+function markHere(scroll){
+  document.querySelectorAll('.r-here').forEach(function(e){ e.classList.remove('r-here'); });
+  const t = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+  if(!t) return;
+  t.classList.add('r-here');
+  if(scroll) t.scrollIntoView({ block:'start' });
+}
+window.addEventListener('hashchange', function(){ markHere(false); });
+boot();
+</script>
+</body>
+</html>
