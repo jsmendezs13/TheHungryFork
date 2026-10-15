@@ -150,6 +150,36 @@
   .m-tab.on { background:var(--ink); color:var(--white); }
   .m-gear { flex:none; width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:#fff; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; -webkit-tap-highlight-color:transparent; }
   .m-gear.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  /* r34: a red dot on the settings button: support messages not read yet */
+  .m-gear { position:relative; }
+  .m-gear-dot { position:absolute; top:-4px; right:-4px; min-width:19px; height:19px; padding:0 4px; border-radius:999px; background:var(--red); color:#fff; border:2px solid var(--white);
+                font-size:.6rem; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; font-family:var(--sans); box-sizing:border-box; }
+  /* r34: Settings → the sanitary inspection grade */
+  .rv-g-tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:.85rem 0 .5rem; }
+  .rv-g-tile { height:98px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border-radius:12px; border:1px solid #E2D6C6; background:#fff;
+               color:var(--text); font-family:var(--sans); font-size:.72rem; font-weight:500; cursor:pointer; padding:4px 0; min-width:0; -webkit-tap-highlight-color:transparent; }
+  .rv-g-tile img { width:56px; height:56px; object-fit:contain; display:block; }
+  .rv-g-tile .rv-g-none { width:50px; height:50px; margin:3px 0; border-radius:50%; border:1.5px dashed #CDBFAE; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  .rv-g-tile.on { border:1.5px solid var(--red); background:var(--red-light); color:var(--red-dark); font-weight:600; }
+  .rv-g-tile:disabled { cursor:default; }
+  .rv-g-sees { font-size:.78rem; color:var(--text); margin:.15rem 0 .2rem; }
+  .rv-g-note { font-size:.74rem; color:var(--muted); line-height:1.55; margin:.45rem 0 .2rem; }
+  .rv-g-note a { color:var(--blue); font-weight:600; }
+  /* r34: Settings → Support: the restaurant's conversation with Seb's Analytics */
+  .sp-sub { font-size:.82rem; color:var(--muted); line-height:1.55; margin-top:.3rem; }
+  .sp-msgs { max-height:440px; overflow-y:auto; background:var(--off-white); border-radius:12px; padding:.75rem .7rem; margin:.85rem 0 .75rem; display:flex; flex-direction:column; gap:.5rem; overscroll-behavior:contain; }
+  .sp-msgs .mg-bub { max-width:88%; }
+  .sp-empty { color:var(--muted); font-size:.82rem; line-height:1.55; text-align:center; padding:1.1rem .6rem; }
+  .sp-seen { align-self:flex-end; font-size:.62rem; color:var(--muted); margin-top:-.3rem; }
+  .sp-text { display:block; width:100%; min-height:96px; resize:vertical; font-family:var(--sans); font-size:.88rem; line-height:1.5; padding:.65rem .8rem;
+             border:1px solid var(--border); border-radius:12px; background:#fff; color:var(--text); }
+  .sp-text:focus { outline:none; border-color:var(--red); }
+  .sp-row { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.55rem; }
+  .sp-count { font-size:.7rem; color:var(--muted); }
+  .sp-count.over { color:var(--red); font-weight:600; }
+  .sp-waiting { margin-top:.75rem; font-size:.76rem; color:var(--muted); display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
+  .sp-wait { font-family:var(--sans); font-size:.76rem; font-weight:600; border:1px solid rgba(176,16,21,.35); background:var(--red-light); color:var(--red-dark); border-radius:999px; padding:.35rem .75rem; cursor:pointer; }
+  .sp-foot { font-size:.72rem; color:var(--muted); line-height:1.55; margin-top:.75rem; }
 
   /* The corner menu's list is invisible while it is closed, but it is still a
      tall box in the top-right corner, and it swallowed taps on the gear and the
@@ -649,6 +679,8 @@ async function boot(){
   mountPage();
   // The role icon in the header, with guest messages waiting, comes here.
   if(window.location.hash === '#messages') msgOpenFromHash();
+  if(/^#support/.test(window.location.hash)) supFromHash();     // r34: the link in a support email
+  supStart();
 }
 
 // Draws the page for the current tab and loads what that tab needs.
@@ -674,6 +706,7 @@ function switchTab(t){
 
 window.addEventListener('hashchange', function(){
   if(window.location.hash === '#messages'){ if(ACCESS && RESTAURANT) msgOpenFromHash(); return; }
+  if(/^#support/.test(window.location.hash)){ if(ACCESS && RESTAURANT) supFromHash(); return; }
   const t = tabFromHash();
   if(t && ACCESS && RESTAURANT && t!==TAB) switchTab(t);
 });
@@ -722,7 +755,8 @@ function tabsBar(){
   // From Menu or Team it opens the settings (they live with Reservations).
   const gear = '<button type="button" class="m-gear'+(TAB==='reservations' && RV.view==='settings'?' on':'')+'" aria-label="Numbers and settings" title="Numbers and settings" onclick="rvGearTap()">'
       + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
-      + '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>';
+      + '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>'
+      + supDotHtml() + '</button>';
   if(tabs.length < 2) return gear ? '<div class="m-tabs"><div class="m-tabbar"><span class="m-tab on">Reservations</span></div>'+gear+'</div>' : '';
   return '<div class="m-tabs"><div class="m-tabbar" role="tablist">'
     + tabs.map(t => '<button type="button" role="tab" class="m-tab'+(t===TAB?' on':'')+'" aria-selected="'+(t===TAB)+'" onclick="switchTab(\''+t+'\')">'+TABS[t]+'</button>').join('')
@@ -1437,6 +1471,7 @@ function rvRender(){
     const kept = rvKeptInputs();
     root.innerHTML = rvSettingsHtml();
     rvPutBack(kept);
+    supAfterPaint();
     return;
   }
   if(RV.error && !RV.day){
@@ -2252,7 +2287,7 @@ document.addEventListener('change', rvMarkTyped, true);
 // survives the whole page being redrawn when the phone is picked up again.
 function rvMarkTyped(e){
   const t = e.target;
-  if(t && t.id && /^rv-(r|a|h|l)-/.test(t.id) && t.closest && t.closest('#rv-root')) RV.typed[t.id] = t.type==='checkbox' ? t.checked : t.value;
+  if(t && t.id && /^rv-(r|a|h|l|s)-/.test(t.id) && t.closest && t.closest('#rv-root')) RV.typed[t.id] = t.type==='checkbox' ? t.checked : t.value;
 }
 // RV.forget: names ending in "-" are a whole section (rv-r-, rv-h-); any other
 // name is one exact field (rv-a-seats-5 is not rv-a-seats-52).
@@ -2291,6 +2326,7 @@ function rvOpenSettings(){
 async function rvLoadSettings(keepDraft){
   if(!RV.settings) rvRender();
   const gen = RV.gen;
+  if(levelHere() >= 2) supLoad(keepDraft);            // r34: the support conversation, at the same time
   try{
     const data = await rvApi({action:'staff_settings'});
     if(gen !== RV.gen) return;
@@ -2299,6 +2335,7 @@ async function rvLoadSettings(keepDraft){
     const edited = RV.settings && RV.hoursDraft && JSON.stringify(RV.hoursDraft) !== JSON.stringify(RV.settings.hours);
     RV.settings = data; RV.settingsError = null;
     if(!keepDraft) RV.loyaltyDraft = null;      // r31: switches not saved yet are kept only on a quiet refresh
+    if(!keepDraft) RV.gradeDraft = undefined;   // r34: the same for a grade tapped but not saved
     if(!keepDraft || !edited){
       RV.hoursDraft = data.hours.map(h => Object.assign({}, h));
       RV.hoursBase = data.hours.map(h => Object.assign({}, h));
@@ -2315,7 +2352,217 @@ function rvSettingsHtml(){
   return back
     + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
-    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S);
+    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S)
+    + rvGradeHtml(S) + rvSupportHtml();
+}
+
+// ── r34: THE SANITARY INSPECTION GRADE ──
+// Sebastian, 15 Oct: the restaurant sets its own letter — A, B or C — or none,
+// and then the menu shows no grade. The menu shows it on every dish. Seb's
+// Analytics does not check it; the Terms of Service say the card posted at the
+// restaurant's door is the official one. Managers and owners choose; crew see it.
+const RV_GRADES = ['A','B','C'];
+function rvGradeChosen(G){ return RV.gradeDraft !== undefined ? RV.gradeDraft : (G.grade || ''); }
+function rvGradeTap(g){
+  const S = RV.settings;
+  if(!S || !S.canEdit || !S.grade || !S.grade.ready) return;
+  RV.gradeDraft = g;
+  rvRender();
+}
+function rvGradeHtml(S){
+  const G = S.grade, edit = S.canEdit;
+  if(!G) return '';
+  const head = '<div class="m-eyebrow">Sanitary inspection grade</div>';
+  if(!G.ready) return '<div class="m-card" id="rv-grade">'+head+'<div class="m-sub">Not set up yet: migration 24 has not been run.</div></div>';
+  const chosen = rvGradeChosen(G), dis = edit ? '' : ' disabled';
+  const tile = (g) => '<button type="button" class="rv-g-tile'+(chosen===g?' on':'')+'" id="rv-g-'+(g||'none')+'" aria-pressed="'+(chosen===g)+'"'+dis+' onclick="rvGradeTap(\''+g+'\')">'
+    + (g ? '<img src="/_vercel/image?url=%2Fgrade-'+g.toLowerCase()+'.png&w=256&q=75" data-orig="/grade-'+g.toLowerCase()+'.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt="">'
+         : '<span class="rv-g-none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14"/></svg></span>')
+    + '<span>'+(g ? 'Grade '+g : 'Don’t show')+'</span></button>';
+  const changed = chosen !== (G.grade || '');
+  return '<div class="m-card" id="rv-grade">'+head
+    + '<div class="m-sub">The New York City Health Department letter grade your menu shows, on every dish. You choose it, or choose not to show one.</div>'
+    + '<div class="rv-g-tiles">'+RV_GRADES.map(tile).join('')+tile('')+'</div>'
+    + '<div class="rv-g-sees">Guests see: <strong>'+(chosen ? 'Grade '+chosen+' on every dish' : 'no grade')+'</strong></div>'
+    + '<div class="rv-g-note">Show only the grade on the card posted at your door. Seb’s Analytics doesn’t check it: the restaurant is responsible for it (<a href="/terms#grades" target="_blank" rel="noopener">Terms of Service</a>).</div>'
+    + (G.changedOn ? '<div class="rv-g-note">Last changed '+esc(G.changedOn)+(G.changedBy ? ' by '+esc(G.changedBy) : '')+'.</div>' : '')
+    + (edit ? '<div style="margin-top:.8rem;"><button type="button" class="m-save" id="rv-g-save"'+(changed?'':' disabled')+' onclick="rvGradeSave(this)">Save the grade</button></div>' : '')
+    + '</div>';
+}
+async function rvGradeSave(btn){
+  const S = RV.settings;
+  if(!S || !S.grade) return;
+  const g = rvGradeChosen(S.grade);
+  if(btn) btn.disabled = true;
+  try{
+    const data = await rvApi({action:'staff_grade_save', grade: g || null});
+    S.grade = data.grade; RV.gradeDraft = undefined;
+    showToast(g ? 'Saved: your menu shows grade '+g : 'Saved: your menu shows no grade');
+  }catch(e){ if(e.status !== 401) showToast(e.message); }
+  rvRender();
+}
+
+// ── r34: SUPPORT — WRITE TO SEB'S ANALYTICS ──
+// Sebastian, 15 Oct: managers and owners write to Seb's Analytics from the end
+// of Settings, and Seb's Analytics answers there. One conversation per
+// restaurant (api/_lib/support.js). The other side gets an email when a message
+// arrives; a red dot on the settings button says how many are not read yet.
+// The platform admin (Sebastian) answers as Seb's Analytics at any restaurant,
+// and sees which other restaurants are waiting for an answer.
+const SUP = { total: 0, list: [], ready: true, thread: null, error: null, notReady: false, sending: false, timer: null, ticks: 0, scrollTo: false, gen: 0 };
+function supReset(){ SUP.total = 0; SUP.list = []; SUP.thread = null; SUP.error = null; SUP.notReady = false; SUP.sending = false; SUP.gen += 1; supPaintDot(); }
+function supDotHtml(){
+  if(!(SUP.total > 0)) return '';
+  return '<span class="m-gear-dot" aria-label="'+SUP.total+' support message'+(SUP.total===1?'':'s')+' not read">'+(SUP.total > 9 ? '9+' : SUP.total)+'</span>';
+}
+function supPaintDot(){
+  const g = document.querySelector('.m-gear');
+  if(!g) return;
+  const old = g.querySelector('.m-gear-dot');
+  if(old) old.remove();
+  const html = supDotHtml();
+  if(html) g.insertAdjacentHTML('beforeend', html);
+}
+async function supUnread(){
+  if(!ACCESS || !RESTAURANT || !currentSession) return;
+  const gen = SUP.gen;
+  try{
+    const d = await rvApi({action:'support_unread'});
+    if(gen !== SUP.gen) return;
+    SUP.ready = d.ready !== false; SUP.total = Number(d.total) || 0; SUP.list = d.restaurants || [];
+  }catch(e){ return; }
+  supPaintDot();
+}
+function supStart(){
+  supUnread();
+  if(SUP.timer) return;
+  // Every 20 seconds while Settings is open (the conversation), every minute otherwise (the dot).
+  SUP.timer = setInterval(function(){
+    if(document.hidden || !ACCESS || !RESTAURANT || !currentSession) return;
+    SUP.ticks += 1;
+    if(TAB==='reservations' && RV.view==='settings' && levelHere() >= 2) supLoad(true);
+    else if(SUP.ticks % 3 === 0) supUnread();
+  }, 20000);
+}
+async function supLoad(quiet){
+  if(!RESTAURANT || levelHere() < 2) return;
+  const rid = RESTAURANT.id, gen = SUP.gen;
+  try{
+    const d = await rvApi({action:'support_thread'});
+    if(gen !== SUP.gen || String(rid) !== String(RESTAURANT.id)) return;
+    SUP.thread = d; SUP.error = null; SUP.notReady = false;
+  }catch(e){
+    if(gen !== SUP.gen || e.status === 401) return;
+    if(e.status === 409) SUP.notReady = true;
+    else if(!quiet || !SUP.thread) SUP.error = e.message;
+  }
+  supPaint();
+  if(SUP.total > 0) supUnread();         // they are read now: the dot goes
+}
+function supThreadHere(){ return SUP.thread && SUP.thread.restaurant && String(SUP.thread.restaurant.id) === String(RESTAURANT.id) ? SUP.thread : null; }
+function supBodyHtml(){
+  const T = supThreadHere(), plat = !!(ACCESS && ACCESS.isPlatformAdmin);
+  if(SUP.notReady) return '<div class="m-sub" style="margin-top:.6rem;">Not set up yet: migration 24 has not been run.</div>';
+  if(!T) return SUP.error ? '<div class="m-err" style="margin:.8rem 0 0;">'+esc(SUP.error)+'</div>' : '<div class="m-skel" style="height:120px;margin:.8rem 0;"></div>';
+  const list = T.messages || [];
+  let msgs = list.map(m => '<div class="mg-bub '+(m.mine?'staff':'guest')+'"><span class="mg-bub-who">'+esc(m.who)+' <i>· '+esc(m.when)+'</i></span>'+esc(m.body)+'</div>').join('');
+  const last = list[list.length-1];
+  if(last && last.mine && last.seen) msgs += '<div class="sp-seen">Seen</div>';
+  if(!list.length) msgs = '<div class="sp-empty">'+(plat ? 'No messages from '+esc(T.restaurant.name)+' yet.' : 'No messages yet. Write the first one below.')+'</div>';
+  const waiting = plat && T.waiting && T.waiting.length
+    ? '<div class="sp-waiting">Also waiting for an answer: '+T.waiting.map(r => '<button type="button" class="sp-wait" onclick="supGo('+Number(r.id)+')">'+esc(r.name)+' ('+Number(r.unread)+')</button>').join('')+'</div>'
+    : '';
+  return waiting + '<div class="sp-msgs" id="sp-msgs" aria-live="polite">'+msgs+'</div>';
+}
+function rvSupportHtml(){
+  if(levelHere() < 2) return '';            // managers, owners and the platform admin; crew do not see it
+  const plat = !!(ACCESS && ACCESS.isPlatformAdmin), name = esc(RESTAURANT.name || 'this restaurant');
+  const sub = plat
+    ? 'The managers and owners of '+name+' write here. You answer as Seb’s Analytics; they get an email when you do, if their account has an email.'
+    : 'A question, a problem or an idea about your site? Write it here. Seb’s Analytics answers here, and you get an email when we do if your account has an email (My information).';
+  return '<div class="m-card" id="sp-card">'
+    + '<div class="m-eyebrow">Support</div>'
+    + '<div class="m-h" style="font-size:1.35rem;">'+(plat ? 'Messages from '+name : 'Write to Seb’s Analytics')+'</div>'
+    + '<div class="sp-sub">'+sub+'</div>'
+    + '<div id="sp-body">'+supBodyHtml()+'</div>'
+    + (SUP.notReady ? '' :
+        '<textarea class="sp-text" id="rv-s-text" maxlength="1000" aria-label="Your message" placeholder="'+(plat ? 'Answer as Seb’s Analytics…' : 'Write to Seb’s Analytics…')+'" oninput="supCount(this)"'
+        + ' onkeydown="if(event.key===\'Enter\'&&(event.ctrlKey||event.metaKey)){event.preventDefault();supSend();}"></textarea>'
+        + '<div class="sp-row"><span class="sp-count" id="sp-count">0 / 1000</span>'
+        + '<button type="button" class="m-save" id="sp-send" onclick="supSend()"'+(SUP.sending?' disabled':'')+'>'+(SUP.sending?'Sending…':'Send')+'</button></div>')
+    + '<div class="sp-foot">Only the owners and managers of '+name+', and Seb’s Analytics, see this conversation.</div>'
+    + '</div>';
+}
+function supCount(el){
+  const n = el ? el.value.length : 0, c = document.getElementById('sp-count');
+  if(c){ c.textContent = n+' / 1000'; c.classList.toggle('over', n > 1000); }
+}
+// Only the conversation is drawn again (what is being typed stays as it is).
+function supPaint(){
+  if(TAB!=='reservations' || RV.view!=='settings') return;
+  const body = document.getElementById('sp-body');
+  if(!body){ return; }
+  const box = document.getElementById('sp-msgs');
+  const atEnd = !box || box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+  body.innerHTML = supBodyHtml();
+  if(SUP.notReady && document.getElementById('rv-s-text')){ rvRender(); return; }
+  supAfterPaint(atEnd);
+}
+function supAfterPaint(toEnd){
+  const box = document.getElementById('sp-msgs');
+  if(box && toEnd !== false) box.scrollTop = box.scrollHeight;
+  supCount(document.getElementById('rv-s-text'));
+  if(SUP.scrollTo && supThreadHere()){
+    const card = document.getElementById('sp-card');
+    if(card){ SUP.scrollTo = false; card.scrollIntoView({block:'start'}); window.scrollBy(0, -12); }
+  }
+}
+async function supSend(){
+  const ta = document.getElementById('rv-s-text');
+  const text = ta ? ta.value.trim() : '';
+  if(!text){ showToast('Write your message first.'); if(ta) ta.focus(); return; }
+  if(text.length > 1000){ showToast('A message is 1,000 characters at most.'); return; }
+  if(SUP.sending) return;
+  SUP.sending = true;
+  const btn = document.getElementById('sp-send');
+  if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
+  const plat = !!(ACCESS && ACCESS.isPlatformAdmin), rid = RESTAURANT.id;
+  try{
+    const d = await rvApi({action:'support_send', body: text});
+    if(String(rid) === String(RESTAURANT.id)){
+      SUP.thread = d; SUP.error = null;
+      delete RV.typed['rv-s-text'];
+      const box = document.getElementById('rv-s-text');
+      if(box) box.value = '';
+    }
+    showToast((plat ? 'Sent to '+(d.restaurant ? d.restaurant.name : 'the restaurant') : 'Sent to Seb’s Analytics')
+      + (d.emailed ? (plat ? '. They got an email.' : '. We got an email.') : '.'));
+  }catch(e){ if(e.status === 409) SUP.notReady = true; if(e.status !== 401) showToast(e.message); }
+  SUP.sending = false;
+  const b2 = document.getElementById('sp-send');
+  if(b2){ b2.disabled = false; b2.textContent = 'Send'; }
+  supPaint();
+}
+// Another restaurant waiting for an answer (the platform admin): its settings, at Support.
+function supGo(id){
+  if(!ACCESS || !ACCESS.restaurants.some(r => String(r.id) === String(id))) return;
+  switchRestaurant(id);
+  supToSettings();
+}
+function supToSettings(){
+  TAB = 'reservations';
+  if(history.replaceState) history.replaceState(null, '', '#reservations');
+  RV.view = 'settings'; RV.armed = null; SUP.scrollTo = true;
+  render(); window.scrollTo(0, 0);
+  rvLoadSettings(false);
+}
+// The link in a support email: manager#support=<restaurant id>.
+function supFromHash(){
+  const m = /^#support(?:=(\d+))?$/.exec(window.location.hash || '');
+  if(!m) return;
+  if(m[1] && String(m[1]) !== String(RESTAURANT.id) && ACCESS.restaurants.some(r => String(r.id) === m[1])) switchRestaurant(m[1]);
+  if(levelHere() < 2){ if(history.replaceState) history.replaceState(null, '', '#reservations'); return; }
+  supToSettings();
 }
 
 // ── r31: LUCKY BITE · STAMP CARD · INVITES ──
@@ -3296,7 +3543,7 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && MSG.o
   if(typeof plain !== 'function') return;
   window.logout = function(){
     const out = plain.apply(this, arguments);
-    try{ rvReset(); rvPaintSheet(); msgHide(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; boot(); }catch(e){}
+    try{ rvReset(); rvPaintSheet(); msgHide(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; supReset(); boot(); }catch(e){}
     return out;
   };
 })();
