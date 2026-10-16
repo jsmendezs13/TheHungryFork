@@ -55,6 +55,7 @@ import {
 } from './_lib/requestchat.js';
 import { profile } from './_lib/profile.js';
 import { support } from './_lib/support.js';      // r34
+import { menuset, publicTop } from './_lib/menuset.js';   // r36
 import { arrivalTokens, qrDataUrl, qrAttachment, QR_CID } from './_lib/qr.js';
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
@@ -116,6 +117,8 @@ export default async function handler(req, res) {
   if (action.startsWith('staff_msg')) return staffMessages(req, res, body, action, { answerByEmail });
   // r34: Settings → Support, the restaurant's conversation with Seb's Analytics.
   if (action === 'support_unread' || action === 'support_thread' || action === 'support_send') return support(req, res, body, action);
+  // r36: manager page → Menu: the Top Rated caves and the order of the dishes.
+  if (action === 'menu_settings' || action === 'menu_top_save' || action === 'dish_order_save') return menuset(req, res, body, action);
   // The confirmation email is lent to the staff side, so a big party the
   // manager says yes to hears about it the same way an online booking does.
   // r30: and the request's conversation follows the table it becomes.
@@ -243,14 +246,18 @@ async function hours(req, res, body) {
 // r34: and the restaurant's sanitary inspection grade, as the manager chose it
 // in Settings: 'A', 'B', 'C', or null (the menu shows none). Not in the answer
 // at all when it cannot be read (before migration 24): the page then shows none.
+// r36: and how many dishes each Top Rated cave of the menu shows (0 = off), as
+// the manager chose in the manager page → Menu. Not in the answer when it
+// cannot be read (before migration 25): the menu then shows 5 in each.
 async function publicHours(restaurantId, timezone) {
-  const [wk, hol, tz, gr] = await Promise.all([
+  const [wk, hol, tz, gr, top] = await Promise.all([
     sb(`/restaurant_hours?restaurant_id=eq.${restaurantId}&select=weekday,opens_at,closes_at&order=weekday.asc,opens_at.asc&limit=28`),
     // one day looser than "today" in the query, exact below once the timezone is known
     sb(`/restaurant_closures?restaurant_id=eq.${restaurantId}&closure_date=gte.${new Date(Date.now() - 36 * 3600 * 1000).toISOString().slice(0, 10)}`
        + '&select=closure_date,opens_at,closes_at,reason&order=closure_date.asc&limit=60'),
     timezone ? Promise.resolve(null) : sb(`/restaurant_booking_settings?restaurant_id=eq.${restaurantId}&select=timezone&limit=1`),
     sb(`/restaurants?id=eq.${Number(restaurantId)}&select=sanitary_grade&limit=1`),
+    publicTop(restaurantId).catch(() => null),
   ]);
   if (!wk.ok || !Array.isArray(wk.data)) return null;
   const zone = timezone || (tz && tz.ok && Array.isArray(tz.data) && tz.data[0] && tz.data[0].timezone) || 'America/New_York';
@@ -269,6 +276,7 @@ async function publicHours(restaurantId, timezone) {
     hours: wk.data.map((h) => ({ weekday: h.weekday, opens: String(h.opens_at).slice(0, 5), closes: String(h.closes_at).slice(0, 5) })),
     holidays, today, timezone: zone,
     ...(graded ? { grade: ['A', 'B', 'C'].includes(graded.sanitary_grade) ? graded.sanitary_grade : null } : {}),
+    ...(top ? { top } : {}),
   };
 }
 
