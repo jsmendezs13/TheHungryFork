@@ -355,3 +355,13 @@
 .hf-prize-ico { flex:none; vertical-align:-3px; margin-right:.35rem; }
 .hf-l-vr-prize .hf-prize-ico { vertical-align:-4px; }
 
+
+/* r35 (Sebastian, 16 Oct): "Terms and conditions apply" opens the restaurant's
+   words for that reward in place, under the link; tapping again folds them. */
+.hf-terms { display:block; }
+button.hf-l-terms { background:none; border:none; margin:0; cursor:pointer; text-align:inherit; -webkit-tap-highlight-color:transparent; }
+.hf-terms-text, .hf-l-prize-text .hf-terms-text { display:block; margin:.35rem 0 .25rem; padding:.55rem .75rem; background:#fff; border:1px solid #E2D6C6; border-radius:10px;
+  font-family:'Inter','Segoe UI',system-ui,sans-serif; font-size:.76rem; line-height:1.5; color:#3E342C; white-space:pre-line; overflow-wrap:anywhere; text-align:left; }
+.hf-terms-text[hidden], .hf-l-prize-text .hf-terms-text[hidden] { display:none !important; }
+/* r35: a friend's invite that works from tomorrow says when, and what will open it */
+.hf-l-prize-text .hf-l-when { color:#8A5A0B; font-weight:500; }
