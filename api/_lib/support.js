@@ -133,7 +133,7 @@ async function placeOf(rid) {
 async function messagesOf(rid) {
   const got = await sb(`/support_messages?restaurant_id=eq.${rid}&select=id,from_platform,author_name,body,created_at,read_at`
                      + `&order=created_at.desc,id.desc&limit=${SHOWN}`);
-  if (!got.ok || !Array.isArray(got.data)) return { missing: got.status === 404 };
+  if (!got.ok || !Array.isArray(got.data)) return { missing: got.status === 404, status: got.status };
   return { list: got.data.reverse() };
 }
 
@@ -155,7 +155,7 @@ function dress(list, platform, place, now = Date.now()) {
 async function threadAnswer(res, access, who, place, status = 200, extra = {}) {
   const got = await messagesOf(who.rid);
   if (got.missing) return res.status(409).json({ error: NOT_READY });
-  if (!got.list) return res.status(502).json({ error: 'Could not read the messages. Please try again.' });
+  if (!got.list) return res.status(502).json({ error: 'Could not read the messages (the database answered ' + got.status + '). Please try again.' });
   // Reading is what makes them read: every message from the other side not
   // read yet — also older ones than the 100 shown, or the dot would never go.
   if (got.list.some((m) => m.from_platform !== who.platform && !m.read_at)
@@ -211,7 +211,10 @@ async function send(res, access, body) {
   });
   if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) {
     if (saved.status === 404) return res.status(409).json({ error: NOT_READY });
-    return res.status(502).json({ error: 'Could not send that. Please try again.' });
+    // r35: with the database's answer in it (401/403: the server's permission on support_messages)
+    console.error('[support] send failed', who.rid, saved.status);
+    return res.status(502).json({ error: 'Could not send that (the database answered ' + saved.status + ').'
+      + (saved.status === 401 || saved.status === 403 ? ' The server is missing its permission: Seb\u2019s Analytics has to run the grants fix.' : ' Please try again.') });
   }
   const msg = saved.data[0];
   console.log('[support] taster', access.tasterId, who.platform ? '(Seb’s Analytics)' : '', 'wrote to', who.rid, 'message', msg.id);
