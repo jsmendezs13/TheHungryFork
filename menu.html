@@ -297,6 +297,9 @@
   .portal-ring::after { content:''; position:absolute; inset:14%; border-radius:50%; border:2px solid rgba(255,90,70,.5); box-shadow:0 0 14px 3px rgba(200,30,20,.4); }
   @keyframes portalPulse { 0%,100%{transform:scale(1);opacity:.85;} 50%{transform:scale(1.06);opacity:1;} }
   .portal-emoji { position:relative; font-size:3rem; filter:drop-shadow(0 5px 12px rgba(0,0,0,.7)); }
+  /* r36: the four Top Rated caves: "TOP RATED" small over the part of the menu, and a star beside its dish */
+  .portal-arch-top { display:block; font-size:.62rem; letter-spacing:.3em; color:#F2C14E; margin-bottom:2px; }
+  .portal-star { position:absolute; top:24%; right:24%; font-size:1.35rem; filter:drop-shadow(0 2px 6px rgba(0,0,0,.8)); }
   .warp-arrow { position:absolute; top:50%; transform:translateY(-50%); z-index:200; background:rgba(252,249,244,.12); border:1px solid rgba(252,249,244,.4); color:var(--white); width:40px; height:40px; border-radius:50%; font-size:1.4rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
   .warp-arrow:hover { background:rgba(252,249,244,.25); }
   .warp-arrow-l { left:10px; } .warp-arrow-r { right:10px; }
@@ -892,6 +895,57 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
+<script>
+// r36 (Sebastian, 16 Oct): the way back. "‹ Site" goes back to the page you came from, as you left it (the
+// browser's own Back, so that page comes back where it was), and says which page: "‹ Manager", "‹ Menu"…
+// Opened from outside the site (a QR code, an email, a typed address) it stays "‹ Site" and goes home. A page
+// that opened in a new tab (its address has nt=1) closes that tab, which shows the page that opened it. Places
+// this page adds to the browser's history (a #hash, a dish) are skipped. The same lines on every page (the tests
+// check they match).
+(function(){
+  var NAMES={'':'Site',index:'Site',menu:'Menu',manager:'Manager',reservations:'Reservations',checkin:'Check In',rewards:'Reward terms',terms:'Terms',privacy:'Privacy',invite:'Invite'};
+  function page(p){return String(p||'').replace(/^\/+|\/+$/g,'').replace(/\.html$/,'');}
+  var from=null,depth=0,H=window.history,newTab=/[?&]nt=1(&|$)/.test(location.search);
+  try{
+    var r=document.referrer?new URL(document.referrer):null,rp=r?page(r.pathname):'';
+    // (the home page with ?dish= in its address only passes the visitor on to the menu: it is not a page to go back to)
+    if(r&&r.origin===location.origin&&rp!==page(location.pathname)&&Object.prototype.hasOwnProperty.call(NAMES,rp)
+       &&!((rp===''||rp==='index')&&/[?&]dish=/.test(r.search)))from=r;
+  }catch(e){}
+  try{
+    var push=H.pushState,rep=H.replaceState;
+    var mark=function(s){if(s===null||s===undefined)s={};if(typeof s==='object'&&!Array.isArray(s)){s=Object.assign({},s);s.hfDepth=depth;}return s;};
+    if(H.state&&typeof H.state.hfDepth==='number')depth=H.state.hfDepth;
+    rep.call(H,mark(H.state),'');
+    H.pushState=function(s,t,u){depth++;return push.call(H,mark(s),t,u);};
+    H.replaceState=function(s,t,u){return rep.call(H,mark(s),t,u);};
+    window.addEventListener('popstate',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;});
+    window.addEventListener('hashchange',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;else{depth++;rep.call(H,mark(s),'');}});
+  }catch(e){}
+  function go(){location.href=from?from.href:'/';}
+  window.hfBackFrom=from?NAMES[page(from.pathname)]:null;
+  window.hfBackCan=function(){return !!from&&H.length>depth+1;};
+  window.hfBack=function(){
+    if(!from){location.href='/';return;}
+    if(H.length<=depth+1){if(newTab){try{window.close();}catch(e){}}setTimeout(go,newTab?300:0);return;}
+    var t=setTimeout(go,900);
+    window.addEventListener('pagehide',function(){clearTimeout(t);});
+    H.go(-(depth+1));
+  };
+  function paint(){
+    var els=document.querySelectorAll('[data-hf-back]');
+    for(var i=0;i<els.length;i++){
+      var a=els[i],name=window.hfBackFrom;
+      if(from)a.setAttribute('href',from.href);
+      if(a.getAttribute('data-hf-back')==='icon')a.setAttribute('aria-label',name?'Back to '+name:'Home');
+      else a.textContent='‹ '+(name||'Site');
+      if(!a.hfBack){a.hfBack=1;a.addEventListener('click',function(ev){if(!from||ev.metaKey||ev.ctrlKey||ev.shiftKey||ev.altKey)return;ev.preventDefault();window.hfBack();});}
+    }
+  }
+  paint();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);
+})();
+</script>
 
 
 <!-- TOP BAR -->
@@ -919,7 +973,7 @@
 <div id="cave" class="cave-overlay">
   <div class="cave-topbar" aria-hidden="true"></div>
   <div class="cave-inner">
-    <button class="cave-back" onclick="exitCave()" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="cave-back" onclick="caveBackTap()" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20.5 C13 17, 20 12.5, 21 7 C21.8 2.8, 17.2 1.6, 13.8 3.4 C10 5.4, 6.4 8.2, 3 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 5.6 L3 11 L8.5 11.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <!-- The cave's name, for screen readers; what you SEE is the bar below. -->
     <div class="cave-title">The Menu</div>
     <div class="cave-cat cave-sr" id="cave-cat" aria-live="polite"></div>
@@ -1134,8 +1188,67 @@ async function sbFetch(path, method='GET', body=null){
 
 // ── DISHES (loaded from Supabase by dishes.js) ──
 const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
-const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks','top-rated'];
-const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},'top-rated':{label:'Top Rated',emoji:'\u2B50'}};
+// r36 (Sebastian, 16 Oct): four Top Rated caves instead of one: Starters, Entrées, Salads and Drinks, each
+// the best rated dishes of that part of the menu, as many as the manager chose (1 to 10), or not there at
+// all (the manager page → Menu). The numbers ride with the opening hours (HF_HOURS.top, taster.js); a
+// restaurant that never chose shows the four, with 5 dishes each. CATEGORY_ORDER is the caves on the menu now.
+const MENU_BASE=['chefs-pick','starters','entree','salads','sides','drinks'];
+const TOP_KEYS={'top-starters':'starters','top-entree':'entree','top-salads':'salads','top-drinks':'drinks'};
+let CATEGORY_ORDER=MENU_BASE.concat(Object.keys(TOP_KEYS));
+const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},
+  'top-starters':{label:'Top Rated Starters',short:'Starters',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
+  'top-salads':{label:'Top Rated Salads',short:'Salads',emoji:'\u{1F957}',top:true},'top-drinks':{label:'Top Rated Drinks',short:'Drinks',emoji:'\u{1F964}',top:true}};
+function topKind(key){return TOP_KEYS[key]||null;}
+function topCounts(){
+  const t=(typeof HF_HOURS!=='undefined'&&HF_HOURS.top)||null, o={};
+  Object.values(TOP_KEYS).forEach(k=>{o[k]=t&&typeof t[k]==='number'?t[k]:5;});
+  return o;
+}
+function menuOrder(){const c=topCounts();return MENU_BASE.concat(Object.keys(TOP_KEYS).filter(k=>c[TOP_KEYS[k]]>0));}
+// The ratings of the last twelve months (the same months as the score on each dish's card), all in one
+// request, so a Top Rated cave is in the same order as the numbers on its cards. Best first; a tie goes to the
+// dish with more ratings, then to the menu's own order. A dish nobody rated in those months is not in it.
+let TOP_RANKS={};
+async function loadTopRanks(){
+  try{
+    const since=encodeURIComponent(windowStartISO(ratingDefaultDays()));
+    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&created_at=gte.${since}&select=dish_id,flavor,worth_every_bite,signature_style&order=created_at.desc&limit=5000`);
+    if(!ok||!Array.isArray(data))return;
+    const by={};
+    data.forEach(r=>{const b=by[r.dish_id]||(by[r.dish_id]={sum:0,count:0});b.sum+=(r.flavor+r.worth_every_bite+r.signature_style)/3;b.count++;});
+    TOP_RANKS={};
+    Object.keys(by).forEach(id=>{TOP_RANKS[id]={avg:by[id].sum/by[id].count,count:by[id].count};caveRatings[id]=TOP_RANKS[id];});
+  }catch(e){/* no ratings read: the Top Rated caves say so */}
+}
+function topRatedDishes(kind){
+  const n=topCounts()[kind]||0;
+  return DISHES.map((d,i)=>({d,i,r:TOP_RANKS[d.dbId]})).filter(x=>x.d.category===kind&&x.r&&x.r.count>0)
+    .sort((a,b)=>b.r.avg-a.r.avg||b.r.count-a.r.count||a.i-b.i).slice(0,n).map(x=>x.d);
+}
+// The manager changed the caves (the fresh hours arrived after the menu was drawn): draw them again, staying
+// in front of the same cave when it is still there.
+let MENU_BUILT=false;
+function menuApplyTop(){
+  const next=menuOrder();
+  if(next.join()===CATEGORY_ORDER.join())return;
+  const key=CATEGORY_ORDER[warpIdx];
+  CATEGORY_ORDER=next;
+  let i=CATEGORY_ORDER.indexOf(key);
+  if(i<0)i=Math.min(warpIdx,CATEGORY_ORDER.length-1);
+  if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}
+  warpIdx=i;warpPos=i;activeFilter=CATEGORY_ORDER[i];
+  warpBuild();updateWarpCatName();warpRender();
+  caveCatBuild();caveCatW=[];caveCatMeasure();caveCatPos=caveCatTarget=warpIdx;caveCatRender();
+}
+document.addEventListener('hf-hours',()=>{if(MENU_BUILT)menuApplyTop();});
+// At the start: the numbers kept from the last visit, or the fresh ones (up to 1.5 s; then 5 each).
+function menuTopWait(ms){
+  return new Promise(res=>{
+    if(typeof HF_HOURS==='undefined'||HF_HOURS.top||HF_HOURS.fresh)return res();
+    const t=setTimeout(res,ms);
+    document.addEventListener('hf-hours',()=>{clearTimeout(t);res();},{once:true});
+  });
+}
 
 // ── STATE ──
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
@@ -1210,7 +1323,7 @@ function warpBuild(){
     const m=WARP_META[k];
     const p=document.createElement('div');
     p.className='warp-portal';p.dataset.idx=i;
-    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span></div></div>`;
+    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.top?'<span class="portal-arch-top">Top Rated</span>'+m.short:m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span>${m.top?'<span class="portal-star" aria-hidden="true">\u2B50</span>':''}</div></div>`;
     p.addEventListener('click',()=>{if(Math.abs(warpWrap(i-warpPos))>0.3)warpTo(i);else enterCave();});
     stage.appendChild(p);
   });
@@ -1258,7 +1371,7 @@ const STAR_GLYPH='<svg class="star-glyph" viewBox="0 0 100 100"><path fill="curr
 let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
 function caveListFor(key){
   if(key==='chefs-pick')return chefsPickDishes();
-  if(key==='top-rated')return[...DISHES].sort((a,b)=>a.name.localeCompare(b.name));
+  if(topKind(key))return topRatedDishes(topKind(key));     // r36
   return DISHES.filter(d=>d.category===key);
 }
 function enterCave(startId){
@@ -1280,6 +1393,31 @@ function enterCave(startId){
 function exitCave(){
   document.getElementById('cave').classList.remove('open');
   document.body.style.overflow='';
+  CAVE_ARRIVED=false;
+}
+// r36 (Sebastian, 16 Oct: back to exactly the window I was before). A cave the page opened by itself, because
+// the visitor came for it from another page of the site (a dish on the home page, Chef's Pick on the home
+// video), goes back to that page. A cave opened here goes back to the caves.
+let CAVE_ARRIVED=false;
+function caveBackTap(){
+  if(CAVE_ARRIVED&&typeof hfBackCan==='function'&&hfBackCan()){hfBack();return;}
+  exitCave();
+}
+// Coming back to the menu with the browser's Back (or "‹ Menu" on another page) shows the cave and the dish
+// you left. Most phones keep the page as it was; when one has to load it again, this puts it back.
+window.addEventListener('pagehide',()=>{
+  try{
+    const open=document.getElementById('cave').classList.contains('open')&&caveDishes.length;
+    sessionStorage.setItem('hf_menu_at',JSON.stringify({key:CATEGORY_ORDER[warpIdx],dish:open?caveDishes[caveDishIdx].id:null,view:open?caveViewIdx:0,arrived:open?CAVE_ARRIVED:false,at:Date.now()}));
+  }catch(e){}
+});
+function menuCameBack(){
+  try{
+    const nav=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];
+    if(!nav||nav.type!=='back_forward')return null;
+    const at=JSON.parse(sessionStorage.getItem('hf_menu_at')||'null');
+    return at&&Date.now()-at.at<2*3600*1000&&CATEGORY_ORDER.includes(at.key)?at:null;
+  }catch(e){return null;}
 }
 function recImgErr(img,emoji){
   if(hfImgBack(img))return;                  // r23: the lighter copy failed: the original first, then the emoji
@@ -1324,7 +1462,10 @@ function renderCave(animClass,mediaOnly){
   const hdots=document.getElementById('cave-hdots');
   if(!card)return;
   if(!caveDishes.length){
-    card.innerHTML=`${caveGradeBlock()}<div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
+    const tk=topKind(CATEGORY_ORDER[warpIdx]);           // r36: a Top Rated cave nobody has rated yet
+    card.innerHTML=tk
+      ?`${caveGradeBlock()}<div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">No ratings yet</div><p class="cave-about">When guests rate our ${WARP_META[tk].label.toLowerCase()}, the best rated will be here. Tried one? Rate it!</p></div>`
+      :`${caveGradeBlock()}<div class="cave-text-view" style="text-align:center;"><div class="cave-dish-name">Coming Soon</div><p class="cave-about">We are crafting this part of the menu. Check back soon!</p></div>`;
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
     caveScrollBar();
@@ -2385,7 +2526,16 @@ function openMyTastings(){
   document.getElementById('tastings-modal').classList.add('open');
   loadMyTastings();
 }
-function closeMyTastings(){document.getElementById('tastings-modal').classList.remove('open');}
+function closeMyTastings(){
+  document.getElementById('tastings-modal').classList.remove('open');
+  // r36: opened for another page of the site (its corner menu → My Tastings): closing it goes back there
+  if(TASTINGS_ARRIVED){
+    TASTINGS_ARRIVED=false;
+    if(typeof hfBackCan==='function'&&hfBackCan()){hfBack();return;}
+    try{const u=new URL(location.href);u.searchParams.delete('open');history.replaceState(history.state,'',u);}catch(e){}
+  }
+}
+let TASTINGS_ARRIVED=false;
 const PIN_SVG='<svg viewBox="0 0 24 24" class="pin-svg"><path fill="currentColor" d="M12 21s-7.2-4.6-9.3-9A5.4 5.4 0 0 1 12 6.1 5.4 5.4 0 0 1 21.3 12c-2.1 4.4-9.3 9-9.3 9z"/></svg>';
 const TASTING_STAR='<svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
 function getPins(){try{return JSON.parse(localStorage.getItem('hf_pins')||'[]');}catch(e){return[];}}
@@ -2548,7 +2698,7 @@ loadSession();
 loadMyLevel();
 (async function(){
   try{
-    await loadDishes();
+    await Promise.all([loadDishes(), loadTopRanks(), menuTopWait(1500)]);     // r36: the ratings and the Top Rated numbers too
   }catch(e){
     console.error('[menu] could not load dishes', e);
     showToast('The menu could not load. Please refresh in a moment.');
@@ -2556,15 +2706,30 @@ loadMyLevel();
               // prices is worse than an honest error.
   }
   loadOverallRating();
+  CATEGORY_ORDER=menuOrder();                 // r36: the Top Rated caves the manager chose
   warpInit();
+  MENU_BUILT=true;
   const params=new URLSearchParams(window.location.search);
+  // r36: My Tastings, asked for by another page's corner menu
+  if(params.get('open')==='tastings'){TASTINGS_ARRIVED=true;openMyTastings();}
+  // r36: back here with the browser's Back: the cave and the dish as they were
+  const back=menuCameBack();
+  if(back){
+    warpIdx=CATEGORY_ORDER.indexOf(back.key);warpPos=warpIdx;activeFilter=back.key;updateWarpCatName();warpRender();
+    if(back.dish&&caveListFor(back.key).some(d=>d.id===back.dish)){
+      enterCave(back.dish);CAVE_ARRIVED=!!back.arrived;
+      if(back.view)setTimeout(()=>{caveViewIdx=back.view;renderCave();},420);
+    }
+    return;
+  }
   const dishId=params.get('dish');
-  const cat=params.get('cat');
-  if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);return;}
+  let cat=params.get('cat');
+  if(cat==='top-rated')cat=CATEGORY_ORDER.find(k=>topKind(k))||null;      // the old single Top Rated cave
+  if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);CAVE_ARRIVED=true;return;}
   if(cat&&CATEGORY_ORDER.includes(cat)){
     warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
     // ?enter=1 opens the cave straight away — the home page video uses it.
-    if(params.get('enter')==='1'&&caveListFor(cat).length)enterCave();
+    if(params.get('enter')==='1'&&caveListFor(cat).length){enterCave();CAVE_ARRIVED=true;}
   }
 })();
 </script>
