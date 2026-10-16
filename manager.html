@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Manager · The Hungry Fork</title>
+<!-- r38 (Sebastian, 16 Oct): this page as an app on the staff's phones. Share → Add to Home Screen (iPhone) or
+     ⋮ → Add to Home screen / Install app (Android) puts the "HF Staff" icon on the phone; it opens this page full
+     screen, without the browser's bars. Only this page offers it: the guests' pages stay as they are. The clock
+     bar on top stays black (it never covers the page). staff-app.json says the rest (name, icons, colors). -->
+<link rel="manifest" href="/staff-app.json">
+<link rel="apple-touch-icon" href="/staff-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HF Staff">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
