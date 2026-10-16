@@ -1281,8 +1281,41 @@ function hfPrizeIcon(kind,size){
   const n=Number(size)||20;
   return '<svg class="hf-prize-ico" width="'+n+'" height="'+n+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
 }
+// r35 (Sebastian, 16 Oct): "Terms and conditions apply" opens the restaurant's
+// words for THAT reward right under it (tap again to fold them), instead of
+// another page. Each reward has its own terms: the Lucky Bite's, the stamp
+// card's and the invites'. They come from the restaurant's public terms
+// (/api/checkins reward_terms), asked once per restaurant and kept on the page.
+// The full page (/rewards) is still there, linked from the Terms of Service.
+var HF_TERMS={};
 function hfTermsLink(rid,which,short){
-  return '<a class="hf-l-terms" href="/rewards?r='+Number(rid)+'#'+which+'">'+(short?'Terms apply':'Terms and conditions apply')+'</a>';
+  return '<span class="hf-terms"><button type="button" class="hf-l-terms" aria-expanded="false" data-rid="'+Number(rid)+'" data-which="'+hfEsc(which)+'"'
+    +' onclick="hfTermsToggle(event,this)">'+(short?'Terms apply':'Terms and conditions apply')+'</button>'
+    +'<span class="hf-terms-text" role="note" hidden></span></span>';
+}
+function hfTermsGet(rid){
+  if(!HF_TERMS[rid]){
+    HF_TERMS[rid]=fetch('/api/checkins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reward_terms',restaurantId:rid})})
+      .then(function(r){return r.json().catch(function(){return {};}).then(function(d){
+        if(!r.ok)throw new Error(d.error||'Could not open the terms.');
+        var m={};(d.programs||[]).forEach(function(p){if(p&&p.kind)m[p.kind]=String(p.terms||'');});
+        return m;
+      });})
+      .catch(function(e){delete HF_TERMS[rid];throw e;});
+  }
+  return HF_TERMS[rid];
+}
+function hfTermsToggle(ev,btn){
+  if(ev){ev.preventDefault();ev.stopPropagation();}
+  var box=btn&&btn.nextElementSibling;
+  if(!box)return;
+  if(btn.getAttribute('aria-expanded')==='true'){box.hidden=true;btn.setAttribute('aria-expanded','false');return;}
+  btn.setAttribute('aria-expanded','true');box.hidden=false;
+  box.textContent='Loading…';
+  var which=btn.getAttribute('data-which');
+  hfTermsGet(Number(btn.getAttribute('data-rid'))).then(function(m){
+    box.textContent=m[which]||'The restaurant has not written terms for this reward right now.';
+  }).catch(function(e){box.textContent=(e&&e.message)||'Could not open the terms. Try again in a moment.';});
 }
 
 // What the visit did, the moment it was confirmed.
@@ -1436,6 +1469,11 @@ function hfvDate(iso){
   const d=new Date(String(iso).length===10?iso+'T12:00:00Z':iso);
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'America/New_York'});
 }
+// "Thu, Oct 15" (r35: when a friend's invite starts to work)
+function hfvDay(iso){
+  const d=new Date(String(iso).length===10?iso+'T12:00:00Z':iso);
+  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'America/New_York'});
+}
 
 function hfvRenderLoyalty(){
   const box=document.getElementById('hf-v-loyalty');
@@ -1462,7 +1500,11 @@ function hfvRenderLoyalty(){
     mineToUse.forEach(function(p){
       const sub=(p.dishName?'On '+p.dishName+' · ':'')+'Invite from a friend · '+p.restaurant+' · until '+hfvDate(p.expiresAt);
       html+='<div class="hf-l-prize invite"><div class="hf-l-prize-icon">&#127873;</div>'
-        +'<div class="hf-l-prize-text"><b>'+hfEsc(p.discount)+'</b><span>'+hfEsc(sub)+'</span>'+hfTermsLink(p.restaurantId,'invite',true)+'</div>'
+        +'<div class="hf-l-prize-text"><b>'+hfEsc(p.discount)+'</b><span>'+hfEsc(sub)+'</span>'
+        // r35: a friend's invite works from the day after it was made; until then the
+        // button waits, and this says when its QR code (Show my invite) will be there.
+        +(p.usableToday?'':'<span class="hf-l-when">Show my invite opens its QR code from '+hfEsc(hfvDay(p.usableFrom))+' (5 AM).</span>')
+        +hfTermsLink(p.restaurantId,'invite',true)+'</div>'
         +(p.usableToday
            ?'<button class="hf-l-btn" onclick="hfvShowPrize(\'pass\','+Number(p.id)+')">Show my invite</button>'
            :'<button class="hf-l-btn" disabled>From '+hfEsc(hfvDate(p.usableFrom))+'</button>')
@@ -1787,17 +1829,19 @@ function hfHoursFill(){
 // words under it when there are any ("Sanitary Inspection Grade").
 var HF_GRADES={A:1,B:1,C:1};
 function hfGrade(){ return HF_GRADES[HF_HOURS.grade]?HF_HOURS.grade:null; }
-function hfGradeHtml(label){
+function hfGradeHtml(label,labelClass){
   var g=hfGrade();
   if(!g)return '';
   var f='grade-'+g.toLowerCase()+'.png';
   return '<img src="/_vercel/image?url=%2F'+f+'&w=256&q=75" data-orig="/'+f+'" onerror="this.onerror=null;this.src=this.dataset.orig" alt="Sanitary inspection grade '+g+'">'
-    +(label?'<div class="cave-grade-label">'+hfEsc(label)+'</div>':'');
+    +(label?'<div class="'+(labelClass||'cave-grade-label')+'">'+hfEsc(label)+'</div>':'');
 }
+// r35: the home page's grade (over the video) and its dish cards follow the
+// choice too; data-hf-grade-label-class gives the words their own look there.
 function hfGradeFill(){
   var els=document.querySelectorAll('[data-hf-grade]');
   for(var i=0;i<els.length;i++){
-    var html=hfGradeHtml(els[i].getAttribute('data-hf-grade'));
+    var html=hfGradeHtml(els[i].getAttribute('data-hf-grade'),els[i].getAttribute('data-hf-grade-label-class'));
     if(els[i].getAttribute('data-hf-grade-now')!==(hfGrade()||'')){ els[i].innerHTML=html; els[i].setAttribute('data-hf-grade-now',hfGrade()||''); }
     els[i].style.display=html?'':'none';
   }
