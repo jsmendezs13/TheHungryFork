@@ -670,9 +670,16 @@ async function saveGrade(req, res, body, tasterId) {
     body: JSON.stringify({ sanitary_grade: grade, sanitary_grade_at: new Date().toISOString(), sanitary_grade_by: tasterId }),
   });
   if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) {
-    return res.status(saved.status === 400 ? 409 : 502).json({
-      error: saved.status === 400 ? 'The grade is not set up yet: migration 24 has not been run.' : 'Could not save the grade. Please try again.',
-    });
+    // r35: say why, with the database's answer in it. A 401 or 403 is the server
+    // missing its permission on restaurants (the r34 grants fix gives it).
+    const st = saved.status, code = saved.data && saved.data.code;
+    console.error('[staff:grade] save failed', who.rid, st, code || '');
+    if (st === 400 && code === '23514') return res.status(400).json({ error: 'The grade is A, B, C, or none.' });
+    if (st === 400 && (!code || code === 'PGRST204' || code === '42703')) return res.status(409).json({ error: 'The grade is not set up yet: migration 24 has not been run.' });
+    if (st === 401 || st === 403) {
+      return res.status(502).json({ error: 'Could not save the grade (the database answered ' + st + '): the server is missing its permission to change the restaurant. Seb\u2019s Analytics has to run the grants fix.' });
+    }
+    return res.status(502).json({ error: 'Could not save the grade (the database answered ' + st + '). Please try again.' });
   }
   console.log('[staff:grade] taster', tasterId, 'set the grade of', who.rid, 'to', grade || 'none');
   const s = await loadBooking(who.rid).catch(() => null);
