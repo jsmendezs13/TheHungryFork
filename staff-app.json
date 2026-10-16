@@ -1,0 +1,31 @@
+{
+  "name": "The Hungry Fork · Staff",
+  "short_name": "HF Staff",
+  "description": "The Hungry Fork's manager page: reservations, messages, the menu and the team.",
+  "id": "/manager",
+  "start_url": "/manager",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#150D09",
+  "theme_color": "#150D09",
+  "icons": [
+    {
+      "src": "/staff-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/staff-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/staff-icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
