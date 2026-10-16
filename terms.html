@@ -47,10 +47,61 @@
 <body>
 
 <div class="p-topbar">
-  <a href="/" class="p-home">&#8249; Site</a>
+  <a href="/" class="p-home" data-hf-back>&#8249; Site</a>
   <div class="p-topbar-title">Terms</div>
   <span class="p-spacer"></span>
 </div>
+<script>
+// r36 (Sebastian, 16 Oct): the way back. "‹ Site" goes back to the page you came from, as you left it (the
+// browser's own Back, so that page comes back where it was), and says which page: "‹ Manager", "‹ Menu"…
+// Opened from outside the site (a QR code, an email, a typed address) it stays "‹ Site" and goes home. A page
+// that opened in a new tab (its address has nt=1) closes that tab, which shows the page that opened it. Places
+// this page adds to the browser's history (a #hash, a dish) are skipped. The same lines on every page (the tests
+// check they match).
+(function(){
+  var NAMES={'':'Site',index:'Site',menu:'Menu',manager:'Manager',reservations:'Reservations',checkin:'Check In',rewards:'Reward terms',terms:'Terms',privacy:'Privacy',invite:'Invite'};
+  function page(p){return String(p||'').replace(/^\/+|\/+$/g,'').replace(/\.html$/,'');}
+  var from=null,depth=0,H=window.history,newTab=/[?&]nt=1(&|$)/.test(location.search);
+  try{
+    var r=document.referrer?new URL(document.referrer):null,rp=r?page(r.pathname):'';
+    // (the home page with ?dish= in its address only passes the visitor on to the menu: it is not a page to go back to)
+    if(r&&r.origin===location.origin&&rp!==page(location.pathname)&&Object.prototype.hasOwnProperty.call(NAMES,rp)
+       &&!((rp===''||rp==='index')&&/[?&]dish=/.test(r.search)))from=r;
+  }catch(e){}
+  try{
+    var push=H.pushState,rep=H.replaceState;
+    var mark=function(s){if(s===null||s===undefined)s={};if(typeof s==='object'&&!Array.isArray(s)){s=Object.assign({},s);s.hfDepth=depth;}return s;};
+    if(H.state&&typeof H.state.hfDepth==='number')depth=H.state.hfDepth;
+    rep.call(H,mark(H.state),'');
+    H.pushState=function(s,t,u){depth++;return push.call(H,mark(s),t,u);};
+    H.replaceState=function(s,t,u){return rep.call(H,mark(s),t,u);};
+    window.addEventListener('popstate',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;});
+    window.addEventListener('hashchange',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;else{depth++;rep.call(H,mark(s),'');}});
+  }catch(e){}
+  function go(){location.href=from?from.href:'/';}
+  window.hfBackFrom=from?NAMES[page(from.pathname)]:null;
+  window.hfBackCan=function(){return !!from&&H.length>depth+1;};
+  window.hfBack=function(){
+    if(!from){location.href='/';return;}
+    if(H.length<=depth+1){if(newTab){try{window.close();}catch(e){}}setTimeout(go,newTab?300:0);return;}
+    var t=setTimeout(go,900);
+    window.addEventListener('pagehide',function(){clearTimeout(t);});
+    H.go(-(depth+1));
+  };
+  function paint(){
+    var els=document.querySelectorAll('[data-hf-back]');
+    for(var i=0;i<els.length;i++){
+      var a=els[i],name=window.hfBackFrom;
+      if(from)a.setAttribute('href',from.href);
+      if(a.getAttribute('data-hf-back')==='icon')a.setAttribute('aria-label',name?'Back to '+name:'Home');
+      else a.textContent='‹ '+(name||'Site');
+      if(!a.hfBack){a.hfBack=1;a.addEventListener('click',function(ev){if(!from||ev.metaKey||ev.ctrlKey||ev.shiftKey||ev.altKey)return;ev.preventDefault();window.hfBack();});}
+    }
+  }
+  paint();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);
+})();
+</script>
 
 <div class="p-wrap">
 
