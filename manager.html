@@ -381,6 +381,9 @@
   .rv-day-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; font-size:.86rem; font-weight:500; }
   .rv-svc { display:flex; align-items:center; gap:.35rem; margin-top:.4rem; font-size:.8rem; color:var(--muted); }
   .rv-svc .m-input { width:auto; flex:1; min-width:0; padding:.45rem .5rem; font-size:.84rem; }
+  .rv-codebar { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin:0 0 .9rem; padding:.5rem .6rem .5rem .85rem; background:var(--white);
+                border:1px dashed #DCCFBE; border-radius:12px; font-size:.76rem; color:var(--muted); }
+  .rv-code-link { display:inline-flex; align-items:center; gap:.4rem; text-decoration:none; color:var(--text); padding:.4rem .8rem; }
   .rv-mini { border:1px solid var(--border); background:#fff; color:var(--muted); border-radius:999px; padding:.28rem .7rem; font-size:.64rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); flex:none; }
   .rv-mini.red { color:var(--red-dark); border-color:rgba(176,16,21,.35); }
   .rv-mini.armed { background:var(--red); color:#fff; border-color:var(--red); }
@@ -1755,7 +1758,13 @@ function rvPaintTop(){
   let html = rvScanHtml() + '<div class="rv-tiles">'
     + tile(c && c.tables, 'Tables') + tile(c && c.people, 'People') + tile(c && c.arrived, 'Arrived')
     + '<button type="button" class="rv-tile'+(q.length?' red':'')+'" onclick="rvOpenRequests()"><b>'+q.length+'</b><span>'+(q.length===1?'Request':'Requests')+'</span></button>'
-    + '</div>';
+    + '</div>'
+    // r35 (Sebastian, 16 Oct): where the waiter types a guest's code when the QR
+    // will not scan — Check In, Show my reward, Show my invite (the six
+    // characters under the guest's QR). The page is /checkin.
+    + '<div class="rv-codebar"><span>QR code won\u2019t scan?</span><a class="rv-mini rv-code-link" href="/checkin">'
+    +   '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>'
+    +   'Type the guest\u2019s code</a></div>';
   if(q.length){
     const r = q[0];
     const unread = q.reduce((n, x) => n + ((x.chat && Number(x.chat.unread)) || 0), 0);
