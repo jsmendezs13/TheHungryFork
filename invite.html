@@ -43,6 +43,12 @@
   .m-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
   .m-btn-ghost { display:block; width:100%; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.85rem; font-size:.78rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); margin-top:.6rem; text-decoration:none; }
   .i-terms { display:inline-block; margin:-.4rem 0 1rem; font-size:.78rem; font-weight:600; color:#2F5DA8; text-decoration:underline; text-underline-offset:2px; padding:.2rem 0; }
+  .i-terms-box { margin:-.5rem 0 1rem; }
+  .i-terms-box .hf-l-terms { font-size:.78rem; }
+  /* r35: no code in the link: the friend types it */
+  .i-code { width:100%; border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem; font-size:1.35rem; letter-spacing:.3em; text-align:center; font-weight:600; font-family:var(--sans);
+            text-transform:uppercase; color:var(--text); background:#fff; outline:none; margin:.9rem 0 1rem; }
+  .i-code:focus { border-color:var(--red); }
   .i-legal { font-size:.68rem; color:var(--muted); font-weight:300; line-height:1.5; text-align:center; padding:0 .5rem; }
   .m-skel { height:260px; background:linear-gradient(90deg,#fff 25%,var(--off-white) 50%,#fff 75%); background-size:200% 100%; animation:sk 1.2s infinite; border-radius:16px; border:1px solid var(--border); }
   @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -68,7 +74,31 @@
 // own phone number): once saved the invite is theirs, nobody else can take it,
 // and the friend who shared it cannot use it themselves. Everything is decided
 // in /api/checkins; this page only shows the answers.
-let CODE = null, INVITE = null, WANT_SAVE = false;
+let CODE = null, INVITE = null, WANT_SAVE = false, TYPED = false;
+
+// r35: /invite with no code in it (a camera that would not read the QR, a code
+// read aloud): the friend types the eight characters under their friend's QR.
+function askCode(err){
+  wrap().innerHTML='<div class="m-card">'
+    + '<div class="i-gift">&#127873;</div>'
+    + '<div class="m-eyebrow">An invite from a friend</div>'
+    + '<div class="i-what" style="font-size:1.6rem;">Type the invite code</div>'
+    + '<div class="m-sub" style="margin-top:.5rem;">The eight characters under your friend\'s QR code.</div>'
+    + (err?'<div class="m-err" style="margin-top:.9rem;margin-bottom:0;">'+esc(err)+'</div>':'')
+    + '<input class="i-code" id="i-code" maxlength="12" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="A2C4E6G8" aria-label="Invite code">'
+    + '<button class="m-btn" onclick="typedCode()">Open the invite</button>'
+    + '<a class="m-btn-ghost" href="/">See the restaurant</a>'
+    + '</div>';
+  const box=document.getElementById('i-code');
+  if(box){ box.focus(); box.addEventListener('keydown',function(e){ if(e.key==='Enter') typedCode(); }); }
+}
+function typedCode(){
+  const raw=((document.getElementById('i-code')||{}).value||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase();
+  if(raw.length!==8){ askCode('An invite code is eight characters.'); return; }
+  CODE=raw; TYPED=true;
+  wrap().innerHTML='<div class="m-skel"></div>';
+  boot();
+}
 
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function wrap(){return document.getElementById('i-wrap');}
@@ -95,9 +125,10 @@ function what(v){
     ? '<div class="i-what">'+esc(v.dishName)+'</div><div class="i-off">'+esc(v.discount)+' on this dish</div>'
     : '<div class="i-what">'+esc(v.discount)+'</div>';
 }
-// r33: the restaurant's own terms for its invites (rewards.html).
+// r33: the restaurant's own terms for its invites. r35 (Sebastian, 16 Oct): they
+// open right here, under the link (taster.js hfTermsLink), not on another page.
 function termsLink(v){
-  return '<a class="i-terms" href="/rewards?r='+Number(v.restaurantId)+'#invite">Terms and conditions apply</a>';
+  return '<div class="i-terms-box">'+hfTermsLink(v.restaurantId,'invite')+'</div>';
 }
 function legal(name){
   return '<div class="i-legal">This discount is offered and given by '+esc(name||'the restaurant')
@@ -108,9 +139,11 @@ async function boot(){
   if(CODE===null){
     CODE=(new URLSearchParams(location.search).get('c')||'').trim();
   }
-  if(!CODE){ wrap().innerHTML='<div class="m-card"><div class="m-err">This link has no invite code in it. Ask your friend to send it again.</div></div>'; return; }
+  if(!CODE){ askCode(); return; }
   const {res, data}=await api({action:'pass_preview', code:CODE});
   if(!res.ok){
+    // r35: a typed code that did not work: ask again, with the reason
+    if(TYPED){ askCode(data.error||'Could not open this invite.'); return; }
     wrap().innerHTML='<div class="m-card"><div class="m-err">'+esc(data.error||'Could not open this invite.')+'</div>'
       +'<a class="m-btn-ghost" href="/">Go to the site</a></div>';
     return;
