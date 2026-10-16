@@ -268,6 +268,42 @@
   .rv-stack { display:grid; grid-template-columns:minmax(0,1fr); gap:.5rem; }
   @media (max-width:560px) { .rv-form-row.has-date { grid-template-columns:minmax(0,1fr); } }
   /* r30: the Menu tab in groups (Starters, Entrées, …) */
+  /* r36: Top Rated on the menu (the Menu tab) */
+  .tr-card { padding:1.15rem 1.1rem .9rem; }
+  .tr-lead { font-size:.8rem; color:var(--muted); line-height:1.5; margin-bottom:.4rem; }
+  .tr-row { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.7rem 0; border-bottom:1px solid var(--border); }
+  .tr-row:last-of-type { border-bottom:none; }
+  .tr-name { min-width:0; }
+  .tr-name b { display:block; font-family:var(--serif); font-size:1.05rem; font-weight:600; line-height:1.25; }
+  .tr-name small { display:block; font-size:.74rem; color:var(--muted); margin-top:.1rem; }
+  .tr-row.off .tr-name b { color:var(--muted); }
+  .tr-ctrl { flex:none; display:flex; align-items:center; gap:.7rem; }
+  .tr-step { display:inline-flex; align-items:center; border:1px solid var(--border); border-radius:999px; background:#FBF7F1; }
+  .tr-b { width:34px; height:32px; border:none; background:none; font-size:1.15rem; font-weight:600; color:var(--red); cursor:pointer; padding:0; }
+  .tr-b:disabled { color:var(--star-off); cursor:default; }
+  .tr-n { min-width:1.4rem; text-align:center; font-weight:700; font-size:.95rem; }
+  .tr-note { font-size:.72rem; color:var(--muted); margin-top:.55rem; }
+  .tr-err { font-size:.78rem; color:var(--red); margin-top:.55rem; }
+  .m-switch:disabled { opacity:.45; cursor:default; }
+  /* r36: Change the order (option B) */
+  .m-dish-group.has-btn { margin-bottom:.7rem; }
+  .m-dish-group.has-btn::after { display:none; }
+  .m-dish-group > span { flex:1; }
+  .dg-arrange { flex:none; margin-left:auto; border:1px solid var(--border); background:var(--white); border-radius:999px; padding:.42rem .8rem; font-family:var(--sans);
+    font-size:.58rem; font-weight:700; letter-spacing:.12em; color:var(--red); text-transform:uppercase; cursor:pointer; }
+  .dg-arrange.done { background:var(--red); color:#fff; border-color:var(--red); min-width:74px; }
+  .dg-arrange:disabled { opacity:.7; cursor:default; }
+  .arr-hint { font-size:.76rem; color:var(--muted); margin:-.2rem 0 .7rem; }
+  .arr-err { font-size:.8rem; color:var(--red); margin:-.2rem 0 .7rem; }
+  .arr-list { position:relative; }
+  .arr-card { cursor:default; transition:box-shadow .15s, border-color .15s; }
+  .arr-card .m-dish-head { cursor:default; padding:.7rem .4rem .7rem 1rem; }
+  .arr-handle { flex:none; margin-left:auto; width:48px; height:48px; border:none; background:none; color:#9A8B7C; font-size:1.45rem; line-height:1; cursor:grab;
+    touch-action:none; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; border-radius:10px; }
+  .arr-handle:focus-visible { outline:2px solid var(--red); }
+  .arr-card.arr-lift { position:relative; z-index:30; border-color:var(--red); box-shadow:0 14px 30px rgba(40,20,10,.28); overflow:visible; }
+  .arr-card.arr-lift .arr-handle { cursor:grabbing; color:var(--red); }
+  .arr-card.arr-lift::before { content:''; position:absolute; left:1rem; right:1rem; top:-.5rem; height:4px; border-radius:4px; background:var(--red); }
   .m-dish-group { display:flex; align-items:center; gap:.7rem; margin:1.4rem 0 .6rem; font-family:var(--sans); font-size:.62rem; font-weight:600;
                   letter-spacing:.2em; text-transform:uppercase; color:var(--red); }
   .m-dish-group:first-child { margin-top:.2rem; }
@@ -515,10 +551,61 @@
 <body>
 
 <div class="m-topbar">
-  <a href="/" class="m-home">&#8249; Site</a>
+  <a href="/" class="m-home" data-hf-back>&#8249; Site</a>
   <div class="m-topbar-title">Manager</div>
   <span class="m-topbar-spacer"></span>
 </div>
+<script>
+// r36 (Sebastian, 16 Oct): the way back. "‹ Site" goes back to the page you came from, as you left it (the
+// browser's own Back, so that page comes back where it was), and says which page: "‹ Manager", "‹ Menu"…
+// Opened from outside the site (a QR code, an email, a typed address) it stays "‹ Site" and goes home. A page
+// that opened in a new tab (its address has nt=1) closes that tab, which shows the page that opened it. Places
+// this page adds to the browser's history (a #hash, a dish) are skipped. The same lines on every page (the tests
+// check they match).
+(function(){
+  var NAMES={'':'Site',index:'Site',menu:'Menu',manager:'Manager',reservations:'Reservations',checkin:'Check In',rewards:'Reward terms',terms:'Terms',privacy:'Privacy',invite:'Invite'};
+  function page(p){return String(p||'').replace(/^\/+|\/+$/g,'').replace(/\.html$/,'');}
+  var from=null,depth=0,H=window.history,newTab=/[?&]nt=1(&|$)/.test(location.search);
+  try{
+    var r=document.referrer?new URL(document.referrer):null,rp=r?page(r.pathname):'';
+    // (the home page with ?dish= in its address only passes the visitor on to the menu: it is not a page to go back to)
+    if(r&&r.origin===location.origin&&rp!==page(location.pathname)&&Object.prototype.hasOwnProperty.call(NAMES,rp)
+       &&!((rp===''||rp==='index')&&/[?&]dish=/.test(r.search)))from=r;
+  }catch(e){}
+  try{
+    var push=H.pushState,rep=H.replaceState;
+    var mark=function(s){if(s===null||s===undefined)s={};if(typeof s==='object'&&!Array.isArray(s)){s=Object.assign({},s);s.hfDepth=depth;}return s;};
+    if(H.state&&typeof H.state.hfDepth==='number')depth=H.state.hfDepth;
+    rep.call(H,mark(H.state),'');
+    H.pushState=function(s,t,u){depth++;return push.call(H,mark(s),t,u);};
+    H.replaceState=function(s,t,u){return rep.call(H,mark(s),t,u);};
+    window.addEventListener('popstate',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;});
+    window.addEventListener('hashchange',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;else{depth++;rep.call(H,mark(s),'');}});
+  }catch(e){}
+  function go(){location.href=from?from.href:'/';}
+  window.hfBackFrom=from?NAMES[page(from.pathname)]:null;
+  window.hfBackCan=function(){return !!from&&H.length>depth+1;};
+  window.hfBack=function(){
+    if(!from){location.href='/';return;}
+    if(H.length<=depth+1){if(newTab){try{window.close();}catch(e){}}setTimeout(go,newTab?300:0);return;}
+    var t=setTimeout(go,900);
+    window.addEventListener('pagehide',function(){clearTimeout(t);});
+    H.go(-(depth+1));
+  };
+  function paint(){
+    var els=document.querySelectorAll('[data-hf-back]');
+    for(var i=0;i<els.length;i++){
+      var a=els[i],name=window.hfBackFrom;
+      if(from)a.setAttribute('href',from.href);
+      if(a.getAttribute('data-hf-back')==='icon')a.setAttribute('aria-label',name?'Back to '+name:'Home');
+      else a.textContent='‹ '+(name||'Site');
+      if(!a.hfBack){a.hfBack=1;a.addEventListener('click',function(ev){if(!from||ev.metaKey||ev.ctrlKey||ev.shiftKey||ev.altKey)return;ev.preventDefault();window.hfBack();});}
+    }
+  }
+  paint();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);
+})();
+</script>
 
 <div class="m-wrap" id="m-wrap">
   <div class="m-skel"></div>
@@ -691,6 +778,7 @@ function mountPage(){
   render();
   if(TAB==='reservations') rvStart();
   else if(TAB==='menu' && !DISHES_LOADED) loadDishes();
+  if(TAB==='menu' && TR.rid!==RESTAURANT.id) trLoad();          // r36: the Top Rated caves
   else if(TAB==='team') loadPeople();
 }
 
@@ -716,6 +804,7 @@ window.addEventListener('hashchange', function(){
 
 async function loadDishes(){
   DISHES_ERROR = null;
+  ARR = null;                      // r36: an order not saved yet belongs to the list that is going away
   try{
     // Hidden dishes must appear here — hiding one on the public menu is not the
     // same as losing the switch that brings it back.
@@ -777,7 +866,7 @@ function render(){
   if(TAB==='menu'){
     if(DISHES_ERROR){ wrap().innerHTML = top + '<div class="m-err">'+esc(DISHES_ERROR)+'</div>'; return; }
     if(!DISHES_LOADED){ wrap().innerHTML = top + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
-    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS)
+    wrap().innerHTML = top + trCardHtml() + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS)
                                                  : '<div class="m-empty">This restaurant has no dishes yet.</div>');
     return;
   }
@@ -786,21 +875,222 @@ function render(){
 }
 
 
+// ── TOP RATED ON THE MENU (r36, Sebastian 16 Oct 12:45) ──
+// The menu has four Top Rated caves: Starters, Entrées, Salads and Drinks, each with the best rated dishes of
+// that part of the menu. Here the manager chooses how many each shows (1 to 10) or switches it off. Every
+// change is saved by itself a moment later (several taps, one save). The server: api/_lib/menuset.js.
+const TR_KINDS = [['starters','Starters','starters'], ['entree','Entrées','entrées'], ['salads','Salads','salads'], ['drinks','Drinks','drinks']];
+let TR = { rid:null, loaded:false, ready:true, failed:false, top:null, last:{}, error:'', note:'', timer:null, busy:false, again:false };
+async function trLoad(){
+  const rid = RESTAURANT.id;
+  clearTimeout(TR.timer);
+  TR = { rid:rid, loaded:false, ready:true, failed:false, top:null, last:{}, error:'', note:'', timer:null, busy:false, again:false };
+  trPaint();
+  try{
+    const d = await rvApi({action:'menu_settings'});
+    if(TR.rid !== rid) return;
+    TR.top = d.top; TR.ready = d.ready !== false; TR.error = d.ready === false ? (d.error || '') : '';
+  }catch(e){
+    if(TR.rid !== rid) return;
+    TR.failed = true; TR.error = e.message; TR.top = {starters:5, entree:5, salads:5, drinks:5};
+  }
+  TR.loaded = true;
+  TR_KINDS.forEach(k => { TR.last[k[0]] = TR.top[k[0]] > 0 ? TR.top[k[0]] : 5; });
+  trPaint();
+}
+function trCardHtml(){ return '<div class="m-card tr-card" id="tr-card">'+trInner()+'</div>'; }
+function trInner(){
+  const head = '<div class="m-eyebrow">Top Rated on the menu</div>'
+    + '<div class="tr-lead">The best rated dishes of each part of the menu, in their own cave. Choose how many each one shows, or switch it off.</div>';
+  if(!TR.loaded) return head + '<div class="tr-note">Loading…</div>';
+  const locked = !TR.ready || TR.failed;
+  return head + TR_KINDS.map(function(k){
+      const n = TR.top[k[0]], on = n > 0;
+      const sub = !on ? 'Not on the menu' : (n === 1 ? 'The best rated of the '+k[2] : 'The best '+n+' '+k[2]);
+      return '<div class="tr-row'+(on?'':' off')+'" id="tr-row-'+k[0]+'">'
+        + '<div class="tr-name"><b>Top Rated '+k[1]+'</b><small id="tr-sub-'+k[0]+'">'+sub+'</small></div>'
+        + '<div class="tr-ctrl">'
+        +   (on ? '<span class="tr-step"><button type="button" class="tr-b" id="tr-minus-'+k[0]+'" aria-label="One dish fewer" onclick="trStep(\''+k[0]+'\',-1)"'+(locked||n<=1?' disabled':'')+'>&minus;</button>'
+               + '<span class="tr-n" id="tr-n-'+k[0]+'" aria-live="polite">'+n+'</span>'
+               + '<button type="button" class="tr-b" id="tr-plus-'+k[0]+'" aria-label="One dish more" onclick="trStep(\''+k[0]+'\',1)"'+(locked||n>=10?' disabled':'')+'>+</button></span>' : '')
+        +   '<button type="button" class="m-switch'+(on?' on':'')+'" id="tr-sw-'+k[0]+'" role="switch" aria-checked="'+on+'" aria-label="Top Rated '+k[1]+' on the menu" onclick="trSwitch(\''+k[0]+'\')"'+(locked?' disabled':'')+'></button>'
+        + '</div></div>';
+    }).join('')
+    + (TR.error ? '<div class="tr-err" id="tr-err">'+esc(TR.error)+'</div>' : '')
+    + '<div class="tr-note" id="tr-note">'+esc(TR.note || 'Up to 10 dishes each. A dish nobody has rated in the last twelve months is not in them.')+'</div>';
+}
+function trPaint(){ const c = document.getElementById('tr-card'); if(c) c.innerHTML = trInner(); }
+function trSet(k, n){
+  if(!TR.loaded || !TR.ready || TR.failed) return;
+  TR.top[k] = Math.max(0, Math.min(10, n));
+  if(TR.top[k] > 0) TR.last[k] = TR.top[k];
+  TR.note = 'Saving…'; TR.error = '';
+  trPaint();
+  clearTimeout(TR.timer);
+  TR.timer = setTimeout(trSave, 600);
+}
+function trSwitch(k){ trSet(k, TR.top[k] > 0 ? 0 : (TR.last[k] || 5)); }
+function trStep(k, d){ if(TR.top[k] > 0) trSet(k, Math.max(1, Math.min(10, TR.top[k] + d))); }
+async function trSave(){
+  if(TR.busy){ TR.again = true; return; }
+  const rid = TR.rid, sent = Object.assign({}, TR.top);
+  TR.busy = true;
+  try{
+    await rvApi({action:'menu_top_save', top:sent});
+    if(TR.rid !== rid) return;
+    TR.note = TR.again ? 'Saving…' : 'Saved. The menu shows it now.'; TR.error = '';
+  }catch(e){
+    if(TR.rid !== rid) return;
+    TR.error = e.message; TR.note = '';
+  }finally{ if(TR.rid === rid) TR.busy = false; }
+  trPaint();
+  if(TR.again){ TR.again = false; trSave(); }
+}
+
 // r30 (Sebastian, 13 Oct: "not all mixed together"): the dishes in groups, in the menu's own order — Starters,
 // Entrées, Salads, Sides, Drinks — each under its heading with how many dishes it has. Inside a group the
 // menu's order (sort_order) stays. A category the menu does not know yet gets its own group at the end.
 const DISH_GROUPS = [['chefs-pick', "Chef's Pick"], ['starters', 'Starters'], ['appetizers', 'Appetizers'], ['entree', 'Entrées'], ['salads', 'Salads'],
                      ['sides', 'Sides'], ['desserts', 'Desserts'], ['drinks', 'Drinks']];
+// r36 (Sebastian, 16 Oct, option B): "Change the order" beside a group's name puts that group in order mode:
+// each dish a short card with ☰; hold ☰ and drag the dish where it goes; "Done" saves. The menu shows each
+// part in that order (the fish before the steak).
+const dishKeyOf = d => String(d.restaurant_category || '').trim().toLowerCase();
 function dishGroupsHtml(rows){
   const known = DISH_GROUPS.map(g => g[0]);
-  const keyOf = d => String(d.restaurant_category || '').trim().toLowerCase();
+  const keyOf = dishKeyOf;
   const extra = [...new Set(rows.map(keyOf).filter(k => known.indexOf(k) < 0))];
   const label = k => k ? k.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Other';
   return DISH_GROUPS.concat(extra.map(k => [k, label(k)])).map(function(g){
     const list = rows.filter(d => keyOf(d) === g[0]);
     if(!list.length) return '';
-    return '<div class="m-dish-group" role="heading" aria-level="3">'+esc(g[1])+' <small>'+list.length+'</small></div>' + list.map(dishCard).join('');
+    const arranging = ARR && ARR.key === g[0];
+    const btn = list.length < 2 ? ''
+      : arranging ? '<button type="button" class="dg-arrange done" id="dg-done" onclick="arrDone()"'+(ARR.saving?' disabled':'')+'>'+(ARR.saving?'Saving…':'Done')+'</button>'
+      : '<button type="button" class="dg-arrange" data-group="'+esc(g[0])+'" onclick="arrStart(this.dataset.group)">Change the order</button>';
+    const head = btn ? '<div class="m-dish-group has-btn"><span role="heading" aria-level="3">'+esc(g[1])+' <small>'+list.length+'</small></span>'+btn+'</div>'
+                     : '<div class="m-dish-group" role="heading" aria-level="3">'+esc(g[1])+' <small>'+list.length+'</small></div>';
+    if(!arranging) return head + list.map(dishCard).join('');
+    const byId = {}; list.forEach(d => { byId[d.id] = d; });
+    return head
+      + '<div class="arr-hint" id="arr-hint">Hold <b>☰</b> and drag a dish to its place. Tap <b>Done</b> to save.</div>'
+      + (ARR.error ? '<div class="arr-err" id="arr-err">'+esc(ARR.error)+'</div>' : '')
+      + '<div class="arr-list" id="arr-list">' + ARR.ids.map(id => byId[id] ? arrCard(byId[id]) : '').join('') + '</div>';
   }).join('');
+}
+
+// ── CHANGE THE ORDER (r36) ──
+let ARR = null;          // { key, ids (in the new order), orig, saving, error }
+let ARR_DRAG = null;
+function arrRows(key){ return DISHES_ROWS.filter(d => dishKeyOf(d) === key); }
+async function arrStart(key){
+  if(ARR && ARR.key === key) return;
+  if(ARR && ARR.saving) return;
+  if(ARR && arrChanged()){ const ok = await arrDone(); if(!ok) return; }
+  const ids = arrRows(key).map(d => d.id);
+  ARR = { key:key, ids:ids, orig:ids.slice(), saving:false, error:'' };
+  openDishId = null;
+  render();
+  const g = document.getElementById('arr-list');
+  if(g){ const top = g.getBoundingClientRect().top + window.scrollY - 150; if(top < window.scrollY) window.scrollTo(0, Math.max(0, top)); }
+}
+function arrChanged(){ return !!ARR && ARR.ids.join() !== ARR.orig.join(); }
+function arrCard(d){
+  return '<div class="m-dish arr-card'+(d.is_hidden?' is-hidden':'')+'" id="arr-'+d.id+'" data-id="'+d.id+'">'
+    + '<div class="m-dish-head">'
+    +   dishThumb(d)
+    +   '<div class="m-dish-id"><div class="m-dish-name">'+esc(d.name)+'</div>'
+    +   '<div class="m-dish-meta">$'+Number(d.price||0).toFixed(2)+' &middot; '+esc(d.restaurant_category||'')+(d.is_hidden?' &middot; hidden':'')+'</div></div>'
+    +   '<button type="button" class="arr-handle" aria-label="Move '+esc(d.name)+' (drag, or the arrow keys)" onpointerdown="arrDown(event,'+d.id+')" onkeydown="arrKey(event,'+d.id+')">☰</button>'
+    + '</div></div>';
+}
+function arrSync(){
+  const list = document.getElementById('arr-list');
+  if(list && ARR) ARR.ids = [...list.querySelectorAll('.arr-card')].map(c => Number(c.dataset.id));
+}
+function arrDown(ev, id){
+  if(!ARR || ARR.saving || (ev.button !== undefined && ev.button > 0)) return;
+  const card = document.getElementById('arr-'+id), list = document.getElementById('arr-list');
+  if(!card || !list) return;
+  ev.preventDefault();
+  const h = ev.currentTarget;
+  try{ h.setPointerCapture(ev.pointerId); }catch(e){}
+  ARR_DRAG = { card:card, list:list, handle:h, startY:ev.clientY, y:ev.clientY, raf:null };
+  card.classList.add('arr-lift');
+  h.addEventListener('pointermove', arrMove);
+  h.addEventListener('pointerup', arrUp);
+  h.addEventListener('pointercancel', arrUp);
+  ARR_DRAG.raf = requestAnimationFrame(arrEdge);
+}
+function arrMove(ev){ if(!ARR_DRAG) return; ev.preventDefault(); ARR_DRAG.y = ev.clientY; arrPlace(); }
+// The card follows the finger; when its middle passes a neighbour's middle, it takes that place.
+function arrPlace(){
+  const D = ARR_DRAG; if(!D) return;
+  D.card.style.transform = 'translateY('+(D.y - D.startY)+'px) rotate(-1.2deg)';
+  const cards = [...D.list.querySelectorAll('.arr-card')], i = cards.indexOf(D.card);
+  const r = D.card.getBoundingClientRect(), mid = r.top + r.height/2;
+  const prev = cards[i-1], next = cards[i+1];
+  let move = null;
+  if(prev){ const p = prev.getBoundingClientRect(); if(mid < p.top + p.height/2) move = () => D.list.insertBefore(D.card, prev); }
+  if(!move && next){ const n = next.getBoundingClientRect(); if(mid > n.top + n.height/2) move = () => D.list.insertBefore(D.card, next.nextSibling); }
+  if(!move) return;
+  const before = D.card.offsetTop; move(); D.startY += D.card.offsetTop - before;
+  arrPlace();
+}
+// Near the top or the bottom of the screen the page scrolls by itself, so a dish can go anywhere in a long list.
+function arrEdge(){
+  const D = ARR_DRAG; if(!D) return;
+  const topEdge = 120, h = window.innerHeight;
+  let v = 0;
+  if(D.y < topEdge) v = -Math.ceil((topEdge - D.y) / 6);
+  else if(D.y > h - 70) v = Math.ceil((D.y - (h - 70)) / 6);
+  if(v){ const was = window.scrollY; window.scrollBy(0, v); const moved = window.scrollY - was; if(moved){ D.startY -= moved; arrPlace(); } }
+  D.raf = requestAnimationFrame(arrEdge);
+}
+function arrUp(){
+  const D = ARR_DRAG; if(!D) return;
+  ARR_DRAG = null;
+  cancelAnimationFrame(D.raf);
+  D.handle.removeEventListener('pointermove', arrMove);
+  D.handle.removeEventListener('pointerup', arrUp);
+  D.handle.removeEventListener('pointercancel', arrUp);
+  D.card.style.transform = '';
+  D.card.classList.remove('arr-lift');
+  arrSync();
+}
+// Without a finger or a mouse: the arrow keys move the dish one place.
+function arrKey(ev, id){
+  if(!ARR || ARR.saving || (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown')) return;
+  ev.preventDefault();
+  const card = document.getElementById('arr-'+id), list = document.getElementById('arr-list');
+  if(!card || !list) return;
+  if(ev.key === 'ArrowUp' && card.previousElementSibling) list.insertBefore(card, card.previousElementSibling);
+  if(ev.key === 'ArrowDown' && card.nextElementSibling) list.insertBefore(card.nextElementSibling, card);
+  arrSync();
+  const h = card.querySelector('.arr-handle'); if(h) h.focus();
+}
+// Done: the new order goes to the server (only if something moved). The screen keeps it only once it is saved.
+async function arrDone(){
+  if(!ARR || ARR.saving) return false;
+  arrSync();
+  if(!arrChanged()){ ARR = null; render(); return true; }
+  ARR.saving = true; ARR.error = ''; render();
+  const key = ARR.key, ids = ARR.ids.slice();
+  try{
+    await rvApi({action:'dish_order_save', ids:ids});
+  }catch(e){
+    if(ARR && ARR.key === key){ ARR.saving = false; ARR.error = e.message; render(); }
+    return false;
+  }
+  // The group's dishes take the same places in the list, in the new order; the other groups do not move.
+  const moved = ids.map(id => rowFor(id)).filter(Boolean);
+  moved.forEach((d, i) => { d.sort_order = i + 1; });
+  let k = 0;
+  DISHES_ROWS = DISHES_ROWS.map(d => moved.indexOf(d) >= 0 ? moved[k++] : d);
+  ARR = null;
+  render();
+  showToast('New order saved. The menu shows it now.');
+  return true;
 }
 
 // The dish's small photo (the plate picture, or the open-cut one if there is no plate), through Vercel's image
@@ -2393,7 +2683,7 @@ function rvGradeHtml(S){
     + '<div class="m-sub">The New York City Health Department letter grade your menu shows, on every dish. You choose it, or choose not to show one.</div>'
     + '<div class="rv-g-tiles">'+RV_GRADES.map(tile).join('')+tile('')+'</div>'
     + '<div class="rv-g-sees">Guests see: <strong>'+(chosen ? 'Grade '+chosen+' on every dish' : 'no grade')+'</strong></div>'
-    + '<div class="rv-g-note">Show only the grade on the card posted at your door. Seb’s Analytics doesn’t check it: the restaurant is responsible for it (<a href="/terms#grades" target="_blank" rel="noopener">Terms of Service</a>).</div>'
+    + '<div class="rv-g-note">Show only the grade on the card posted at your door. Seb’s Analytics doesn’t check it: the restaurant is responsible for it (<a href="/terms?nt=1#grades" target="_blank" rel="noopener">Terms of Service</a>).</div>'
     + (G.changedOn ? '<div class="rv-g-note">Last changed '+esc(G.changedOn)+(G.changedBy ? ' by '+esc(G.changedBy) : '')+'.</div>' : '')
     + (edit ? '<div style="margin-top:.8rem;"><button type="button" class="m-save" id="rv-g-save"'+(changed?'':' disabled')+' onclick="rvGradeSave(this)">Save the grade</button></div>' : '')
     + '</div>';
@@ -2651,7 +2941,7 @@ function rvLoyaltyHtml(S){
     + terms('rv-l-inviteTerms', 'Invite a friend', L.inviteTerms) + '</div>';
   html += num('rv-l-rewardDays', 'A full stamp card lasts', 'days', L.rewardDays, 1, 365);
   if(edit) html += '<div class="m-actions"><button type="button" class="m-save" onclick="rvSaveLoyalty(this)">Save the rewards</button></div>';
-  html += '<a class="rv-l-terms-page" href="/rewards?r='+Number(S.restaurant.id)+'" target="_blank" rel="noopener">See your reward terms page &#8599;</a>';
+  html += '<a class="rv-l-terms-page" href="/rewards?r='+Number(S.restaurant.id)+'&nt=1" target="_blank" rel="noopener">See your reward terms page &#8599;</a>';
   const st = L.stats || {}, iv = L.invites || {};
   html += '<div class="rv-l-stat" style="margin-top:.9rem;">Rewards: <b>'+n(st.waiting||0)+'</b> waiting &middot; <b>'+n(st.given||0)+'</b> given &middot; <b>'+n(st.expired||0)+'</b> expired'
     + '<br>Invites: <b>'+n(iv.made||0)+'</b> made &middot; <b>'+n(iv.saved||0)+'</b> saved by a friend &middot; <b>'+n(iv.used||0)+'</b> used</div>';
