@@ -318,7 +318,7 @@ const TASTER_MODAL_HTML = `
         <input class="t-input" id="signup-pin2" type="password" placeholder="Confirm PIN" maxlength="6" inputmode="numeric">
         <div class="t-checkbox-row">
           <input type="checkbox" id="signup-privacy">
-          <label for="signup-privacy">I agree to the <a href="/privacy" target="_blank" rel="noopener" style="color:var(--red);">Privacy Policy</a> and <a href="/terms" target="_blank" rel="noopener" style="color:var(--red);">Terms of Service</a>.</label>
+          <label for="signup-privacy">I agree to the <a href="/privacy?nt=1" target="_blank" rel="noopener" style="color:var(--red);">Privacy Policy</a> and <a href="/terms?nt=1" target="_blank" rel="noopener" style="color:var(--red);">Terms of Service</a>.</label>
         </div>
         <div class="t-checkbox-row">
           <input type="checkbox" id="signup-promos">
@@ -816,7 +816,8 @@ document.addEventListener('click',function(e){
     closeCornerMenu();
     const act=item.getAttribute('data-act');
     if(act==='login')openTasterModal();
-    else if(act==='tastings'){if(typeof openMyTastings==='function')openMyTastings();}
+    // r36: My Tastings lives on the menu: from a page without it, the menu opens it (and closing it comes back here)
+    else if(act==='tastings'){if(typeof openMyTastings==='function')openMyTastings();else location.href='/menu?open=tastings';}
     else if(act==='visits'){if(typeof openMyVisits==='function')openMyVisits();}
     else if(act==='logout'){if(confirm('Log out?'))logout();}
     else if(act==='me')openMyInfo();
@@ -1312,10 +1313,21 @@ function hfTermsToggle(ev,btn){
   if(btn.getAttribute('aria-expanded')==='true'){box.hidden=true;btn.setAttribute('aria-expanded','false');return;}
   btn.setAttribute('aria-expanded','true');box.hidden=false;
   box.textContent='Loading…';
+  hfTermsTip(btn,box);
   var which=btn.getAttribute('data-which');
   hfTermsGet(Number(btn.getAttribute('data-rid'))).then(function(m){
     box.textContent=m[which]||'The restaurant has not written terms for this reward right now.';
   }).catch(function(e){box.textContent=(e&&e.message)||'Could not open the terms. Try again in a moment.';});
+}
+
+// r36 (Sebastian, 16 Oct, option C): the words open in a blue bubble whose tip points at the link,
+// wherever the link sits (at the left of a card, or in the middle of a centred line).
+function hfTermsTip(btn,box){
+  try{
+    var b=btn.getBoundingClientRect(),r=box.getBoundingClientRect();
+    var x=b.left+Math.min(b.width/2,34)-r.left;
+    box.style.setProperty('--hf-tip',Math.round(Math.max(16,Math.min(r.width-16,x)))+'px');
+  }catch(e){}
 }
 
 // What the visit did, the moment it was confirmed.
@@ -1855,9 +1867,22 @@ function hfHoursApply(d){
   HF_HOURS.holidays=Array.isArray(d.holidays)?d.holidays:[];
   HF_HOURS.tz=typeof d.timezone==='string'?d.timezone:null;
   HF_HOURS.grade=HF_GRADES[d.grade]?d.grade:null;           // r34
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,at:Date.now()}));}catch(e){}
+  HF_HOURS.top=hfTopClean(d.top);                            // r36
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,at:Date.now()}));}catch(e){}
   hfHoursFill();
+  HF_HOURS.fresh=true;
+  try{document.dispatchEvent(new Event('hf-hours'));}catch(e){}
   return true;
+}
+// r36 (Sebastian, 16 Oct): how many dishes each Top Rated cave of the menu shows
+// (0: not on the menu), as the manager chose in the manager page → Menu. It
+// rides with the hours too. Missing (an older server, migration 25 not run):
+// null, and the menu shows the four caves with 5 dishes each.
+function hfTopClean(t){
+  if(!t||typeof t!=='object')return null;
+  var out={},ok=true;
+  ['starters','entree','salads','drinks'].forEach(function(k){var n=t[k];if(typeof n==='number'&&n%1===0&&n>=0&&n<=10)out[k]=n;else ok=false;});
+  return ok?out:null;
 }
 function hfHoursFetch(){
   fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
@@ -1875,6 +1900,7 @@ function hfHoursLoad(){
       HF_HOURS.holidays=Array.isArray(kept.holidays)?kept.holidays:[];
       HF_HOURS.tz=typeof kept.tz==='string'?kept.tz:null;
       HF_HOURS.grade=HF_GRADES[kept.grade]?kept.grade:null;  // r34
+      HF_HOURS.top=hfTopClean(kept.top);                     // r36
       hfHoursFill();
     }
   }catch(e){}
