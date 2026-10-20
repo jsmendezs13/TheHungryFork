@@ -554,6 +554,24 @@
   .m-crew { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .9rem; margin-top:.35rem; }
   .m-crew .m-select { width:auto; padding:.35rem .6rem; font-size:.76rem; border-radius:999px; }
   .m-crew .m-codes { margin-top:0; color:var(--text); }
+  /* r39: the kind of a drink, and a dish's pairings chosen from the drinks (a row of photos you slide) */
+  .pk-note { font-size:.78rem; color:var(--muted); margin-top:.4rem; line-height:1.45; }
+  .pk-seg { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .pk-seg.sub { margin-top:.5rem; }
+  .pk-pill { border:1px solid var(--border); border-radius:999px; padding:.45rem .85rem; font-size:.82rem; font-family:var(--sans); background:#fff; color:var(--text); cursor:pointer; }
+  .pk-pill.on { background:var(--red); border-color:var(--red); color:#fff; font-weight:600; }
+  .pk-seg.sub .pk-pill { font-size:.76rem; padding:.36rem .7rem; }
+  .pk-seg.sub .pk-pill.on { background:var(--text); border-color:var(--text); }
+  .pk-tiles { display:flex; gap:.55rem; overflow-x:auto; padding:.15rem .1rem .45rem; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+  .pk-tile { flex:none; width:92px; min-height:118px; scroll-snap-align:start; border:1.5px solid var(--border); border-radius:12px; background:#fff; padding:.5rem .35rem .45rem;
+    text-align:center; font-size:.7rem; line-height:1.2; color:var(--text); font-family:var(--sans); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:.3rem; }
+  .pk-tile img { width:48px; height:62px; object-fit:contain; display:block; }
+  .pk-tile .pk-emoji { font-size:1.9rem; line-height:62px; height:62px; }
+  .pk-tile em { color:var(--muted); font-style:normal; }
+  .pk-tile.on { border-color:var(--red); box-shadow:0 0 0 2px rgba(176,16,21,.18); font-weight:600; }
+  .pk-tile.none { justify-content:center; color:var(--muted); font-size:.76rem; }
+  .pk-tile.none.on { color:var(--red); }
+  .pk-tile:disabled, .pk-pill:disabled { opacity:.5; cursor:wait; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -812,16 +830,21 @@ window.addEventListener('hashchange', function(){
   if(t && ACCESS && RESTAURANT && t!==TAB) switchTab(t);
 });
 
+let DRINKS_READY = true;          // r39: false while migration 26 has not been run
 async function loadDishes(){
   DISHES_ERROR = null;
   ARR = null;                      // r36: an order not saved yet belongs to the list that is going away
   try{
     // Hidden dishes must appear here — hiding one on the public menu is not the
     // same as losing the switch that brings it back.
-    const res = await fetch(SUPABASE_URL+'/rest/v1/dishes?restaurant_id=eq.'+RESTAURANT.id
-      +'&select=id,slug,name,emoji,image,image_open,price,description,about,modifications,wine,cocktail,ingredients,restaurant_category,is_chefs_pick,is_hidden,sold_out_until,sort_order'
-      +'&order=sort_order.asc',
+    const COLS = 'id,slug,name,emoji,image,image_open,price,description,about,modifications,wine,cocktail,ingredients,restaurant_category,is_chefs_pick,is_hidden,sold_out_until,sort_order';
+    const ask = cols => fetch(SUPABASE_URL+'/rest/v1/dishes?restaurant_id=eq.'+RESTAURANT.id
+      +'&select='+cols+'&order=sort_order.asc',
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    // r39: the drinks' columns (migration 26); without them before it is run.
+    let res = await ask(COLS+',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id');
+    DRINKS_READY = res.ok;
+    if(!res.ok && res.status>=400 && res.status<500) res = await ask(COLS);
     if(!res.ok) throw new Error('Could not load the menu ('+res.status+').');
     DISHES_ROWS = await res.json();
     DISHES_LOADED = true;
@@ -916,7 +939,8 @@ function trInner(){
   const locked = !TR.ready || TR.failed;
   return head + TR_KINDS.map(function(k){
       const n = TR.top[k[0]], on = n > 0;
-      const sub = !on ? 'Not on the menu' : (n === 1 ? 'The best rated of the '+k[2] : 'The best '+n+' '+k[2]);
+      const sub = (!on ? 'Not on the menu' : (n === 1 ? 'The best rated of the '+k[2] : 'The best '+n+' '+k[2]))
+        + (on && k[0] === 'drinks' ? ', in the drinks’ carousel' : '');      // r39
       return '<div class="tr-row'+(on?'':' off')+'" id="tr-row-'+k[0]+'">'
         + '<div class="tr-name"><b>Top Rated '+k[1]+'</b><small id="tr-sub-'+k[0]+'">'+sub+'</small></div>'
         + '<div class="tr-ctrl">'
@@ -1125,6 +1149,7 @@ function dishCard(d){
     .concat(soldOut ? '<span class="m-flag sold">Sold out</span>' : [])
     .concat(d.is_hidden ? '<span class="m-flag hid">Hidden</span>' : [])
     .concat(d.is_chefs_pick ? '<span class="m-flag pick">Chef\'s Pick</span>' : [])
+    .concat(d.is_bartenders_pick ? '<span class="m-flag pick">Bartender\'s Pick</span>' : [])
     // Visible from the list, because a dish with no allergens declared is the
     // one that needs attention.
     .concat(allergenCount(d) === 0 ? '<span class="m-flag sold">No allergens set</span>' : []);
@@ -1134,7 +1159,7 @@ function dishCard(d){
     +   dishThumb(d)
     +   '<div class="m-dish-id">'
     +     '<div class="m-dish-name">'+esc(d.name)+'</div>'
-    +     '<div class="m-dish-meta">$'+Number(d.price||0).toFixed(2)+' &middot; '+esc(d.restaurant_category||'')+'</div>'
+    +     '<div class="m-dish-meta">'+dishMeta(d)+'</div>'
     +     (flags.length?'<div class="m-flags">'+flags.join('')+'</div>':'')
     +   '</div>'
     +   '<span class="m-dish-caret">&#9656;</span>'
@@ -1142,7 +1167,9 @@ function dishCard(d){
     + '<div class="m-dish-body">'
     +   switchRow(d.id,'sold_out',soldOut,'Sold out','Comes off the menu as sold out and stays that way until you switch it back. Nothing resets it overnight.',true)
     +   switchRow(d.id,'is_hidden',!!d.is_hidden,'Hidden from the menu','Nobody sees this dish on the site at all. Use it for a dish that is off for the season.',false)
-    +   switchRow(d.id,'is_chefs_pick',!!d.is_chefs_pick,'Chef\'s Pick','Only one dish at a time. Turning this on takes it off whichever dish has it now.',false)
+    +   (isDrinkRow(d)
+          ? (DRINKS_READY ? switchRow(d.id,'is_bartenders_pick',!!d.is_bartenders_pick,'Bartender\'s Pick','Only one drink at a time. It opens the drinks\' carousel on the menu, in its own cave. Turning this on takes it off whichever drink has it now.',false) : '')
+          : switchRow(d.id,'is_chefs_pick',!!d.is_chefs_pick,'Chef\'s Pick','Only one dish at a time. Turning this on takes it off whichever dish has it now.',false))
     +   textFields(d)
     +   '<div class="m-actions">'
     +     '<button class="m-save" id="save-'+d.id+'" onclick="saveText('+d.id+')" disabled>Save changes</button>'
@@ -1172,18 +1199,84 @@ function textFields(d){
     const counter = LIMITS[field] ? '<div class="m-count" id="c-'+d.id+'-'+field+'">'+String(value||'').length+' / '+LIMITS[field]+'</div>' : '';
     return '<div class="m-field"><div class="m-field-label">'+label+'</div>'+control+counter+'</div>';
   };
-  return f('name','Dish name',d.name,'text')
+  const drink = isDrinkRow(d);
+  return f('name', drink ? 'Drink name' : 'Dish name', d.name, 'text')
+    + (drink ? kindField(d) : '')
     + f('price','Price',d.price,'price')
     + f('description','Short description',d.description,'area')
-    + f('about','About this dish',d.about,'area')
+    + f('about', drink ? 'About this drink' : 'About this dish', d.about, 'area')
     + f('ingredients','Ingredients (comma separated)',d.ingredients,'area')
     + f('modifications','Modifications',d.modifications,'area')
-    + f('wine','Wine pairing',d.wine,'text')
-    + f('cocktail','Cocktail pairing',d.cocktail,'text')
+    + (drink ? '' : pairField(d,'wine') + pairField(d,'cocktail'))
     + classifySection(d)
     + allergenSection(d);
 }
 
+
+// ── r39 (Sebastian, 19 Oct): DRINKS ──
+// A drink has a kind — Wine, Cocktail, Beer, or Spirit and then which (Gin, Whiskey, Tequila, Vodka, Rum, Other) —
+// and the menu shows it in that cave of the drinks' carousel. A dish's pairings are chosen from the drinks on the
+// menu, as photos in a row you slide (option B): the Sommelier's Recommendation from the wines, the Suggested
+// Cocktail from the cocktails; "None" leaves it empty. Each choice saves at once, like the switches.
+const DRINK_KIND_LABEL = { wine:'Wine', cocktail:'Cocktail', beer:'Beer', gin:'Gin', whiskey:'Whiskey', tequila:'Tequila', vodka:'Vodka', rum:'Rum', spirit:'Other spirit' };
+const SPIRITS = [['gin','Gin'],['whiskey','Whiskey'],['tequila','Tequila'],['vodka','Vodka'],['rum','Rum'],['spirit','Other']];
+function isDrinkRow(d){ return dishKeyOf(d) === 'drinks'; }
+function isSpiritKind(k){ return SPIRITS.some(s => s[0] === k); }
+function dishMeta(d){
+  const price = d.price == null || d.price === '' ? 'No price yet' : '$'+Number(d.price).toFixed(2);
+  if(isDrinkRow(d)) return price+' &middot; '+(d.drink_kind ? (isSpiritKind(d.drink_kind) && d.drink_kind !== 'spirit' ? 'Spirit · ' : '')+esc(DRINK_KIND_LABEL[d.drink_kind]||d.drink_kind) : 'drink');
+  return price+' &middot; '+esc(d.restaurant_category||'');
+}
+function kindField(d){
+  if(!DRINKS_READY) return '<div class="m-field"><div class="m-field-label">Kind of drink</div><div class="pk-note">Not set up yet: Seb\'s Analytics has to run migration 26.</div></div>';
+  const k = d.drink_kind || '', spirit = isSpiritKind(k);
+  const pill = (val, label, on) => '<button type="button" class="pk-pill'+(on?' on':'')+'" aria-pressed="'+(on?'true':'false')+'" onclick="setKind('+d.id+',\''+val+'\')">'+label+'</button>';
+  return '<div class="m-field" id="kind-'+d.id+'"><div class="m-field-label">Kind of drink</div>'
+    + '<div class="pk-seg">'+pill('wine','Wine',k==='wine')+pill('cocktail','Cocktail',k==='cocktail')+pill('beer','Beer',k==='beer')+pill(spirit?k:'spirit','Spirit',spirit)+'</div>'
+    + (spirit ? '<div class="pk-seg sub">'+SPIRITS.map(s => pill(s[0], s[1], k===s[0])).join('')+'</div>' : '')
+    + '<div class="pk-note">'+(k ? 'The menu shows it with the '+(spirit?'spirits':DRINK_KIND_LABEL[k].toLowerCase()+'s')+'.' : 'Choose one: the menu shows each drink under its kind.')+'</div></div>';
+}
+async function setKind(id, kind){
+  const d = rowFor(id); if(!d || d.drink_kind === kind) return;
+  const saved = await save(id, { drink_kind: kind });
+  if(saved) showToast('Saved · '+(isSpiritKind(kind) && kind !== 'spirit' ? 'Spirit · ' : '')+DRINK_KIND_LABEL[kind]);
+}
+function pairField(d, which){
+  const col = which==='wine' ? 'pair_wine_id' : 'pair_cocktail_id';
+  const title = which==='wine' ? 'Sommelier\'s Recommendation' : 'Suggested Cocktail';
+  if(!DRINKS_READY) return '<div class="m-field"><div class="m-field-label">'+title+'</div><div class="pk-note">Choosing from your drinks is not set up yet: Seb\'s Analytics has to run migration 26.</div></div>';
+  const chosen = d[col] ? String(d[col]) : '';
+  const drinks = DISHES_ROWS.filter(x => isDrinkRow(x) && x.drink_kind === which && (!x.is_hidden || String(x.id) === chosen));
+  const tile = (x) => {
+    const on = String(x.id) === chosen;
+    const file = String(x.image || '');
+    const img = file ? '<img src="'+esc(typeof hfImgSrc==='function' ? hfImgSrc(file, 96) : file)+'" data-orig="'+esc(file)+'" data-emoji="'+esc(x.emoji||'🍷')+'" alt="" loading="lazy" onerror="pkImgBad(this)">' : '<span class="pk-emoji">'+esc(x.emoji||'🍷')+'</span>';
+    return '<button type="button" class="pk-tile'+(on?' on':'')+'" aria-pressed="'+(on?'true':'false')+'" onclick="setPair('+d.id+',\''+which+'\','+x.id+')">'+img+'<span>'+esc(x.name)+(x.is_hidden?' <em>(hidden)</em>':'')+'</span></button>';
+  };
+  const none = '<button type="button" class="pk-tile none'+(chosen?'':' on')+'" aria-pressed="'+(chosen?'false':'true')+'" onclick="setPair('+d.id+',\''+which+'\',null)">None</button>';
+  const typed = which==='wine' ? d.wine : d.cocktail;
+  const note = !drinks.length ? 'No '+(which==='wine'?'wines':'cocktails')+' on your menu yet. Message Seb\'s Analytics to add them.'
+    : (!chosen && typed ? 'Typed before: “'+esc(typed)+'”. Tap one of your '+(which==='wine'?'wines':'cocktails')+' to choose it instead.'
+    : 'Slide to see your '+(which==='wine'?'wines':'cocktails')+'. Tap one to choose it; “None” leaves it empty.');
+  return '<div class="m-field"><div class="m-field-label">'+title+'</div>'
+    + '<div class="pk-tiles" id="pk-'+d.id+'-'+which+'">'+none+drinks.map(tile).join('')+'</div>'
+    + '<div class="pk-note">'+note+'</div></div>';
+}
+function pkImgBad(img){
+  if(typeof hfImgBack === 'function' && hfImgBack(img)) return;          // the original file, once
+  const s = document.createElement('span'); s.className = 'pk-emoji'; s.textContent = img.getAttribute('data-emoji') || '🍷';
+  img.replaceWith(s);
+}
+async function setPair(id, which, drinkId){
+  const d = rowFor(id); if(!d) return;
+  const col = which==='wine' ? 'pair_wine_id' : 'pair_cocktail_id';
+  if(String(d[col]||'') === String(drinkId||'') && (drinkId || !(which==='wine' ? d.wine : d.cocktail))) return;
+  // The choice replaces whatever was typed before r39.
+  const saved = await save(id, { [col]: drinkId, [which]: null });
+  if(!saved) return;
+  const x = drinkId ? rowFor(drinkId) : null;
+  showToast((which==='wine' ? 'Sommelier\'s Recommendation' : 'Suggested Cocktail')+': '+(x ? x.name : 'none'));
+}
 
 // ── ALLERGENS ──
 // The same 30 keys as api/_lib/dish-fields.js, with names a person can read.
@@ -1504,8 +1597,13 @@ function collectText(id){
   const out = {};
   const priceEl = document.getElementById('f-'+id+'-price');
   if(priceEl){
-    const n = Number(priceEl.value);
-    if(priceEl.value!=='' && Number.isFinite(n) && Math.round(n*100)!==Math.round(Number(d.price||0)*100)) out.price = n;
+    // r39: a price may be left empty (no price yet on the menu).
+    const v = priceEl.value.trim(), had = d.price != null && d.price !== '';
+    if(v === ''){ if(had) out.price = null; }
+    else{
+      const n = Number(v);
+      if(Number.isFinite(n) && (!had || Math.round(n*100)!==Math.round(Number(d.price)*100))) out.price = n;
+    }
   }
   const TEXTY = ['name','description','about','ingredients','modifications','wine','cocktail','allergens_text']
     .concat(CLASSIFY_FIELDS.map(c=>c[0]));
@@ -1532,7 +1630,7 @@ async function toggleFlag(id, field){
 }
 
 function labelFor(f){
-  return f==='sold_out' ? 'Sold out' : f==='is_hidden' ? 'Hidden' : 'Chef\'s Pick';
+  return f==='sold_out' ? 'Sold out' : f==='is_hidden' ? 'Hidden' : f==='is_bartenders_pick' ? 'Bartender\'s Pick' : 'Chef\'s Pick';
 }
 
 async function saveText(id){
@@ -1562,6 +1660,7 @@ async function save(id, changes){
     if(i>=0) DISHES_ROWS[i] = data.dish;
     // Chef's Pick is exclusive, so the server may have cleared it elsewhere.
     if(data.dish.is_chefs_pick) DISHES_ROWS.forEach(d=>{ if(String(d.id)!==String(id)) d.is_chefs_pick=false; });
+    if(data.dish.is_bartenders_pick) DISHES_ROWS.forEach(d=>{ if(String(d.id)!==String(id)) d.is_bartenders_pick=false; });
     render();
     return true;
   }catch(e){
