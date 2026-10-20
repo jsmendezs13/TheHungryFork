@@ -319,6 +319,66 @@
   .m-dish-group:first-child { margin-top:.2rem; }
   .m-dish-group::after { content:''; flex:1; height:1px; background:var(--border); }
   .m-dish-group small { font-size:.62rem; color:var(--muted); letter-spacing:.08em; font-weight:500; }
+  /* r40: food apart from drinks */
+  .mg-tr-gap { height:1.6rem; }
+  .mg-subkind { font-size:.6rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:.9rem 0 .45rem .2rem; }
+  .mg-subkind small { font-weight:500; letter-spacing:.06em; }
+  .mg-side { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin:0 0 1rem; }
+  .mg-side-btn { display:flex; align-items:center; justify-content:center; gap:.55rem; min-height:58px; padding:.6rem .8rem; border:1.5px solid var(--border); background:var(--white); border-radius:16px;
+    font-family:var(--serif); font-size:1.2rem; font-weight:600; color:var(--text); cursor:pointer; box-shadow:var(--shadow-sm); -webkit-tap-highlight-color:transparent; }
+  .mg-side-btn small { font-family:var(--sans); font-size:.68rem; font-weight:600; color:var(--muted); background:var(--off-white); border-radius:999px; padding:.1rem .5rem; }
+  .mg-side-btn.on { background:var(--ink); border-color:var(--ink); color:var(--white); }
+  .mg-side-btn.on small { background:rgba(255,255,255,.16); color:#fff; }
+  .mg-side-ic { font-size:1.25rem; line-height:1; }
+  .mg-search { display:flex; align-items:center; gap:.5rem; background:#fff; border:1px solid var(--border); border-radius:999px; padding:0 .9rem; color:var(--muted); margin:0 0 .8rem; }
+  .mg-search:focus-within { border-color:var(--red); }
+  .mg-search input { flex:1; min-width:0; border:none; outline:none; background:none; font:400 .95rem var(--sans); color:var(--text); padding:.65rem 0; }
+  /* r40 · the carousel in small (Sebastian, 20 Oct 01:02 and 01:42): small copies of the menu's caves — the stone arch with
+     its name, the warm spotlight, the dish — on one line; "Change the order", then drag a cave left or right. */
+  .co-strip-card { background:linear-gradient(180deg, #2A1D17 0%, #170F0B 100%); border-radius:16px; padding:.75rem .7rem .8rem; margin:0 0 1.1rem; }
+  .co-strip-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; color:#E9DCCB; font-size:.62rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; margin:0 .2rem .6rem; }
+  .co-hint { color:#CDBBA8; font-size:.74rem; margin:-.2rem .2rem .6rem; }
+  .co-hint b { color:#fff; }
+  .co-err { color:#FF8A7E; font-size:.78rem; margin:-.2rem .2rem .6rem; }
+  .co-strip { display:flex; gap:.55rem; overflow-x:auto; scrollbar-width:none; padding:.15rem .1rem .35rem; scroll-behavior:auto; }
+  .co-strip::-webkit-scrollbar { display:none; }
+  .co-arch { flex:none; width:96px; display:flex; flex-direction:column; align-items:center; border-radius:14px; }
+  .co-arch-in { width:96px; height:122px; border-radius:50% 50% 8px 8px / 40% 40% 8px 8px; background:linear-gradient(160deg, #6E6459 0%, #544A40 45%, #3E352D 100%);
+    box-shadow:inset 0 0 0 3px rgba(0,0,0,.25), inset 0 3px 7px rgba(255,255,255,.12), 0 8px 16px rgba(0,0,0,.45); padding:7px 6px 6px; display:flex; flex-direction:column; pointer-events:none; }
+  .co-arch-title { text-align:center; color:#F3E9DC; font-size:.5rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; line-height:1.15; min-height:1.2em; margin:3px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .co-arch-title span { display:block; color:#D9A441; font-size:.42rem; }
+  .co-arch-open { position:relative; flex:1; border-radius:50% 50% 5px 5px / 44% 44% 5px 5px; background:radial-gradient(80% 55% at 50% 42%, #3A1210 0%, #1C0908 55%, #0D0505 100%);
+    box-shadow:inset 0 0 14px rgba(0,0,0,.9); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .co-arch-open::before { content:''; position:absolute; width:110%; aspect-ratio:1; border-radius:50%; background:radial-gradient(closest-side, rgba(255,214,168,.32) 0%, rgba(255,170,110,.13) 50%, rgba(255,150,90,0) 100%); }
+  .co-arch-open .m-dish-thumb { position:relative; width:96%; height:64%; border:none; background:none; border-radius:0; box-shadow:none; filter:drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+  .co-arch-open .m-dish-thumb img { object-fit:contain; }
+  .co-arch-open .co-emoji { position:relative; font-size:1.5rem; background:none; border:none; }
+  .co-star { position:absolute; top:16%; right:14%; font-size:.7rem; }
+  .co-arch-off { color:#FF8A7E; font-size:.52rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; margin-top:.3rem; }
+  .co-arch.off .co-arch-in { opacity:.4; filter:grayscale(.8); }
+  .co-strip-card.editing .co-arch { cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none; }
+  .co-strip-card.editing .co-arch-in { box-shadow:inset 0 0 0 3px rgba(0,0,0,.25), 0 0 0 2px rgba(255,122,107,.55), 0 8px 16px rgba(0,0,0,.45); }
+  .co-arch:focus-visible { outline:2px solid #FF7A6B; outline-offset:3px; }
+  .co-arch.co-lift { position:relative; z-index:20; cursor:grabbing; filter:drop-shadow(0 14px 18px rgba(0,0,0,.65)); }
+  /* r40 · each part of the menu folds and unfolds, with a switch for its cave */
+  .mg-g { gap:.5rem; }
+  .mg-g-name { flex:1; display:flex; align-items:center; gap:.45rem; min-width:0; border:none; background:none; padding:.35rem 0; margin:0; cursor:pointer; text-align:left;
+    font:inherit; letter-spacing:inherit; text-transform:inherit; color:inherit; -webkit-tap-highlight-color:transparent; }
+  .mg-g-name > span { flex:none; }
+  .mg-caret { display:inline-block; color:var(--muted); font-size:.7rem; transition:transform .2s; }
+  .mg-g.open .mg-caret { transform:rotate(90deg); }
+  .mg-g-sw { flex:none; width:36px; height:21px; }
+  .mg-g-sw::after { top:2px; left:2px; width:17px; height:17px; }
+  .mg-g-sw.on::after { transform:translateX(15px); }
+  .mg-g.is-off .mg-g-name { color:var(--muted); }
+  .mg-off { font-style:normal; font-size:.56rem; letter-spacing:.12em; color:var(--muted); background:var(--off-white); border:1px solid var(--border); border-radius:999px; padding:.05rem .45rem; margin-left:.2rem; }
+  .m-dish-group.mg-g:not(.open) { margin-bottom:.2rem; }
+  .pz-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+  .pz-grid.three { grid-template-columns:1fr 1fr 1fr; }
+  .pz { display:flex; flex-direction:column; gap:.25rem; font-size:.72rem; color:var(--muted); font-weight:600; }
+  .pz-in { display:flex; align-items:center; gap:.3rem; color:var(--text); font-weight:500; }
+  .pz-in .m-input { min-width:0; }
+  @media (max-width:420px) { .pz-grid.three { grid-template-columns:1fr 1fr; } }
   .rv-note { font-size:.74rem; color:var(--text); background:var(--off-white); border-radius:8px; padding:.3rem .5rem; margin-top:.35rem; overflow-wrap:anywhere; }
   .rv-chip { display:inline-block; font-size:.56rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; margin-left:.3rem; vertical-align:2px; white-space:nowrap; }
   .rv-chip.in { background:var(--blue-light); color:var(--blue); }
@@ -831,6 +891,7 @@ window.addEventListener('hashchange', function(){
 });
 
 let DRINKS_READY = true;          // r39: false while migration 26 has not been run
+let PRICES_READY = true;          // r40: false while migration 27 has not been run (the drink prices)
 async function loadDishes(){
   DISHES_ERROR = null;
   ARR = null;                      // r36: an order not saved yet belongs to the list that is going away
@@ -842,7 +903,10 @@ async function loadDishes(){
       +'&select='+cols+'&order=sort_order.asc',
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     // r39: the drinks' columns (migration 26); without them before it is run.
-    let res = await ask(COLS+',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id');
+    const R39 = COLS+',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id';
+    let res = await ask(R39+',price_glass,price_bottle,price_shot,price_mixed');      // r40 (migration 27)
+    PRICES_READY = res.ok;
+    if(!res.ok && res.status>=400 && res.status<500) res = await ask(R39);
     DRINKS_READY = res.ok;
     if(!res.ok && res.status>=400 && res.status<500) res = await ask(COLS);
     if(!res.ok) throw new Error('Could not load the menu ('+res.status+').');
@@ -899,8 +963,9 @@ function render(){
   if(TAB==='menu'){
     if(DISHES_ERROR){ wrap().innerHTML = top + '<div class="m-err">'+esc(DISHES_ERROR)+'</div>'; return; }
     if(!DISHES_LOADED){ wrap().innerHTML = top + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
-    wrap().innerHTML = top + trCardHtml() + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS)
-                                                 : '<div class="m-empty">This restaurant has no dishes yet.</div>');
+    // r40: the dishes and drinks first (the way to find them at the top), the Top Rated settings after them.
+    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS) + '<div class="mg-tr-gap"></div>' + trCardHtml()
+                                                 : trCardHtml() + '<div class="m-empty">This restaurant has no dishes yet.</div>');
     return;
   }
   wrap().innerHTML = top + '<div id="rv-root"></div>';
@@ -912,7 +977,7 @@ function render(){
 // The menu has four Top Rated caves: Starters, Entrées, Salads and Drinks, each with the best rated dishes of
 // that part of the menu. Here the manager chooses how many each shows (1 to 10) or switches it off. Every
 // change is saved by itself a moment later (several taps, one save). The server: api/_lib/menuset.js.
-const TR_KINDS = [['starters','Starters','starters'], ['entree','Entrées','entrées'], ['salads','Salads','salads'], ['drinks','Drinks','drinks']];
+const TR_KINDS = [['starters','Appetizers','appetizers'], ['entree','Entrées','entrées'], ['salads','Salads','salads'], ['drinks','Drinks','drinks']];
 let TR = { rid:null, loaded:false, ready:true, failed:false, top:null, last:{}, error:'', note:'', timer:null, busy:false, again:false };
 async function trLoad(){
   const rid = RESTAURANT.id;
@@ -923,6 +988,12 @@ async function trLoad(){
     const d = await rvApi({action:'menu_settings'});
     if(TR.rid !== rid) return;
     TR.top = d.top; TR.ready = d.ready !== false; TR.error = d.ready === false ? (d.error || '') : '';
+    // r40: the order of the caves (migration 27); an older server or database: the menu's own order, not changeable
+    const o = d.order || {};
+    CAVE_ORDER = { food:Array.isArray(o.main) ? o.main : [], drinks:Array.isArray(o.drinks) ? o.drinks : [] };
+    CAVE_HIDDEN = Array.isArray(o.hidden) ? o.hidden : [];
+    CO_READY = d.orderReady === true;
+    if(TAB === 'menu' && DISHES_LOADED && !CO.ui) render();
   }catch(e){
     if(TR.rid !== rid) return;
     TR.failed = true; TR.error = e.message; TR.top = {starters:5, entree:5, salads:5, drinks:5};
@@ -984,42 +1055,283 @@ async function trSave(){
 // r30 (Sebastian, 13 Oct: "not all mixed together"): the dishes in groups, in the menu's own order — Starters,
 // Entrées, Salads, Sides, Drinks — each under its heading with how many dishes it has. Inside a group the
 // menu's order (sort_order) stays. A category the menu does not know yet gets its own group at the end.
-const DISH_GROUPS = [['chefs-pick', "Chef's Pick"], ['starters', 'Starters'], ['appetizers', 'Appetizers'], ['entree', 'Entrées'], ['salads', 'Salads'],
+const DISH_GROUPS = [['chefs-pick', "Chef's Pick"], ['starters', 'Appetizers'], ['appetizers', 'Appetizers'], ['entree', 'Entrées'], ['salads', 'Salads'],
                      ['sides', 'Sides'], ['desserts', 'Desserts'], ['drinks', 'Drinks']];
 // r36 (Sebastian, 16 Oct, option B): "Change the order" beside a group's name puts that group in order mode:
 // each dish a short card with ☰; hold ☰ and drag the dish where it goes; "Done" saves. The menu shows each
 // part in that order (the fish before the steak).
 const dishKeyOf = d => String(d.restaurant_category || '').trim().toLowerCase();
-function dishGroupsHtml(rows){
+// r40 (Sebastian, 19 Oct 22:14: "separate drinks and food"): the food in its parts, the drinks in theirs — Wines,
+// Cocktails, Beers, Spirits (gin, whiskey, tequila, vodka, rum, other) — as the menu's drinks' carousel shows them.
+const DRINK_GROUPS = [['drinks:wines', 'Wines', ['wine']], ['drinks:cocktails', 'Cocktails', ['cocktail']], ['drinks:beers', 'Beers', ['beer']],
+                      ['drinks:spirits', 'Spirits', ['gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit']], ['drinks:shots', 'Shots', ['shot']]];   // r40: Shots
+const SPIRIT_ORDER = ['gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];
+function menuGroups(rows){
   const known = DISH_GROUPS.map(g => g[0]);
-  const keyOf = dishKeyOf;
-  const extra = [...new Set(rows.map(keyOf).filter(k => known.indexOf(k) < 0))];
   const label = k => k ? k.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Other';
-  return DISH_GROUPS.concat(extra.map(k => [k, label(k)])).map(function(g){
-    const list = rows.filter(d => keyOf(d) === g[0]);
-    if(!list.length) return '';
-    const arranging = ARR && ARR.key === g[0];
-    const btn = list.length < 2 ? ''
-      : arranging ? '<button type="button" class="dg-arrange done" id="dg-done" onclick="arrDone()"'+(ARR.saving?' disabled':'')+'>'+(ARR.saving?'Saving…':'Done')+'</button>'
-      : '<button type="button" class="dg-arrange" data-group="'+esc(g[0])+'" onclick="arrStart(this.dataset.group)">Change the order</button>';
-    const head = btn ? '<div class="m-dish-group has-btn"><span role="heading" aria-level="3">'+esc(g[1])+' <small>'+list.length+'</small></span>'+btn+'</div>'
-                     : '<div class="m-dish-group" role="heading" aria-level="3">'+esc(g[1])+' <small>'+list.length+'</small></div>';
-    if(!arranging) return head + list.map(dishCard).join('');
-    const byId = {}; list.forEach(d => { byId[d.id] = d; });
-    return head
-      + '<div class="arr-hint" id="arr-hint">Hold <b>☰</b> and drag a dish to its place. Tap <b>Done</b> to save.</div>'
-      + (ARR.error ? '<div class="arr-err" id="arr-err">'+esc(ARR.error)+'</div>' : '')
-      + '<div class="arr-list" id="arr-list">' + ARR.ids.map(id => byId[id] ? arrCard(byId[id]) : '').join('') + '</div>';
-  }).join('');
+  const extra = [...new Set(rows.map(dishKeyOf).filter(k => known.indexOf(k) < 0))];
+  const food = DISH_GROUPS.filter(g => g[0] !== 'drinks').concat(extra.map(k => [k, label(k)]))
+    .map(g => ({ key:g[0], label:g[1], side:'food', list:rows.filter(d => dishKeyOf(d) === g[0]) }));
+  const drinks = rows.filter(isDrinkRow);
+  const kinds = [].concat(...DRINK_GROUPS.map(g => g[2]));
+  const dg = DRINK_GROUPS.map(g => ({ key:g[0], label:g[1], side:'drinks',
+      list:drinks.map((d, i) => ({ d, i })).filter(x => g[2].indexOf(x.d.drink_kind) >= 0)
+                 .sort((a, b) => (g[0] === 'drinks:spirits' ? SPIRIT_ORDER.indexOf(a.d.drink_kind) - SPIRIT_ORDER.indexOf(b.d.drink_kind) : 0) || a.i - b.i)
+                 .map(x => x.d) }))
+    .concat([{ key:'drinks:other', label:'Other drinks', side:'drinks', list:drinks.filter(d => kinds.indexOf(d.drink_kind) < 0) }]);
+  return { food:food.filter(g => g.list.length), drinks:dg.filter(g => g.list.length) };
+}
+function groupOf(key){ const g = menuGroups(DISHES_ROWS); return g.food.concat(g.drinks).find(x => x.key === key) || null; }
+// A part of the menu: its name and count, and its dishes. In the list (not a search) a tap on the name folds or
+// unfolds it, and a switch shows its cave on the menu or takes it off (Sebastian, 20 Oct 01:02).
+function groupHtml(g, foldable){
+  const list = g.list;
+  const arranging = ARR && ARR.key === g.key;
+  const open = !foldable || arranging || !!MG_OPEN[g.key] || list.some(d => String(d.id) === String(openDishId));
+  const btn = list.length < 2 ? ''
+    : arranging ? '<button type="button" class="dg-arrange done" id="dg-done" onclick="arrDone()"'+(ARR.saving?' disabled':'')+'>'+(ARR.saving?'Saving…':'Done')+'</button>'
+    : '<button type="button" class="dg-arrange" data-group="'+esc(g.key)+'" onclick="arrStart(this.dataset.group)">Change the order</button>';
+  const id = ' id="dg-'+esc(g.key.replace(':', '-'))+'"';
+  const cave = caveKeyOfGroup(g.key), hideable = foldable && CAVE_HIDEABLE.indexOf(cave) >= 0, shown = CAVE_HIDDEN.indexOf(cave) < 0;
+  const name = '<span role="heading" aria-level="3">'+esc(g.label)+' <small>'+list.length+'</small>'+(hideable && !shown ? ' <em class="mg-off">Hidden</em>' : '')+'</span>';
+  const title = foldable
+    ? '<button type="button" class="mg-g-name" aria-expanded="'+open+'" onclick="mgFoldTap(\''+esc(g.key)+'\')"><span class="mg-caret" aria-hidden="true">▸</span>'+name+'</button>'
+    : name;
+  const sw = hideable
+    ? '<button type="button" class="m-switch mg-g-sw'+(shown?' on':'')+'" id="cs-'+esc(cave)+'" role="switch" aria-checked="'+shown+'" aria-label="'+esc(g.label)+' on the menu"'
+      + ' title="'+(shown ? 'On the menu. Tap to hide this cave.' : 'Hidden from the menu. Tap to show this cave.')+'" onclick="caveShow(\''+esc(cave)+'\')"'+(CO_READY && !CS.busy ? '' : ' disabled')+'></button>'
+    : '';
+  const head = '<div class="m-dish-group has-btn mg-g'+(open?' open':'')+(hideable && !shown?' is-off':'')+'"'+id+'>'+title+sw+btn+'</div>';
+  if(!open) return head;
+  if(!arranging){
+    if(g.key !== 'drinks:spirits') return head + list.map(dishCard).join('');
+    // the spirits, kind by kind (Gin, Whiskey…), as the menu's Spirits cave shows them
+    return head + SPIRIT_ORDER.map(k => { const l = list.filter(d => d.drink_kind === k); return l.length
+      ? '<div class="mg-subkind">'+esc(k === 'spirit' ? 'Other spirits' : DRINK_KIND_LABEL[k])+' <small>'+l.length+'</small></div>' + l.map(dishCard).join('') : ''; }).join('');
+  }
+  const byId = {}; list.forEach(d => { byId[d.id] = d; });
+  return head
+    + '<div class="arr-hint" id="arr-hint">Hold <b>☰</b> and drag a dish to its place. Tap <b>Done</b> to save.</div>'
+    + (ARR.error ? '<div class="arr-err" id="arr-err">'+esc(ARR.error)+'</div>' : '')
+    + '<div class="arr-list" id="arr-list">' + ARR.ids.map(id => byId[id] ? arrCard(byId[id]) : '').join('') + '</div>';
+}
+
+// r40 (Sebastian, 19 Oct 23:57 and 20 Oct 01:02): a search box under the tabs, then Food | Drinks, then that side's
+// carousel in small (drag a cave to change what comes first), then its parts of the menu in that order, each one
+// folding and unfolding, with a switch for its cave.
+let MG_SIDE = 'food', MG_Q = '', MG_OPEN = {};
+try{ const s = sessionStorage.getItem('hf_mg_side'); if(s === 'drinks') MG_SIDE = 'drinks'; }catch(e){}
+try{ MG_OPEN = JSON.parse(sessionStorage.getItem('hf_mg_open') || '{}') || {}; }catch(e){ MG_OPEN = {}; }
+const mgCount = list => list.reduce((n, g) => n + g.list.length, 0);
+const mgNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function dishGroupsHtml(rows){
+  const G = menuGroups(rows);
+  const side = MG_SIDE === 'drinks' && G.drinks.length ? 'drinks' : 'food';
+  const btn = (s, ic, name, n) => '<button type="button" role="tab" aria-selected="'+(side===s)+'" class="mg-side-btn'+(side===s?' on':'')+'" onclick="mgSide(\''+s+'\')">'
+    + '<span class="mg-side-ic" aria-hidden="true">'+ic+'</span><span class="mg-side-name">'+name+'</span><small>'+n+'</small></button>';
+  return '<label class="mg-search"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>'
+    + '<input id="mg-q" type="search" placeholder="Find a dish or a drink" autocomplete="off" value="'+esc(MG_Q)+'" oninput="mgSearch(this.value)"></label>'
+    + '<div class="mg-side" role="tablist" aria-label="Food or drinks">'+btn('food', '🍽️', 'Food', mgCount(G.food))+btn('drinks', '🍸', 'Drinks', mgCount(G.drinks))+'</div>'
+    + '<div id="mg-list">'+mgListHtml(G, side)+'</div>';
+}
+function mgListHtml(G, side){
+  const q = mgNorm(MG_Q).trim();
+  if(q){
+    // a search looks in the food and the drinks
+    const hit = G.food.concat(G.drinks).map(g => Object.assign({}, g, { list:g.list.filter(d => mgNorm(d.name).indexOf(q) >= 0) })).filter(g => g.list.length);
+    return hit.length ? hit.map(g => groupHtml(g, false)).join('') : '<div class="m-empty">No dish or drink called “'+esc(MG_Q)+'”.</div>';
+  }
+  const order = CO.side === side && CO.ui ? CO.keys : cavesFor(side);
+  const list = G[side].slice().sort((a, b) => caveRank(order, a.key) - caveRank(order, b.key));
+  return caveStripHtml(side) + list.map(g => groupHtml(g, true)).join('');
+}
+async function mgSide(s){
+  if(MG_SIDE === s) return;
+  if(ARR && ARR.saving) return;
+  if(ARR && arrChanged()){ const ok = await arrDone(); if(!ok) return; }     // a new order not saved yet: saved first
+  if(CO.ui && CO.keys.join() !== CO.orig.join()){ await coDone(); if(CO.ui) return; }    // a cave order not saved yet: saved first
+  ARR = null; CO = CO_IDLE(); MG_SIDE = s; openDishId = null;
+  try{ sessionStorage.setItem('hf_mg_side', s); }catch(e){} render();
+}
+function mgSearch(v){ MG_Q = v; const l = document.getElementById('mg-list'); if(!l) return;
+  const G = menuGroups(DISHES_ROWS); l.innerHTML = mgListHtml(G, MG_SIDE === 'drinks' && G.drinks.length ? 'drinks' : 'food'); }
+function mgFoldTap(key){
+  if(ARR && ARR.key === key) return;
+  const g = groupOf(key), wasOpen = !!MG_OPEN[key] || (g && g.list.some(d => String(d.id) === String(openDishId)));
+  MG_OPEN[key] = !wasOpen;
+  if(!MG_OPEN[key]){ delete MG_OPEN[key]; if(g && g.list.some(d => String(d.id) === String(openDishId))) openDishId = null; }
+  try{ sessionStorage.setItem('hf_mg_open', JSON.stringify(MG_OPEN)); }catch(e){}
+  render();
+}
+
+// ── THE CAVES: WHAT COMES FIRST, AND WHICH ARE ON THE MENU (r40) ──
+// The menu's carousel and the drinks' carousel in small, as guests see them: "Change the order", then hold a cave
+// and drag it to its place (the arrow keys too); Done saves. A cave taken off the menu shows dimmed here.
+const CAVE_LABEL = { 'chefs-pick':"Chef's Pick", starters:'Appetizers', appetizers:'Appetizers', entree:'Entrées', salads:'Salads', sides:'Sides', desserts:'Desserts',
+  drinks:'Drinks', 'top-starters':'Top Rated Appetizers', 'top-entree':'Top Rated Entrées', 'top-salads':'Top Rated Salads', 'bartenders-pick':"Bartender's Pick",
+  wines:'Wines', cocktails:'Cocktails', beers:'Beers', spirits:'Spirits', shots:'Shots', 'drinks-other':'More Drinks', 'top-drinks':'Top Rated Drinks' };
+const CAVE_EMOJI = { 'chefs-pick':'👨‍🍳', drinks:'🍸', 'bartenders-pick':'🍸', 'top-starters':'⭐', 'top-entree':'⭐', 'top-salads':'⭐', 'top-drinks':'⭐' };
+const CAVE_HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other'];
+let CAVE_ORDER = { food:[], drinks:[] };               // what the manager saved (empty: the menu's own order)
+let CAVE_HIDDEN = [];                                   // the caves taken off the menu
+let CO_READY = false;                                   // migration 27 is in: the order and the switches can change
+const CO_IDLE = () => ({ side:null, ui:false, keys:[], orig:[], saving:false, error:'' });
+let CO = CO_IDLE();
+let CS = { busy:false };
+const caveKeyOfGroup = k => k === 'drinks:other' ? 'drinks-other' : k.indexOf('drinks:') === 0 ? k.slice(7) : k;
+function caveRank(order, groupKey){ const i = order.indexOf(caveKeyOfGroup(groupKey)); return i < 0 ? 999 : i; }
+function cavesFor(side){
+  const top = (TR && TR.top) || {};
+  let base;
+  if(side === 'drinks'){
+    const drinks = DISHES_ROWS.filter(d => isDrinkRow(d) && !d.is_hidden), has = l => drinks.some(d => l.indexOf(d.drink_kind) >= 0);
+    base = [].concat(drinks.some(d => d.is_bartenders_pick) ? ['bartenders-pick'] : [],
+      DRINK_GROUPS.filter(g => has(g[2])).map(g => g[0].slice(7)),
+      drinks.some(d => [].concat(...DRINK_GROUPS.map(g => g[2])).indexOf(d.drink_kind) < 0) ? ['drinks-other'] : [],
+      top.drinks > 0 ? ['top-drinks'] : []);
+  } else {
+    base = ['chefs-pick', 'starters', 'entree', 'salads', 'sides', 'desserts', 'drinks']
+      .concat(['starters', 'entree', 'salads'].filter(k => top[k] > 0).map(k => 'top-'+k));
+  }
+  const saved = (CAVE_ORDER[side] || []).filter(k => base.indexOf(k) >= 0);
+  return saved.concat(base.filter(k => saved.indexOf(k) < 0));
+}
+function caveFirstDish(k){
+  const rows = DISHES_ROWS.filter(d => !d.is_hidden);
+  if(k === 'chefs-pick') return rows.find(d => d.is_chefs_pick) || null;
+  if(k === 'bartenders-pick') return rows.find(d => d.is_bartenders_pick) || null;
+  if(k === 'drinks'){ const c = cavesFor('drinks').find(x => CAVE_HIDDEN.indexOf(x) < 0 && x.indexOf('top-') < 0); return c ? caveFirstDish(c) : rows.find(isDrinkRow) || null; }
+  if(k.indexOf('top-') === 0) return null;
+  const g = groupOf(k === 'drinks-other' ? 'drinks:other' : DRINK_GROUPS.some(x => x[0] === 'drinks:'+k) ? 'drinks:'+k : k);
+  return g ? g.list.find(d => !d.is_hidden && (d.image || d.image_open)) || null : null;
+}
+function caveIcon(k){
+  const d = caveFirstDish(k);
+  if(d && (d.image || d.image_open)) return dishThumb(d).replace(' loading="lazy"', '');
+  return '<span class="m-dish-emoji co-emoji">'+(CAVE_EMOJI[k] || '🍽️')+'</span>';
+}
+function caveStripHtml(side){
+  const editing = CO.side === side && CO.ui, keys = editing ? CO.keys : cavesFor(side);
+  const what = side === 'drinks' ? 'The drinks’ carousel' : 'The menu’s carousel';
+  const btn = !CO_READY ? ''
+    : editing ? '<button type="button" class="dg-arrange done" id="co-done" onclick="coDone()"'+(CO.saving ? ' disabled' : '')+'>'+(CO.saving ? 'Saving…' : 'Done')+'</button>'
+    : '<button type="button" class="dg-arrange" id="co-start" onclick="coStart(\''+side+'\')">Change the order</button>';
+  return '<div class="co-strip-card'+(editing ? ' editing' : '')+'" id="co-card">'
+    + '<div class="co-strip-head"><span>'+what+'</span>'+btn+'</div>'
+    + (editing ? '<div class="co-hint">Hold a cave and drag it left or right to its place. Tap <b>Done</b> to save.</div>' : '')
+    + (CO.error ? '<div class="co-err" id="co-err">'+esc(CO.error)+'</div>' : '')
+    + (!CO_READY && TR.loaded ? '<div class="co-hint">Changing the order and hiding a cave are not set up yet: Seb\'s Analytics has to run migration 27.</div>' : '')
+    + '<div class="co-strip" id="co-strip">' + keys.map((k, i) => {
+        const off = CAVE_HIDDEN.indexOf(k) >= 0, top = k.indexOf('top-') === 0, label = CAVE_LABEL[k] || k;
+        return '<div class="co-arch'+(off ? ' off' : '')+'" data-k="'+esc(k)+'"'
+          + (editing ? ' tabindex="0" role="button" aria-label="'+esc(label)+', place '+(i + 1)+' of '+keys.length+' (drag left or right, or the arrow keys)" onpointerdown="coDown(event)" onkeydown="coKey(event,'+i+')"' : '')
+          + '><div class="co-arch-in"><div class="co-arch-title">'+(top ? '<span>Top Rated</span>'+esc(label.replace(/^Top Rated /, '')) : esc(label))+'</div>'
+          + '<div class="co-arch-open">'+caveIcon(k)+(top ? '<span class="co-star" aria-hidden="true">⭐</span>' : '')+'</div></div>'
+          + (off ? '<div class="co-arch-off">Hidden</div>' : '')+'</div>';
+      }).join('') + '</div></div>';
+}
+async function coStart(side){
+  if(!CO_READY || (ARR && ARR.saving)) return;
+  if(ARR && arrChanged()){ const ok = await arrDone(); if(!ok) return; }      // a dish order not saved yet: saved first
+  ARR = null; const k = cavesFor(side); CO = { side:side, ui:true, keys:k.slice(), orig:k.slice(), saving:false, error:'' }; render();
+}
+function coMove(i, dir){ const j = i + dir; if(!CO.ui || CO.saving || j < 0 || j >= CO.keys.length) return false; const k = CO.keys; [k[i], k[j]] = [k[j], k[i]]; render(); return true; }
+function coKey(ev, i){
+  const dir = ev.key === 'ArrowLeft' || ev.key === 'ArrowUp' ? -1 : ev.key === 'ArrowRight' || ev.key === 'ArrowDown' ? 1 : 0;
+  if(!dir) return;
+  ev.preventDefault();
+  const k = CO.keys[i];
+  const s0 = document.getElementById('co-strip'), left = s0 ? s0.scrollLeft : 0;
+  if(coMove(i, dir)){ const s = document.getElementById('co-strip'); if(s) s.scrollLeft = left;
+    const el = document.querySelector('#co-strip .co-arch[data-k="'+k+'"]'); if(el){ el.focus({ preventScroll:true }); el.scrollIntoView({ block:'nearest', inline:'nearest' }); } }
+}
+// Dragging (Sebastian, 20 Oct 01:42: left or right, on one line): the cave follows the finger; when its middle passes
+// a neighbour's middle it takes that place; near either end of the line the line scrolls by itself.
+let CO_DRAG = null;
+function coDown(ev){
+  if(!CO.ui || CO.saving || (ev.button !== undefined && ev.button > 0)) return;
+  const el = ev.currentTarget, strip = document.getElementById('co-strip'); ev.preventDefault();
+  try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+  CO_DRAG = { el:el, strip:strip, x0:ev.clientX, x:ev.clientX, raf:null };
+  el.classList.add('co-lift');
+  // on the window: a cave moved in the line loses the pointer's capture, and its own events would stop
+  window.addEventListener('pointermove', coDrag); window.addEventListener('pointerup', coUp); window.addEventListener('pointercancel', coUp);
+  CO_DRAG.raf = requestAnimationFrame(coEdge);
+}
+function coDrag(ev){ const D = CO_DRAG; if(!D) return; ev.preventDefault(); D.x = ev.clientX; coPlace(); }
+function coPlace(){
+  const D = CO_DRAG; if(!D) return;
+  D.el.style.transform = 'translateX('+(D.x - D.x0)+'px) scale(1.08)';
+  const arches = [...D.strip.querySelectorAll('.co-arch')], i = arches.indexOf(D.el);
+  const r = D.el.getBoundingClientRect(), mid = r.left + r.width/2;
+  const prev = arches[i-1], next = arches[i+1];
+  let move = null;
+  if(prev){ const p = prev.getBoundingClientRect(); if(mid < p.left + p.width/2) move = () => D.strip.insertBefore(D.el, prev); }
+  if(!move && next){ const n = next.getBoundingClientRect(); if(mid > n.left + n.width/2) move = () => D.strip.insertBefore(D.el, next.nextSibling); }
+  if(!move) return;
+  const before = D.el.offsetLeft; move(); D.x0 += D.el.offsetLeft - before;
+  coPlace();
+}
+function coEdge(){
+  const D = CO_DRAG; if(!D) return;
+  const s = D.strip.getBoundingClientRect(), edge = 44;
+  let v = 0;
+  if(D.x < s.left + edge) v = -Math.ceil((s.left + edge - D.x) / 5);
+  else if(D.x > s.right - edge) v = Math.ceil((D.x - (s.right - edge)) / 5);
+  if(v){ const was = D.strip.scrollLeft; D.strip.scrollLeft += v; const moved = D.strip.scrollLeft - was; if(moved){ D.x0 -= moved; coPlace(); } }
+  D.raf = requestAnimationFrame(coEdge);
+}
+function coUp(){
+  const D = CO_DRAG; if(!D) return;
+  CO_DRAG = null; cancelAnimationFrame(D.raf);
+  window.removeEventListener('pointermove', coDrag); window.removeEventListener('pointerup', coUp); window.removeEventListener('pointercancel', coUp);
+  D.el.style.transform = ''; D.el.classList.remove('co-lift');
+  CO.keys = [...D.strip.querySelectorAll('.co-arch')].map(a => a.dataset.k);
+  const left = D.strip.scrollLeft;
+  render();
+  const s = document.getElementById('co-strip'); if(s) s.scrollLeft = left;          // the line stays where it was
+}
+async function coDone(){
+  if(!CO.ui || CO.saving) return;
+  const side = CO.side, keys = CO.keys.slice();
+  if(keys.join() === CO.orig.join()){ CO = CO_IDLE(); render(); return; }       // nothing moved: nothing asked
+  CO.saving = true; CO.error = ''; render();
+  try{
+    const d = await rvApi({ action:'menu_top_save', order:{ side:side === 'drinks' ? 'drinks' : 'main', keys:keys } });
+    const o = d.order || {};
+    CAVE_ORDER = { food:Array.isArray(o.main) ? o.main : CAVE_ORDER.food, drinks:Array.isArray(o.drinks) ? o.drinks : CAVE_ORDER.drinks };
+  }catch(e){
+    if(CO.side === side){ CO.saving = false; CO.error = e.message; render(); }
+    return;
+  }
+  CO = CO_IDLE(); render();
+  showToast('New order saved. The menu shows it now.');
+}
+// The switch of a part of the menu: its cave on the menu, or not. Saves at once, like the other switches.
+async function caveShow(cave){
+  if(!CO_READY || CS.busy || CAVE_HIDEABLE.indexOf(cave) < 0) return;
+  const was = CAVE_HIDDEN.slice(), off = was.indexOf(cave) < 0;
+  const next = off ? was.concat([cave]) : was.filter(k => k !== cave);
+  CS.busy = true; CAVE_HIDDEN = next; render();
+  try{
+    const d = await rvApi({ action:'menu_top_save', hidden:next });
+    CAVE_HIDDEN = d.order && Array.isArray(d.order.hidden) ? d.order.hidden : next;
+    showToast((CAVE_LABEL[cave] || cave)+(off ? ': hidden from the menu' : ': on the menu again'));
+  }catch(e){
+    CAVE_HIDDEN = was; showToast(e.message);
+  }
+  CS.busy = false; render();
 }
 
 // ── CHANGE THE ORDER (r36) ──
 let ARR = null;          // { key, ids (in the new order), orig, saving, error }
 let ARR_DRAG = null;
-function arrRows(key){ return DISHES_ROWS.filter(d => dishKeyOf(d) === key); }
+function arrRows(key){ const g = groupOf(key); return g ? g.list : []; }
 async function arrStart(key){
   if(ARR && ARR.key === key) return;
   if(ARR && ARR.saving) return;
+  if(CO.ui){ await coDone(); if(CO.ui) return; }                  // r40: a cave order being changed: saved first
+  MG_OPEN[key] = true; try{ sessionStorage.setItem('hf_mg_open', JSON.stringify(MG_OPEN)); }catch(e){}   // r40: it stays open after Done
   if(ARR && arrChanged()){ const ok = await arrDone(); if(!ok) return; }
   const ids = arrRows(key).map(d => d.id);
   ARR = { key:key, ids:ids, orig:ids.slice(), saving:false, error:'' };
@@ -1034,7 +1346,7 @@ function arrCard(d){
     + '<div class="m-dish-head">'
     +   dishThumb(d)
     +   '<div class="m-dish-id"><div class="m-dish-name">'+esc(d.name)+'</div>'
-    +   '<div class="m-dish-meta">$'+Number(d.price||0).toFixed(2)+' &middot; '+esc(d.restaurant_category||'')+(d.is_hidden?' &middot; hidden':'')+'</div></div>'
+    +   '<div class="m-dish-meta">'+dishMeta(d)+(d.is_hidden?' &middot; hidden':'')+'</div></div>'
     +   '<button type="button" class="arr-handle" aria-label="Move '+esc(d.name)+' (drag, or the arrow keys)" onpointerdown="arrDown(event,'+d.id+')" onkeydown="arrKey(event,'+d.id+')">☰</button>'
     + '</div></div>';
 }
@@ -1109,7 +1421,15 @@ async function arrDone(){
   arrSync();
   if(!arrChanged()){ ARR = null; render(); return true; }
   ARR.saving = true; ARR.error = ''; render();
-  const key = ARR.key, ids = ARR.ids.slice();
+  const key = ARR.key;
+  let ids = ARR.ids.slice();
+  // r40: a kind of drink (Wines, Spirits…) is part of the Drinks: the server orders all the drinks at once, so
+  // the others keep their places and this kind's drinks take theirs in the new order.
+  if(key.indexOf('drinks:') === 0){
+    const all = DISHES_ROWS.filter(isDrinkRow).map(d => d.id), mine = new Set(ids.map(String));
+    let k = 0;
+    ids = all.map(id => mine.has(String(id)) ? ids[k++] : id);
+  }
   try{
     await rvApi({action:'dish_order_save', ids:ids});
   }catch(e){
@@ -1189,6 +1509,22 @@ function switchRow(dishId, field, on, label, note, warn){
     + '</div>';
 }
 
+// r40 (Sebastian, 19 Oct 23:57): a wine is sold by the Glass and the Bottle; a spirit as a Shot, a Mixed drink
+// (rum and Coke, gin and tonic, vodka cranberry…) and the Bottle. Each one empty = not sold that way. The food,
+// the beers and the cocktails keep the one price.
+const DRINK_WAYS = { wine:[['price_glass','Glass'],['price_bottle','Bottle']],
+                     spirit:[['price_shot','Shot'],['price_mixed','Mixed drink'],['price_bottle','Bottle']] };
+function drinkWays(d){ return !isDrinkRow(d) ? null : d.drink_kind === 'wine' ? DRINK_WAYS.wine : isSpiritKind(d.drink_kind) ? DRINK_WAYS.spirit : null; }
+function priceFields(d, f){
+  const ways = drinkWays(d);
+  if(!ways) return f('price','Price',d.price,'price');
+  if(!PRICES_READY) return f('price','Price',d.price,'price')
+    + '<div class="pk-note" style="margin:-.4rem 0 .9rem;">Prices by the glass, the bottle or the shot are not set up yet: Seb\'s Analytics has to run migration 27.</div>';
+  const spirit = ways === DRINK_WAYS.spirit;
+  return '<div class="m-field"><div class="m-field-label">Prices</div><div class="pz-grid'+(spirit?' three':'')+'">'
+    + ways.map(w => '<label class="pz"><span>'+w[1]+'</span><span class="pz-in">$<input class="m-input" id="f-'+d.id+'-'+w[0]+'" type="number" step="0.01" min="0" max="10000" inputmode="decimal" value="'+esc(d[w[0]]==null?'':d[w[0]])+'" oninput="dirty('+d.id+',\''+w[0]+'\')" placeholder="—"></span></label>').join('')
+    + '</div><div class="pk-note">'+(spirit ? 'Mixed drink: with a mixer — rum and Coke, gin and tonic, vodka cranberry. ' : '')+'Leave one empty if it is not sold that way.</div></div>';
+}
 function textFields(d){
   const f = (field,label,value,type)=>{
     const id = 'f-'+d.id+'-'+field;
@@ -1202,7 +1538,7 @@ function textFields(d){
   const drink = isDrinkRow(d);
   return f('name', drink ? 'Drink name' : 'Dish name', d.name, 'text')
     + (drink ? kindField(d) : '')
-    + f('price','Price',d.price,'price')
+    + priceFields(d, f)
     + f('description','Short description',d.description,'area')
     + f('about', drink ? 'About this drink' : 'About this dish', d.about, 'area')
     + f('ingredients','Ingredients (comma separated)',d.ingredients,'area')
@@ -1218,21 +1554,24 @@ function textFields(d){
 // and the menu shows it in that cave of the drinks' carousel. A dish's pairings are chosen from the drinks on the
 // menu, as photos in a row you slide (option B): the Sommelier's Recommendation from the wines, the Suggested
 // Cocktail from the cocktails; "None" leaves it empty. Each choice saves at once, like the switches.
-const DRINK_KIND_LABEL = { wine:'Wine', cocktail:'Cocktail', beer:'Beer', gin:'Gin', whiskey:'Whiskey', tequila:'Tequila', vodka:'Vodka', rum:'Rum', spirit:'Other spirit' };
+const DRINK_KIND_LABEL = { wine:'Wine', cocktail:'Cocktail', beer:'Beer', shot:'Shot', gin:'Gin', whiskey:'Whiskey', tequila:'Tequila', vodka:'Vodka', rum:'Rum', spirit:'Other spirit' };
 const SPIRITS = [['gin','Gin'],['whiskey','Whiskey'],['tequila','Tequila'],['vodka','Vodka'],['rum','Rum'],['spirit','Other']];
 function isDrinkRow(d){ return dishKeyOf(d) === 'drinks'; }
 function isSpiritKind(k){ return SPIRITS.some(s => s[0] === k); }
 function dishMeta(d){
-  const price = d.price == null || d.price === '' ? 'No price yet' : '$'+Number(d.price).toFixed(2);
+  const ways = drinkWays(d), set = ways ? ways.filter(w => d[w[0]] != null && d[w[0]] !== '') : [];
+  const price = set.length ? set.map(w => w[1]+' $'+Number(d[w[0]]).toFixed(2)).join(' · ')
+    : d.price == null || d.price === '' ? 'No price yet' : '$'+Number(d.price).toFixed(2);
   if(isDrinkRow(d)) return price+' &middot; '+(d.drink_kind ? (isSpiritKind(d.drink_kind) && d.drink_kind !== 'spirit' ? 'Spirit · ' : '')+esc(DRINK_KIND_LABEL[d.drink_kind]||d.drink_kind) : 'drink');
-  return price+' &middot; '+esc(d.restaurant_category||'');
+  const g = DISH_GROUPS.find(x => x[0] === dishKeyOf(d));                   // r40: "Appetizers", not "starters"
+  return price+' &middot; '+esc(g ? g[1] : (d.restaurant_category||''));
 }
 function kindField(d){
   if(!DRINKS_READY) return '<div class="m-field"><div class="m-field-label">Kind of drink</div><div class="pk-note">Not set up yet: Seb\'s Analytics has to run migration 26.</div></div>';
   const k = d.drink_kind || '', spirit = isSpiritKind(k);
   const pill = (val, label, on) => '<button type="button" class="pk-pill'+(on?' on':'')+'" aria-pressed="'+(on?'true':'false')+'" onclick="setKind('+d.id+',\''+val+'\')">'+label+'</button>';
   return '<div class="m-field" id="kind-'+d.id+'"><div class="m-field-label">Kind of drink</div>'
-    + '<div class="pk-seg">'+pill('wine','Wine',k==='wine')+pill('cocktail','Cocktail',k==='cocktail')+pill('beer','Beer',k==='beer')+pill(spirit?k:'spirit','Spirit',spirit)+'</div>'
+    + '<div class="pk-seg">'+pill('wine','Wine',k==='wine')+pill('cocktail','Cocktail',k==='cocktail')+pill('beer','Beer',k==='beer')+(PRICES_READY||k==='shot'?pill('shot','Shot',k==='shot'):'')+pill(spirit?k:'spirit','Spirit',spirit)+'</div>'
     + (spirit ? '<div class="pk-seg sub">'+SPIRITS.map(s => pill(s[0], s[1], k===s[0])).join('')+'</div>' : '')
     + '<div class="pk-note">'+(k ? 'The menu shows it with the '+(spirit?'spirits':DRINK_KIND_LABEL[k].toLowerCase()+'s')+'.' : 'Choose one: the menu shows each drink under its kind.')+'</div></div>';
 }
@@ -1555,6 +1894,9 @@ async function setCodes(roleId, on){
 // ── INTERACTION ──
 function toggleDish(id){
   openDishId = String(openDishId)===String(id) ? null : id;
+  // r40: a dish opened from elsewhere (a link, the search) shows on its own side, Food or Drinks
+  const d = openDishId != null ? rowFor(openDishId) : null;
+  if(d && !MG_Q) MG_SIDE = isDrinkRow(d) ? 'drinks' : 'food';
   render();
 }
 
@@ -1595,16 +1937,17 @@ function anyOver(id){
 function collectText(id){
   const d = rowFor(id); if(!d) return {};
   const out = {};
-  const priceEl = document.getElementById('f-'+id+'-price');
-  if(priceEl){
+  ['price', 'price_glass', 'price_bottle', 'price_shot', 'price_mixed'].forEach(field => {   // r40: and the drink prices
+    const el = document.getElementById('f-'+id+'-'+field);
+    if(!el) return;
     // r39: a price may be left empty (no price yet on the menu).
-    const v = priceEl.value.trim(), had = d.price != null && d.price !== '';
-    if(v === ''){ if(had) out.price = null; }
+    const v = el.value.trim(), had = d[field] != null && d[field] !== '';
+    if(v === ''){ if(had) out[field] = null; }
     else{
       const n = Number(v);
-      if(Number.isFinite(n) && (!had || Math.round(n*100)!==Math.round(Number(d.price)*100))) out.price = n;
+      if(Number.isFinite(n) && (!had || Math.round(n*100)!==Math.round(Number(d[field])*100))) out[field] = n;
     }
-  }
+  });
   const TEXTY = ['name','description','about','ingredients','modifications','wine','cocktail','allergens_text']
     .concat(CLASSIFY_FIELDS.map(c=>c[0]));
   TEXTY.forEach(field=>{
