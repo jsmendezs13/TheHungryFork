@@ -27,7 +27,7 @@
 
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, canEditDishes, sb, accessProblem } from './_lib/roles.js';
-import { TEXT_FIELDS, isAllergen, DRINK_KINDS, PAIRINGS } from './_lib/dish-fields.js';
+import { TEXT_FIELDS, isAllergen, DRINK_KINDS, PAIRINGS, DRINK_PRICES } from './_lib/dish-fields.js';
 
 // Generous, because a manager marking a busy Friday night sold out will click
 // a lot. Tight enough that a stolen session cannot rewrite the whole menu.
@@ -61,9 +61,10 @@ function clean(field, raw) {
     return { ok: true, column: 'sold_out_until', value: raw ? new Date().toISOString() : null };
   }
 
-  if (field === 'price') {
-    // r39: a dish may have no price yet (the menu then shows none).
+  if (field === 'price' || DRINK_PRICES.includes(field)) {
+    // r39: a dish may have no price yet (the menu then shows none). r40: the same for a drink's other prices.
     if (raw === null || (typeof raw === 'string' && raw.trim() === '')) return { ok: true, value: null };
+    if (typeof raw !== 'number' && typeof raw !== 'string') return { ok: false, error: 'Price must be between 0 and 10000.' };   // r40: not true → $1
     const n = Number(raw);
     if (!Number.isFinite(n) || n < 0 || n > 10000) {
       return { ok: false, error: 'Price must be between 0 and 10000.' };
@@ -75,7 +76,7 @@ function clean(field, raw) {
   // the dish may have them is decided in the handler, which knows the dish.
   if (field === 'drink_kind') {
     if (raw === null || raw === '') return { ok: true, value: null };
-    if (!DRINK_KINDS.includes(raw)) return { ok: false, error: 'Choose a kind of drink: wine, cocktail, beer, gin, whiskey, tequila, vodka, rum or another spirit.' };
+    if (!DRINK_KINDS.includes(raw)) return { ok: false, error: 'Choose a kind of drink: wine, cocktail, beer, shot, gin, whiskey, tequila, vodka, rum or another spirit.' };
     return { ok: true, value: raw };
   }
   if (Object.prototype.hasOwnProperty.call(PAIRINGS, field)) {
@@ -153,7 +154,18 @@ export default async function handler(req, res) {
   if (DRINK_FIELDS.some((f) => f in patch) && !('drink_kind' in before)) {
     return res.status(409).json({ error: 'The drinks settings are not set up yet: migration 26 has not been run.' });
   }
+  // r40 (migration 27): a drink's prices by the glass, the bottle, the shot and the mixed drink.
+  if (DRINK_PRICES.some((f) => f in patch) && !('price_glass' in before)) {
+    return res.status(409).json({ error: 'The drink prices are not set up yet: migration 27 has not been run.' });
+  }
+  // r40: Shot is a kind the database knows only from migration 27 on (its check lists the kinds).
+  if (patch.drink_kind === 'shot' && !('price_glass' in before)) {
+    return res.status(409).json({ error: 'Shots are not set up yet: migration 27 has not been run.' });
+  }
   const isDrink = String(before.restaurant_category || '').trim().toLowerCase() === 'drinks';
+  if (DRINK_PRICES.some((f) => f in patch && patch[f] !== null) && !isDrink) {
+    return res.status(400).json({ error: 'Only a drink has prices by the glass, the bottle, the shot or the mixed drink.' });
+  }
   if ('drink_kind' in patch && !isDrink) return res.status(400).json({ error: 'Only a drink has a kind of drink.' });
   if (patch.is_bartenders_pick === true && !isDrink) return res.status(400).json({ error: 'Only a drink can be the Bartender\'s Pick.' });
   if (patch.is_chefs_pick === true && isDrink) return res.status(400).json({ error: 'A drink can be the Bartender\'s Pick, not the Chef\'s Pick.' });
