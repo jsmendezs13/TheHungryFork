@@ -28,7 +28,8 @@ function normalizeDish(row) {
     dbId:      row.id,                // what reviews are stored against
     name:      row.name,
     desc:      row.description || '',
-    price:     Number(row.price),
+    // r39: a dish may have no price yet (null): the pages then show none.
+    price:     row.price === null || row.price === undefined || row.price === '' ? null : Number(row.price),
     emoji:     row.emoji || '🍽️',
     category:  row.restaurant_category,
     img:       row.image || '',
@@ -43,7 +44,13 @@ function normalizeDish(row) {
       : [],
     soldOutUntil: row.sold_out_until ? new Date(row.sold_out_until) : null,
     chefsPick: !!row.is_chefs_pick,
-    hidden:    !!row.is_hidden
+    hidden:    !!row.is_hidden,
+    // r39 (migration 26): what kind of drink (null for the food), the
+    // Bartender's Pick, and the drinks chosen as this dish's pairings.
+    kind:        row.drink_kind || null,
+    barPick:     !!row.is_bartenders_pick,
+    pairWineId:  row.pair_wine_id || null,
+    pairCocktailId: row.pair_cocktail_id || null
   };
 }
 
@@ -69,17 +76,21 @@ const DISH_COLUMNS = [
   'cocktail','ingredients','is_chefs_pick','sort_order','is_hidden',
   'sold_out_until'
 ].join(',');
+// r39: the drinks' columns (migration 26). Asked for with the others; if the
+// database does not have them yet, the menu is asked for again without them.
+const DISH_COLUMNS_R39 = DISH_COLUMNS + ',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id';
 
 async function loadDishes() {
-  const url = SUPABASE_URL
+  const ask = (cols) => fetch(SUPABASE_URL
     + '/rest/v1/dishes?restaurant_id=eq.' + RESTAURANT_ID
     + '&is_hidden=eq.false'
-    + '&select=' + DISH_COLUMNS
-    + '&order=sort_order.asc';
-
-  const res = await fetch(url, {
+    + '&select=' + cols
+    + '&order=sort_order.asc', {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
+
+  let res = await ask(DISH_COLUMNS_R39);
+  if (!res.ok && res.status >= 400 && res.status < 500) res = await ask(DISH_COLUMNS);
   if (!res.ok) throw new Error('dishes request failed: ' + res.status);
 
   const rows = await res.json();
