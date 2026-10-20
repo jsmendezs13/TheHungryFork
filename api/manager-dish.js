@@ -18,10 +18,16 @@
 // knows what is in the dish, so the restaurant declares it — as explicit
 // checkboxes rather than free text, and labelled on the menu as the
 // restaurant's own statement.
+//
+// r39 (Sebastian, 19 Oct): a drink has a kind (wine, cocktail, beer, or a
+// spirit: gin, whiskey, tequila, vodka, rum, another) and may be the
+// Bartender's Pick, one drink at a time. A dish's pairings are chosen from the
+// restaurant's drinks: pair_wine_id one of its wines, pair_cocktail_id one of
+// its cocktails. A price may be left empty (no price yet).
 
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, canEditDishes, sb, accessProblem } from './_lib/roles.js';
-import { TEXT_FIELDS, isAllergen } from './_lib/dish-fields.js';
+import { TEXT_FIELDS, isAllergen, DRINK_KINDS, PAIRINGS } from './_lib/dish-fields.js';
 
 // Generous, because a manager marking a busy Friday night sold out will click
 // a lot. Tight enough that a stolen session cannot rewrite the whole menu.
@@ -41,7 +47,7 @@ function clean(field, raw) {
     return { ok: true, value: raw };
   }
 
-  if (field === 'is_hidden' || field === 'is_chefs_pick') {
+  if (field === 'is_hidden' || field === 'is_chefs_pick' || field === 'is_bartenders_pick') {
     if (typeof raw !== 'boolean') return { ok: false, error: field + ' must be true or false.' };
     return { ok: true, value: raw };
   }
@@ -56,11 +62,27 @@ function clean(field, raw) {
   }
 
   if (field === 'price') {
+    // r39: a dish may have no price yet (the menu then shows none).
+    if (raw === null || (typeof raw === 'string' && raw.trim() === '')) return { ok: true, value: null };
     const n = Number(raw);
     if (!Number.isFinite(n) || n < 0 || n > 10000) {
       return { ok: false, error: 'Price must be between 0 and 10000.' };
     }
     return { ok: true, value: Math.round(n * 100) / 100 };
+  }
+
+  // r39: the kind of a drink, and the pairings chosen from the drinks. Whether
+  // the dish may have them is decided in the handler, which knows the dish.
+  if (field === 'drink_kind') {
+    if (raw === null || raw === '') return { ok: true, value: null };
+    if (!DRINK_KINDS.includes(raw)) return { ok: false, error: 'Choose a kind of drink: wine, cocktail, beer, gin, whiskey, tequila, vodka, rum or another spirit.' };
+    return { ok: true, value: raw };
+  }
+  if (Object.prototype.hasOwnProperty.call(PAIRINGS, field)) {
+    if (raw === null || raw === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n <= 0) return { ok: false, error: 'Which drink?' };
+    return { ok: true, value: n };
   }
 
   if (Object.prototype.hasOwnProperty.call(MAX, field)) {
@@ -124,6 +146,29 @@ export default async function handler(req, res) {
   }
   if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nothing to change.' });
 
+  // ── r39 (migration 26): drinks ──
+  // A drink has a kind and may be the Bartender's Pick; a dish (not a drink)
+  // has pairings, each one of this restaurant's drinks of the right kind.
+  const DRINK_FIELDS = ['drink_kind', 'is_bartenders_pick', 'pair_wine_id', 'pair_cocktail_id'];
+  if (DRINK_FIELDS.some((f) => f in patch) && !('drink_kind' in before)) {
+    return res.status(409).json({ error: 'The drinks settings are not set up yet: migration 26 has not been run.' });
+  }
+  const isDrink = String(before.restaurant_category || '').trim().toLowerCase() === 'drinks';
+  if ('drink_kind' in patch && !isDrink) return res.status(400).json({ error: 'Only a drink has a kind of drink.' });
+  if (patch.is_bartenders_pick === true && !isDrink) return res.status(400).json({ error: 'Only a drink can be the Bartender\'s Pick.' });
+  if (patch.is_chefs_pick === true && isDrink) return res.status(400).json({ error: 'A drink can be the Bartender\'s Pick, not the Chef\'s Pick.' });
+  for (const [field, kind] of Object.entries(PAIRINGS)) {
+    if (!(field in patch)) continue;
+    if (isDrink) return res.status(400).json({ error: 'A drink has no pairings.' });
+    if (patch[field] === null) continue;
+    const got = await sb(`/dishes?id=eq.${patch[field]}&select=id,restaurant_id,restaurant_category,drink_kind,is_hidden`);
+    const drink = got.ok && Array.isArray(got.data) ? got.data[0] : null;
+    if (!drink || Number(drink.restaurant_id) !== Number(restaurantId)) return res.status(404).json({ error: 'That drink is not on this menu. Reload the page.' });
+    if (String(drink.restaurant_category || '').trim().toLowerCase() !== 'drinks' || drink.drink_kind !== kind) {
+      return res.status(400).json({ error: kind === 'wine' ? 'The Sommelier\'s Recommendation must be one of your wines.' : 'The Suggested Cocktail must be one of your cocktails.' });
+    }
+  }
+
   // One Chef's Pick per restaurant. Clearing the others first means the menu
   // can never show two, whatever order the clicks arrive in.
   if (patch.is_chefs_pick === true) {
@@ -132,6 +177,15 @@ export default async function handler(req, res) {
       { method: 'PATCH', body: JSON.stringify({ is_chefs_pick: false }) }
     );
     if (!cleared.ok) return res.status(500).json({ error: 'Could not update the Chef\'s Pick.' });
+  }
+
+  // r39: one Bartender's Pick per restaurant, the same way.
+  if (patch.is_bartenders_pick === true) {
+    const cleared = await sb(
+      `/dishes?restaurant_id=eq.${restaurantId}&is_bartenders_pick=eq.true&id=neq.${id}`,
+      { method: 'PATCH', body: JSON.stringify({ is_bartenders_pick: false }) }
+    );
+    if (!cleared.ok) return res.status(500).json({ error: 'Could not update the Bartender\'s Pick.' });
   }
 
   const updated = await sb(`/dishes?id=eq.${id}`, {
