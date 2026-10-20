@@ -311,6 +311,21 @@
   .warp-cat-name { text-align:center; font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--white); margin-top:.9rem; position:relative; z-index:5; }
   .warp-tap-hint { text-align:center; font-family:var(--sans); font-size:.62rem; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:rgba(252,249,244,.5); margin-top:.3rem; position:relative; z-index:5; }
   #warp-stage.warp-zoom { transition:transform .42s ease-in; transform:translateZ(560px); }
+  /* r39: the drinks' carousel — coming in from the Drinks cave, and going back out to the menu's carousel */
+  #warp-stage.warp-ring-in { animation:warpRingIn .46s cubic-bezier(.2,.8,.3,1); }
+  #warp-stage.warp-ring-out { animation:warpRingOut .46s cubic-bezier(.2,.8,.3,1); }
+  @keyframes warpRingIn { from { transform:translateZ(-520px); opacity:0; } to { transform:none; opacity:1; } }
+  @keyframes warpRingOut { from { transform:translateZ(420px); opacity:0; } to { transform:none; opacity:1; } }
+  .warp-ring-bar { display:flex; justify-content:center; margin:-.6rem 0 .9rem; position:relative; z-index:6; }
+  .warp-ring-bar[hidden] { display:none; }
+  .warp-ring-back { font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--white);
+    background:rgba(252,249,244,.08); border:1px solid rgba(252,249,244,.38); border-radius:999px; padding:.6rem 1rem; cursor:pointer; }
+  .warp-ring-back:hover { background:rgba(252,249,244,.16); }
+  /* the kind of a drink over its name, in red ("GIN") */
+  .cave-kind { font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.24em; text-transform:uppercase; color:#C01108; text-align:center; margin:.55rem 0 -.15rem; }
+  #cave .cave-kind { color:#FF6B5E; }
+  .cave-rec-drink { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .cave-rec-drink:active img { transform:scale(.96); }
 
   /* ── CAVE INTERIOR ── */
   .cave-overlay { display:none; position:fixed; inset:0; z-index:600; background:radial-gradient(140% 100% at 50% 0%, #38261D 0%, #1E130D 55%, #120B07 100%); }
@@ -959,6 +974,8 @@
 <div id="warp-room">
   <div class="warp-bg" id="warp-bg-far"></div>
   <div class="warp-bg warp-bg-near" id="warp-bg-near"></div>
+  <!-- r39: in the drinks' carousel, the way back to the menu's carousel -->
+  <div class="warp-ring-bar" id="warp-ring-bar" hidden><button type="button" class="warp-ring-back" onclick="closeDrinksRing()">&#8249; Back to the menu</button></div>
   <div class="warp-hint">Swipe to explore &middot; Tap a cave to enter</div>
   <div class="warp-viewport" id="warp-viewport">
     <div id="warp-stage"></div>
@@ -1192,10 +1209,20 @@ const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrée
 // the best rated dishes of that part of the menu, as many as the manager chose (1 to 10), or not there at
 // all (the manager page → Menu). The numbers ride with the opening hours (HF_HOURS.top, taster.js); a
 // restaurant that never chose shows the four, with 5 dishes each. CATEGORY_ORDER is the caves on the menu now.
-const MENU_BASE=['chefs-pick','starters','entree','salads','sides','drinks'];
+// r39 (Sebastian, 19 Oct): Desserts after Sides, and the drinks in a carousel of their own ("a carousel inside the
+// carousel"): the Drinks cave opens Bartender's Pick · Wines · Cocktails · Beers · Spirits · Top Rated Drinks, each a
+// cave of its own. RING says which carousel is showing; CATEGORY_ORDER is always that carousel's caves.
+const MENU_BASE=['chefs-pick','starters','entree','salads','sides','desserts','drinks'];
 const TOP_KEYS={'top-starters':'starters','top-entree':'entree','top-salads':'salads','top-drinks':'drinks'};
-let CATEGORY_ORDER=MENU_BASE.concat(Object.keys(TOP_KEYS));
+const MAIN_TOPS=['top-starters','top-entree','top-salads'];
+const DRINK_CAVES={'wines':['wine'],'cocktails':['cocktail'],'beers':['beer'],'spirits':['gin','whiskey','tequila','vodka','rum','spirit']};
+const DRINK_KIND_ORDER=['wine','cocktail','beer','gin','whiskey','tequila','vodka','rum','spirit'];
+const KIND_LABEL={wine:'Wine',cocktail:'Cocktail',beer:'Beer',gin:'Gin',whiskey:'Whiskey',tequila:'Tequila',vodka:'Vodka',rum:'Rum',spirit:'Spirit'};
+let RING='main';
+let CATEGORY_ORDER=MENU_BASE.concat(MAIN_TOPS);
 const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},
+  'desserts':{label:'Desserts',emoji:'\u{1F370}'},'bartenders-pick':{label:"Bartender's Pick",emoji:'\u{1F378}'},'wines':{label:'Wines',emoji:'\u{1F377}'},
+  'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
   'top-starters':{label:'Top Rated Starters',short:'Starters',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
   'top-salads':{label:'Top Rated Salads',short:'Salads',emoji:'\u{1F957}',top:true},'top-drinks':{label:'Top Rated Drinks',short:'Drinks',emoji:'\u{1F964}',top:true}};
 function topKind(key){return TOP_KEYS[key]||null;}
@@ -1204,7 +1231,25 @@ function topCounts(){
   Object.values(TOP_KEYS).forEach(k=>{o[k]=t&&typeof t[k]==='number'?t[k]:5;});
   return o;
 }
-function menuOrder(){const c=topCounts();return MENU_BASE.concat(Object.keys(TOP_KEYS).filter(k=>c[TOP_KEYS[k]]>0));}
+function menuOrder(){
+  if(RING==='drinks')return drinksRing();
+  const c=topCounts();return MENU_BASE.concat(MAIN_TOPS.filter(k=>c[TOP_KEYS[k]]>0));
+}
+// r39: the drinks' carousel — only the caves that have drinks; Top Rated Drinks when the manager shows it.
+function drinksAll(){return DISHES.filter(d=>d.category==='drinks');}
+function drinkCaveOf(d){
+  if(!d||d.category!=='drinks')return null;
+  return Object.keys(DRINK_CAVES).find(k=>DRINK_CAVES[k].includes(d.kind))||'drinks-other';
+}
+function drinksRing(){
+  const all=drinksAll(),r=[];
+  if(all.some(d=>d.barPick))r.push('bartenders-pick');
+  Object.keys(DRINK_CAVES).forEach(k=>{if(all.some(d=>DRINK_CAVES[k].includes(d.kind)))r.push(k);});
+  if(all.some(d=>!DRINK_KIND_ORDER.includes(d.kind)))r.push('drinks-other');
+  if(r.length&&topCounts().drinks>0)r.push('top-drinks');
+  return r;
+}
+function hasDrinkRing(){return drinksAll().length>0;}
 // The ratings of the last twelve months (the same months as the score on each dish's card), all in one
 // request, so a Top Rated cave is in the same order as the numbers on its cards. Best first; a tie goes to the
 // dish with more ratings, then to the menu's own order. A dish nobody rated in those months is not in it.
@@ -1372,10 +1417,15 @@ let caveDishes=[],caveDishIdx=0,caveViewIdx=0,caveRatings={};
 function caveListFor(key){
   if(key==='chefs-pick')return chefsPickDishes();
   if(topKind(key))return topRatedDishes(topKind(key));     // r36
+  if(key==='bartenders-pick')return drinksAll().filter(d=>d.barPick);                    // r39
+  if(DRINK_CAVES[key])return drinksAll().map((d,i)=>({d,i})).filter(x=>DRINK_CAVES[key].includes(x.d.kind))
+    .sort((a,b)=>DRINK_KIND_ORDER.indexOf(a.d.kind)-DRINK_KIND_ORDER.indexOf(b.d.kind)||a.i-b.i).map(x=>x.d);
+  if(key==='drinks-other')return drinksAll().filter(d=>!DRINK_KIND_ORDER.includes(d.kind));
   return DISHES.filter(d=>d.category===key);
 }
 function enterCave(startId){
   const key=CATEGORY_ORDER[warpIdx];
+  if(RING==='main'&&key==='drinks'&&hasDrinkRing()){openDrinksRing();return;}     // r39
   caveDishes=caveListFor(key);
   caveDishIdx=Math.max(0,caveDishes.findIndex(d=>d.id===startId));
   caveViewIdx=0;
@@ -1400,6 +1450,7 @@ function exitCave(){
 // video), goes back to that page. A cave opened here goes back to the caves.
 let CAVE_ARRIVED=false;
 function caveBackTap(){
+  if(PAIR_FROM){pairBack();return;}                         // r39: a pairing's drink goes back to its dish
   if(CAVE_ARRIVED&&typeof hfBackCan==='function'&&hfBackCan()){hfBack();return;}
   exitCave();
 }
@@ -1408,7 +1459,7 @@ function caveBackTap(){
 window.addEventListener('pagehide',()=>{
   try{
     const open=document.getElementById('cave').classList.contains('open')&&caveDishes.length;
-    sessionStorage.setItem('hf_menu_at',JSON.stringify({key:CATEGORY_ORDER[warpIdx],dish:open?caveDishes[caveDishIdx].id:null,view:open?caveViewIdx:0,arrived:open?CAVE_ARRIVED:false,at:Date.now()}));
+    sessionStorage.setItem('hf_menu_at',JSON.stringify({key:CATEGORY_ORDER[warpIdx],ring:RING,dish:open?caveDishes[caveDishIdx].id:null,view:open?caveViewIdx:0,arrived:open?CAVE_ARRIVED:false,at:Date.now()}));
   }catch(e){}
 });
 function menuCameBack(){
@@ -1416,7 +1467,9 @@ function menuCameBack(){
     const nav=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];
     if(!nav||nav.type!=='back_forward')return null;
     const at=JSON.parse(sessionStorage.getItem('hf_menu_at')||'null');
-    return at&&Date.now()-at.at<2*3600*1000&&CATEGORY_ORDER.includes(at.key)?at:null;
+    if(!at||Date.now()-at.at>=2*3600*1000)return null;
+    if(at.ring==='drinks')return hasDrinkRing()&&drinksRing().includes(at.key)?at:null;    // r39
+    return CATEGORY_ORDER.includes(at.key)?at:null;
   }catch(e){return null;}
 }
 function recImgErr(img,emoji){
@@ -1527,26 +1580,112 @@ function renderCave(animClass,mediaOnly){
     <div class="cave-scroll">
     <section class="cave-sec cave-sec-info">
       <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
+      ${caveKindTag(d)}
       ${caveNameRow(d,multi)}
-      <div class="cave-dish-price">$${d.price}</div>
+      ${d.price!=null?`<div class="cave-dish-price">$${d.price}</div>`:''}
       ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
       <div class="cave-acts">
         <button class="cave-share-btn" onclick="caveShare()">${caveIcon('share')}Share</button>
         <a class="cave-share-btn cave-reserve-btn" href="/reservations">${caveIcon('calendar')}Reserve</a>
       </div>
     </section>
-    <section class="cave-sec cave-sec-recs">
+    ${d.category==='drinks'?'':`<section class="cave-sec cave-sec-recs">
       <div class="cave-recs">
-        <div class="cave-rec"><div class="rec-title">Sommelier's<br>Recommendation</div><img src="${hfImgSrc(d.id+'-wine.png',140)}" data-orig="${d.id}-wine.png" alt="" loading="lazy" onerror="recImgErr(this,'🍷')"><div class="rec-name">${d.wine||''}</div></div>
-        <div class="cave-rec"><div class="rec-title">Suggested<br>Cocktail</div><img src="${hfImgSrc(d.id+'-cocktail.png',140)}" data-orig="${d.id}-cocktail.png" alt="" loading="lazy" onerror="recImgErr(this,'🥃')"><div class="rec-name">${d.cocktail||''}</div></div>
+        ${caveRecHTML(d,'wine',"Sommelier's<br>Recommendation")}
+        ${caveRecHTML(d,'cocktail','Suggested<br>Cocktail')}
       </div>
-    </section>
+    </section>`}
     ${caveFootHTML()}
     </div>`;
   hdots.innerHTML=caveDishes.map((x,i)=>`<span class="warp-dot${i===caveDishIdx?' active':''}" onclick="caveSetDish(${i})"></span>`).join('');
   updateCaveDots();playCardAnim(card,animClass);
   loadZoneStars(d);
   caveScrollBar();
+}
+// r39 (Sebastian, 19 Oct): the kind of a drink, in red over its name ("GIN"), where the cave has more than one kind.
+function caveKindTag(d){
+  if(!d||d.category!=='drinks'||!KIND_LABEL[d.kind])return '';
+  const key=CATEGORY_ORDER[warpIdx];
+  if(DRINK_CAVES[key]&&DRINK_CAVES[key].length===1)return '';
+  return `<div class="cave-kind">${KIND_LABEL[d.kind]}</div>`;
+}
+// A dish's pairing: the drink the manager chose from the menu (its own photo and name; a tap opens it), or what
+// was typed before r39 (its own picture).
+function pairDrink(d,which){
+  const id=which==='wine'?d.pairWineId:d.pairCocktailId;
+  return id?DISHES.find(x=>String(x.dbId)===String(id)&&x.category==='drinks')||null:null;
+}
+function caveRecHTML(d,which,title){
+  const p=pairDrink(d,which), emoji=which==='wine'?'🍷':'🥃';
+  if(p)return `<div class="cave-rec cave-rec-drink" role="button" tabindex="0" onclick="caveGoDrink('${p.id}')" onkeydown="if(event.key==='Enter')caveGoDrink('${p.id}')" aria-label="${title.replace('<br>',' ')}: ${hfEsc(p.name)}"><div class="rec-title">${title}</div><img src="${hfImgSrc(p.img,140)}" data-orig="${p.img||''}" alt="" loading="lazy" onerror="recImgErr(this,'${emoji}')"><div class="rec-name">${hfEsc(p.name)}</div></div>`;
+  const typed=which==='wine'?d.wine:d.cocktail;
+  return `<div class="cave-rec"><div class="rec-title">${title}</div><img src="${hfImgSrc(d.id+'-'+which+'.png',140)}" data-orig="${d.id}-${which}.png" alt="" loading="lazy" onerror="recImgErr(this,'${emoji}')"><div class="rec-name">${typed||''}</div></div>`;
+}
+// A tap on a pairing: that drink's card, in the drinks' carousel; Back comes back to the dish.
+let PAIR_FROM=null;
+function caveGoDrink(id){
+  const p=DISHES.find(x=>x.id===id);
+  if(!p)return;
+  const from={ring:RING,key:CATEGORY_ORDER[warpIdx],dish:caveDishes.length?caveDishes[caveDishIdx].id:null,list:caveDishes.slice()};
+  ringSet('drinks',drinkCaveOf(p));
+  caveDishes=caveListFor(CATEGORY_ORDER[warpIdx]);
+  caveDishIdx=Math.max(0,caveDishes.findIndex(x=>x.id===id));
+  caveViewIdx=0;
+  document.getElementById('cave-cat').textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
+  PAIR_FROM=from;
+  renderCave('anim-l');
+}
+function pairBack(){
+  const f=PAIR_FROM;PAIR_FROM=null;
+  ringSet(f.ring,f.key);
+  caveDishes=f.list.length?f.list:caveListFor(f.key);
+  caveDishIdx=Math.max(0,caveDishes.findIndex(x=>x.id===f.dish));
+  caveViewIdx=0;
+  document.getElementById('cave-cat').textContent=WARP_META[f.key].label;
+  renderCave('anim-r');
+}
+// ── r39: the drinks' carousel ──
+// The menu's carousel has one Drinks cave; it opens a carousel of the drinks' caves. Its caves fill the warp room
+// and the cave's bar of names; "Back to the menu" (or the arrow at the top) goes back to the menu's carousel.
+function ringSet(ring,key){
+  RING=ring==='drinks'&&hasDrinkRing()?'drinks':'main';
+  CATEGORY_ORDER=menuOrder();
+  let i=key?CATEGORY_ORDER.indexOf(key):0;
+  if(i<0)i=0;
+  if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}
+  if(caveCatRAF){cancelAnimationFrame(caveCatRAF);caveCatRAF=null;}
+  warpIdx=i;warpPos=i;activeFilter=CATEGORY_ORDER[i];
+  warpBuild();updateWarpCatName();warpRender();
+  caveCatBuild();caveCatW=[];caveCatMeasure();caveCatPos=caveCatTarget=warpIdx;caveCatRender();
+  ringChrome();
+}
+function ringChrome(){
+  const drinks=RING==='drinks';
+  document.body.classList.toggle('ring-drinks',drinks);
+  const bar=document.getElementById('warp-ring-bar');if(bar)bar.hidden=!drinks;
+  const t=document.querySelector('.menu-topbar-title');if(t)t.textContent=drinks?'Drinks':'The Menu';
+  const ct=document.querySelector('#cave .cave-title');if(ct)ct.textContent=drinks?'Drinks':'The Menu';
+}
+function ringAnim(cls){
+  const st=document.getElementById('warp-stage');
+  if(!st)return;
+  st.classList.remove('warp-ring-in','warp-ring-out');void st.offsetWidth;st.classList.add(cls);
+  setTimeout(()=>st.classList.remove(cls),480);
+}
+function openDrinksRing(key){
+  const st=document.getElementById('warp-stage');
+  PAIR_FROM=null;
+  if(st)st.classList.add('warp-zoom');
+  setTimeout(()=>{
+    if(st)st.classList.remove('warp-zoom');
+    ringSet('drinks',key||drinksRing()[0]);
+    ringAnim('warp-ring-in');
+  },380);
+}
+function closeDrinksRing(){
+  PAIR_FROM=null;
+  ringSet('main','drinks');
+  ringAnim('warp-ring-out');
 }
 function loadZoneStars(d){
   const dbId=DISH_ID_MAP[d.id]||1;
@@ -1600,6 +1739,8 @@ function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-
 function caveOpenDish(id){
   const d=DISHES.find(x=>x.id===id);
   if(!d)return;
+  if(d.category==='drinks'&&hasDrinkRing()){ringSet('drinks',drinkCaveOf(d));enterCave(id);return;}   // r39
+  if(RING!=='main')ringSet('main');
   const ci=CATEGORY_ORDER.indexOf(d.category);
   if(ci>=0){warpIdx=ci;warpPos=ci;updateWarpCatName();warpRender();}
   enterCave(id);
@@ -1753,7 +1894,7 @@ function caveCatJump(){
 // Glide to position p (any whole number; it wraps), and open that cave.
 function caveCatTo(p){
   const idx=warpNorm(p);
-  if(idx!==warpIdx)caveCatEnter(idx,warpWrap(idx-warpIdx)>0?1:-1);
+  if(idx!==warpIdx&&caveCatEnter(idx,warpWrap(idx-warpIdx)>0?1:-1)==='ring')return;    // r39: now the drinks' carousel
   caveCatTarget=p;
   if(caveCatRAF)cancelAnimationFrame(caveCatRAF);
   const step=()=>{
@@ -1769,6 +1910,14 @@ function caveCatGo(dir){caveCatTo(caveCatTarget+dir);}
 // Another cave, from inside one: its first dish, on the plate view. The warp
 // room behind follows along, so Back lands in front of the cave you were in.
 function caveCatEnter(idx,dir){
+  PAIR_FROM=null;
+  if(RING==='main'&&CATEGORY_ORDER[idx]==='drinks'&&hasDrinkRing()){                    // r39
+    ringSet('drinks',drinksRing()[0]);
+    caveDishes=caveListFor(CATEGORY_ORDER[warpIdx]);caveDishIdx=0;caveViewIdx=0;
+    document.getElementById('cave-cat').textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
+    renderCave(dir>0?'anim-l':'anim-r');
+    return 'ring';
+  }
   if(warpRAF){cancelAnimationFrame(warpRAF);warpRAF=null;}
   warpPos=warpPos+warpWrap(idx-warpPos);
   warpIdx=idx;
@@ -1918,6 +2067,13 @@ function warpInit(){
   caveCatInit();
 }
 
+// r39: in the drinks' carousel, the arrow at the top goes back to the menu's carousel (not to the home page).
+document.addEventListener('click',e=>{
+  const a=e.target.closest&&e.target.closest('.menu-home');
+  if(!a||RING!=='drinks'||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+  e.preventDefault();closeDrinksRing();
+});
+
 // ── DISH MODAL ──
 function renderDishModal(id){
   const d=DISHES.find(x=>x.id===id);
@@ -1925,7 +2081,7 @@ function renderDishModal(id){
   currentDishId=id;
   document.getElementById('modal-dish-emoji').textContent=d.emoji;
   document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent='$'+d.price+' · '+d.desc;
+  document.getElementById('modal-desc').textContent=(d.price!=null?'$'+d.price+' · ':'')+d.desc;
   loadReviews(id,RESTAURANT_ID);
   document.getElementById('modal').classList.add('open');
 }
@@ -1981,7 +2137,7 @@ function openRatingModal(){
   const d=DISHES.find(x=>x.id===currentDishId);
   document.getElementById('r-dish-emoji').textContent=d.emoji;
   document.getElementById('r-dish-name').textContent=d.name;
-  document.getElementById('r-dish-desc').textContent='$'+d.price+' · '+d.desc;
+  document.getElementById('r-dish-desc').textContent=(d.price!=null?'$'+d.price+' · ':'')+d.desc;
   ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
   ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
   document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
@@ -2715,6 +2871,7 @@ loadMyLevel();
   // r36: back here with the browser's Back: the cave and the dish as they were
   const back=menuCameBack();
   if(back){
+    if(back.ring==='drinks')ringSet('drinks',back.key);                       // r39: back in the drinks' carousel
     warpIdx=CATEGORY_ORDER.indexOf(back.key);warpPos=warpIdx;activeFilter=back.key;updateWarpCatName();warpRender();
     if(back.dish&&caveListFor(back.key).some(d=>d.id===back.dish)){
       enterCave(back.dish);CAVE_ARRIVED=!!back.arrived;
@@ -2726,6 +2883,8 @@ loadMyLevel();
   let cat=params.get('cat');
   if(cat==='top-rated')cat=CATEGORY_ORDER.find(k=>topKind(k))||null;      // the old single Top Rated cave
   if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);CAVE_ARRIVED=true;return;}
+  // r39: a drinks' cave (?cat=wines, ?cat=top-drinks…) opens in the drinks' carousel
+  if(cat&&cat!=='drinks'&&hasDrinkRing()&&drinksRing().includes(cat))ringSet('drinks',cat);
   if(cat&&CATEGORY_ORDER.includes(cat)){
     warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
     // ?enter=1 opens the cave straight away — the home page video uses it.
