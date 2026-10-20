@@ -64,6 +64,15 @@ export const TEXT_FIELDS = {
 // point at dish_id. A restaurant renaming its own dish breaks nothing.
 export const LOCKED = ['id', 'slug', 'restaurant_id', 'image', 'image_open'];
 
+// ── Drinks (r39, migration 26) ─────────────────────────────────────────────
+// The kind of a drink. The menu shows the drinks in their own carousel:
+// Bartender's Pick, Wines, Cocktails, Beers, Spirits (gin, whiskey, tequila,
+// vodka, rum, or another spirit) and Top Rated Drinks.
+export const DRINK_KINDS = ['wine', 'cocktail', 'beer', 'gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];
+// A dish's pairings are chosen from the restaurant's drinks: the Sommelier's
+// Recommendation from its wines, the Suggested Cocktail from its cocktails.
+export const PAIRINGS = { pair_wine_id: 'wine', pair_cocktail_id: 'cocktail' };
+
 export function isAllergen(field) {
   return ALLERGENS.includes(field);
 }
