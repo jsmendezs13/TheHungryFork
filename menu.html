@@ -297,6 +297,12 @@
   .portal-ring::after { content:''; position:absolute; inset:14%; border-radius:50%; border:2px solid rgba(255,90,70,.5); box-shadow:0 0 14px 3px rgba(200,30,20,.4); }
   @keyframes portalPulse { 0%,100%{transform:scale(1);opacity:.85;} 50%{transform:scale(1.06);opacity:1;} }
   .portal-emoji { position:relative; font-size:3rem; filter:drop-shadow(0 5px 12px rgba(0,0,0,.7)); }
+  /* r40 (Sebastian, 20 Oct 00:17: option 1, "a spotlight", and the dish bigger): behind a cave's photo a warm light
+     instead of the red rings (the rings stay for a cave that shows its icon). */
+  /* (20 Oct: a cave with no photo yet — a Top Rated cave nobody has rated — has the same light, with its icon) */
+  .portal-opening .portal-ring { display:none; }
+  .portal-opening::before { content:''; position:absolute; width:104%; aspect-ratio:1; border-radius:50%; background:radial-gradient(closest-side, rgba(255,214,168,.32) 0%, rgba(255,170,110,.13) 50%, rgba(255,150,90,0) 100%); }
+  .portal-photo { position:relative; width:96%; height:64%; object-fit:contain; filter:drop-shadow(0 10px 16px rgba(0,0,0,.75)); pointer-events:none; -webkit-user-drag:none; user-select:none; }
   /* r36: the four Top Rated caves: "TOP RATED" small over the part of the menu, and a star beside its dish */
   .portal-arch-top { display:block; font-size:.62rem; letter-spacing:.3em; color:#F2C14E; margin-bottom:2px; }
   .portal-star { position:absolute; top:24%; right:24%; font-size:1.35rem; filter:drop-shadow(0 2px 6px rgba(0,0,0,.8)); }
@@ -1204,7 +1210,7 @@ async function sbFetch(path, method='GET', body=null){
 }
 
 // ── DISHES (loaded from Supabase by dishes.js) ──
-const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
+const CATEGORIES=[{key:'starters',label:'Appetizers'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
 // r36 (Sebastian, 16 Oct): four Top Rated caves instead of one: Starters, Entrées, Salads and Drinks, each
 // the best rated dishes of that part of the menu, as many as the manager chose (1 to 10), or not there at
 // all (the manager page → Menu). The numbers ride with the opening hours (HF_HOURS.top, taster.js); a
@@ -1215,15 +1221,15 @@ const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrée
 const MENU_BASE=['chefs-pick','starters','entree','salads','sides','desserts','drinks'];
 const TOP_KEYS={'top-starters':'starters','top-entree':'entree','top-salads':'salads','top-drinks':'drinks'};
 const MAIN_TOPS=['top-starters','top-entree','top-salads'];
-const DRINK_CAVES={'wines':['wine'],'cocktails':['cocktail'],'beers':['beer'],'spirits':['gin','whiskey','tequila','vodka','rum','spirit']};
-const DRINK_KIND_ORDER=['wine','cocktail','beer','gin','whiskey','tequila','vodka','rum','spirit'];
-const KIND_LABEL={wine:'Wine',cocktail:'Cocktail',beer:'Beer',gin:'Gin',whiskey:'Whiskey',tequila:'Tequila',vodka:'Vodka',rum:'Rum',spirit:'Spirit'};
+const DRINK_CAVES={'wines':['wine'],'cocktails':['cocktail'],'beers':['beer'],'spirits':['gin','whiskey','tequila','vodka','rum','spirit'],'shots':['shot']};   // r40: Shots
+const DRINK_KIND_ORDER=['wine','cocktail','beer','gin','whiskey','tequila','vodka','rum','spirit','shot'];
+const KIND_LABEL={wine:'Wine',cocktail:'Cocktail',beer:'Beer',gin:'Gin',whiskey:'Whiskey',tequila:'Tequila',vodka:'Vodka',rum:'Rum',spirit:'Spirit',shot:'Shot'};
 let RING='main';
 let CATEGORY_ORDER=MENU_BASE.concat(MAIN_TOPS);
-const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},
+const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Appetizers',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},
   'desserts':{label:'Desserts',emoji:'\u{1F370}'},'bartenders-pick':{label:"Bartender's Pick",emoji:'\u{1F378}'},'wines':{label:'Wines',emoji:'\u{1F377}'},
-  'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
-  'top-starters':{label:'Top Rated Starters',short:'Starters',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
+  'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'shots':{label:'Shots',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
+  'top-starters':{label:'Top Rated Appetizers',short:'Appetizers',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
   'top-salads':{label:'Top Rated Salads',short:'Salads',emoji:'\u{1F957}',top:true},'top-drinks':{label:'Top Rated Drinks',short:'Drinks',emoji:'\u{1F964}',top:true}};
 function topKind(key){return TOP_KEYS[key]||null;}
 function topCounts(){
@@ -1233,7 +1239,18 @@ function topCounts(){
 }
 function menuOrder(){
   if(RING==='drinks')return drinksRing();
-  const c=topCounts();return MENU_BASE.concat(MAIN_TOPS.filter(k=>c[TOP_KEYS[k]]>0));
+  const c=topCounts();return caveOrderApply(MENU_BASE.concat(MAIN_TOPS.filter(k=>c[TOP_KEYS[k]]>0)),'main');
+}
+// r40 (Sebastian, 19 Oct 23:57 and 20 Oct 01:02): what comes first, as the manager chose (Manager → Menu); the caves
+// he has not placed (a new one) follow in the menu's own order. A cave he took off the menu is not a door (its dishes
+// stay: a link to one still opens it); never all of them.
+function caveOrderApply(keys,side){
+  const co=(typeof HF_HOURS!=='undefined'&&HF_HOURS.caveOrder)||{};
+  const o=co[side]||[],hid=co.hidden||[];
+  const saved=o.filter((k,i)=>keys.includes(k)&&o.indexOf(k)===i);
+  const all=saved.concat(keys.filter(k=>!saved.includes(k)));
+  const shown=all.filter(k=>!hid.includes(k));
+  return shown.length?shown:all;
 }
 // r39: the drinks' carousel — only the caves that have drinks; Top Rated Drinks when the manager shows it.
 function drinksAll(){return DISHES.filter(d=>d.category==='drinks');}
@@ -1247,7 +1264,7 @@ function drinksRing(){
   Object.keys(DRINK_CAVES).forEach(k=>{if(all.some(d=>DRINK_CAVES[k].includes(d.kind)))r.push(k);});
   if(all.some(d=>!DRINK_KIND_ORDER.includes(d.kind)))r.push('drinks-other');
   if(r.length&&topCounts().drinks>0)r.push('top-drinks');
-  return r;
+  return caveOrderApply(r,'drinks');
 }
 function hasDrinkRing(){return drinksAll().length>0;}
 // The ratings of the last twelve months (the same months as the score on each dish's card), all in one
@@ -1275,7 +1292,7 @@ function topRatedDishes(kind){
 let MENU_BUILT=false;
 function menuApplyTop(){
   const next=menuOrder();
-  if(next.join()===CATEGORY_ORDER.join())return;
+  if(next.join()===CATEGORY_ORDER.join()){portalPaint();return;}
   const key=CATEGORY_ORDER[warpIdx];
   CATEGORY_ORDER=next;
   let i=CATEGORY_ORDER.indexOf(key);
@@ -1368,11 +1385,42 @@ function warpBuild(){
     const m=WARP_META[k];
     const p=document.createElement('div');
     p.className='warp-portal';p.dataset.idx=i;
-    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.top?'<span class="portal-arch-top">Top Rated</span>'+m.short:m.label}</div><div class="portal-opening"><span class="portal-ring"></span><span class="portal-emoji">${m.emoji}</span>${m.top?'<span class="portal-star" aria-hidden="true">\u2B50</span>':''}</div></div>`;
+    p.innerHTML=`<div class="portal-arch"><div class="portal-arch-title">${m.top?'<span class="portal-arch-top">Top Rated</span>'+m.short:m.label}</div><div class="portal-opening"><span class="portal-ring"></span>${portalIconHTML(k)}${m.top?'<span class="portal-star" aria-hidden="true">\u2B50</span>':''}</div></div>`;
     p.addEventListener('click',()=>{if(Math.abs(warpWrap(i-warpPos))>0.3)warpTo(i);else enterCave();});
     stage.appendChild(p);
   });
   document.getElementById('warp-dots').innerHTML=CATEGORY_ORDER.map((k,i)=>`<span class="warp-dot" data-i="${i}" onclick="warpTo(${i})"></span>`).join('');
+}
+// r40 (Sebastian, 19 Oct 22:14): each cave shows the photo of the first dish in it, not an icon. The Drinks cave
+// shows the first drink of its own carousel (the Bartender's Pick, or the first wine). A dish without a photo (or one
+// that does not load) is passed over for the next one; no photo at all: the icon.
+const PORTAL_BAD=new Set();
+function portalDish(k){
+  try{
+    let list;
+    if(RING==='main'&&k==='drinks'){const r=hasDrinkRing()?drinksRing():[];list=r.length?caveListFor(r[0]):[];}
+    else list=caveListFor(k);
+    return list.find(d=>d&&d.img&&!PORTAL_BAD.has(d.img))||null;
+  }catch(e){return null;}
+}
+function portalIconHTML(k){
+  const m=WARP_META[k],pd=portalDish(k);
+  return pd?`<img class="portal-photo" src="${hfImgSrc(pd.img,220)}" data-orig="${pd.img}" alt="" decoding="async" draggable="false" onerror="portalImgErr(this)">`:`<span class="portal-emoji" data-orig="">${m.emoji}</span>`;
+}
+// The ratings arrive after the caves are drawn: a Top Rated cave's first dish can change without the caves changing.
+function portalPaint(){
+  document.querySelectorAll('.warp-portal').forEach(p=>{
+    const k=CATEGORY_ORDER[+p.dataset.idx];if(!k)return;
+    const pd=portalDish(k),want=pd?pd.img:'';
+    const ic=p.querySelector('.portal-photo,.portal-emoji');if(!ic)return;
+    if(want!==(ic.getAttribute('data-orig')||''))ic.outerHTML=portalIconHTML(k);
+  });
+}
+function portalImgErr(img){
+  if(hfImgBack(img))return;                                  // the lighter copy failed: the original file once
+  PORTAL_BAD.add(img.getAttribute('data-orig'));              // then the next dish's photo, or the icon
+  const p=img.closest('.warp-portal'),k=p&&CATEGORY_ORDER[+p.dataset.idx];
+  img.outerHTML=k?portalIconHTML(k):'';
 }
 function warpRender(){
   const sp=warpSpacing();
@@ -1423,8 +1471,10 @@ function caveListFor(key){
   if(key==='drinks-other')return drinksAll().filter(d=>!DRINK_KIND_ORDER.includes(d.kind));
   return DISHES.filter(d=>d.category===key);
 }
+// r40: the cave of a dish opened by a link when the manager took that cave off the menu (its door is not shown).
+let CAVE_FORCE=null;
 function enterCave(startId){
-  const key=CATEGORY_ORDER[warpIdx];
+  const key=CAVE_FORCE||CATEGORY_ORDER[warpIdx];CAVE_FORCE=null;
   if(RING==='main'&&key==='drinks'&&hasDrinkRing()){openDrinksRing();return;}     // r39
   caveDishes=caveListFor(key);
   caveDishIdx=Math.max(0,caveDishes.findIndex(d=>d.id===startId));
@@ -1505,6 +1555,16 @@ async function caveDishRating(dbId){
 // chose in Settings — A, B or C — or none, and then no grade is shown. taster.js
 // has it (it rides with the opening hours) and fills it in again if it arrives
 // after the card is drawn.
+// r40 (Sebastian, 19 Oct 23:57): a wine by the Glass and the Bottle; a spirit as a Shot, a Mixed drink (rum and
+// Coke, gin and tonic…) and the Bottle — the ones the manager filled in. Otherwise the one price, or none.
+const SPIRIT_KINDS=['gin','whiskey','tequila','vodka','rum','spirit'];
+function dishPriceText(d){
+  const p=d&&d.prices||{},money=n=>'$'+(Number.isInteger(n)?n:n.toFixed(2));
+  const ways=d&&d.kind==='wine'?[['glass','Glass'],['bottle','Bottle']]:d&&SPIRIT_KINDS.includes(d.kind)?[['shot','Shot'],['mixed','Mixed drink'],['bottle','Bottle']]:[];
+  const set=ways.filter(w=>typeof p[w[0]]==='number');
+  if(set.length)return set.map(w=>w[1]+' '+money(p[w[0]])).join(' · ');
+  return d&&d.price!=null?money(d.price):'';
+}
 function caveGradeBlock(){
   const g=typeof hfGrade==='function'?hfGrade():null;
   const html=typeof hfGradeHtml==='function'?hfGradeHtml('Sanitary Inspection Grade'):'';
@@ -1526,6 +1586,7 @@ function renderCave(animClass,mediaOnly){
   }
   const d=caveDishes[caveDishIdx];
   currentDishId=d.id;
+  if(!caveViews(d).includes(caveViewIdx))caveViewIdx=0;
   const prevD=caveDishes[(caveDishIdx-1+caveDishes.length)%caveDishes.length];
   const nextD=caveDishes[(caveDishIdx+1)%caveDishes.length];
   const multi=caveDishes.length>1;
@@ -1538,6 +1599,7 @@ function renderCave(animClass,mediaOnly){
   }else{
     media=`<div class="cave-text-view">
       <p class="cave-about">${d.about||d.desc}</p>
+      ${d.ingredients&&d.ingredients.length?`<p class="cave-meta-line cave-ingredients"><strong>Ingredients:</strong> ${d.ingredients.join(', ')}</p>`:''}
       ${d.allergens?`<p class="cave-meta-line"><strong>Allergies/Aversions:</strong> ${d.allergens}</p>`:''}
       <p class="cave-meta-line cave-ask-staff">Always ask staff about allergens.</p>
       ${d.mods?`<p class="cave-meta-line"><strong>Mods:</strong> ${d.mods}</p>`:''}
@@ -1572,9 +1634,7 @@ function renderCave(animClass,mediaOnly){
       </div>
       ${caveSwipeHint('down')}
       <div class="cave-vdots-h">
-        <span class="cave-vdot${caveViewIdx===0?' active':''}" onclick="caveSetView(0)" title="Plate"></span>
-        <span class="cave-vdot${caveViewIdx===1?' active':''}" onclick="caveSetView(1)" title="Ingredients"></span>
-        <span class="cave-vdot${caveViewIdx===2?' active':''}" onclick="caveSetView(2)" title="Description"></span>
+        ${caveViews(d).map(v=>`<span class="cave-vdot${caveViewIdx===v?' active':''}" onclick="caveSetView(${v})" title="${['Plate','Ingredients','Description'][v]}"></span>`).join('')}
       </div>
     </section>
     <div class="cave-scroll">
@@ -1582,7 +1642,7 @@ function renderCave(animClass,mediaOnly){
       <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       ${caveKindTag(d)}
       ${caveNameRow(d,multi)}
-      ${d.price!=null?`<div class="cave-dish-price">$${d.price}</div>`:''}
+      ${dishPriceText(d)?`<div class="cave-dish-price">${dishPriceText(d)}</div>`:''}
       ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
       <div class="cave-acts">
         <button class="cave-share-btn" onclick="caveShare()">${caveIcon('share')}Share</button>
@@ -1733,16 +1793,26 @@ function playCardAnim(card,cls){
   });
 }
 function caveDish(dir){if(!caveDishes.length)return;caveDishIdx=(caveDishIdx+dir+caveDishes.length)%caveDishes.length;renderCave(dir>0?'anim-l':'anim-r');}
-function caveView(dir){if(!caveDishes.length)return;caveViewIdx=(caveViewIdx+dir+3)%3;renderCave(dir>0?'anim-u':'anim-d',true);}
-function caveSetView(i){if(!caveDishes.length||i===caveViewIdx)return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir,true);}
+// r40 (Sebastian, 19 Oct 22:16): a drink has its photo and its description, no second photo of the ingredients;
+// a dish has the ingredients view only when it has that photo.
+// r40 (Sebastian, 19 Oct 23:57): neither the appetizers nor the sides have it either.
+const NO_OPEN_VIEW=['drinks','starters','appetizers','sides'];
+function caveViews(d){return d&&!NO_OPEN_VIEW.includes(d.category)&&d.imgOpen?[0,1,2]:[0,2];}
+function caveView(dir){if(!caveDishes.length)return;const v=caveViews(caveDishes[caveDishIdx]),i=Math.max(0,v.indexOf(caveViewIdx));caveViewIdx=v[(i+dir+v.length)%v.length];renderCave(dir>0?'anim-u':'anim-d',true);}
+function caveSetView(i){if(!caveDishes.length||i===caveViewIdx||!caveViews(caveDishes[caveDishIdx]).includes(i))return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir,true);}
 function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;renderCave(dir);}
 function caveOpenDish(id){
   const d=DISHES.find(x=>x.id===id);
   if(!d)return;
-  if(d.category==='drinks'&&hasDrinkRing()){ringSet('drinks',drinkCaveOf(d));enterCave(id);return;}   // r39
+  if(d.category==='drinks'&&hasDrinkRing()){
+    const k=drinkCaveOf(d);ringSet('drinks',k);
+    if(!CATEGORY_ORDER.includes(k))CAVE_FORCE=k;            // r40: its cave is off the menu: the dish opens all the same
+    enterCave(id);return;
+  }   // r39
   if(RING!=='main')ringSet('main');
   const ci=CATEGORY_ORDER.indexOf(d.category);
   if(ci>=0){warpIdx=ci;warpPos=ci;updateWarpCatName();warpRender();}
+  else if(WARP_META[d.category])CAVE_FORCE=d.category;     // r40: its cave is off the menu: the dish opens all the same
   enterCave(id);
 }
 function caveRate(){if(!caveDishes.length)return;currentDishId=caveDishes[caveDishIdx].id;if(!currentTaster){openTasterModal();return;}openRatingModal();}
@@ -2081,7 +2151,7 @@ function renderDishModal(id){
   currentDishId=id;
   document.getElementById('modal-dish-emoji').textContent=d.emoji;
   document.getElementById('modal-name').textContent=d.name;
-  document.getElementById('modal-desc').textContent=(d.price!=null?'$'+d.price+' · ':'')+d.desc;
+  document.getElementById('modal-desc').textContent=(dishPriceText(d)?dishPriceText(d)+' · ':'')+d.desc;
   loadReviews(id,RESTAURANT_ID);
   document.getElementById('modal').classList.add('open');
 }
@@ -2137,7 +2207,7 @@ function openRatingModal(){
   const d=DISHES.find(x=>x.id===currentDishId);
   document.getElementById('r-dish-emoji').textContent=d.emoji;
   document.getElementById('r-dish-name').textContent=d.name;
-  document.getElementById('r-dish-desc').textContent=(d.price!=null?'$'+d.price+' · ':'')+d.desc;
+  document.getElementById('r-dish-desc').textContent=(dishPriceText(d)?dishPriceText(d)+' · ':'')+d.desc;
   ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
   ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
   document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
@@ -2885,6 +2955,8 @@ loadMyLevel();
   if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);CAVE_ARRIVED=true;return;}
   // r39: a drinks' cave (?cat=wines, ?cat=top-drinks…) opens in the drinks' carousel
   if(cat&&cat!=='drinks'&&hasDrinkRing()&&drinksRing().includes(cat))ringSet('drinks',cat);
+  // r40: ?ring=drinks (the home page's Drinks button): the drinks' carousel, at its first cave
+  else if(params.get('ring')==='drinks'&&hasDrinkRing()){ringSet('drinks',drinksRing()[0]);return;}
   if(cat&&CATEGORY_ORDER.includes(cat)){
     warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
     // ?enter=1 opens the cave straight away — the home page video uses it.
