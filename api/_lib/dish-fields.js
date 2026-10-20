@@ -68,10 +68,15 @@ export const LOCKED = ['id', 'slug', 'restaurant_id', 'image', 'image_open'];
 // The kind of a drink. The menu shows the drinks in their own carousel:
 // Bartender's Pick, Wines, Cocktails, Beers, Spirits (gin, whiskey, tequila,
 // vodka, rum, or another spirit) and Top Rated Drinks.
-export const DRINK_KINDS = ['wine', 'cocktail', 'beer', 'gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];
+export const DRINK_KINDS = ['wine', 'cocktail', 'beer', 'shot', 'gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];   // r40: shot
 // A dish's pairings are chosen from the restaurant's drinks: the Sommelier's
 // Recommendation from its wines, the Suggested Cocktail from its cocktails.
 export const PAIRINGS = { pair_wine_id: 'wine', pair_cocktail_id: 'cocktail' };
+
+// ── Drink prices (r40, migration 27) ───────────────────────────────────────
+// A wine by the Glass and by the Bottle; a spirit as a Shot, as a Mixed drink
+// (rum and Coke, gin and tonic…) and by the Bottle. Empty = not sold that way.
+export const DRINK_PRICES = ['price_glass', 'price_bottle', 'price_shot', 'price_mixed'];
 
 export function isAllergen(field) {
   return ALLERGENS.includes(field);
