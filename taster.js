@@ -1868,7 +1868,8 @@ function hfHoursApply(d){
   HF_HOURS.tz=typeof d.timezone==='string'?d.timezone:null;
   HF_HOURS.grade=HF_GRADES[d.grade]?d.grade:null;           // r34
   HF_HOURS.top=hfTopClean(d.top);                            // r36
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,at:Date.now()}));}catch(e){}
+  HF_HOURS.caveOrder=hfOrderClean(d.top&&d.top.order);       // r40
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,at:Date.now()}));}catch(e){}
   hfHoursFill();
   HF_HOURS.fresh=true;
   try{document.dispatchEvent(new Event('hf-hours'));}catch(e){}
@@ -1883,6 +1884,15 @@ function hfTopClean(t){
   var out={},ok=true;
   ['starters','entree','salads','drinks'].forEach(function(k){var n=t[k];if(typeof n==='number'&&n%1===0&&n>=0&&n<=10)out[k]=n;else ok=false;});
   return ok?out:null;
+}
+// r40 (Sebastian, 19 Oct and 20 Oct 01:02): what comes first in the menu's carousel and in the drinks' carousel,
+// and the caves taken off the menu, as the manager chose: { main:[...], drinks:[...], hidden:[...] } (the caves'
+// names). Missing: null, and the menu keeps its own order with every cave.
+function hfOrderClean(o){
+  if(!o||typeof o!=='object')return null;
+  var out={};
+  ['main','drinks','hidden'].forEach(function(s){out[s]=Array.isArray(o[s])?o[s].filter(function(k){return typeof k==='string'&&/^[a-z-]{2,30}$/.test(k);}).slice(0,20):[];});
+  return out;
 }
 function hfHoursFetch(){
   fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
@@ -1901,6 +1911,7 @@ function hfHoursLoad(){
       HF_HOURS.tz=typeof kept.tz==='string'?kept.tz:null;
       HF_HOURS.grade=HF_GRADES[kept.grade]?kept.grade:null;  // r34
       HF_HOURS.top=hfTopClean(kept.top);                     // r36
+      HF_HOURS.caveOrder=hfOrderClean(kept.caveOrder);       // r40
       hfHoursFill();
     }
   }catch(e){}
