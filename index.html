@@ -421,9 +421,10 @@
       <div class="vh-btn" data-idx="1" data-name="Promotions"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Promotions</span></div>
       <div class="vh-btn" data-idx="2" data-name="Career"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Career</span></div>
       <div class="vh-btn" data-idx="3" data-name="Menu" data-menu="1"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Menu</span></div>
-      <div class="vh-btn" data-idx="4" data-name="Events"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Events</span></div>
-      <div class="vh-btn" data-idx="5" data-name="Reservations" data-book="1"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Reservations</span></div>
-      <div class="vh-btn" data-idx="6" data-name="Help"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Help</span></div>
+      <div class="vh-btn" data-idx="4" data-name="Drinks" data-drinks="1"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Drinks</span></div>
+      <div class="vh-btn" data-idx="5" data-name="Events"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Events</span></div>
+      <div class="vh-btn" data-idx="6" data-name="Reservations" data-book="1"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Reservations</span></div>
+      <div class="vh-btn" data-idx="7" data-name="Help"><img src="/_vercel/image?url=%2Fmenu-button-blank.png&w=256&q=75" data-orig="/menu-button-blank.png" onerror="this.onerror=null;this.src=this.dataset.orig" alt=""><span>Help</span></div>
     </div>
   </div>
 </div>
@@ -549,9 +550,9 @@ async function sbFetch(path, method='GET', body=null){
 }
 
 // ── DISHES (loaded from Supabase by dishes.js) ──
-const CATEGORIES=[{key:'starters',label:'Starters'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
+const CATEGORIES=[{key:'starters',label:'Appetizers'},{key:'entree',label:'Entrées'},{key:'salads',label:'Salads'},{key:'sides',label:'Sides'},{key:'drinks',label:'Drinks'}];
 const CATEGORY_ORDER=['chefs-pick','starters','entree','salads','sides','drinks','top-rated'];
-const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Starters',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},'top-rated':{label:'Top Rated',emoji:'\u2B50'}};
+const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Appetizers',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},'top-rated':{label:'Top Rated',emoji:'\u2B50'}};
 
 // ── STATE ──
 // currentTaster / currentSession / pendingVerificationTicket are declared in taster.js
@@ -919,9 +920,9 @@ async function loadOverallRating(){
 }
 
 // ── ENTER MENU PAGE ──
-function menuEnter(){
+function menuEnter(url){
   document.body.classList.add('warping');
-  setTimeout(()=>{window.location.href='/menu';},430);
+  setTimeout(()=>{window.location.href=typeof url==='string'?url:'/menu';},430);
 }
 
 // ── FORK'S RATING INFO ──
@@ -969,7 +970,9 @@ function fiRender(){
 // dish (the T-Bone). The video is a general restaurant video now, and the
 // chef's pick is whatever the manager flags, so the tap goes straight to the
 // Chef's Pick cave on the menu and there is no dish name written down here.
-function goChefsPick(){window.location.href='/menu?cat=chefs-pick&enter=1';}
+// r40 (Sebastian, 19 Oct 23:57): to the Chef's Pick cave in the menu's carousel — not into the dish — where its
+// photo is now.
+function goChefsPick(){window.location.href='/menu?cat=chefs-pick';}
 (function(){
   const hero=document.querySelector('.video-hero');
   if(!hero)return;
@@ -990,8 +993,10 @@ function closeComingSoon(){document.getElementById('cs-overlay').classList.remov
 // ── 3D BUTTON RAIL (moves like the warp room) ──
 let railPos=3, railIdx=3, railRAF=null;
 function railSpacing(){return Math.min(window.innerWidth*0.30,120);}
-function railWrap(d){const n=7;return((d%n)+n*1.5)%n-n/2;}
-function railNorm(i){const n=7;return((Math.round(i)%n)+n)%n;}
+// r40: eight buttons (Drinks after Menu); the count is read from the page.
+function railCount(){return document.querySelectorAll('.vh-btn').length||8;}
+function railWrap(d){const n=railCount();return((d%n)+n*1.5)%n-n/2;}
+function railNorm(i){const n=railCount();return((Math.round(i)%n)+n)%n;}
 function railRender(){
   const sp=railSpacing();
   document.querySelectorAll('.vh-btn').forEach(b=>{
@@ -1024,6 +1029,7 @@ function railInit(){
       const i=parseInt(b.dataset.idx);
       if(Math.abs(railWrap(i-railPos))>0.3){railTo(i);return;}
       if(b.dataset.menu)menuEnter();
+      else if(b.dataset.drinks)menuEnter('/menu?ring=drinks');      // r40: the drinks' carousel
       else if(b.dataset.book)window.location.href='/reservations';   // the booking screen
       else openComingSoon(b.dataset.name);
     });
