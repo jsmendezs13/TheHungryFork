@@ -50,8 +50,19 @@ function normalizeDish(row) {
     kind:        row.drink_kind || null,
     barPick:     !!row.is_bartenders_pick,
     pairWineId:  row.pair_wine_id || null,
-    pairCocktailId: row.pair_cocktail_id || null
+    pairCocktailId: row.pair_cocktail_id || null,
+    // r40 (migration 27): a wine by the glass and the bottle; a spirit as a
+    // shot, a mixed drink and the bottle. Only the ones filled in.
+    prices: dishPrices(row)
   };
+}
+function dishPrices(row) {
+  const out = {};
+  [['glass', 'price_glass'], ['bottle', 'price_bottle'], ['shot', 'price_shot'], ['mixed', 'price_mixed']].forEach(function (p) {
+    const v = row[p[1]];
+    if (v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v))) out[p[0]] = Number(v);
+  });
+  return out;
 }
 
 // A dish stays sold out until the manager clears it by hand — deliberately no
@@ -79,6 +90,8 @@ const DISH_COLUMNS = [
 // r39: the drinks' columns (migration 26). Asked for with the others; if the
 // database does not have them yet, the menu is asked for again without them.
 const DISH_COLUMNS_R39 = DISH_COLUMNS + ',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id';
+// r40: and the drink prices (migration 27); without them, as r39 asked.
+const DISH_COLUMNS_R40 = DISH_COLUMNS_R39 + ',price_glass,price_bottle,price_shot,price_mixed';
 
 async function loadDishes() {
   const ask = (cols) => fetch(SUPABASE_URL
@@ -89,7 +102,8 @@ async function loadDishes() {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
 
-  let res = await ask(DISH_COLUMNS_R39);
+  let res = await ask(DISH_COLUMNS_R40);
+  if (!res.ok && res.status >= 400 && res.status < 500) res = await ask(DISH_COLUMNS_R39);
   if (!res.ok && res.status >= 400 && res.status < 500) res = await ask(DISH_COLUMNS);
   if (!res.ok) throw new Error('dishes request failed: ' + res.status);
 
