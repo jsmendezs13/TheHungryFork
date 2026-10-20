@@ -10,6 +10,16 @@
 //   dish_order_save  the order of the dishes of one part of the menu
 //                    (Entrées, Salads…): the fish before the steak
 //
+// r40 (Sebastian, 19 Oct 23:57): menu_top_save may carry, instead of (or with)
+// the four numbers, the order of the caves of one carousel — the menu's
+// (Chef's Pick, Appetizers, Entrées…) or the drinks' (Bartender's Pick, Wines,
+// Cocktails…): order: { side: 'main' | 'drinks', keys: [...] }. It rides on
+// menu_top_save so api/reservations.js (the function that routes it) does not
+// change. Saved in menu_settings.cave_order_main / cave_order_drinks
+// (migration 27); empty = the menu's own order. With them, hidden: [...] — the
+// caves the manager took off the menu (their dishes stay; only the door goes),
+// in caves_hidden.
+//
 // Reached through api/reservations.js like Settings, so the site still deploys
 // as twelve functions. Managers, owners and Seb's Analytics: the same people
 // who may change the dishes (canEditDishes).
@@ -30,6 +40,27 @@ const readLimiter  = makeLimiter({ requests: 300, window: '10 m', prefix: 'menus
 const writeLimiter = makeLimiter({ requests: 60,  window: '5 m',  prefix: 'menuset:write' });
 
 const NOT_READY = 'The Top Rated settings are not set up yet: migration 25 has not been run.';
+const ORDER_NOT_READY = 'The order of the caves is not set up yet: migration 27 has not been run.';
+// The caves each carousel may have (the menu adds the ones it has, in this order, after the saved ones).
+export const CAVES = {
+  main:   ['chefs-pick', 'starters', 'entree', 'salads', 'sides', 'desserts', 'drinks', 'top-starters', 'top-entree', 'top-salads'],
+  drinks: ['bartenders-pick', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other', 'top-drinks'],
+};
+const ORDER_COLUMN = { main: 'cave_order_main', drinks: 'cave_order_drinks' };
+// The caves a manager may take off the menu: the parts of the menu and the kinds of drink (not Chef's Pick, the
+// Drinks door, Bartender's Pick or the Top Rated ones: those have their own switches).
+export const HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other'];
+// The saved order as the pages use it: { main: [...], drinks: [...], hidden: [...] } (only known caves, each once).
+function orderOf(row) {
+  const out = {};
+  for (const side of Object.keys(CAVES)) {
+    const v = row && Array.isArray(row[ORDER_COLUMN[side]]) ? row[ORDER_COLUMN[side]] : [];
+    out[side] = [...new Set(v.filter((k) => CAVES[side].includes(k)))];
+  }
+  const h = row && Array.isArray(row.caves_hidden) ? row.caves_hidden : [];
+  out.hidden = [...new Set(h.filter((k) => HIDEABLE.includes(k)))];
+  return out;
+}
 
 // The row as the pages use it: { starters: 5, entree: 5, salads: 5, drinks: 5 }.
 function topOf(row) {
@@ -55,10 +86,15 @@ function failWords(what, got) {
 // For the menu (with the opening hours, api/reservations.js publicHours):
 // the four numbers, or null when they cannot be read (the menu then shows the
 // four caves with 5 dishes each, as a restaurant that never chose).
+// r40: with the order of the caves too (top.order), when migration 27 is in — the whole row is asked for, so the
+// same request works before and after it.
 export async function publicTop(restaurantId) {
-  const got = await sb(`/menu_settings?restaurant_id=eq.${Number(restaurantId)}&select=${Object.values(COLUMN).join(',')}&limit=1`);
+  const got = await sb(`/menu_settings?restaurant_id=eq.${Number(restaurantId)}&select=*&limit=1`);
   if (!got.ok || !Array.isArray(got.data)) return null;
-  return topOf(got.data[0] || null);
+  const row = got.data[0] || null;
+  const top = topOf(row);
+  if (row && (ORDER_COLUMN.main in row)) top.order = orderOf(row);
+  return top;
 }
 
 export async function menuset(req, res, body, action) {
@@ -89,19 +125,51 @@ async function settings(res, rid) {
     return res.status(502).json({ error: failWords('read the Top Rated settings', got) });
   }
   const row = got.data[0] || null;
-  return res.status(200).json({ ready: true, top: topOf(row), chosen: !!row, changedOn: row ? row.updated_at : null });
+  // r40: orderReady — whether migration 27 is in (a row is needed to know; without one, the column list is asked for).
+  let orderReady = row ? ORDER_COLUMN.main in row : null;
+  if (orderReady === null) {
+    const probe = await sb(`/menu_settings?select=${ORDER_COLUMN.main}&limit=1`);
+    orderReady = probe.ok;
+  }
+  return res.status(200).json({ ready: true, top: topOf(row), chosen: !!row, changedOn: row ? row.updated_at : null,
+                                order: orderOf(row), orderReady });
 }
 
 async function topSave(res, rid, body, tasterId) {
-  const top = body.top;
-  if (!top || typeof top !== 'object' || Array.isArray(top)) return res.status(400).json({ error: 'Nothing to save.' });
+  const top = body.top, order = body.order, hidden = body.hidden;
+  const hasTop = top && typeof top === 'object' && !Array.isArray(top);
+  const hasOrder = order && typeof order === 'object' && !Array.isArray(order);
+  const hasHidden = hidden !== undefined;
+  if (!hasTop && !hasOrder && !hasHidden) return res.status(400).json({ error: 'Nothing to save.' });
   const row = { restaurant_id: rid, updated_at: new Date().toISOString(), updated_by: tasterId };
-  for (const k of TOP_KINDS) {
-    const n = top[k];
-    if (!Number.isInteger(n) || n < 0 || n > TOP_MAX) {
-      return res.status(400).json({ error: `Top Rated ${k}: choose 1 to ${TOP_MAX} dishes, or 0 to take it off the menu.` });
+  if (hasTop) {
+    for (const k of TOP_KINDS) {
+      const n = top[k];
+      if (!Number.isInteger(n) || n < 0 || n > TOP_MAX) {
+        return res.status(400).json({ error: `Top Rated ${k}: choose 1 to ${TOP_MAX} dishes, or 0 to take it off the menu.` });
+      }
+      row[COLUMN[k]] = n;
     }
-    row[COLUMN[k]] = n;
+  }
+  if (hasOrder) {
+    // r40: the order of the caves of one carousel: every key one of its caves, each once.
+    const side = order.side, keys = order.keys;
+    if (!Object.prototype.hasOwnProperty.call(CAVES, side)) return res.status(400).json({ error: 'Which carousel: the menu or the drinks?' });
+    if (!Array.isArray(keys) || keys.length > CAVES[side].length || keys.some((k) => !CAVES[side].includes(k)) || new Set(keys).size !== keys.length) {
+      return res.status(400).json({ error: 'That order has a cave the menu does not have. Reload the page and try again.' });
+    }
+    const probe = await sb(`/menu_settings?select=${ORDER_COLUMN[side]}&limit=1`);
+    if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : ORDER_NOT_READY });
+    row[ORDER_COLUMN[side]] = keys;
+  }
+  if (hasHidden) {
+    // r40: the caves taken off the menu (all of them at once: the list as it is now).
+    if (!Array.isArray(hidden) || hidden.some((k) => !HIDEABLE.includes(k)) || new Set(hidden).size !== hidden.length) {
+      return res.status(400).json({ error: 'That cave cannot be hidden here. Reload the page and try again.' });
+    }
+    const probe = await sb('/menu_settings?select=caves_hidden&limit=1');
+    if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : ORDER_NOT_READY });
+    row.caves_hidden = hidden;
   }
   // Insert the row the first time, change it after (restaurant_id is the key).
   const saved = await sb('/menu_settings?on_conflict=restaurant_id', {
@@ -113,7 +181,7 @@ async function topSave(res, rid, body, tasterId) {
     if (missing(saved)) return res.status(409).json({ error: NOT_READY });
     return res.status(502).json({ error: failWords('save the Top Rated settings', saved) });
   }
-  return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at });
+  return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at, order: orderOf(saved.data[0]) });
 }
 
 // The order of one part of the menu: every dish of it, in the new order. The
