@@ -35,6 +35,11 @@
 // r30: messages about a big-party request (api/_lib/requestchat.js, actions
 // req_msg_* and staff_req_*), and "My information" (api/_lib/profile.js,
 // actions me, me_save, me_pin, me_phone). Migration 20.
+//
+// r42 (migration 29): photos and PDFs in the conversations (api/_lib/files.js;
+// the daily job deletes them with their conversation), the restaurant starting
+// a conversation, and an email to the restaurant when a guest sends a
+// big-party request (requestToRestaurant below).
 
 import crypto from 'node:crypto';
 import { makeLimiter, allow, keyFor, clientIp, normalizeUsPhone, validateName } from './_lib/auth.js';
@@ -46,8 +51,10 @@ import {
 import {
   emailReady, senderFor, newLinkToken, saveLink, cancelUrl, talkUrl, cleanToken, hashToken,
   sendEmail, confirmationEmail, reminderEmail, answerEmail, hostOf, sendableAddress, mailboxKey, requestMessageEmail,
+  partyRequestEmail,
 } from './_lib/email.js';
-import { staff } from './_lib/staff.js';
+import { staff, requestMailList } from './_lib/staff.js';
+import { forgetOldFiles } from './_lib/files.js';
 import { guest, staffMessages, chatSummaries, KEEP_MS } from './_lib/messages.js';
 import {
   guestRequestChat, staffRequestChat, guestRequests, requestBell, requestSummaries, moveToTable,
@@ -81,6 +88,11 @@ const emailAddrLimiter = makeLimiter({ requests: 6,  window: '24 h', prefix: 're
 // no mistake and no attack can ever run past it or into a bill.
 const emailDayLimiter  = makeLimiter({ requests: 95, window: '24 h', prefix: 'resv:email:all' });
 const linkLimiter      = makeLimiter({ requests: 30, window: '10 m', prefix: 'resv:link' });
+// r42: the emails to a restaurant about new big-party requests. Anybody can send
+// a request, so they have their own ceiling per restaurant (and the day's one):
+// a flood of fake requests can not fill the restaurant's inbox, nor use up the
+// emails the guests' confirmations need.
+const partyMailLimiter = makeLimiter({ requests: 30, window: '24 h', prefix: 'resv:email:party' });
 
 const LINK_GONE = 'This link does not open a table any more. Please call the restaurant.';
 
@@ -103,7 +115,7 @@ export default async function handler(req, res) {
   if (action === 'link')        return byLink(req, res, body);
   if (action === 'cancel_link') return cancelByLink(req, res, body);
   // Messages about a table, and the bell.
-  if (action === 'msg_list' || action === 'msg_send' || action === 'inbox') {
+  if (action === 'msg_list' || action === 'msg_send' || action === 'inbox' || action === 'msg_upload' || action === 'msg_files') {
     return guest(req, res, body, action, {
       findByLink: (t) => { const clean = cleanToken(t); return clean ? findByLink(clean) : null; },
       linkGone: LINK_GONE,
@@ -111,8 +123,10 @@ export default async function handler(req, res) {
     });
   }
   // r30: a big-party request's own conversation, and My information.
-  if (action === 'req_msg_list' || action === 'req_msg_send') return guestRequestChat(req, res, body, action);
-  if (action === 'staff_req_thread' || action === 'staff_req_send') return staffRequestChat(req, res, body, action, { requestByEmail });
+  if (action === 'req_msg_list' || action === 'req_msg_send' || action === 'req_msg_upload' || action === 'req_msg_files') return guestRequestChat(req, res, body, action);
+  if (action === 'staff_req_thread' || action === 'staff_req_send' || action === 'staff_req_upload' || action === 'staff_req_files') {
+    return staffRequestChat(req, res, body, action, { requestByEmail });
+  }
   if (action === 'me' || action === 'me_save' || action === 'me_pin' || action === 'me_phone') return profile(req, res, body, action);
   if (action.startsWith('staff_msg')) return staffMessages(req, res, body, action, { answerByEmail });
   // r34: Settings → Support, the restaurant's conversation with Seb's Analytics.
@@ -664,7 +678,7 @@ async function noteEmail(reservationId, fields) {
 // more emails? No: one per conversation, ever (first_reply_emailed_at, claimed
 // in the same write that checks it, so two answers at once send one email).
 // Returns true only when Resend took it.
-async function answerByEmail({ reservationId, staffName, loaded, timezone }) {
+async function answerByEmail({ reservationId, staffName, loaded, timezone, opening = false }) {
   const settings = loaded && !loaded.error ? loaded.settings : null;
   if (!emailReady(settings)) return false;
   const found = await sb(`/reservations?id=eq.${Number(reservationId)}&select=id,code,taster_id,guest_name,guest_phone,guest_email,reserved_at&limit=1`);
@@ -697,7 +711,7 @@ async function answerByEmail({ reservationId, staffName, loaded, timezone }) {
   const sender = senderFor(settings, loaded.restaurant);
   const mail = answerEmail({
     restaurant: loaded.restaurant, timezone, at: new Date(row.reserved_at).toISOString(),
-    staffName, guestName: row.guest_name, link: talkUrl(settings, token), siteHost: hostOf(settings),
+    staffName, guestName: row.guest_name, link: talkUrl(settings, token), siteHost: hostOf(settings), opening,
   });
   // No reply-to: a reply would land in the restaurant's inbox and show the
   // guest's address to whoever reads it (staff never see guest emails). The
@@ -838,6 +852,11 @@ async function request(req, res, body) {
   }
 
   const row = Array.isArray(created.data) ? created.data[0] : null;
+  // r42: the restaurant hears about it by email. Never fails the request.
+  if (row) {
+    try { await requestToRestaurant(row, loaded); }
+    catch (err) { console.error('[reservations:request] restaurant email threw', row.id, err && err.message); }
+  }
   return res.status(200).json({
     success:    true,
     requestId:  row ? row.id : null,
@@ -846,6 +865,43 @@ async function request(req, res, body) {
     time,
     party,
   });
+}
+
+// r42 (Sebastian, 22 and 26 Oct): "when people make a big reservation please
+// send an email to the restaurant". To whoever the restaurant chose in
+// Settings: its owners and managers, and/or up to 5 other addresses — one
+// email each, so nobody sees the others' addresses. Only the first name, the
+// people and the day (partyRequestEmail). Returns how many went.
+async function requestToRestaurant(q, loaded) {
+  const settings = loaded && !loaded.error ? loaded.settings : null;
+  if (!emailReady(settings)) return 0;
+  const list = (await requestMailList(q.restaurant_id, settings)).map(sendableAddress).filter(Boolean);
+  if (!list.length) return 0;
+  const sender = senderFor(settings, loaded.restaurant);
+  const site = (settings && settings.site_url) || 'https://thehungryfork.fun';
+  const mail = partyRequestEmail({
+    restaurant: loaded.restaurant, guestName: q.guest_name, party: q.party_size, date: q.wanted_date, time: q.wanted_time,
+    link: `${site}/manager#request=${Number(q.id)}`, siteHost: hostOf(settings),
+  });
+  const results = await Promise.all(list.map(async (to) => {
+    if (!(await allow(partyMailLimiter, keyFor('r' + q.restaurant_id), { failOpen: false }))
+        || !(await allow(emailDayLimiter, keyFor('all'), { failOpen: false }))) return false;
+    const sent = await sendEmail({
+      from: sender.from, replyTo: null, to, subject: mail.subject, html: mail.html, text: mail.text,
+      idempotencyKey: `party-request-${q.id}-${crypto.createHash('sha256').update(to).digest('hex').slice(0, 16)}`,
+      tags: [{ name: 'kind', value: 'party-request' }],
+      timeoutMs: 4000,                         // the guest is looking at a spinner
+    });
+    if (!sent.ok && !sent.duplicate) console.error('[reservations:request] restaurant email not sent', q.id, sent.error);
+    return !!sent.ok;
+  }));
+  const n = results.filter(Boolean).length;
+  if (n) {
+    await sb(`/reservation_requests?id=eq.${Number(q.id)}`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ staff_mailed_at: new Date().toISOString() }),
+    });
+  }
+  return n;
 }
 
 // ── THE TABLES THIS GUEST HAS ─────────────────────────────────────────────────
@@ -1229,7 +1285,10 @@ async function forgetOldMessages() {
     let r = 0;
     try { r = await forgetOldRequestMessages(); } catch (err) { console.error('[reservations:forget] requests threw', err && err.message); }
     if (r) console.log('[reservations:forget] deleted', r, 'request messages older than 90 days after their day');
-    return n + r;
+    // r42: the photos and PDFs of conversations that are gone, and files chosen but never sent.
+    const f = await forgetOldFiles();
+    if (f) console.log('[reservations:forget] deleted', f, 'files');
+    return n + r + (f || 0);
   } catch (err) {
     console.error('[reservations:forget] threw', err && err.message);
     return null;
