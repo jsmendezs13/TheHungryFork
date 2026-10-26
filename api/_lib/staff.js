@@ -13,9 +13,11 @@
 //                and changes the hours, holidays, rooms and rules
 //   owner (3) and platform admin (4) can do all of that too
 //
-// What staff never see: the guest's email address. The privacy page promises it
-// is seen by "only us", so it is never selected in a staff read. The server
-// still uses it to send the confirmation when a manager accepts a request.
+// The guest's email address (r42, Sebastian, 22 Oct: "Me + owners and
+// managers"): owners, managers and the platform admin see it on the cards and
+// the big-party requests; crew NEVER. It is still never in BOOKING_COLUMNS or
+// REQUEST_COLUMNS: it is read on its own, by id, only when the caller is a
+// manager or more (guestEmails), and the privacy page says who sees it.
 //
 // Guest messages (migration 19) live in api/_lib/messages.js. Two things about
 // them are here, because they belong to the day and to Arrived: the chat sign
@@ -95,7 +97,7 @@ const WHY_NOT = {
 };
 
 // Everything a staff read selects from reservations. guest_email is NOT here,
-// on purpose, and a test fails if it ever is. taster_id is: it only finds the
+// on purpose, and a test fails if it ever is (r42: managers get it from guestEmails). taster_id is: it only finds the
 // guest's handle (guests.js), and never goes back to the page.
 const BOOKING_COLUMNS = 'id,code,area_id,taster_id,guest_name,guest_phone,party_size,reserved_at,local_date,local_time,'
                       + 'status,notes,source,seated_at,no_show_at,cancelled_at,created_at';
@@ -123,6 +125,7 @@ export async function staff(req, res, body, action, helpers = {}) {
     case 'staff_area':       return area(req, res, body, tasterId);
     case 'staff_loyalty_save': return saveLoyalty(req, res, body, tasterId);
     case 'staff_grade_save': return saveGrade(req, res, body, tasterId);       // r34
+    case 'staff_request_mail_save': return saveRequestMail(req, res, body, tasterId);   // r42
     default:                 return res.status(400).json({ error: 'Unknown action.' });
   }
 }
@@ -242,9 +245,17 @@ async function day(req, res, body, tasterId, helpers = {}) {
     if (got && got.ok && Array.isArray(got.data)) withEmail = new Set(got.data.map((x) => Number(x.id)));
   }
   await addHandles([...bookings.data, ...requestRows]);
-  const dressed = bookings.data
-    .filter((r) => inServiceDay(r, date))
-    .map((r) => dressBooking(r, s.timezone, areaName, now, who.canEdit, date));
+  const dayRows = bookings.data.filter((r) => inServiceDay(r, date));
+  const dressed = dayRows.map((r) => dressBooking(r, s.timezone, areaName, now, who.canEdit, date));
+  // r42: the guest's email on each card and request, for managers and up only.
+  let emails = null, requestEmails = null;
+  if (who.level >= LEVEL.manager) {
+    [emails, requestEmails] = await Promise.all([
+      guestEmails('reservations', dayRows.map((r) => r.id)),
+      guestEmails('reservation_requests', requestRows.map((q) => q.id)),
+    ]);
+    dressed.forEach((b) => { b.email = emails[b.id] || null; });
+  }
   const live = dressed.filter((b) => b.status !== 'cancelled');
 
   // The chat sign on a card whose guest has written, and the count on the
@@ -266,6 +277,8 @@ async function day(req, res, body, tasterId, helpers = {}) {
       threads.data.forEach((t) => { open[t.reservation_id] = !t.closed_at; });
       dressed.forEach((b) => {
         b.chat = b.id in open ? { open: open[b.id], unread: count[b.id] || 0 } : null;
+        // r42: no conversation yet, and the table still kept: the restaurant may start one.
+        b.canWrite = !b.chat && Date.parse(b.at) + KEEP_MS > now;
       });
       messages = { unread: waiting.length, conversations: Object.keys(count).length };
     }
@@ -299,8 +312,26 @@ async function day(req, res, body, tasterId, helpers = {}) {
     },
     bookings: dressed,
     areas: areaList.filter((a) => a.is_active).map((a) => ({ id: a.id, name: a.name, seats: a.seats })),
-    requests: requestRows.map((q) => dressRequest(q, withEmail.has(Number(q.id)), canMessage ? (requestChats[q.id] || null) : null)),
+    requests: requestRows.map((q) => {
+      const out = dressRequest(q, withEmail.has(Number(q.id)), canMessage ? (requestChats[q.id] || null) : null);
+      if (requestEmails) out.email = requestEmails[q.id] || null;     // r42: managers and up only
+      return out;
+    }),
   });
+}
+
+// r42: conversations are kept 90 days after the table (api/_lib/messages.js).
+const KEEP_MS = 90 * 24 * 3600 * 1000;
+
+// r42: { id: email } for some bookings or requests. Only ever called for a
+// manager or more. One small read by id, apart from every other read.
+async function guestEmails(table, ids) {
+  const list = [...new Set(ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+  const out = {};
+  if (!list.length) return out;
+  const got = await sb(`/${table}?id=in.(${list.join(',')})&guest_email=not.is.null&select=id,guest_email&limit=${list.length}`);
+  (got.ok && Array.isArray(got.data) ? got.data : []).forEach((x) => { if (x.guest_email) out[x.id] = String(x.guest_email); });
+  return out;
 }
 
 export function inServiceDay(r, date) {
@@ -728,12 +759,14 @@ async function settingsRead(req, res, body, tasterId) {
   }), { tables: 0, people: 0, arrived: 0, noShows: 0, cancelled: 0 });
 
   const st = s.settings;
-  const [loyalty, grade] = await Promise.all([
+  const [loyalty, grade, requestMail] = await Promise.all([
     staffLoyalty(who.rid).catch(() => ({ ready: false })),
     gradeOf(who.rid, s.timezone).catch(() => ({ ready: false })),
+    who.canEdit ? requestMailOut(who.rid, st).catch(() => null) : null,
   ]);
   return res.status(200).json({
     success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone, loyalty, grade,
+    requestMail,
     restaurant: { id: s.loaded.restaurant.id, name: s.loaded.restaurant.name },
     rules: rulesOut(st),
     email: { ready: !!st.email_from_address, from: st.email_from_address || null },
@@ -821,6 +854,86 @@ async function saveRules(req, res, body, tasterId) {
   }
   console.log('[staff:rules] taster', tasterId, 'changed', Object.keys(patch).join(','), 'at', who.rid);
   return res.status(200).json({ success: true, rules: rulesOut(saved.data[0]) });
+}
+
+// ── WHO HEARS ABOUT A BIG-PARTY REQUEST (r42) ─────────────────────────────────
+// Sebastian (22 Oct): when a guest sends a big-party request, the restaurant
+// gets an email. The restaurant chooses who: all its owners and managers (the
+// email on each one's account), and/or up to 5 other addresses.
+const MAX_REQUEST_MAIL = 5;
+const MAIL_RE = /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+export function cleanMail(value) {
+  const text = String(value || '').trim().toLowerCase();
+  return text.length <= 120 && MAIL_RE.test(text) ? text : null;
+}
+
+// The owners and managers of a restaurant, with the email on their account.
+async function teamMail(rid) {
+  const roles = await sb(`/restaurant_roles?restaurant_id=eq.${Number(rid)}&role=in.(owner,manager)&select=taster_id,role`);
+  const list = roles.ok && Array.isArray(roles.data) ? roles.data : [];
+  if (!list.length) return [];
+  const ids = [...new Set(list.map((r) => Number(r.taster_id)))];
+  const people = await sb(`/tasters?id=in.(${ids.join(',')})&select=id,first_name,username,email`);
+  const byId = {};
+  (people.ok && Array.isArray(people.data) ? people.data : []).forEach((t) => { byId[t.id] = t; });
+  const rank = { owner: 2, manager: 1 };
+  const best = {};
+  list.forEach((r) => { if (!best[r.taster_id] || rank[r.role] > rank[best[r.taster_id]]) best[r.taster_id] = r.role; });
+  return ids.filter((id) => byId[id]).map((id) => ({
+    id, role: best[id], name: String(byId[id].first_name || '').trim().split(/\s+/)[0] || 'Someone',
+    handle: byId[id].username || null, email: cleanMail(byId[id].email),
+  })).sort((a, b) => rank[b.role] - rank[a.role] || a.name.localeCompare(b.name));
+}
+
+// Who gets the email about a new request: the addresses, without repeats. [] when nobody.
+export async function requestMailList(rid, st) {
+  if (!st || !('request_mail_to' in st)) return [];          // before migration 29
+  const out = [];
+  if (st.request_mail_staff !== false) (await teamMail(rid)).forEach((p) => { if (p.email) out.push(p.email); });
+  (Array.isArray(st.request_mail_to) ? st.request_mail_to : []).forEach((e) => { const c = cleanMail(e); if (c) out.push(c); });
+  return [...new Set(out)].slice(0, 12);
+}
+
+// For Settings (managers and up): the switch, the addresses, and the team —
+// names and whether each has an email on the account, never the address itself.
+async function requestMailOut(rid, st) {
+  if (!st || !('request_mail_to' in st)) return { ready: false, migration: false };
+  const team = await teamMail(rid);
+  return {
+    ready: !!(st.email_enabled && st.email_from_address),
+    staff: st.request_mail_staff !== false,
+    to: Array.isArray(st.request_mail_to) ? st.request_mail_to : [],
+    team: team.map((p) => ({ name: p.name, handle: p.handle, role: p.role, hasEmail: !!p.email })),
+    max: MAX_REQUEST_MAIL,
+  };
+}
+
+async function saveRequestMail(req, res, body, tasterId) {
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  if (!who) return;
+  const s = await settingsFor(res, who.rid);
+  if (!s) return;
+  if (!('request_mail_to' in s.settings)) {
+    return res.status(503).json({ error: 'This needs migration 29 first (Supabase, SQL editor).' });
+  }
+  if (typeof body.staff !== 'boolean') return res.status(400).json({ error: 'The switch is on or off.' });
+  const raw = Array.isArray(body.to) ? body.to : [];
+  if (raw.length > MAX_REQUEST_MAIL) return res.status(400).json({ error: `Up to ${MAX_REQUEST_MAIL} other addresses.` });
+  const to = [];
+  for (const e of raw) {
+    const c = cleanMail(e);
+    if (!c) return res.status(400).json({ error: `"${String(e || '').slice(0, 60)}" is not an email address.`, bad: String(e || '').slice(0, 120) });
+    if (!to.includes(c)) to.push(c);
+  }
+  const saved = await sb(`/restaurant_booking_settings?restaurant_id=eq.${who.rid}`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ request_mail_staff: body.staff, request_mail_to: to, updated_at: new Date().toISOString(), updated_by: tasterId }),
+  });
+  if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) {
+    return res.status(502).json({ error: 'Could not save it (the database answered ' + saved.status + ').' });
+  }
+  console.log('[staff:request-mail] taster', tasterId, 'set', body.staff ? 'team on' : 'team off', to.length, 'addresses at', who.rid);
+  return res.status(200).json({ success: true, requestMail: await requestMailOut(who.rid, saved.data[0]) });
 }
 
 // ── OPENING HOURS ─────────────────────────────────────────────────────────────
