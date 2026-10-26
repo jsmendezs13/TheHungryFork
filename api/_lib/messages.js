@@ -11,6 +11,8 @@
 //   staff   staff_msgs              the messages window: one day, Open / Closed
 //           staff_msg_thread        one conversation
 //           staff_msg_send · staff_msg_close · staff_msg_reopen
+//   r42     msg_upload · msg_files · staff_msg_upload · staff_msg_files
+//                                   photos and PDFs (api/_lib/files.js)
 //
 // Sebastian's rules (7–8 Oct):
 //   · no ready-made answers; people write;
@@ -28,13 +30,21 @@
 //   · a guest without an account gets ONE email, at the restaurant's first
 //     answer, and never the words of the message (api/reservations.js).
 //
-// What staff never see here either: the guest's email address.
+// r42 (Sebastian, 22 Oct):
+//   · the restaurant can START a conversation on any table it keeps (not only
+//     answer): the guest without an account gets the same one email, saying
+//     the restaurant wrote to them; the bell says "wrote to you";
+//   · photos and PDFs, both ways (api/_lib/files.js); a message may be only a file;
+//   · owners, managers and Sebastian see the guest's email address on the
+//     conversation (crew never). TABLE_COLUMNS still never carries it: it is
+//     read on its own, by id, only for them (emailFor).
 
 import { makeLimiter, allow, keyFor, clientIp } from './auth.js';
 import { sb, tasterIdFromRequest, loadAccess, accessProblem, levelAt, LEVEL } from './roles.js';
 import { loadBooking, clockIn, cleanDate } from './booking.js';
 import { serviceDateOf, serviceToday, addDays, canMessageAt } from './staff.js';
 import { waitingOnly, addHandles, handlesById } from './guests.js';
+import { makeSlot, claimFile, filesById, fileLinks, fileLine, fileError } from './files.js';
 
 export const KEEP_DAYS = 90;
 export const KEEP_MS = KEEP_DAYS * 24 * 3600 * 1000;
@@ -49,6 +59,7 @@ export const MAX_BODY = 1000;
 const guestSendTable = makeLimiter({ requests: 12,  window: '10 m', prefix: 'resv:msg:send:table' });
 const guestSendIp    = makeLimiter({ requests: 60,  window: '1 h',  prefix: 'resv:msg:send:ip' });
 const guestRead      = makeLimiter({ requests: 900, window: '10 m', prefix: 'resv:msg:read' });   // r22: pages ask every 3 s (was 10)
+const guestUpload    = makeLimiter({ requests: 20,  window: '10 m', prefix: 'resv:msg:file' });   // r42: files chosen, per table
 const staffRead      = makeLimiter({ requests: 1800, window: '10 m', prefix: 'resv:msg:staff:read' });  // r22: one login on a few devices, each asking every 3 s
 const staffWrite     = makeLimiter({ requests: 150, window: '10 m', prefix: 'resv:msg:staff:write' });
 
@@ -130,9 +141,23 @@ async function threadOf(reservationId) {
 }
 
 async function messagesOf(reservationId) {
-  const got = await sb(`/reservation_messages?reservation_id=eq.${Number(reservationId)}` +
-                       '&select=id,from_guest,author_id,author_name,body,created_at,read_at&order=id.asc&limit=500');
+  const ask = (cols) => sb(`/reservation_messages?reservation_id=eq.${Number(reservationId)}` +
+                           `&select=${cols}&order=id.asc&limit=500`);
+  let got = await ask('id,from_guest,author_id,author_name,body,created_at,read_at,file_id');
+  if (!got.ok && got.status === 400) got = await ask('id,from_guest,author_id,author_name,body,created_at,read_at');   // before migration 29
   return got.ok && Array.isArray(got.data) ? got.data : null;
+}
+
+// r42: the files of a list of messages, and each message as the page shows it:
+// its words (maybe none) and its file (or null).
+async function withFiles(list) {
+  const files = await filesById(list.map((m) => m.file_id).filter(Boolean));
+  return (m) => (m.file_id && files[m.file_id]) || null;
+}
+
+// When a conversation of this table is deleted, and its files with it.
+function keepUntilOf(row) {
+  return new Date(new Date(row.reserved_at).getTime() + KEEP_MS);
 }
 
 // The other side's messages, now read: only the ones just shown (a message
@@ -221,7 +246,7 @@ async function guestTable(req, body, helpers) {
   return { row, tasterId };
 }
 
-function guestView(row, thread, list, place, timezone, now = Date.now(), handles = {}) {
+function guestView(row, thread, list, place, timezone, now = Date.now(), handles = {}, fileOf = () => null) {
   const restaurant = (place && place.name) || 'The restaurant';
   const right = guestRight(row, thread, now);
   let note = null;
@@ -254,6 +279,7 @@ function guestView(row, thread, list, place, timezone, now = Date.now(), handles
       who: m.from_guest ? 'You'
         : `${m.author_name || 'The team'}${handles[m.author_id] ? ` (${handles[m.author_id]})` : ''} · ${restaurant}`,
       body: m.body,
+      file: fileOf(m),
       at: new Date(m.created_at).toISOString(),
       label: whenLabel(timezone, m.created_at, now),
     })),
@@ -266,8 +292,10 @@ async function guestReply(res, row, timezone, place) {
   const list = t.thread ? await messagesOf(row.id) : [];
   if (list === null) return res.status(502).json({ error: 'Could not read the messages. Please try again in a moment.' });
   if (t.thread) await markRead(row.id, list, true);
-  const handles = await handlesById(list.filter((m) => !m.from_guest).map((m) => m.author_id));
-  return res.status(200).json(guestView(row, t.thread, list, place, timezone, Date.now(), handles));
+  const [handles, fileOf] = await Promise.all([
+    handlesById(list.filter((m) => !m.from_guest).map((m) => m.author_id)), withFiles(list),
+  ]);
+  return res.status(200).json(guestView(row, t.thread, list, place, timezone, Date.now(), handles, fileOf));
 }
 
 function whoKey(req, body) {
@@ -293,10 +321,35 @@ export async function guest(req, res, body, action, helpers = {}) {
 
   if (action === 'msg_list') return guestReply(res, row, timezone, place);
 
+  // r42: a link (one hour) for each file of this conversation the page shows.
+  if (action === 'msg_files') {
+    const got = await fileLinks({ restaurantId: row.restaurant_id, reservationId: row.id }, body.fileIds);
+    if (got.error) return fileError(res, got.error);
+    return res.status(200).json({ success: true, links: got.links, expiresIn: got.expiresIn || null });
+  }
+
+  // r42: a place for one file, while the guest may write here.
+  if (action === 'msg_upload') {
+    const t = await threadOf(row.id);
+    if (t.error) return res.status(t.error === 404 ? 503 : 502).json({ error: 'Messages are not switched on yet. Please call the restaurant.' });
+    if (!guestRight(row, t.thread).canWrite) {
+      return res.status(409).json({ error: 'The restaurant closed this conversation.' + (place && place.phone ? ' To talk to them, call ' + place.phone + '.' : ' Please call the restaurant.'), reason: 'closed' });
+    }
+    if (!(await allow(guestUpload, keyFor('t' + row.id), { failOpen: false }))) {
+      return res.status(429).json({ error: 'Too many files in a few minutes. Wait a little, or call the restaurant.' });
+    }
+    const slot = await makeSlot({ restaurantId: row.restaurant_id, reservationId: row.id },
+      { fromGuest: true, uploaderId: tasterId || null, name: body.name, mime: body.mime, size: body.size });
+    if (slot.error) return fileError(res, slot.error);
+    return res.status(200).json({ success: true, file: slot.file, uploadUrl: slot.uploadUrl });
+  }
+
   if (action === 'msg_send') {
-    const text = cleanBody(body.body);
-    if (!text) return res.status(400).json({ error: 'Write your message first.' });
+    const hasFile = body.fileId !== undefined && body.fileId !== null && body.fileId !== '';
+    let text = cleanBody(body.body);
+    if (!text && !hasFile) return res.status(400).json({ error: 'Write your message first.' });
     if (text === 'long') return res.status(400).json({ error: `A message can be up to ${MAX_BODY} letters.` });
+    if (!text) text = '';
     if (!(await allow(guestSendTable, keyFor('t' + row.id), { failOpen: false }))
         || !(await allow(guestSendIp, keyFor(whoKey(req, body)), { failOpen: false }))) {
       return res.status(429).json({ error: 'Too many messages in a few minutes. Wait a little, or call the restaurant.' });
@@ -322,9 +375,15 @@ export async function guest(req, res, body, action, helpers = {}) {
         }
       }
     }
-    const saved = await addMessage(row, { from_guest: true, author_id: tasterId || null, body: text });
+    let fileId = null;
+    if (hasFile) {
+      const claimed = await claimFile(body.fileId, { restaurantId: row.restaurant_id, reservationId: row.id }, { fromGuest: true, keepUntil: keepUntilOf(row) });
+      if (claimed.error) return fileError(res, claimed.error);
+      fileId = claimed.file.id;
+    }
+    const saved = await addMessage(row, { from_guest: true, author_id: tasterId || null, body: text, ...(fileId ? { file_id: fileId } : {}) });
     if (!saved) return res.status(502).json({ error: 'Your message was not sent. Please try again.' });
-    console.log('[messages] guest wrote about', row.code);
+    console.log('[messages] guest wrote about', row.code, fileId ? '(with a file)' : '');
     return guestReply(res, row, timezone, place);
   }
   return res.status(400).json({ error: 'Unknown action.' });
@@ -384,7 +443,13 @@ async function inbox(req, res, body, helpers = {}) {
         b.count += 1;
       });
       // r28: the handle of whoever wrote the newest answer, beside the name.
-      const handles = await handlesById(Object.values(byTable).map((b) => b.by));
+      // r42: and whether the guest ever wrote there: if not, the restaurant
+      // started the conversation, and the bell says "wrote to you".
+      const [handles, wrote] = await Promise.all([
+        handlesById(Object.values(byTable).map((b) => b.by)),
+        sb(`/reservation_messages?reservation_id=in.(${Object.keys(byTable).map(Number).join(',')})&from_guest=is.true&select=reservation_id&limit=1000`),
+      ]);
+      const guestWrote = new Set((wrote.ok && Array.isArray(wrote.data) ? wrote.data : []).map((m) => String(m.reservation_id)));
       const tableOf = {};
       tables.forEach((r) => { tableOf[r.id] = r; });
       const rids = [...new Set(Object.keys(byTable).map((id) => tableOf[id].restaurant_id))];
@@ -399,6 +464,7 @@ async function inbox(req, res, body, helpers = {}) {
           who: b.who || 'The team', handle: handles[b.by] || null, restaurant: (l && l.restaurant && l.restaurant.name) || 'The restaurant',
           at: new Date(b.at).toISOString(), label: whenLabel(tz, b.at),
           table: tableDay(tz, r.reserved_at) + ' · ' + clockIn(tz, r.reserved_at).label,
+          started: wrote.ok ? !guestWrote.has(String(id)) : false,
         });
       });
     }
@@ -467,7 +533,7 @@ export async function msgAccess(res, tasterId, restaurantId, { hide } = {}) {
 export async function staffMessages(req, res, body, action, helpers = {}) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
-  const writes = action !== 'staff_msgs' && action !== 'staff_msg_thread';
+  const writes = action !== 'staff_msgs' && action !== 'staff_msg_thread' && action !== 'staff_msg_files';
   if (!(await allow(writes ? staffWrite : staffRead, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many taps in a few minutes. Wait a moment and try again.' });
   }
@@ -487,10 +553,26 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
   const t = await threadOf(row.id);
   if (t.error) return res.status(502).json({ error: 'Could not read the conversation (the database answered ' + t.error + ').'
     + (t.error === 404 ? ' That usually means migration 19 has not been run yet.' : '') });
-  if (!t.thread) return res.status(404).json({ error: 'This guest has not written about this table.' });
   if (!isKept(row)) return res.status(410).json({ error: GONE });
+  const place = { restaurantId: row.restaurant_id, reservationId: row.id };
 
-  if (action === 'staff_msg_thread') return staffReply(res, row, t.thread, who, timezone, { read: who.marksRead });
+  // r42: a table nobody has written about yet opens empty, ready for the
+  // restaurant's first message (the conversation is made when it is sent).
+  if (action === 'staff_msg_thread') return staffReply(res, row, t.thread || 'none', who, timezone, { read: who.marksRead });
+
+  if (action === 'staff_msg_files') {
+    const got = await fileLinks(place, body.fileIds);
+    if (got.error) return fileError(res, got.error);
+    return res.status(200).json({ success: true, links: got.links, expiresIn: got.expiresIn || null });
+  }
+
+  if (action === 'staff_msg_upload') {
+    const slot = await makeSlot(place, { fromGuest: false, uploaderId: tasterId, name: body.name, mime: body.mime, size: body.size });
+    if (slot.error) return fileError(res, slot.error);
+    return res.status(200).json({ success: true, file: slot.file, uploadUrl: slot.uploadUrl });
+  }
+
+  if (!t.thread && action !== 'staff_msg_send') return res.status(404).json({ error: 'Nobody has written about this table yet.' });
 
   if (action === 'staff_msg_close') {
     const stamp = new Date().toISOString();
@@ -522,22 +604,41 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
   }
 
   if (action === 'staff_msg_send') {
-    const text = cleanBody(body.body);
-    if (!text) return res.status(400).json({ error: 'Write the answer first.' });
+    const hasFile = body.fileId !== undefined && body.fileId !== null && body.fileId !== '';
+    let text = cleanBody(body.body);
+    if (!text && !hasFile) return res.status(400).json({ error: 'Write the message first.' });
     if (text === 'long') return res.status(400).json({ error: `A message can be up to ${MAX_BODY} letters.` });
+    if (!text) text = '';
+    // r42: the first message of a conversation the restaurant starts makes it.
+    let thread = t.thread;
+    if (!thread) {
+      const made = await ensureThread(row);
+      if (made.error || !made.thread) return res.status(502).json({ error: 'The message was not sent. Please try again.' });
+      thread = made.thread;
+    }
     // Writing in a closed conversation opens it again.
-    if (t.thread.closed_at) await reopen(id, 'staff');
-    const saved = await addMessage(row, { from_guest: false, author_id: tasterId, author_name: who.name, body: text });
-    if (!saved) return res.status(502).json({ error: 'The answer was not sent. Please try again.' });
-    console.log('[messages] taster', tasterId, 'answered about', row.code);
-    // A guest with no account gets one email, at the restaurant's first answer.
+    if (thread.closed_at) await reopen(id, 'staff');
+    let fileId = null;
+    if (hasFile) {
+      const claimed = await claimFile(body.fileId, place, { fromGuest: false, keepUntil: keepUntilOf(row) });
+      if (claimed.error) return fileError(res, claimed.error);
+      fileId = claimed.file.id;
+    }
+    // Did the guest ever write here? If not, the restaurant is starting the
+    // conversation, and its one email says "wrote to you", not "answered".
+    const before = await sb(`/reservation_messages?reservation_id=eq.${id}&from_guest=is.true&select=id&limit=1`);
+    const opening = before.ok && Array.isArray(before.data) && before.data.length === 0;
+    const saved = await addMessage(row, { from_guest: false, author_id: tasterId, author_name: who.name, body: text, ...(fileId ? { file_id: fileId } : {}) });
+    if (!saved) return res.status(502).json({ error: 'The message was not sent. Please try again.' });
+    console.log('[messages] taster', tasterId, opening ? 'wrote first about' : 'answered about', row.code, fileId ? '(with a file)' : '');
+    // A guest with no account gets one email, at the restaurant's first message.
     // If that one could not be sent (Resend down, the day's limit), the next
-    // answer tries again; first_reply_emailed_at keeps it to one email ever.
+    // message tries again; first_reply_emailed_at keeps it to one email ever.
     let emailed = false;
-    if (!t.thread.first_reply_emailed_at && typeof helpers.answerByEmail === 'function') {
+    if (!thread.first_reply_emailed_at && typeof helpers.answerByEmail === 'function') {
       try {
-        // r28: "Ana (Ana_L)": the guest with no account is told who answered, handle and all.
-        emailed = await helpers.answerByEmail({ reservationId: id, staffName: who.name + (who.handle ? ` (${who.handle})` : ''), loaded, timezone });
+        // r28: "Ana (Ana_L)": the guest with no account is told who wrote, handle and all.
+        emailed = await helpers.answerByEmail({ reservationId: id, staffName: who.name + (who.handle ? ` (${who.handle})` : ''), loaded, timezone, opening });
       } catch (err) {
         console.error('[messages] answer email threw', id, err && err.message);
       }
@@ -550,36 +651,47 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
 // One conversation, as the staff see it. The guest's messages are marked read
 // only when the conversation is opened (read: true), not when an answer goes.
 async function staffReply(res, row, thread, who, timezone, opts = {}) {
-  let th = thread;
-  if (!th) {
+  let th = thread === 'none' ? null : thread;
+  const fresh = thread === 'none';                // r42: nobody has written yet
+  if (!th && !fresh) {
     const t = await threadOf(row.id);
     th = t.thread;
     if (!th) return res.status(502).json({ error: 'Could not read the conversation. Please try again.' });
   }
-  const list = await messagesOf(row.id);
+  const list = fresh ? [] : await messagesOf(row.id);
   if (list === null) return res.status(502).json({ error: 'Could not read the messages. Please try again.' });
-  if (opts.read) await markRead(row.id, list, false);
+  if (opts.read && !fresh) await markRead(row.id, list, false);
   // r27 (Sebastian, 12 Oct): every name carries its handle — the guest's, and
   // the staff member's who wrote each answer or closed the conversation.
-  const [names, , byId] = await Promise.all([
-    closerNames([th]), addHandles([row]),
+  const [names, , byId, fileOf, email, account] = await Promise.all([
+    closerNames(th ? [th] : []), addHandles([row]),
     handlesById(list.filter((m) => !m.from_guest).map((m) => m.author_id)),
+    withFiles(list),
+    emailFor(row, who.level),
+    fresh ? guestHasAccount(row) : null,
   ]);
   const now = Date.now();
+  const base = th || { closed_at: null, guest_late_reopen_at: null, service_date: serviceDateOf(row) };
   return res.status(200).json({
     success: true,
     ...(opts.emailed ? { emailed: true } : {}),
     booking: {
       id: row.id, name: row.guest_name, handle: row.handle || null, phone: row.guest_phone, code: row.code, party: row.party_size,
       status: row.status, day: tableDay(timezone, row.reserved_at), ...clockIn(timezone, row.reserved_at),
-      serviceDate: th.service_date,
+      serviceDate: base.service_date,
+      // r42 (Sebastian, 22 Oct): owners, managers and Sebastian see the guest's email; crew never.
+      ...(email !== undefined ? { email } : {}),
     },
-    open: !th.closed_at,
-    closedNote: th.closed_at ? closedNote(th, row, names, timezone) : null,
+    fresh,
+    // r42: where a guest reads a first message from the restaurant: on the bell
+    // (an account), or after one email with a link (no account, an email given).
+    ...(fresh ? { guestReads: account ? 'account' : (row.has_email ? 'email' : 'none') } : {}),
+    open: !base.closed_at,
+    closedNote: base.closed_at ? closedNote(base, row, names, timezone) : null,
     // Can the guest open it again if it is (or gets) closed now? Within their
     // 24 hours, yes; after that, only if their one late reopen is unused.
-    guestCanReopen: isKept(row, now) && (now <= freeUntil(row, th.closed_at ? th : { ...th, closed_at: new Date(now).toISOString() })
-                                         || !th.guest_late_reopen_at),
+    guestCanReopen: isKept(row, now) && (now <= freeUntil(row, base.closed_at ? base : { ...base, closed_at: new Date(now).toISOString() })
+                                         || !base.guest_late_reopen_at),
     keptUntil: new Intl.DateTimeFormat('en-US', { timeZone: timezone, month: 'long', day: 'numeric' })
       .format(new Date(new Date(row.reserved_at).getTime() + KEEP_MS)),
     messages: list.map((m) => ({
@@ -588,10 +700,31 @@ async function staffReply(res, row, thread, who, timezone, opts = {}) {
       who: m.from_guest ? firstWord(row.guest_name) : (Number(m.author_id) === Number(who.access.tasterId) ? 'You' : (m.author_name || 'The team')),
       handle: m.from_guest ? (row.handle || null) : (byId[m.author_id] || null),
       body: m.body,
+      file: fileOf(m),
       at: new Date(m.created_at).toISOString(),
       label: whenLabel(timezone, m.created_at, now),
     })),
   });
+}
+
+// r42: the guest's email, for owners, managers and Sebastian only. Read on its
+// own, by the table's id, so no other read here ever carries it. undefined for
+// crew (the field is not there at all); null when the guest gave none.
+// Also sets row.has_email (whether, never which) for the "where the guest reads" line.
+async function emailFor(row, level) {
+  const got = await sb(`/reservations?id=eq.${Number(row.id)}&select=id,guest_email&limit=1`);
+  const e = got.ok && Array.isArray(got.data) && got.data.length ? (got.data[0].guest_email || null) : null;
+  row.has_email = !!e;
+  return level >= LEVEL.manager ? e : undefined;
+}
+
+// Does the guest of this table have an account (booked logged in, or an
+// account on the table's phone)? Unknown counts as yes, as for the email.
+async function guestHasAccount(row) {
+  if (row.taster_id) return true;
+  const got = await sb(`/tasters?phone_number=eq.${encodeURIComponent(row.guest_phone || '')}&select=id&limit=1`);
+  if (!got.ok || !Array.isArray(got.data)) return true;
+  return got.data.length > 0;
 }
 
 function firstWord(name) {
@@ -670,7 +803,7 @@ async function staffDay(req, res, body, tasterId) {
     const ids = here.map((t) => Number(t.reservation_id));
     const [tables, last, names] = await Promise.all([
       sb(`/reservations?id=in.(${ids.join(',')})&select=${TABLE_COLUMNS}`),
-      sb(`/reservation_messages?reservation_id=in.(${ids.join(',')})&select=reservation_id,from_guest,author_id,author_name,body,created_at&order=id.desc&limit=${Math.min(2000, ids.length * 40)}`),
+      lastMessages(ids),
       closerNames(here),
     ]);
     const rowOf = {};
@@ -678,11 +811,16 @@ async function staffDay(req, res, body, tasterId) {
     await addHandles(Object.values(rowOf));
     const lastOf = {};
     (last.ok && Array.isArray(last.data) ? last.data : []).forEach((m) => { if (!lastOf[m.reservation_id]) lastOf[m.reservation_id] = m; });
-    const lastBy = await handlesById(Object.values(lastOf).filter((m) => !m.from_guest).map((m) => m.author_id));
+    const [lastBy, lastFiles] = await Promise.all([
+      handlesById(Object.values(lastOf).filter((m) => !m.from_guest).map((m) => m.author_id)),
+      filesById(Object.values(lastOf).filter((m) => m.file_id && !String(m.body || '').trim()).map((m) => m.file_id)),
+    ]);
     const now = Date.now();
     list = here.filter((t) => rowOf[t.reservation_id]).map((t) => {
       const r = rowOf[t.reservation_id], m = lastOf[t.reservation_id];
-      const preview = m ? String(m.body).replace(/\s+/g, ' ') : '';
+      // r42: a message that is only a file reads "📎 Photo" / "📎 menu.pdf".
+      const words = m ? String(m.body || '').replace(/\s+/g, ' ').trim() : '';
+      const preview = m ? (words || (m.file_id ? fileLine(lastFiles[m.file_id]) : '')) : '';
       return {
         id: Number(t.reservation_id), name: r.guest_name, handle: r.handle || null, code: r.code, party: r.party_size, status: r.status,
         ...clockIn(timezone, r.reserved_at),
@@ -710,6 +848,13 @@ async function staffDay(req, res, body, tasterId) {
     days: Object.values(days).sort((a, b) => a.date.localeCompare(b.date)),
     threads: list,
   });
+}
+
+// The newest messages of some tables (file_id after migration 29).
+async function lastMessages(ids) {
+  const ask = (cols) => sb(`/reservation_messages?reservation_id=in.(${ids.join(',')})&select=${cols}&order=id.desc&limit=${Math.min(2000, ids.length * 40)}`);
+  const got = await ask('reservation_id,from_guest,author_id,author_name,body,created_at,file_id');
+  return !got.ok && got.status === 400 ? ask('reservation_id,from_guest,author_id,author_name,body,created_at') : got;
 }
 
 // A 12:30 AM table on the night before's list counts as 24:30, as on the clock.
