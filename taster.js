@@ -107,6 +107,51 @@ function tasterPhoneEdited(flow){
 // digits in a row. A pasted or saved number in any shape ("+1 518-554-0137",
 // "15185540137") is put in the same shape.
 var HF_PHONE_REST='(555) 000-0000';
+// ── r42 (Sebastian, 22 Oct): photos and PDFs in the conversations ──
+// A photo is made smaller on this phone before it goes up: at most 1600 px on its long side, as a JPEG (a 4 MB
+// picture becomes about 300 KB, and an iPhone's HEIC becomes a JPEG). A PDF goes as it is, up to 10 MB. The file
+// then goes straight to the storage, to the one-time address the server gave (hfFileUpload).
+var HF_FILE_MAX=10*1024*1024;
+function hfFileSize(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1).replace(/\.0$/,'')+' MB':Math.max(1,Math.round(n/1024))+' KB';}
+function hfFilePrepare(file){
+  return new Promise(function(resolve,reject){
+    if(!file){reject(new Error('No file chosen.'));return;}
+    var type=String(file.type||'').toLowerCase(),name=String(file.name||'');
+    if(type==='application/pdf'||(!type&&/\.pdf$/i.test(name))){
+      if(file.size<1){reject(new Error('This file is empty.'));return;}
+      if(file.size>HF_FILE_MAX){reject(new Error('A PDF can be up to 10 MB. This one is '+hfFileSize(file.size)+'.'));return;}
+      resolve({blob:file,name:name||'file.pdf',mime:'application/pdf',size:file.size,kind:'pdf'});return;
+    }
+    if(!/^image\//.test(type)&&!/\.(heic|heif|jpe?g|png|webp)$/i.test(name)){reject(new Error('Only photos and PDF files can be sent.'));return;}
+    var url=URL.createObjectURL(file),img=new Image(),done=false;
+    var fail=function(msg){if(done)return;done=true;URL.revokeObjectURL(url);reject(new Error(msg));};
+    img.onload=function(){
+      try{
+        var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+        if(!w||!h){fail('This photo can not be opened here. Please send a JPG or PNG.');return;}
+        var k=Math.min(1,1600/Math.max(w,h)),c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+        var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+        c.toBlob(function(b){
+          if(done)return;
+          if(!b){fail('This photo could not be prepared. Please try another one.');return;}
+          if(b.size>HF_FILE_MAX){fail('This photo is too big.');return;}
+          done=true;URL.revokeObjectURL(url);
+          resolve({blob:b,name:(name.replace(/\.[^.]*$/,'')||'photo')+'.jpg',mime:'image/jpeg',size:b.size,kind:'photo',width:c.width,height:c.height});
+        },'image/jpeg',0.85);
+      }catch(e){fail('This photo could not be prepared. Please try another one.');}
+    };
+    img.onerror=function(){fail('This photo can not be opened here. Please send a JPG or PNG.');};
+    img.src=url;
+  });
+}
+function hfFileUpload(url,prep){
+  return fetch(url,{method:'PUT',headers:{'content-type':prep.mime,'x-upsert':'false'},body:prep.blob}).then(function(r){
+    if(!r.ok)throw new Error(r.status===413?'The file is too big (10 MB at most).':'The file could not be sent. Please try again.');
+    return true;
+  },function(){throw new Error('The file could not be sent. Check the connection and try again.');});
+}
+
 function hfPhoneTen(value){
   var raw=String(value||''), d=raw.replace(/\D/g,'');
   if(/^\s*\+\s*1/.test(raw))d=d.slice(1);          // "+1 518…": the country code
@@ -753,7 +798,7 @@ function hfBellRender(){
   }
   if(!list.length){
     panel.innerHTML='<div class="hf-bell-head">Notifications</div>'
-      +'<div class="hf-bell-empty">Nothing new. When a restaurant answers your message, it shows here.</div>';
+      +'<div class="hf-bell-empty">Nothing new. When a restaurant writes to you, it shows here.</div>';
     return;
   }
   panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
@@ -763,8 +808,9 @@ function hfBellRender(){
       +'<span>Your request: '+hfEsc(b.table)+'</span>'
       +'<small>'+hfEsc(b.label)+(b.count>1?' · '+Number(b.count)+' messages':'')+'</small>'
       +'</a>';
+    // r42: the restaurant may write first (started): "wrote to you" instead of "answered you"
     return '<a class="hf-bell-item" href="/reservations#chat='+Number(b.reservationId)+'">'
-      +'<b>'+hfEsc(b.who)+(b.handle?' ('+hfEsc(b.handle)+')':'')+' · '+hfEsc(b.restaurant)+' answered you</b>'
+      +'<b>'+hfEsc(b.who)+(b.handle?' ('+hfEsc(b.handle)+')':'')+' · '+hfEsc(b.restaurant)+(b.started?' wrote to you':' answered you')+'</b>'
       +'<span>Your table: '+hfEsc(b.table)+'</span>'
       +'<small>'+hfEsc(b.label)+(b.count>1?' · '+Number(b.count)+' messages':'')+'</small>'
       +'</a>';
