@@ -627,6 +627,48 @@
   .mg-send { flex:none; width:44px; height:44px; border-radius:50%; border:none; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .mg-send svg { width:20px; height:20px; }
   .mg-send:disabled { opacity:.5; cursor:wait; }
+  /* r42 (Sebastian, 22 Oct): the restaurant starts a conversation on any table — the sign on a card nobody has written about */
+  .rv-chat-sign.start { color:var(--muted); border:1px dashed rgba(43,33,26,.38); }
+  .rv-chat-sign.start i { position:absolute; right:-4px; bottom:-4px; width:17px; height:17px; border-radius:50%; background:var(--red); color:#fff;
+                          font-style:normal; font-size:.8rem; font-weight:700; line-height:17px; text-align:center; border:2px solid var(--white); box-sizing:content-box; }
+  .rv-mailto { color:var(--red); text-decoration:none; font-weight:500; overflow-wrap:anywhere; }
+  .rv-meta.rv-email { display:flex; align-items:center; gap:.35rem; margin-top:.15rem; }
+  .rv-meta.rv-email svg { flex:none; width:14px; height:14px; color:var(--muted); }
+  .mg-fresh { font-size:.78rem; color:var(--text); background:var(--off-white); border:1px dashed var(--border); border-radius:12px; padding:.6rem .75rem; margin:.5rem 0 .4rem; line-height:1.5; }
+  .mg-fresh b { font-weight:600; }
+  /* r42: photos and PDFs in a conversation */
+  .mg-bub .mg-photo { display:block; margin:.2rem 0 .15rem; border-radius:10px; overflow:hidden; background:var(--off-white); width:220px; max-width:100%; min-height:90px; }
+  .mg-bub .mg-photo img { display:block; width:100%; height:auto; max-height:300px; object-fit:cover; }
+  .mg-bub .mg-photo span { display:block; padding:2rem .6rem; text-align:center; font-size:.72rem; color:var(--muted); white-space:normal; }
+  .mg-bub .mg-pdf { display:flex; align-items:center; gap:.55rem; margin:.2rem 0 .15rem; padding:.5rem .65rem; border-radius:10px; text-decoration:none; color:inherit;
+                    background:var(--off-white); border:1px solid var(--border); white-space:normal; max-width:260px; }
+  .mg-bub.staff .mg-pdf { background:rgba(252,249,244,.1); border-color:rgba(252,249,244,.25); }
+  .mg-pdf svg { flex:none; width:26px; height:26px; color:var(--red); }
+  .mg-bub.staff .mg-pdf svg { color:#FF9C92; }
+  .mg-pdf b { display:block; font-size:.8rem; font-weight:600; line-height:1.3; overflow-wrap:anywhere; }
+  .mg-pdf small { display:block; font-size:.66rem; opacity:.7; }
+  .mg-bub-text { display:block; }
+  .mg-clip { flex:none; width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:#fff; color:var(--text); display:flex; align-items:center;
+             justify-content:center; cursor:pointer; padding:0; }
+  .mg-clip svg { width:21px; height:21px; }
+  .mg-clip:disabled { opacity:.5; cursor:wait; }
+  .mg-pend { display:flex; align-items:center; gap:.6rem; padding:.45rem .55rem; margin-top:.55rem; border:1px solid var(--border); border-radius:12px; background:#fff; font-size:.78rem; }
+  .mg-pend[hidden] { display:none; }
+  .mg-pend img, .mg-pend .mg-pend-pdf { flex:none; width:44px; height:44px; border-radius:8px; object-fit:cover; background:var(--off-white); display:flex; align-items:center; justify-content:center; color:var(--red); }
+  .mg-pend .mg-pend-pdf svg { width:24px; height:24px; }
+  .mg-pend-t { flex:1; min-width:0; line-height:1.35; }
+  .mg-pend-t b { display:block; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mg-pend-t small { color:var(--muted); }
+  .mg-pend-x { flex:none; width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:var(--white); color:var(--muted); font-size:1.1rem; line-height:1; cursor:pointer; }
+  /* r42: Settings → emails about big parties */
+  .rv-rq.wanted { box-shadow:0 0 0 2px var(--red); }
+  .rq-mail-team { margin:.2rem 0 .3rem; padding:0; list-style:none; font-size:.8rem; }
+  .rq-mail-team li { display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.35rem 0; border-bottom:1px solid var(--border); }
+  .rq-mail-team li small { color:var(--muted); font-size:.7rem; }
+  .rq-mail-team li .no { color:var(--red-dark); }
+  .rq-mail-row { display:flex; gap:.4rem; align-items:center; margin-top:.45rem; }
+  .rq-mail-row .m-input { flex:1; }
+  .rq-mail-x { flex:none; width:36px; height:36px; border-radius:50%; border:1px solid var(--border); background:#fff; color:var(--muted); font-size:1.1rem; cursor:pointer; }
   /* Team: what a crew member does, and whether they answer guests */
   .m-crew { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .9rem; margin-top:.35rem; }
   .m-crew .m-select { width:auto; padding:.35rem .6rem; font-size:.76rem; border-radius:999px; }
@@ -868,6 +910,11 @@ async function boot(){
   }
 
   RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
+  // r42: from the email about a new big-party request — Reservations, with the requests open.
+  if(/^#request=\d+$/.test(window.location.hash || '')){
+    RV.wantRequest = Number(window.location.hash.slice(9)); TAB = 'reservations'; RV.view = 'day';
+    if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
+  }
   // A table's QR in the address: open that table. 'out' = the session ended
   // while asking; the login card is already up and the QR waits for the log-in.
   if(await rvTakeScan() === 'out') return;
@@ -876,6 +923,28 @@ async function boot(){
   if(window.location.hash === '#messages') msgOpenFromHash();
   if(/^#support/.test(window.location.hash)) supFromHash();     // r34: the link in a support email
   supStart();
+}
+
+// r42: the button in the email about a new big-party request opens manager#request=<id>: the Reservations tab,
+// with the big-party requests open and that one in view (or a word if it has been answered meanwhile).
+function rqFromHash(){
+  const m = /^#request=(\d+)$/.exec(window.location.hash || '');
+  if(!m) return false;
+  RV.wantRequest = Number(m[1]);
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
+  if(TAB !== 'reservations' || RV.view !== 'day'){ TAB = 'reservations'; RV.view = 'day'; mountPage(); }
+  else if(RV.day) rqShowWanted();
+  return true;
+}
+function rqShowWanted(){
+  const id = RV.wantRequest;
+  if(!id || !RV.day || TAB !== 'reservations') return;
+  RV.wantRequest = null;
+  const there = (RV.day.requests || []).some(q => q.id === id);
+  RV.sheet = {open:null}; rvPaintSheet();
+  if(!there){ showToast('That request is not waiting any more: it has been answered, or it is at another restaurant.'); return; }
+  const card = document.querySelector('#rv-sheet-host .rv-rq[data-rq="'+id+'"]');
+  if(card){ card.scrollIntoView({block:'center'}); card.classList.add('wanted'); }
 }
 
 // Draws the page for the current tab and loads what that tab needs.
@@ -902,6 +971,7 @@ function switchTab(t){
 
 window.addEventListener('hashchange', function(){
   if(window.location.hash === '#messages'){ if(ACCESS && RESTAURANT) msgOpenFromHash(); return; }
+  if(/^#request=\d+$/.test(window.location.hash)){ if(ACCESS && RESTAURANT) rqFromHash(); return; }
   if(/^#support/.test(window.location.hash)){ if(ACCESS && RESTAURANT) supFromHash(); return; }
   const t = tabFromHash();
   if(t && ACCESS && RESTAURANT && t!==TAB) switchTab(t);
@@ -2139,7 +2209,7 @@ function rvReset(){
   Object.assign(RV, { gen: RV.gen + 1, rid: RESTAURANT ? RESTAURANT.id : null, view: 'day', days: [], daysFrom: null, daysTo: null,
     today: null, date: null, day: null, error: null, centerId: null, armed: null, sheet: null, sheetResult: {},
     settings: null, settingsError: null, hoursDraft: null, hoursBase: null, settingsNote: '', typed: {}, forget: [],
-    stripFor: null, stripDates: null, stripTouch: false, stripAim: null, scan: null });
+    stripFor: null, stripDates: null, stripTouch: false, stripAim: null, scan: null, reqMailDraft: null });
 }
 
 async function rvApi(body){
@@ -2190,6 +2260,12 @@ function rvTel(phone){
   return '<a class="rv-tel" href="tel:'+esc(dial)+'">'+esc(shown)+'</a>';
 }
 function rvPeople(n){ return n+(n===1?' person':' people'); }
+// r42 (Sebastian, 22 Oct: "Me + owners and managers"): the guest's email, as a link that opens the phone's mail app.
+// The server sends it only to owners, managers and Sebastian; crew never get it, so it never shows for them.
+function rvMail(email){
+  const e = String(email || '');
+  return e ? '<a class="rv-mailto" href="mailto:'+esc(e)+'">'+esc(e)+'</a>' : '';
+}
 // "Write", next to Call (r29): a text message from the manager's own phone to the number the guest gave, started with a
 // short first line. (An email from here would need an address, which the staff never see.)
 const WRITE_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.6A8 8 0 1 1 21 12z"/></svg>';
@@ -2268,11 +2344,12 @@ async function rvLoadDay(date, opts){
       const scanned = RV.scan && RV.scan.booking && data.bookings.some(b => b.id === RV.scan.booking.id) ? RV.scan.booking.id : null;
       RV.centerId = scanned || rvDefaultCenter(); RV.armed = null;
     }
-    if(!document.getElementById('rv-evening')){ rvRender(); return; }
+    if(!document.getElementById('rv-evening')){ rvRender(); rqShowWanted(); return; }
     rvPaintDays(); rvPaintTop();
     if(listChanged) rvPaintEvening();
     else { document.getElementById('rv-evening').classList.remove('busy'); rvRefreshLate(); }
     if(RV.sheet) rvPaintSheet();
+    rqShowWanted();
   }catch(e){
     if(seq !== RV.seq || gen !== RV.gen) return;
     if(!quiet || !RV.day){ RV.error = e.message; rvRender(); }
@@ -2638,6 +2715,7 @@ function rvCard(b){
     +   '<div class="rv-when"><span>'+esc(b.label)+'</span><em>'+esc(b.code)+'</em></div>'
     +   '<div class="rv-name"><span class="rv-name-text">'+whoHtml(b.name, b.handle)+chips+'</span>'+msgSign(b)+'</div>'
     +   '<div class="rv-meta">'+rvPeople(b.party)+(b.areaName?' · '+esc(b.areaName):'')+' · '+rvTel(b.phone)+'</div>'
+    +   (b.email ? '<div class="rv-meta rv-email">'+MAIL_ICON+rvMail(b.email)+'</div>' : '')
     +   (b.notes ? '<div class="rv-note">&ldquo;'+esc(b.notes)+'&rdquo;</div>' : '')
     + '</div>'
     + (acts ? '<div class="rv-acts">'+acts+'</div>' : '')
@@ -3059,8 +3137,9 @@ function rvRequestCard(r){
     + (r.occasion ? '<div class="rv-meta">Occasion: '+esc(r.occasion)+'</div>' : '')
     + (r.message ? '<div class="rv-note">&ldquo;'+esc(r.message)+'&rdquo;</div>' : '')
     + '<div class="rv-contact"><span>Call '+rvTel(r.phone)+'</span>'+rvWrite(r)+rqSign(r)+'</div>'
-    // Whether there is an email, never which one: the staff do not see guests' addresses (privacy page).
-    + '<div class="rv-meta rv-mail">'+(r.hasEmail ? 'Email given. If you accept, the confirmation goes there.' : 'No email on this request. If you accept, call them to confirm.')+'</div>'
+    // Crew: whether there is an email, never which one. r42: owners, managers and Sebastian see it (r.email).
+    + '<div class="rv-meta rv-mail">'+(r.email ? 'Email: '+rvMail(r.email)+'. If you accept, the confirmation goes there.'
+        : r.hasEmail ? 'Email given. If you accept, the confirmation goes there.' : 'No email on this request. If you accept, call them to confirm.')+'</div>'
     + (RV.day.canEdit && !open ? '<div class="rv-acts">'
         + '<button type="button" class="rv-act go" onclick="RV.sheet.open={id:'+r.id+',mode:\'accept\'};rvPaintSheet()">Accept…</button>'
         + '<button type="button" class="rv-act no" onclick="RV.sheet.open={id:'+r.id+',mode:\'decline\'};rvPaintSheet()">Decline…</button></div>' : '')
@@ -3175,6 +3254,7 @@ async function rvLoadSettings(keepDraft){
     RV.settings = data; RV.settingsError = null;
     if(!keepDraft) RV.loyaltyDraft = null;      // r31: switches not saved yet are kept only on a quiet refresh
     if(!keepDraft) RV.gradeDraft = undefined;   // r34: the same for a grade tapped but not saved
+    if(!keepDraft) RV.reqMailDraft = null;      // r42: the same for the emails about big parties
     if(!keepDraft || !edited){
       RV.hoursDraft = data.hours.map(h => Object.assign({}, h));
       RV.hoursBase = data.hours.map(h => Object.assign({}, h));
@@ -3191,7 +3271,7 @@ function rvSettingsHtml(){
   return back
     + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
-    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S)
+    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S)
     + rvGradeHtml(S) + rvSupportHtml();
 }
 
@@ -3556,6 +3636,61 @@ function rvSwitchesHtml(S){
     + '</div>';
 }
 
+// ── r42: EMAILS ABOUT BIG PARTIES ──
+// Sebastian (22 and 26 Oct): "when people make a big reservation please send an email to the restaurant". The
+// restaurant chooses who gets it: all its owners and managers (the email on each one's account), and/or up to 5
+// other addresses (events@…, the chef). Managers and owners only; the server sends requestMail to nobody else.
+function rvRequestMailDraft(M){
+  if(!RV.reqMailDraft) RV.reqMailDraft = { staff: M.staff, to: (M.to || []).slice() };
+  return RV.reqMailDraft;
+}
+function rvRequestMailHtml(S){
+  const M = S.requestMail;
+  if(!M || !S.canEdit) return '';
+  const head = '<div class="m-card" id="rq-mail"><div class="m-eyebrow">Emails about big parties</div>';
+  if(M.migration === false) return head + '<div class="m-sub">Needs migration 29 first (Supabase, SQL editor).</div></div>';
+  const D = rvRequestMailDraft(M);
+  const team = (M.team || []).map(p => '<li><span>'+whoHtml(p.name, p.handle)+' <small>· '+esc(p.role)+'</small></span>'
+    + (p.hasEmail ? '<small>has an email</small>' : '<small class="no">no email on the account</small>')+'</li>').join('');
+  const rows = D.to.map((e, i) => '<div class="rq-mail-row"><input class="m-input" type="email" inputmode="email" autocomplete="off" maxlength="120" value="'+esc(e)+'"'
+    + ' aria-label="Address '+(i+1)+'" oninput="RV.reqMailDraft.to['+i+']=this.value">'
+    + '<button type="button" class="rq-mail-x" aria-label="Remove this address" onclick="rvReqMailDel('+i+')">&times;</button></div>').join('');
+  const changed = JSON.stringify({ staff: D.staff, to: D.to }) !== JSON.stringify({ staff: M.staff, to: M.to });
+  return head
+    + '<div class="m-sub" style="margin-bottom:.4rem;">When a guest sends a big-party request, we email the restaurant: who, how many people and the day, with a button to the request.'
+    + (M.ready ? '' : ' <b>Emails are not set up for this restaurant yet: ask Seb\'s Analytics.</b>')+'</div>'
+    + '<div class="m-switch-row"><div><div class="m-switch-label">All owners and managers</div><div class="m-switch-note">To the email on each one\'s account.</div></div>'
+    + '<button type="button" class="m-switch'+(D.staff?' on':'')+'" role="switch" aria-checked="'+(D.staff?'true':'false')+'" aria-label="All owners and managers" onclick="rvReqMailStaff()"></button></div>'
+    + (D.staff ? (team ? '<ul class="rq-mail-team">'+team+'</ul>' : '<div class="m-sub">No owners or managers yet.</div>') : '')
+    + '<div class="m-field-label" style="margin-top:.8rem;">Other addresses (up to '+Number(M.max || 5)+')</div>'
+    + (rows || '<div class="m-sub">None.</div>')
+    + (D.to.length < (M.max || 5) ? '<button type="button" class="m-revert" style="margin-top:.5rem;" onclick="rvReqMailAdd()">+ Add an address</button>' : '')
+    + (!D.staff && !D.to.filter(x => String(x).trim()).length ? '<div class="m-sub" style="color:var(--red-dark);margin-top:.5rem;">Nobody gets these emails now. Requests still show here.</div>' : '')
+    + '<div class="m-actions"><button type="button" class="m-save" onclick="rvReqMailSave(this)"'+(changed ? '' : ' disabled')+'>Save</button>'
+    + (changed ? '<button type="button" class="m-revert" onclick="RV.reqMailDraft=null;rvRender()">Undo</button>' : '')+'</div>'
+    + '</div>';
+}
+function rvReqMailStaff(){ const D = RV.reqMailDraft; if(!D) return; D.staff = !D.staff; rvRender(); }
+function rvReqMailAdd(){
+  const D = RV.reqMailDraft; if(!D) return;
+  D.to.push(''); rvRender();
+  const ins = document.querySelectorAll('#rq-mail .rq-mail-row .m-input');
+  if(ins.length) ins[ins.length - 1].focus();
+}
+function rvReqMailDel(i){ const D = RV.reqMailDraft; if(!D) return; D.to.splice(i, 1); rvRender(); }
+async function rvReqMailSave(btn){
+  const D = RV.reqMailDraft, gen = RV.gen;
+  if(!D) return;
+  btn.disabled = true;
+  try{
+    const data = await rvApi({action:'staff_request_mail_save', staff: !!D.staff, to: D.to.map(x => String(x).trim()).filter(Boolean)});
+    if(gen !== RV.gen) return;
+    RV.settings.requestMail = data.requestMail; RV.reqMailDraft = null;
+    showToast('Saved · emails about big parties');
+  }catch(e){ showToast(e.message); btn.disabled = false; return; }
+  rvRender();
+}
+
 const RV_RULES = [
   ['holdMinutes', 'A table is held for', 'minutes', 30, 300],
   ['graceMinutes', 'Wait for a late guest', 'minutes', 0, 240],
@@ -3794,15 +3929,25 @@ async function rvRoomAdd(btn){
 // kind: 'table' (a booking's conversation) or 'request' (r30: a big-party request's, opened from its card).
 const MSG = { known: null, unread: 0, open: false, view: 'list', kind: 'table', tab: 'open', date: null, today: null, data: null, error: null,
               threadId: null, thread: null, threadError: null, seq: 0, gen: 0, timer: null, lastList: 0, sending: false, busy: false,
-              asking: 0, askedAt: 0, wokeAt: 0, stripDates: null, stripToday: null, stripAim: null, stripTouch: false, stripMoved: 0, stripWatch: null, stripChose: null };
+              asking: 0, askedAt: 0, wokeAt: 0, stripDates: null, stripToday: null, stripAim: null, stripTouch: false, stripMoved: 0, stripWatch: null, stripChose: null,
+              pending: null, links: {} };     // r42: a file chosen and not sent yet; links to files (one hour), by file id
 const MSG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/></svg>';
 const MSG_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>';
+const MSG_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M20.5 11.5 12.3 19.7a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg>';
+const MSG_PDF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 15.5h7M8.5 12h4"/></svg>';
+const MAIL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>';
 
 // The chat sign on a card whose guest has written: red with the count when
 // something is unread, outlined when read, grey when the conversation is closed.
 function msgSign(b){
+  // r42 (Sebastian, 22 and 26 Oct: "I want to be able to open a conversation with any reservation"): nobody has
+  // written yet, the table is still kept, and this account answers guests — a sign to start one.
+  if(!b.chat && b.canWrite) return '<button type="button" class="rv-chat-sign start" aria-label="Write to '+esc(whoText(b.name, b.handle))+'">'+MSG_ICON+'<i aria-hidden="true">+</i></button>';
   if(!b.chat) return '';
   const n = Number(b.chat.unread) || 0;
   const cls = n ? ' new' : (b.chat.open ? '' : ' shut');
@@ -3843,11 +3988,13 @@ function msgBubble(){
 function msgReset(){
   MSG.gen += 1;
   Object.assign(MSG, { known: null, unread: 0, view: 'list', tab: 'open', date: null, today: null, data: null, error: null,
-                       threadId: null, thread: null, threadError: null, sending: false, busy: false });
+                       threadId: null, thread: null, threadError: null, sending: false, busy: false, links: {} });
+  msgPendClear(true);
   msgHide();
 }
 function msgHide(){
   MSG.open = false;
+  msgPendClear(true);                                   // r42: a file chosen and not sent stays on this phone only until the window closes
   clearInterval(MSG.timer); MSG.timer = null;
   const host = document.getElementById('mg-sheet-host');
   if(host) host.innerHTML = '';
@@ -3879,6 +4026,7 @@ function msgOpen(){
 }
 function msgOpenThread(id){
   if(!RESTAURANT || !currentSession) return;
+  if(MSG.threadId !== Number(id) || MSG.kind !== 'table') msgPendClear(true);
   MSG.open = true; MSG.view = 'thread'; MSG.kind = 'table'; MSG.threadId = Number(id); MSG.thread = null; MSG.threadError = null;
   msgBubble(); msgPaint();
   msgLoadThread(true);
@@ -3888,6 +4036,7 @@ function msgOpenThread(id){
 // the requests; closing it goes back to them.
 function rqChatOpen(id){
   if(!RESTAURANT || !currentSession) return;
+  if(MSG.threadId !== Number(id) || MSG.kind !== 'request') msgPendClear(true);
   MSG.open = true; MSG.view = 'thread'; MSG.kind = 'request'; MSG.threadId = Number(id); MSG.thread = null; MSG.threadError = null;
   msgBubble(); msgPaint();
   msgLoadThread(true);
@@ -4020,7 +4169,11 @@ function msgPaint(first){
   if(MSG.view === 'thread' && MSG.thread && host.dataset.view === key && host.querySelector('.mg-form')){
     host.querySelector('.mg-top').innerHTML = msgTopHtml(MSG.thread);
     host.querySelector('.mg-msgs').innerHTML = msgBubblesHtml(MSG.thread);
+    const ph = MSG.thread.fresh ? 'Write your message…' : 'Write your answer…', inp = host.querySelector('.mg-input');
+    if(inp && inp.placeholder !== ph) inp.placeholder = ph;
+    MSG.stick = first || atEnd;
     if(first || atEnd) scroller.scrollTop = scroller.scrollHeight;
+    msgFilesFill();
     return;
   }
   if(MSG.view === 'list' && MSG.data && host.dataset.view === 'list' && msgPatchList(host)) return;
@@ -4033,7 +4186,7 @@ function msgPaint(first){
   host.dataset.view = MSG.view === 'thread' ? (MSG.thread ? key : '') : 'list';
   host.dataset.date = String(MSG.date);
   const sc = host.querySelector('.mg-scroll');
-  if(sc && MSG.view === 'thread') sc.scrollTop = sc.scrollHeight;
+  if(sc && MSG.view === 'thread'){ sc.scrollTop = sc.scrollHeight; MSG.stick = true; msgPendPaint(); msgFilesFill(); }
   if(sc && MSG.view === 'list') sc.scrollTop = keepTop;
   if(MSG.view === 'list'){
     const strip = host.querySelector('.mg-strip');
@@ -4271,7 +4424,9 @@ function msgTopHtml(t){
   if(t.kind === 'request') return rqTopHtml(t);
   const b = t.booking;
   const first = String(b.name || '').trim().split(/\s+/)[0] || 'The guest';
-  const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+' · '+rvTel(b.phone);
+  const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+' · '+rvTel(b.phone)+(b.email ? ' · '+rvMail(b.email) : '');
+  // r42: nobody has written yet — the restaurant starts it, and is told where the guest will read it.
+  if(t.fresh) return '<div class="mg-sub">'+sub+'</div><div class="mg-fresh">'+msgFreshText(t, first, b)+'</div>';
   const state = t.open
     ? '<div class="mg-bar"><span class="mg-state">Open</span><button type="button" class="rv-mini" onclick="msgCloseThread(this)">Close</button></div>'
       + (t.guestCanReopen ? '' : '<div class="mg-warn">'+whoHtml(first, b.handle)+' has used the one reopen after 24 hours. If you close it now, only the restaurant can open it again.</div>')
@@ -4279,11 +4434,18 @@ function msgTopHtml(t){
       + '<button type="button" class="rv-mini" onclick="msgReopenThread(this)">Reopen the conversation</button></div>';
   return '<div class="mg-sub">'+sub+'</div>' + state;
 }
+function msgFreshText(t, first, b){
+  const who = whoHtml(first, b.handle);
+  return '<b>Nobody has written yet.</b> Write to '+who+' about this table: '
+    + (t.guestReads === 'account' ? who+' sees it on the bell of the website.'
+       : t.guestReads === 'email' ? who+' has no account, so we email them once to say you wrote (never your words), with a button back to this conversation.'
+       : who+' has no account and gave no email, so they may never see it. Better call: '+rvTel(b.phone)+'.');
+}
 // The top of a request's conversation: the day asked for, the people, the phone, and where the guest reads it.
 function rqTopHtml(t){
   const q = t.request;
   const first = String(q.name || '').trim().split(/\s+/)[0] || 'The guest';
-  const sub = esc(q.day)+' · '+(q.time ? esc(q.time) : 'no time given')+' · '+rvPeople(q.party)+' · Request · '+rvTel(q.phone);
+  const sub = esc(q.day)+' · '+(q.time ? esc(q.time) : 'no time given')+' · '+rvPeople(q.party)+' · Request · '+rvTel(q.phone)+(q.email ? ' · '+rvMail(q.email) : '');
   const where = !t.open ? 'This request has been answered.'
     : t.guestReads === 'account' ? whoHtml(first, q.handle)+' reads this in My Reservations on the website.'
     : whoHtml(first, q.handle)+' has no account yet: we email '+(first ? 'them' : 'the guest')+' once to say you wrote, and '
@@ -4292,7 +4454,90 @@ function rqTopHtml(t){
 }
 function msgBubblesHtml(t){
   return t.messages.map(m => '<div class="mg-bub '+(m.fromGuest?'guest':'staff')+'"><span class="mg-bub-who">'+(m.who==='You' ? 'You' : whoHtml(m.who, m.handle))+' <i>· '+esc(m.label)+'</i></span>'
-    + esc(m.body)+'</div>').join('');
+    + (m.file ? msgFileHtml(m.file, m.who) : '')
+    + (m.body ? (m.file ? '<span class="mg-bub-text">'+esc(m.body)+'</span>' : esc(m.body)) : '')+'</div>').join('');
+}
+
+// ── r42 (Sebastian, 22 Oct): photos and PDFs in the conversations ──
+// A file opens through a link that works for one hour, asked for the files on screen (staff_msg_files /
+// staff_req_files) and kept here until a few minutes before it ends. A photo shows in the bubble and opens full
+// size; a PDF is a card that opens it. A file deleted (90 days) says so.
+function msgLinkOf(id){ const l = MSG.links[id]; return l && l.until > Date.now() ? l : null; }
+function msgFileHtml(f, who){
+  const l = msgLinkOf(f.id), url = l && l.url;
+  const href = url ? ' href="'+esc(url)+'" target="_blank" rel="noopener"' : '';
+  if(f.kind === 'pdf') return '<a class="mg-pdf" data-file="'+Number(f.id)+'"'+href+'>'+MSG_PDF+'<span><b>'+esc(f.name)+'</b><small>'
+    + (l && l.gone ? 'Not available any more' : 'PDF · '+esc(hfFileSize(f.size)))+'</small></span></a>';
+  const alt = 'Photo from '+(who === 'You' ? 'you' : who);
+  return '<a class="mg-photo" data-file="'+Number(f.id)+'"'+href+' aria-label="'+esc(alt)+' (opens full size)">'
+    + (url ? '<img src="'+esc(url)+'" alt="'+esc(alt)+'" onload="msgImgLoaded(this)">' : '<span>'+(l && l.gone ? 'Photo not available any more' : 'Photo…')+'</span>')+'</a>';
+}
+function msgImgLoaded(img){
+  const sc = img.closest('.mg-scroll');
+  if(sc && MSG.stick) sc.scrollTop = sc.scrollHeight;
+}
+async function msgFilesFill(){
+  const t = MSG.thread;
+  if(!t || !MSG.open || MSG.view !== 'thread' || MSG.linking) return;
+  const need = t.messages.filter(m => m.file && !msgLinkOf(m.file.id)).map(m => Number(m.file.id)).slice(0, 40);
+  if(!need.length) return;
+  MSG.linking = true;
+  const gen = MSG.gen, id = MSG.threadId, kind = MSG.kind;
+  try{
+    const data = await rvApi(kind === 'request' ? {action:'staff_req_files', requestId: id, fileIds: need} : {action:'staff_msg_files', id: id, fileIds: need});
+    if(gen !== MSG.gen) return;
+    const until = Date.now() + Math.max(60, (Number(data.expiresIn) || 3600) - 300) * 1000;
+    need.forEach(k => {
+      const url = data.links && data.links[k];
+      MSG.links[k] = url ? { url: url, until: until } : { url: null, gone: true, until: Date.now() + 120000 };
+    });
+  }catch(e){ MSG.linking = false; return; }
+  MSG.linking = false;
+  if(id !== MSG.threadId || kind !== MSG.kind || !MSG.open) return;
+  const host = document.getElementById('mg-sheet-host'), box = host && host.querySelector('.mg-msgs');
+  if(!box) return;
+  const sc = host.querySelector('.mg-scroll');
+  const atEnd = !sc || sc.scrollHeight - sc.scrollTop - sc.clientHeight < 60;
+  MSG.stick = atEnd;
+  box.innerHTML = msgBubblesHtml(MSG.thread);
+  if(sc && atEnd) sc.scrollTop = sc.scrollHeight;
+}
+
+// Choosing a file: a photo is made smaller on this phone first (taster.js, hfFilePrepare); it is shown above the
+// box with an ✕, and goes with the next Send (with or without words).
+function msgClip(){
+  const host = document.getElementById('mg-sheet-host'), input = host && host.querySelector('.mg-file-in');
+  if(input && !MSG.sending){ input.value = ''; input.click(); }
+}
+async function msgPicked(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const gen = MSG.gen, key = MSG.kind + MSG.threadId;
+  MSG.preparing = true; msgPendPaint();
+  try{
+    const prep = await hfFilePrepare(file);
+    if(gen !== MSG.gen || key !== MSG.kind + MSG.threadId) return;
+    msgPendClear(true);
+    prep.preview = prep.kind === 'photo' ? URL.createObjectURL(prep.blob) : null;
+    MSG.pending = prep;
+  }catch(e){ showToast(e.message); }
+  finally{ MSG.preparing = false; msgPendPaint(); }
+}
+function msgPendClear(quiet){
+  if(MSG.pending && MSG.pending.preview) URL.revokeObjectURL(MSG.pending.preview);
+  MSG.pending = null;
+  if(!quiet) msgPendPaint();
+}
+function msgPendPaint(){
+  const host = document.getElementById('mg-sheet-host'), box = host && host.querySelector('.mg-pend');
+  if(!box) return;
+  const p = MSG.pending;
+  if(MSG.preparing && !p){ box.hidden = false; box.innerHTML = '<div class="mg-pend-t"><b>Preparing the file…</b></div>'; return; }
+  if(!p){ box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = (p.preview ? '<img src="'+esc(p.preview)+'" alt="">' : '<span class="mg-pend-pdf">'+MSG_PDF+'</span>')
+    + '<div class="mg-pend-t"><b>'+esc(p.kind === 'pdf' ? p.name : 'Photo')+'</b><small>'+esc(hfFileSize(p.size))+' · goes with your next message</small></div>'
+    + '<button type="button" class="mg-pend-x" aria-label="Remove the file" onclick="msgPendClear()">&times;</button>';
 }
 function msgThreadHtml(){
   const t = MSG.thread, back = MSG.kind === 'request' ? 'requests' : true;
@@ -4303,13 +4548,17 @@ function msgThreadHtml(){
     + '<div class="mg-scroll"><div class="mg-msgs">'+msgBubblesHtml(t)+'</div>'
     + '<p class="mg-foot">Kept until '+esc(t.keptUntil)+' (90 days after the '+(isReq ? 'day asked for' : 'table')+'), then deleted.</p></div>'
     + '<p class="mg-live" aria-live="polite"></p>'
-    + '<div class="mg-form"'+(isReq && !t.open ? ' hidden' : '')+'><textarea class="mg-input" rows="1" maxlength="1000" aria-label="Your answer" placeholder="Write your answer…"'
+    + '<div class="mg-pend" hidden></div>'
+    + '<div class="mg-form"'+(isReq && !t.open ? ' hidden' : '')+'>'
+    + '<button type="button" class="mg-clip" aria-label="Attach a photo or a PDF" onclick="msgClip()">'+MSG_CLIP+'</button>'
+    + '<input type="file" class="mg-file-in" accept="image/*,application/pdf" hidden onchange="msgPicked(this)">'
+    + '<textarea class="mg-input" rows="1" maxlength="1000" aria-label="'+(t.fresh ? 'Your message' : 'Your answer')+'" placeholder="'+(t.fresh ? 'Write your message…' : 'Write your answer…')+'"'
     + ' oninput="msgGrow(this)" onkeydown="if(event.key===\'Enter\'&&(event.ctrlKey||event.metaKey)){event.preventDefault();msgSend();}"></textarea>'
     + '<button type="button" class="mg-send" aria-label="Send" onclick="msgSend()">'+MSG_SEND+'</button></div>';
 }
 function msgGrow(input){ input.style.height = 'auto'; input.style.height = Math.min(140, input.scrollHeight + 2) + 'px'; }
 
-function msgBackToList(){ MSG.view = 'list'; MSG.threadId = null; MSG.thread = null; MSG.seq += 1; msgPaint(); msgLoadList(); }
+function msgBackToList(){ msgPendClear(true); MSG.view = 'list'; MSG.threadId = null; MSG.thread = null; MSG.seq += 1; msgPaint(); msgLoadList(); }
 function msgTab(tab){ MSG.tab = tab; msgPaint(); }
 function msgPick(date, fromStrip){
   if(!date || date === MSG.date) return;
@@ -4332,21 +4581,43 @@ function msgStep(n){
 async function msgSend(){
   const host = document.getElementById('mg-sheet-host');
   const input = host && host.querySelector('.mg-input'), send = host && host.querySelector('.mg-send');
-  if(!input || MSG.sending) return;
+  if(!input || MSG.sending || MSG.preparing) return;
   const text = input.value.trim();
-  if(!text){ input.focus(); return; }
+  const pending = MSG.pending;
+  if(!text && !pending){ input.focus(); return; }
   MSG.sending = true; send.disabled = true;
-  const gen = MSG.gen, id = MSG.threadId;
+  const clip = host.querySelector('.mg-clip'); if(clip) clip.disabled = true;
+  const gen = MSG.gen, id = MSG.threadId, isReq = MSG.kind === 'request';
   try{
-    const data = await rvApi(MSG.kind === 'request' ? {action:'staff_req_send', requestId: id, body: text} : {action:'staff_msg_send', id: id, body: text});
+    const body = isReq ? {action:'staff_req_send', requestId: id, body: text} : {action:'staff_msg_send', id: id, body: text};
+    // r42: a file goes first, straight to the storage (a place for it, then the file), then the message names it.
+    if(pending){
+      if(!pending.fileId){
+        const slot = await rvApi(isReq ? {action:'staff_req_upload', requestId: id, name: pending.name, mime: pending.mime, size: pending.size}
+                                       : {action:'staff_msg_upload', id: id, name: pending.name, mime: pending.mime, size: pending.size});
+        await hfFileUpload(slot.uploadUrl, pending);
+        pending.fileId = slot.file.id;
+      }
+      body.fileId = pending.fileId;
+    }
+    const data = await rvApi(body);
     if(gen !== MSG.gen || id !== MSG.threadId) return;
     MSG.seq += 1;                                   // an older answer still on its way is not drawn
     MSG.thread = data;
     input.value = ''; msgGrow(input);
+    if(pending) msgPendClear();
     MSG.sending = false;
     msgPaint(true);
-  }catch(e){ showToast(e.message); }
-  finally{ MSG.sending = false; const again = document.querySelector('#mg-sheet-host .mg-send'); if(again) again.disabled = false; }
+  }catch(e){
+    // A file the server refused (not a photo, too late): it is chosen again, not sent again.
+    if(pending && e.data && /^file_(bad|gone)$/.test(e.data.reason || '')) msgPendClear();
+    showToast(e.message);
+  }
+  finally{
+    MSG.sending = false;
+    const again = document.querySelector('#mg-sheet-host .mg-send'); if(again) again.disabled = false;
+    const c = document.querySelector('#mg-sheet-host .mg-clip'); if(c) c.disabled = false;
+  }
 }
 
 function msgCloseThread(btn){
