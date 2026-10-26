@@ -249,6 +249,21 @@ if (window.hfEarlyMine) {
   .rv-book .rv-foot { margin-top:6px; }
   .rv-foot p { font-size:.78rem; color:rgba(252,249,244,.65); line-height:1.55; }
   .rv-link { color:#FF9C92; text-decoration:underline; background:none; border:none; padding:0; font:inherit; cursor:pointer; }
+  /* r42 (Sebastian, 26 Oct, Option B): Parties & private events, a big red-framed card under the free tables */
+  .rv-party { width:100%; display:flex; align-items:center; gap:14px; background:rgba(226,59,46,.08); color:var(--white); border:1.5px solid var(--red-bright);
+    border-radius:18px; padding:14px; font-family:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .15s, transform .12s; }
+  .rv-party:active { transform:scale(.985); }
+  .rv-party:focus-visible { outline:2px solid #FF9C92; outline-offset:3px; }
+  .rv-party-tile { flex:none; width:54px; height:54px; border-radius:14px; background:var(--red-bright); color:#fff; display:flex; align-items:center;
+    justify-content:center; box-shadow:0 0 16px rgba(226,59,46,.45); }
+  .rv-party-tile svg { width:30px; height:30px; }
+  .rv-party-txt { flex:1; min-width:0; }
+  .rv-party-txt b { display:block; font-family:var(--serif); font-size:1.22rem; font-weight:600; line-height:1.1; }
+  .rv-party-txt small { display:block; font-size:.74rem; color:rgba(252,249,244,.65); margin-top:4px; line-height:1.35; }
+  .rv-party-chev { flex:none; width:22px; height:22px; color:#FF9C92; }
+  .rv-party-chev svg { width:22px; height:22px; display:block; }
+  @media (hover:hover) { .rv-party:hover { background:rgba(226,59,46,.16); } }
+  @media (max-width:360px) { .rv-party-more { display:none; } .rv-party { gap:12px; padding:12px; } .rv-party-tile { width:48px; height:48px; } }
 
   /* ── forms ── */
   .rv-field { margin-bottom:.8rem; }
@@ -378,6 +393,30 @@ if (window.hfEarlyMine) {
   .rv-chat-send:disabled { opacity:.5; cursor:wait; }
   .rv-chat-foot { font-size:.66rem; line-height:1.5; color:rgba(252,249,244,.5); margin-top:.5rem; }
   .rv-chat-live { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  /* r42 (Sebastian, 22 Oct): photos and PDFs, both ways */
+  .rv-bub .rv-photo { display:block; margin:.2rem 0 .15rem; border-radius:10px; overflow:hidden; background:rgba(0,0,0,.15); width:220px; max-width:100%; min-height:90px; }
+  .rv-bub .rv-photo img { display:block; width:100%; height:auto; max-height:300px; object-fit:cover; }
+  .rv-bub .rv-photo span { display:block; padding:2rem .6rem; text-align:center; font-size:.72rem; opacity:.75; white-space:normal; }
+  .rv-bub .rv-pdf { display:flex; align-items:center; gap:.55rem; margin:.2rem 0 .15rem; padding:.5rem .65rem; border-radius:10px; text-decoration:none; color:inherit;
+    background:rgba(43,33,26,.06); border:1px solid rgba(43,33,26,.12); white-space:normal; max-width:260px; }
+  .rv-bub.me .rv-pdf { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.3); }
+  .rv-pdf svg { flex:none; width:26px; height:26px; }
+  .rv-pdf b { display:block; font-size:.8rem; font-weight:600; line-height:1.3; overflow-wrap:anywhere; }
+  .rv-pdf small { display:block; font-size:.66rem; opacity:.75; }
+  .rv-bub-text { display:block; }
+  .rv-chat-clip { flex:none; width:44px; height:44px; border-radius:50%; border:1px solid rgba(252,249,244,.3); background:rgba(252,249,244,.07); color:var(--white);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .rv-chat-clip svg { width:21px; height:21px; }
+  .rv-chat-clip:disabled { opacity:.5; cursor:wait; }
+  .rv-chat-pend { display:flex; align-items:center; gap:.6rem; padding:.45rem .55rem; margin-top:.55rem; border:1px solid rgba(252,249,244,.2); border-radius:12px;
+    background:rgba(252,249,244,.06); font-size:.78rem; color:var(--white); }
+  .rv-chat-pend[hidden] { display:none; }
+  .rv-chat-pend img, .rv-chat-pend .pdf { flex:none; width:44px; height:44px; border-radius:8px; object-fit:cover; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+  .rv-chat-pend .pdf svg { width:24px; height:24px; }
+  .rv-chat-pend .t { flex:1; min-width:0; line-height:1.35; }
+  .rv-chat-pend .t b { display:block; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rv-chat-pend .t small { color:rgba(252,249,244,.6); }
+  .rv-chat-pend .x { flex:none; width:32px; height:32px; border-radius:50%; border:1px solid rgba(252,249,244,.3); background:none; color:var(--white); font-size:1.1rem; line-height:1; cursor:pointer; }
 
   @media (min-width:760px) {
     .rv-time { flex-basis:100px; }
@@ -588,9 +627,16 @@ if (window.hfEarlyMine) {
             <div class="rv-empty" id="rv-empty">Looking…</div>
           </div>
 
+          <!-- r42 (Sebastian, 26 Oct, Option B "red card"): the small link became a big button. The number follows the
+               manager's setting (the biggest party that books online + 1). -->
           <div class="rv-foot">
-            <p id="rv-foot-text">Nine people or more, or a private event?
-              <button type="button" class="rv-link" id="rv-go-request">Send a request</button> and the restaurant answers you.</p>
+            <div id="rv-foot-text">
+              <button type="button" class="rv-party" id="rv-go-request">
+                <span class="rv-party-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h5l-.6 5.2A2.6 2.6 0 0 1 6.8 11.5h0A2.6 2.6 0 0 1 4.2 9.2Z"/><path d="M6.9 11.5V19M4.6 19h4.6"/><path d="M14 4h5l.8 5.2a2.6 2.6 0 0 1-2.6 2.3h0a2.6 2.6 0 0 1-2.6-2.3Z"/><path d="M17.2 11.5V19M14.9 19h4.6"/><path d="M12 2.2v1.6M9.7 2.9l.7 1M14.3 2.9l-.7 1"/></svg></span>
+                <span class="rv-party-txt"><b>Parties &amp; private events</b><small><span id="rv-party-num">9</span> people or more, birthdays, company dinners.<span class="rv-party-more"> The restaurant answers you.</span></small></span>
+                <span class="rv-party-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1100,10 +1146,8 @@ function renderSizes() {
   sizes.innerHTML = '';
   // The manager sets the biggest party that books online (manager.html), so the
   // line under the times follows that number instead of always saying nine.
-  const foot = el('rv-foot-text');
-  if (foot && foot.firstChild && foot.firstChild.nodeType === 3) {
-    foot.firstChild.textContent = (state.booking.maxPartyInstant + 1) + ' people or more, or a private event? ';
-  }
+  const num = el('rv-party-num');                 // r42: the number on the Parties button
+  if (num) num.textContent = String(state.booking.maxPartyInstant + 1);
   let on = null;
   for (let n = 1; n <= state.booking.maxPartyInstant; n++) {
     const b = document.createElement('button');
@@ -1979,6 +2023,10 @@ const MSG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
   + '<path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/></svg>';
 const SEND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>';
+const CLIP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M20.5 11.5 12.3 19.7a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg>';
+const PDF_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 15.5h7M8.5 12h4"/></svg>';
 state.chats = {};
 let chatTimer = null;
 // How often an open conversation asks for news (r22: was 10 seconds; Sebastian,
@@ -1994,7 +2042,10 @@ function chatBlock(key, chat) {
     +   '<div class="rv-chat-list"><p class="rv-chat-empty">Loading the messages…</p></div>'
     +   '<p class="rv-chat-live" aria-live="polite"></p>'
     +   '<p class="rv-chat-note" hidden></p>'
+    +   '<div class="rv-chat-pend" hidden></div>'
     +   '<div class="rv-chat-form" hidden>'
+    +     '<button type="button" class="rv-chat-clip" aria-label="Attach a photo or a PDF">' + CLIP_ICON + '</button>'
+    +     '<input type="file" class="rv-chat-file" accept="image/*,application/pdf" hidden>'
     +     '<textarea class="rv-chat-input" rows="1" maxlength="1000" aria-label="Your message" placeholder="Write to the restaurant…"></textarea>'
     +     '<button type="button" class="rv-chat-send" aria-label="Send">' + SEND_ICON + '</button>'
     +   '</div>'
@@ -2116,35 +2167,120 @@ function chatPaint(key, first) {
   const atEnd = first || list.scrollHeight - list.scrollTop - list.clientHeight < 40;
   list.innerHTML = d.messages.length
     ? d.messages.map((m) => '<div class="rv-bub ' + (m.mine ? 'me' : 'them') + '">'
-        + '<span class="rv-bub-who">' + bubWho(m) + ' <i>· ' + esc(m.label) + '</i></span>' + esc(m.body) + '</div>').join('')
+        + '<span class="rv-bub-who">' + bubWho(m) + ' <i>· ' + esc(m.label) + '</i></span>'
+        + (m.file ? chatFileHtml(key, m.file, m.mine ? 'you' : (m.name || 'the restaurant')) : '')
+        + (m.body ? (m.file ? '<span class="rv-bub-text">' + esc(m.body) + '</span>' : esc(m.body)) : '') + '</div>').join('')
     : '<p class="rv-chat-empty">' + (d.empty ? esc(d.empty) : 'Write here instead of calling: running late, an allergy, something you left behind. '
       + esc(d.restaurant) + ' answers you here' + (d.canWrite ? '.' : '')) + '</p>';
   const note = box.querySelector('.rv-chat-note');
   note.hidden = !d.note;
   note.textContent = d.note || '';
   box.querySelector('.rv-chat-form').hidden = !d.canWrite;
+  if (!d.canWrite) chatPendClear(key);
   box.querySelector('.rv-chat-foot').textContent = d.foot || ('Messages are kept until ' + d.keptUntil + ' (90 days after your table), then deleted.');
+  c.stick = atEnd;
   if (atEnd) list.scrollTop = list.scrollHeight;
+  chatFilesFill(key);
+}
+
+// ── r42 (Sebastian, 22 Oct): photos and PDFs in the conversation ──
+// A file opens through a link that works for one hour (msg_files / req_msg_files), asked for the files on screen
+// and kept here until a few minutes before it ends.
+function chatLinkOf(key, id) { const c = state.chats[key], l = c && c.links && c.links[id]; return l && l.until > Date.now() ? l : null; }
+function chatFileHtml(key, f, who) {
+  const l = chatLinkOf(key, f.id), url = l && l.url;
+  const href = url ? ' href="' + esc(url) + '" target="_blank" rel="noopener"' : '';
+  if (f.kind === 'pdf') return '<a class="rv-pdf" data-file="' + Number(f.id) + '"' + href + '>' + PDF_ICON + '<span><b>' + esc(f.name) + '</b><small>'
+    + (l && l.gone ? 'Not available any more' : 'PDF · ' + esc(hfFileSize(f.size))) + '</small></span></a>';
+  const alt = 'Photo from ' + who;
+  return '<a class="rv-photo" data-file="' + Number(f.id) + '"' + href + ' aria-label="' + esc(alt) + ' (opens full size)">'
+    + (url ? '<img src="' + esc(url) + '" alt="' + esc(alt) + '" onload="chatImgLoaded(this)">' : '<span>' + (l && l.gone ? 'Photo not available any more' : 'Photo…') + '</span>') + '</a>';
+}
+function chatImgLoaded(img) {
+  const box = img.closest('.rv-chat'), c = box && state.chats[box.id.slice(5)], list = img.closest('.rv-chat-list');
+  if (c && c.stick && list) list.scrollTop = list.scrollHeight;
+}
+async function chatFilesFill(key) {
+  const c = state.chats[key];
+  if (!c || !c.data || c.linking) return;
+  const need = c.data.messages.filter((m) => m.file && !chatLinkOf(key, m.file.id)).map((m) => Number(m.file.id)).slice(0, 40);
+  if (!need.length) return;
+  c.linking = true; c.links = c.links || {};
+  try {
+    const data = await api(Object.assign({ action: chatAction(key, 'files'), fileIds: need }, chatTarget(key)));
+    const until = Date.now() + Math.max(60, (Number(data.expiresIn) || 3600) - 300) * 1000;
+    need.forEach((k) => { const url = data.links && data.links[k]; c.links[k] = url ? { url, until } : { url: null, gone: true, until: Date.now() + 120000 }; });
+  } catch (e) { c.linking = false; return; }
+  c.linking = false;
+  chatPaint(key, false);
+}
+// Choosing a file: a photo is made smaller on this phone first (taster.js, hfFilePrepare); it shows above the box
+// with an ✕ and goes with the next Send, with or without words.
+async function chatPicked(key, input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const c = state.chats[key] || (state.chats[key] = {});
+  c.preparing = true; chatPendPaint(key);
+  try {
+    const prep = await hfFilePrepare(file);
+    chatPendClear(key, true);
+    prep.preview = prep.kind === 'photo' ? URL.createObjectURL(prep.blob) : null;
+    c.pending = prep;
+  } catch (e) { showToast(e.message); }
+  finally { c.preparing = false; chatPendPaint(key); }
+}
+function chatPendClear(key, quiet) {
+  const c = state.chats[key];
+  if (!c) return;
+  if (c.pending && c.pending.preview) URL.revokeObjectURL(c.pending.preview);
+  c.pending = null;
+  if (!quiet) chatPendPaint(key);
+}
+function chatPendPaint(key) {
+  const box = el('chat-' + key), c = state.chats[key];
+  const pend = box && box.querySelector('.rv-chat-pend');
+  if (!pend) return;
+  const p = c && c.pending;
+  if (c && c.preparing && !p) { pend.hidden = false; pend.innerHTML = '<div class="t"><b>Preparing the file…</b></div>'; return; }
+  if (!p) { pend.hidden = true; pend.innerHTML = ''; return; }
+  pend.hidden = false;
+  pend.innerHTML = (p.preview ? '<img src="' + esc(p.preview) + '" alt="">' : '<span class="pdf">' + PDF_ICON + '</span>')
+    + '<div class="t"><b>' + esc(p.kind === 'pdf' ? p.name : 'Photo') + '</b><small>' + esc(hfFileSize(p.size)) + ' · goes with your message</small></div>'
+    + '<button type="button" class="x" data-pend-x="' + esc(key) + '" aria-label="Remove the file">&times;</button>';
 }
 
 async function chatSend(key) {
   const box = el('chat-' + key), c = state.chats[key] || (state.chats[key] = {});
   if (!box || c.sending) return;
-  const input = box.querySelector('.rv-chat-input'), send = box.querySelector('.rv-chat-send');
+  const input = box.querySelector('.rv-chat-input'), send = box.querySelector('.rv-chat-send'), clip = box.querySelector('.rv-chat-clip');
   const text = input.value.trim();
-  if (!text) { input.focus(); return; }
-  c.sending = true; send.disabled = true;
+  const pending = c.pending;
+  if (c.preparing) return;
+  if (!text && !pending) { input.focus(); return; }
+  c.sending = true; send.disabled = true; if (clip) clip.disabled = true;
   try {
-    const data = await api(Object.assign({ action: chatAction(key, 'send'), body: text }, chatTarget(key)));
+    const body = Object.assign({ action: chatAction(key, 'send'), body: text }, chatTarget(key));
+    // r42: the file first, straight to the storage (a place for it, then the file); then the message names it.
+    if (pending) {
+      if (!pending.fileId) {
+        const slot = await api(Object.assign({ action: chatAction(key, 'upload'), name: pending.name, mime: pending.mime, size: pending.size }, chatTarget(key)));
+        await hfFileUpload(slot.uploadUrl, pending);
+        pending.fileId = slot.file.id;
+      }
+      body.fileId = pending.fileId;
+    }
+    const data = await api(body);
     c.seq = (c.seq || 0) + 1;                     // an older answer still on its way is not drawn
     c.data = data;
     input.value = ''; chatGrow(input);
+    if (pending) chatPendClear(key);
     chatPaint(key, true);
   } catch (e) {
+    if (pending && e.data && /^file_(bad|gone)$/.test(e.data.reason || '')) chatPendClear(key);
     showToast(e.message);
     if (e.data && e.data.reason === 'closed') { c.sending = false; chatLoad(key, false); }
   } finally {
-    c.sending = false; send.disabled = false;
+    c.sending = false; send.disabled = false; if (clip) clip.disabled = false;
   }
 }
 function chatGrow(input) { input.style.height = 'auto'; input.style.height = Math.min(140, input.scrollHeight + 2) + 'px'; }
@@ -2153,7 +2289,17 @@ document.addEventListener('click', (event) => {
   const b = event.target.closest('.rv-msg-btn');
   if (b) { const box = el('chat-' + b.dataset.chat); chatOpen(b.dataset.chat, !!(box && box.hidden)); return; }
   const send = event.target.closest('.rv-chat-send');
-  if (send) { const box = send.closest('.rv-chat'); if (box) chatSend(box.id.slice(5)); }
+  if (send) { const box = send.closest('.rv-chat'); if (box) chatSend(box.id.slice(5)); return; }
+  // r42: the paperclip opens the phone's photos and files; the ✕ takes a chosen file away
+  const clip = event.target.closest('.rv-chat-clip');
+  if (clip) { const box = clip.closest('.rv-chat'), input = box && box.querySelector('.rv-chat-file'); if (input && !clip.disabled) { input.value = ''; input.click(); } return; }
+  const x = event.target.closest('[data-pend-x]');
+  if (x) chatPendClear(x.dataset.pendX);
+});
+document.addEventListener('change', (event) => {
+  if (!event.target.classList || !event.target.classList.contains('rv-chat-file')) return;
+  const box = event.target.closest('.rv-chat');
+  if (box) chatPicked(box.id.slice(5), event.target);
 });
 document.addEventListener('input', (event) => { if (event.target.classList && event.target.classList.contains('rv-chat-input')) chatGrow(event.target); });
 // Ctrl+Enter (or ⌘+Enter) sends; Enter alone is a new line, as on a phone.
