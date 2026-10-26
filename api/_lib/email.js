@@ -401,25 +401,71 @@ function writeButton(restaurant) {
 // The restaurant answered a guest who has no account (one email per
 // conversation, at the first answer). The message itself is NOT in the email:
 // the guest reads it, and answers, on the page the button opens.
-export function answerEmail({ restaurant, timezone, at, staffName, guestName, link, siteHost }) {
+// r42 (Sebastian, 22 Oct): opening = the restaurant started the conversation
+// (the guest never wrote): "Ana from The Hungry Fork wrote to you about your
+// table" — still once per conversation, still never the words.
+export function answerEmail({ restaurant, timezone, at, staffName, guestName, link, siteHost, opening = false }) {
   const when = whenIn(timezone, at);
   const first = greetingName(guestName);
   const who = String(staffName || '').trim() || 'The team';
-  const subject = `${who} from ${restaurant.name} answered your message`;
+  const subject = opening
+    ? `${who} from ${restaurant.name} wrote to you about your table`
+    : `${who} from ${restaurant.name} answered your message`;
   const html = layout({
     preheader: `About your table on ${when.long} at ${when.time}`,
     restaurantName: restaurant.name,
-    heading: 'You have an answer',
-    intro: `${first ? escapeHtml(first) + ', ' : ''}${escapeHtml(who)} from ${escapeHtml(restaurant.name)} answered your message about your table.`,
+    heading: opening ? 'A message about your table' : 'You have an answer',
+    intro: opening
+      ? `${first ? escapeHtml(first) + ', ' : ''}${escapeHtml(who)} from ${escapeHtml(restaurant.name)} wrote to you about your table.`
+      : `${first ? escapeHtml(first) + ', ' : ''}${escapeHtml(who)} from ${escapeHtml(restaurant.name)} answered your message about your table.`,
     when,
     rows: [],
-    write: { lead: 'Read the answer, and write back if you need to:', label: 'Read and answer', href: link },
-    footer: `You wrote to ${escapeHtml(restaurant.name)} about a table booked on ${escapeHtml(siteHost)}. We send this email once per conversation. Replies to it are not read: please answer on the page the button opens.`,
+    write: opening
+      ? { lead: 'Read the message, and answer if you need to:', label: 'Read the message', href: link }
+      : { lead: 'Read the answer, and write back if you need to:', label: 'Read and answer', href: link },
+    footer: opening
+      ? `You booked a table at ${escapeHtml(restaurant.name)} on ${escapeHtml(siteHost)}. We send this email once per conversation. Replies to it are not read: please answer on the page the button opens.`
+      : `You wrote to ${escapeHtml(restaurant.name)} about a table booked on ${escapeHtml(siteHost)}. We send this email once per conversation. Replies to it are not read: please answer on the page the button opens.`,
   });
   const text = [
-    `${who} from ${restaurant.name} answered your message about your table on ${when.long} at ${when.time}.`, '',
-    `Read and answer: ${link}`, '',
+    opening
+      ? `${who} from ${restaurant.name} wrote to you about your table on ${when.long} at ${when.time}.`
+      : `${who} from ${restaurant.name} answered your message about your table on ${when.long} at ${when.time}.`, '',
+    `${opening ? 'Read the message' : 'Read and answer'}: ${link}`, '',
     `We send this email once per conversation. Replies to it are not read: please answer on the page above.`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
+// r42 (Sebastian, 22 and 26 Oct): a guest sent a big-party request; this goes
+// to the restaurant (its owners and managers and/or the addresses it chose in
+// Settings). Only the first name, the people and the day: the guest's own
+// words, phone and email stay on the manager page, where the request is
+// answered — whatever a stranger types never lands in the restaurant's inbox.
+export function partyRequestEmail({ restaurant, guestName, party, date, time, link, siteHost }) {
+  const e = escapeHtml;
+  const first = greetingName(guestName) || 'A guest';
+  const p = String(date || '').split('-').map(Number);
+  const d = new Date(Date.UTC(p[0], (p[1] || 1) - 1, p[2] || 1));
+  const long = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' }).format(d);
+  const short = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' }).format(d);
+  const m = /^(\d{2}):(\d{2})/.exec(String(time || ''));
+  const clock = m ? `${Number(m[1]) % 12 || 12}:${m[2]} ${Number(m[1]) < 12 ? 'AM' : 'PM'}` : 'Any time';
+  const subject = `New request: ${party} people on ${short}`;
+  const html = layout({
+    preheader: `${first} asked for a table for ${party} people on ${long}`,
+    restaurantName: restaurant.name,
+    heading: 'New big-party request',
+    intro: `${e(first)} asked ${e(restaurant.name)} for a table for <b>${e(String(party))} people</b>.`,
+    when: { long, time: clock },
+    rows: [['People', e(party + ' people')], ['Name', e(first)]],
+    write: { lead: 'Read the request and answer the guest on the manager page:', label: 'Open the request', href: link },
+    footer: `${e(restaurant.name)} sends new big-party requests from ${e(siteHost)} to this address. A manager can change who gets them on the manager page: Settings (the button beside the tabs) → Emails about big parties. Replies to this email are not read.`,
+  });
+  const text = [
+    `${first} asked ${restaurant.name} for a table for ${party} people on ${long} (${clock}).`, '',
+    `Open the request: ${link}`, '',
+    `A manager can change who gets these emails on the manager page: Settings (the button beside the tabs) → Emails about big parties.`,
   ].join('\n');
   return { subject, html, text };
 }
