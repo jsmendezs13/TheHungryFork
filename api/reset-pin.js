@@ -11,6 +11,7 @@ import {
   clientIp,
   stripSecrets,
 } from './_lib/auth.js';
+import { isStaff, removeAllDevices, createDevice, deviceLabel, newDeviceEmail, sessionFor } from './_lib/devices.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
 
@@ -81,17 +82,24 @@ export default async function handler(req, res) {
 
     const taster = rows[0];
 
-    const session = jwt.sign(
-      {
-        role: 'authenticated',
-        taster_id: taster.id,
-        restaurant_id: taster.is_restaurant_admin ? taster.restaurant_id : null,
-      },
-      process.env.SUPABASE_JWT_SECRET,
-      { expiresIn: '30d', algorithm: 'HS256' }
-    );
+    // r43: a staff account. The text-message code of this reset is the same proof
+    // as the device code, so this device is trusted (60 days); every other device
+    // is logged out, because a new PIN is what someone does when a phone or a PIN
+    // is in the wrong hands. Before migration 30 nothing changes.
+    let device = null;
+    if (await isStaff(taster) && await removeAllDevices(taster.id)) {
+      const app = !!(req.body && req.body.app === true);
+      const made = await createDevice(taster.id, deviceLabel(req.headers['user-agent'], app), app);
+      if (made) {
+        device = { id: made.row.id, label: made.row.label, key: made.key, trustedUntil: made.row.trusted_until };
+        console.log('[reset-pin] staff account', taster.id, 'new PIN: other devices logged out, device', made.row.id, 'trusted');
+        await newDeviceEmail(taster, made.row);
+      }
+    }
 
-    return res.status(200).json({ success: true, session, taster: stripSecrets(taster) });
+    const session = sessionFor(taster, device ? device.id : null);
+
+    return res.status(200).json({ success: true, session, taster: stripSecrets(taster), ...(device ? { device } : {}) });
   } catch (e) {
     console.error('[reset-pin]', e);
     return res.status(500).json({ error: 'Server error' });
