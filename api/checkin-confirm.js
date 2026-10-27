@@ -45,12 +45,12 @@ export default async function handler(req, res) {
   const { token, code, confirm, restaurantId, giveReward } = req.body || {};
 
   // ── Where does this member of staff work? ───────────────────────────────
-  const access = await loadAccess(staffId);
+  const access = await loadAccess(staffId, req);          // r43: req, so the session's device is checked
   // A waiter must never be told "you do not work here" because the roles table
   // was unreachable. That sends them to their manager for a problem their
   // manager cannot fix.
   const problem = accessProblem(access);
-  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });   // r43: reason 'device' → log in again
 
   let places = [];
   if (access.isPlatformAdmin) {
