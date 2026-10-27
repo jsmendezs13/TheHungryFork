@@ -55,6 +55,7 @@ import {
 } from './_lib/email.js';
 import { staff, requestMailList } from './_lib/staff.js';
 import { forgetOldFiles } from './_lib/files.js';
+import { notifyStaff, line } from './_lib/push.js';     // r43: notifications on the staff's phones
 import { guest, staffMessages, chatSummaries, KEEP_MS } from './_lib/messages.js';
 import {
   guestRequestChat, staffRequestChat, guestRequests, requestBell, requestSummaries, moveToTable,
@@ -448,10 +449,17 @@ async function book(req, res, body) {
   // which would send them straight back to book a second table.
   let emailSent = false;
   try {
-    emailSent = await confirmByEmail({
-      reservationId: result.reservation_id, email, loaded, timezone,
-      at: at.toISOString(), party, areaName, code: result.code, guestName: name.value,
-    });
+    // r43: the team's phones hear about it at the same time (never slower than 3 seconds, never an error here).
+    [emailSent] = await Promise.all([
+      confirmByEmail({
+        reservationId: result.reservation_id, email, loaded, timezone,
+        at: at.toISOString(), party, areaName, code: result.code, guestName: name.value,
+      }),
+      notifyStaff(restaurantId, 'bookings', {
+        title: loaded.restaurant.name, body: 'New table: ' + tableLine(name.value, party, timezone, at.toISOString()),
+        url: '/manager#day=' + localDate + '&b=' + Number(result.reservation_id) + '&at=' + Number(restaurantId), tag: 'table-' + result.reservation_id,
+      }),
+    ]);
   } catch (err) {
     console.error('[reservations:email] confirmation threw', result.reservation_id, err && err.message);
   }
@@ -853,8 +861,18 @@ async function request(req, res, body) {
 
   const row = Array.isArray(created.data) ? created.data[0] : null;
   // r42: the restaurant hears about it by email. Never fails the request.
+  // r43: and on the team's phones.
   if (row) {
-    try { await requestToRestaurant(row, loaded); }
+    try {
+      await Promise.all([
+        requestToRestaurant(row, loaded),
+        notifyStaff(restaurantId, 'requests', {
+          title: loaded.restaurant.name,
+          body: 'Big-party request: ' + line(String(name.value).split(/\s+/)[0], 30) + ' · ' + party + ' people · ' + dayLabel(date) + (time ? ' · ' + timeLabel(time) : ''),
+          url: '/manager#request=' + Number(row.id) + '&at=' + Number(restaurantId), tag: 'request-' + Number(row.id),
+        }),
+      ]);
+    }
     catch (err) { console.error('[reservations:request] restaurant email threw', row.id, err && err.message); }
   }
   return res.status(200).json({
@@ -1109,7 +1127,25 @@ async function releaseTable(id, cancelledBy) {
     console.error('[reservations:cancel] update failed', id, done.status, done.data?.message);
     return false;
   }
+  // r43: the guest cancelled (here or by the email's link): the team's phones hear about it.
+  const t = done.data[0];
+  try {
+    const loaded = await loadBooking(t.restaurant_id);
+    const tz = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
+    await notifyStaff(t.restaurant_id, 'cancellations', {
+      title: (loaded && loaded.restaurant && loaded.restaurant.name) || 'Reservations',
+      body: 'Cancelled: ' + tableLine(t.guest_name, t.party_size, tz, t.reserved_at),
+      url: '/manager#day=' + t.local_date + '&b=' + Number(t.id) + '&at=' + Number(t.restaurant_id), tag: 'table-' + t.id,
+    });
+  } catch (err) { console.error('[reservations:cancel] notification threw', id, err && err.message); }
   return true;
+}
+
+// "Mike · 4 people · Sat, Oct 31 · 7:00 PM" — a notification's one line about a table.
+function tableLine(guestName, party, timezone, iso) {
+  const first = line(String(guestName || '').trim().split(/\s+/)[0] || 'A guest', 30);
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(iso));
+  return `${first} · ${party} ${Number(party) === 1 ? 'person' : 'people'} · ${day} · ${clockIn(timezone, iso).label}`;
 }
 
 // ── THE LINK IN THE EMAIL ─────────────────────────────────────────────────────
