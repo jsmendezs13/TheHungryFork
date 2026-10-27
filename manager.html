@@ -691,6 +691,22 @@
   .pk-tile.none { justify-content:center; color:var(--muted); font-size:.76rem; }
   .pk-tile.none.on { color:var(--red); }
   .pk-tile:disabled, .pk-pill:disabled { opacity:.5; cursor:wait; }
+  /* r43: Settings → You and your devices */
+  .dv-h { font-family:var(--serif); font-size:1.12rem; font-weight:600; margin:.2rem 0 .35rem; }
+  .dv-h2 { margin-top:1.3rem; padding-top:1rem; border-top:1px solid var(--border); }
+  .dv-on { margin-top:.75rem; }
+  .dv-onnote { margin-bottom:.1rem; }
+  .dv-warn { color:var(--red-dark); }
+  .dv-steps { margin:.45rem 0 0 1.15rem; font-size:.84rem; line-height:1.55; }
+  .dv-steps li { margin:.2rem 0; padding-left:.15rem; }
+  .dv-share { display:inline-flex; vertical-align:-2px; color:#0A84FF; }
+  .dv-list { list-style:none; margin:.55rem 0 0; padding:0; }
+  .dv-dev { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.7rem 0; border-bottom:1px solid var(--border); }
+  .dv-dev:last-child { border-bottom:none; }
+  .dv-dev-t { min-width:0; font-size:.88rem; line-height:1.35; }
+  .dv-dev-t b { font-weight:600; }
+  .dv-dev-t small { display:block; color:var(--muted); font-size:.72rem; margin-top:.15rem; }
+  .dv-this { display:inline-block; font-size:.64rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--green); background:#E6EFE4; border-radius:999px; padding:.12rem .5rem; margin-left:.3rem; vertical-align:1px; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -827,7 +843,16 @@ async function callApi(path, options){
       + (snippet ? ' — "'+snippet+'"' : '')
       + '. Check the function logs in Vercel.');
   }
-  return { res, data: data || {} };
+  const out = { res, data: data || {} };
+  // r43: a staff session on a device that is no longer trusted (removed in Settings, or past its 60 days): log in again.
+  if(res.status === 401 && out.data.reason === 'device') dvSessionGone(options, out.data.error);
+  return out;
+}
+function dvSessionGone(options, msg){
+  const auth = options && options.headers && options.headers.Authorization;
+  if(!currentSession || auth !== 'Bearer '+currentSession) return;     // a reply to an older session: the new one stays
+  logout();                                                            // the page's logout wrapper (below) draws the log-in again
+  showToast(msg || 'Please log in again.');
 }
 
 // ── STALE SCREEN ──
@@ -880,7 +905,7 @@ async function boot(){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession}
     });
     data = payload;
-    if(res.status===401){ logout(); boot(); return; }
+    if(res.status===401){ if(currentSession) logout(); return; }     // logout() draws the log-in (the wrapper at the end)
     if(!res.ok) throw new Error(data.error||'Could not load your access.');
   }catch(e){
     w.innerHTML = '<div class="m-err">'+esc(e.message||'Could not reach the server.')+'</div>';
@@ -888,6 +913,8 @@ async function boot(){
   }
 
   ACCESS = data;
+  // r43: another account on this page: its own devices and notifications
+  if(DV.who !== ACCESS.tasterId){ Object.assign(DV, { who: ACCESS.tasterId, loaded:false, loading:false, error:null, devices:null, off:false }); Object.assign(DV.push, { on:false, kinds:[], busy:false }); }
 
   if(!ACCESS.restaurants.length){
     // Two very different reasons for an empty list, and saying the wrong one
@@ -910,9 +937,18 @@ async function boot(){
   }
 
   RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
+  // r43: a tapped notification (#chat=, #reqchat=, #day=, #request=…&at=): its restaurant first, then the place.
+  const nf = nfParse(), rqm = /^#request=(\d+)(?:&at=(\d+))?$/.exec(window.location.hash || '');
+  const nfRid = nf ? nf.at : rqm ? Number(rqm[2]) || null : null;
+  if(nfRid && ACCESS.restaurants.some(r => String(r.id) === String(nfRid))) RESTAURANT = ACCESS.restaurants.find(r => String(r.id) === String(nfRid));
+  if(nf){
+    if(nf.kind === 'day'){ NF_DAY = { date:nf.value, b:nf.b }; TAB = 'reservations'; RV.view = 'day'; }
+    if(nf.kind === 'go' || nf.kind === 'dish') nfPlace(nf);                 // r43: a change by the team
+    if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#' + TAB);
+  }
   // r42: from the email about a new big-party request — Reservations, with the requests open.
-  if(/^#request=\d+$/.test(window.location.hash || '')){
-    RV.wantRequest = Number(window.location.hash.slice(9)); TAB = 'reservations'; RV.view = 'day';
+  if(rqm){
+    RV.wantRequest = Number(rqm[1]); TAB = 'reservations'; RV.view = 'day';
     if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
   }
   // A table's QR in the address: open that table. 'out' = the session ended
@@ -922,16 +958,20 @@ async function boot(){
   // The role icon in the header, with guest messages waiting, comes here.
   if(window.location.hash === '#messages') msgOpenFromHash();
   if(/^#support/.test(window.location.hash)) supFromHash();     // r34: the link in a support email
+  if(nf && nf.kind === 'chat') msgOpenThread(Number(nf.value));          // r43: a guest's message, from a notification
+  if(nf && nf.kind === 'reqchat') rqChatOpen(Number(nf.value));
   supStart();
+  dvResync();                                                   // r43: this device's notifications, saved again if needed
 }
 
 // r42: the button in the email about a new big-party request opens manager#request=<id>: the Reservations tab,
 // with the big-party requests open and that one in view (or a word if it has been answered meanwhile).
 function rqFromHash(){
-  const m = /^#request=(\d+)$/.exec(window.location.hash || '');
+  const m = /^#request=(\d+)(?:&at=(\d+))?$/.exec(window.location.hash || '');
   if(!m) return false;
-  RV.wantRequest = Number(m[1]);
   if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
+  nfAt(Number(m[2]) || null);                                   // r43: a notification says the restaurant
+  RV.wantRequest = Number(m[1]);
   if(TAB !== 'reservations' || RV.view !== 'day'){ TAB = 'reservations'; RV.view = 'day'; mountPage(); }
   else if(RV.day) rqShowWanted();
   return true;
@@ -971,8 +1011,9 @@ function switchTab(t){
 
 window.addEventListener('hashchange', function(){
   if(window.location.hash === '#messages'){ if(ACCESS && RESTAURANT) msgOpenFromHash(); return; }
-  if(/^#request=\d+$/.test(window.location.hash)){ if(ACCESS && RESTAURANT) rqFromHash(); return; }
+  if(/^#request=\d+(&at=\d+)?$/.test(window.location.hash)){ if(ACCESS && RESTAURANT) rqFromHash(); return; }
   if(/^#support/.test(window.location.hash)){ if(ACCESS && RESTAURANT) supFromHash(); return; }
+  if(nfParse()){ if(ACCESS && RESTAURANT) nfFromHash(); return; }    // r43: a tapped notification
   const t = tabFromHash();
   if(t && ACCESS && RESTAURANT && t!==TAB) switchTab(t);
 });
@@ -1003,6 +1044,7 @@ async function loadDishes(){
     DISHES_ERROR = e.message;
   }
   if(TAB==='menu') render();
+  nfShowDish();                       // r43: a notification about a dish: that dish, open
 }
 
 // ── RENDER ──
@@ -2154,7 +2196,7 @@ async function save(id, changes){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
       body:JSON.stringify({dishId:id, changes})
     });
-    if(res.status===401){ showToast('Your session expired. Please log in again.'); logout(); boot(); return false; }
+    if(res.status===401){ if(currentSession){ logout(); showToast('Your session expired. Please log in again.'); } return false; }
     if(!res.ok){ showToast(data.error||'Could not save that.'); return false; }
 
     const i = DISHES_ROWS.findIndex(d=>String(d.id)===String(id));
@@ -2291,6 +2333,8 @@ function rqSign(r){
 async function rvStart(){
   if(!RESTAURANT) return;
   if(RV.rid !== RESTAURANT.id) rvReset();
+  if(NF_DAY){ RV.date = NF_DAY.date; RV.wantCenter = NF_DAY.b || null; RV.view = 'day'; NF_DAY = null; }   // r43: a notification's day
+  if(NF_SETTINGS){ NF_SETTINGS = false; RV.view = 'settings'; RV.settings = null; }                       // r43: a change to the settings
   rvRender();
   if(RV.view === 'settings'){ rvLoadSettings(true); return; }
   await Promise.all([ rvLoadDays(RV.date), rvLoadDay(RV.date, {quiet: !!RV.day}) ]);
@@ -2344,9 +2388,11 @@ async function rvLoadDay(date, opts){
       const scanned = RV.scan && RV.scan.booking && data.bookings.some(b => b.id === RV.scan.booking.id) ? RV.scan.booking.id : null;
       RV.centerId = scanned || rvDefaultCenter(); RV.armed = null;
     }
+    // r43: the table a tapped notification is about, in the middle
+    if(RV.wantCenter && data.bookings.some(b => b.id === RV.wantCenter)){ RV.centerId = RV.wantCenter; RV.armed = null; RV.wantCenter = null; if(!dayChanged) RV.forceEvening = true; }
     if(!document.getElementById('rv-evening')){ rvRender(); rqShowWanted(); return; }
     rvPaintDays(); rvPaintTop();
-    if(listChanged) rvPaintEvening();
+    if(listChanged || RV.forceEvening){ RV.forceEvening = false; rvPaintEvening(); }
     else { document.getElementById('rv-evening').classList.remove('busy'); rvRefreshLate(); }
     if(RV.sheet) rvPaintSheet();
     rqShowWanted();
@@ -3245,6 +3291,7 @@ async function rvLoadSettings(keepDraft){
   if(!RV.settings) rvRender();
   const gen = RV.gen;
   if(levelHere() >= 2) supLoad(keepDraft);            // r34: the support conversation, at the same time
+  if(!keepDraft || !DV.loaded) dvLoad();              // r43: your devices and this device's notifications
   try{
     const data = await rvApi({action:'staff_settings'});
     if(gen !== RV.gen) return;
@@ -3271,8 +3318,312 @@ function rvSettingsHtml(){
   return back
     + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
+    + dvCardHtml()                                     // r43: you and your devices (everyone, crew too)
     + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S)
     + rvGradeHtml(S) + rvSupportHtml();
+}
+
+// ── r43: YOU AND YOUR DEVICES (Sebastian, 26 Oct) ──
+// At the top of Settings, for everyone on the team (crew too):
+//   · notifications on this device — the kinds he chose: guest messages,
+//     big-party requests, new online bookings, cancellations, and the changes
+//     the team makes (each one only to those whose role sees it; api/_lib/push.js). The notifications themselves
+//     are shown by /sw.js, even with the app closed.
+//   · the phones and computers trusted on this account (a code by text message,
+//     then 60 days), each with Remove: removed is logged out at once.
+// (Sebastian, 26 Oct 22:56: the code only for a new device; the changes the team
+// makes come as notifications instead: "Changes by the team".)
+const DV_KINDS = [
+  ['messages', 'Guest messages', 'A guest writes about a table or a big party'],
+  ['requests', 'Big-party requests', 'A guest asks for a big table'],
+  ['bookings', 'New online bookings', 'A table booked on the website'],
+  ['cancellations', 'Cancellations', 'A guest cancels a table'],
+  ['changes', 'Changes by the team', 'Who changed the menu, prices, hours, team or settings, and when'],
+];
+const DV = { loaded:false, loading:false, error:null, devices:null, trustDays:30, off:false,
+             push:{ ready:false, key:null, allowed:[], on:false, kinds:[], busy:false } };
+
+async function myAccess(body){
+  const {res, data} = await callApi('/api/my-access', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+    body:JSON.stringify(body)
+  });
+  if(!res.ok){ const e = new Error(data.error||'Something went wrong. Please try again.'); e.status = res.status; e.data = data; throw e; }
+  return data;
+}
+
+function dvIos(){ const ua = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); }
+function dvApp(){ return typeof hfIsApp === 'function' && hfIsApp(); }
+function dvWhat(){ return dvApp() ? 'app' : (/Mobi|Android|iPhone/.test(navigator.userAgent || '') ? 'phone' : 'computer'); }
+// 'ok', 'ios-browser' (an iPhone in Safari: notifications come to the Home Screen app only), or 'no'.
+function dvSupport(){
+  if(dvIos() && !dvApp()) return 'ios-browser';
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'no';
+  return 'ok';
+}
+function dvPerm(){ try{ return 'Notification' in window ? Notification.permission : 'default'; }catch(e){ return 'default'; } }
+function dvB64(s){
+  const t = String(s||'').replace(/-/g,'+').replace(/_/g,'/'), b = atob(t + '='.repeat((4 - t.length % 4) % 4));
+  return Uint8Array.from(b, c => c.charCodeAt(0));
+}
+function dvSameKey(sub, key){
+  const k = sub && sub.options && sub.options.applicationServerKey;
+  if(!k) return true;
+  const a = new Uint8Array(k);
+  return a.length === key.length && a.every((x, i) => x === key[i]);
+}
+async function dvSub(){
+  if(dvSupport() !== 'ok') return null;
+  try{ const reg = await navigator.serviceWorker.getRegistration('/'); return reg ? await reg.pushManager.getSubscription() : null; }
+  catch(e){ return null; }
+}
+// This browser remembers whose notifications it carries, and which kinds, so a
+// subscription the browser replaced (or a new log-in after the 60 days) is saved again.
+function dvKept(){ try{ const k = JSON.parse(localStorage.getItem('hf_push')||'null'); return k && Array.isArray(k.kinds) ? k : null; }catch(e){ return null; } }
+function dvKeep(kinds){ try{ localStorage.setItem('hf_push', JSON.stringify({ who: ACCESS && ACCESS.tasterId, kinds: kinds })); }catch(e){} }
+function dvForget(){ try{ localStorage.removeItem('hf_push'); }catch(e){} }
+
+async function dvLoad(){
+  if(DV.loading || !currentSession) return;
+  DV.loading = true;
+  try{
+    const both = await Promise.all([ myAccess({action:'devices'}), myAccess({action:'push_key'}) ]);
+    DV.devices = both[0].devices; DV.trustDays = both[0].trustDays || 30;
+    DV.push.ready = !!both[1].ready; DV.push.key = both[1].key; DV.push.allowed = both[1].kinds || [];
+    DV.error = null; DV.off = false;
+    const sub = DV.push.ready ? await dvSub() : null;
+    if(sub){
+      const st = await myAccess({action:'push_state', subscription: sub.toJSON()});
+      DV.push.on = !!st.on; DV.push.kinds = st.kinds || [];
+    }else{ DV.push.on = false; DV.push.kinds = []; }
+  }catch(e){
+    if(e.status === 503 && !(e.data && e.data.reason === 'updating')) DV.off = true;     // migration 30 not run yet
+    else DV.error = e.message;                                                         // (or the update still going up)
+  }
+  DV.loaded = true; DV.loading = false;
+  dvPaint();
+}
+function dvPaint(){ const el = document.getElementById('dv-card'); if(el) el.outerHTML = dvCardHtml(); }
+
+function dvCardHtml(){
+  const head = '<div class="m-card" id="dv-card"><div class="m-eyebrow">You and your devices</div>';
+  if(DV.off) return head + '<div class="m-sub">Needs migration 30 first (Supabase, SQL editor).</div></div>';
+  if(!DV.loaded) return head + '<div class="m-sub">Loading…</div></div>';
+  if(DV.error && !DV.devices) return head + '<div class="m-err" style="margin:0 0 .6rem;">'+esc(DV.error)+'</div>'
+    + '<button type="button" class="m-revert" onclick="DV.loaded=false;DV.error=null;dvPaint();dvLoad()">Try again</button></div>';
+  return head + dvPushHtml() + dvListHtml() + '</div>';
+}
+
+function dvPushHtml(){
+  const P = DV.push, sup = dvSupport(), perm = dvPerm();
+  const title = '<div class="dv-h">Notifications on this '+(sup === 'ios-browser' ? 'iPhone' : dvWhat())+'</div>';
+  if(!P.allowed.length) return title + '<div class="m-sub">Your role has no notifications.</div>';
+  if(sup === 'ios-browser') return title
+    + '<div class="m-sub">On iPhone, notifications come to the <b>HF Staff</b> app, not to Safari:</div>'
+    + '<ol class="dv-steps"><li>In Safari, tap Share <span class="dv-share" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg></span> → <b>Add to Home Screen</b>.</li>'
+    + '<li>Open <b>HF Staff</b> from the Home Screen and log in (a code comes by text message: the app is a new device).</li>'
+    + '<li>Settings → <b>Turn on notifications</b> → Allow.</li></ol>';
+  if(sup === 'no') return title + '<div class="m-sub">This browser cannot show notifications. Use the HF Staff app on your phone, or Chrome, Edge, Firefox or Safari on a computer.</div>';
+  if(!P.ready) return title + '<div class="m-sub">Notifications are not set up yet: Seb’s Analytics adds two keys in Vercel.</div>';
+  if(perm === 'denied') return title + '<div class="m-sub dv-warn">Notifications are blocked here. '
+    + (dvIos() ? 'On the iPhone: Settings → Notifications → <b>HF Staff</b> → Allow Notifications.' : 'Allow them in the browser’s settings for this site (the icon at the left of the address).')
+    + ' Then come back to this page.</div>';
+  if(!P.on) return title
+    + '<div class="m-sub">A notification on this '+dvWhat()+' when something needs you, even with the app closed.</div>'
+    + '<button type="button" class="m-save dv-on" id="dv-on" onclick="dvPushOn(this)"'+(P.busy?' disabled':'')+'>'+(P.busy ? 'Turning on…' : 'Turn on notifications')+'</button>';
+  const rows = DV_KINDS.filter(k => P.allowed.includes(k[0])).map(function(k){
+    const on = P.kinds.includes(k[0]);
+    return '<div class="m-switch-row"><div><div class="m-switch-label">'+k[1]+'</div><div class="m-switch-note">'+k[2]+'</div></div>'
+      + '<button type="button" class="m-switch'+(on?' on':'')+'" id="dv-k-'+k[0]+'" role="switch" aria-checked="'+on+'" aria-label="'+k[1]+'"'
+      + (P.busy?' disabled':'')+' onclick="dvKind(\''+k[0]+'\')"></button></div>';
+  }).join('');
+  return title + '<div class="m-sub dv-onnote">On for this '+dvWhat()+'. Choose what comes:</div>' + rows
+    + '<div class="m-actions"><button type="button" class="m-revert" id="dv-test" onclick="dvTest(this)"'+(P.busy?' disabled':'')+'>Send a test</button>'
+    + '<button type="button" class="m-revert" id="dv-off" onclick="dvPushOff(this)"'+(P.busy?' disabled':'')+'>Turn off here</button></div>';
+}
+
+function dvDay(iso){ try{ return new Date(iso).toLocaleDateString('en-US', {month:'short', day:'numeric'}); }catch(e){ return ''; } }
+function dvUsed(iso){
+  const t = Date.parse(iso); if(!t) return '';
+  const days = Math.floor((Date.now() - t) / 86400000);
+  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : days < 30 ? days+' days ago' : dvDay(iso);
+}
+function dvListHtml(){
+  const list = DV.devices || [];
+  const rows = list.map(d => '<li class="dv-dev" id="dv-dev-'+Number(d.id)+'"><div class="dv-dev-t"><b>'+esc(d.label)+'</b>'
+    + (d.current ? ' <span class="dv-this">This device</span>' : '')
+    + '<small>Added '+esc(dvDay(d.added))+' · used '+esc(dvUsed(d.lastUsed))+' · trusted until '+esc(dvDay(d.trustedUntil))+'</small></div>'
+    + '<button type="button" class="m-person-x" onclick="dvRemove('+Number(d.id)+',this)">Remove</button></li>').join('');
+  return '<div class="dv-h dv-h2">Phones and computers on your account</div>'
+    + '<div class="m-sub">A new phone or computer needs a code by text message; then it is trusted for '+Number(DV.trustDays)+' days. '
+    + 'Remove one you no longer use, or one you don’t recognize: it is logged out at once.</div>'
+    + (rows ? '<ul class="dv-list">'+rows+'</ul>' : '<div class="m-sub">None.</div>');
+}
+
+async function dvRemove(id, btn){
+  const d = (DV.devices || []).find(x => Number(x.id) === Number(id));
+  const ask = d && d.current
+    ? 'Remove this device? You are logged out here, and logging in again needs a code by text message.'
+    : 'Remove '+(d ? d.label : 'this device')+'? It is logged out at once and its notifications stop.';
+  if(!confirm(ask)) return;
+  if(btn) btn.disabled = true;
+  try{
+    const r = await myAccess({action:'device_remove', id: Number(id)});
+    if(r.loggedOut){ dvForget(); logout(); showToast('This device was removed. Log in again to use it.'); boot(); return; }
+    DV.devices = (DV.devices || []).filter(x => Number(x.id) !== Number(id));
+    showToast('Removed · '+(d ? d.label : 'device'));
+  }catch(e){ if(e.status !== 401) showToast(e.message); }
+  dvPaint();
+}
+
+// "Turn on": the question first, straight from the tap (an iPhone asks only from a tap).
+async function dvPushOn(btn){
+  const P = DV.push;
+  if(P.busy) return;
+  let perm = dvPerm();
+  let asking = null;
+  if(perm === 'default') asking = Notification.requestPermission();
+  P.busy = true; if(btn){ btn.disabled = true; btn.textContent = 'Turning on…'; }
+  try{
+    if(asking) perm = await asking;
+    if(perm !== 'granted'){
+      P.busy = false; dvPaint();
+      if(perm !== 'denied') showToast('Notifications were not allowed. Tap again to choose.');
+      return;
+    }
+    const reg = await navigator.serviceWorker.register('/sw.js', {scope:'/'});
+    await navigator.serviceWorker.ready;
+    const key = dvB64(P.key);
+    let sub = await reg.pushManager.getSubscription();
+    if(sub && !dvSameKey(sub, key)){ try{ await sub.unsubscribe(); }catch(e){} sub = null; }
+    if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:key });
+    const kept = dvKept();
+    const kinds = kept && kept.who === (ACCESS && ACCESS.tasterId) ? kept.kinds : P.allowed.slice();
+    const d = await myAccess({action:'push_save', subscription: sub.toJSON(), kinds: kinds});
+    P.on = true; P.kinds = d.kinds || kinds; dvKeep(P.kinds);
+    showToast('Notifications are on for this '+dvWhat());
+  }catch(e){
+    showToast(e && e.message ? e.message : 'Could not turn notifications on.');
+  }
+  P.busy = false; dvPaint();
+}
+async function dvKind(kind){
+  const P = DV.push;
+  if(P.busy || !P.allowed.includes(kind)) return;
+  const sub = await dvSub();
+  if(!sub){ P.on = false; dvPaint(); return; }
+  const kinds = P.kinds.includes(kind) ? P.kinds.filter(k => k !== kind) : P.kinds.concat([kind]);
+  P.busy = true; P.kinds = kinds; dvPaint();
+  try{
+    const d = await myAccess({action:'push_save', subscription: sub.toJSON(), kinds: kinds});
+    P.kinds = d.kinds || kinds; dvKeep(P.kinds);
+    const name = (DV_KINDS.find(k => k[0] === kind) || [kind, kind])[1];
+    showToast(name + (P.kinds.includes(kind) ? ': on' : ': off'));
+  }catch(e){ if(e.status !== 401) showToast(e.message); P.kinds = P.kinds.includes(kind) ? P.kinds.filter(k => k !== kind) : P.kinds.concat([kind]); }
+  P.busy = false; dvPaint();
+}
+async function dvTest(btn){
+  const sub = await dvSub();
+  if(!sub){ DV.push.on = false; dvPaint(); return; }
+  if(btn) btn.disabled = true;
+  try{ await myAccess({action:'push_test', subscription: sub.toJSON()}); showToast('Sent: it arrives in a few seconds'); }
+  catch(e){ if(e.status === 410){ DV.push.on = false; dvForget(); dvPaint(); } if(e.status !== 401) showToast(e.message); }
+  if(btn) btn.disabled = false;
+}
+async function dvPushOff(btn){
+  const P = DV.push;
+  const sub = await dvSub();
+  P.busy = true; if(btn) btn.disabled = true;
+  try{
+    if(sub){ await myAccess({action:'push_off', subscription: sub.toJSON()}); try{ await sub.unsubscribe(); }catch(e){} }
+    P.on = false; P.kinds = []; dvForget();
+    showToast('Notifications are off on this '+dvWhat());
+  }catch(e){ if(e.status !== 401) showToast(e.message); }
+  P.busy = false; dvPaint();
+}
+// After every load of the page: a subscription the browser replaced, or one left on
+// an older device of this account (a new log-in after the 60 days), is saved again.
+async function dvResync(){
+  try{
+    if(!ACCESS || dvSupport() !== 'ok' || dvPerm() !== 'granted') return;
+    const kept = dvKept();
+    if(!kept || kept.who !== ACCESS.tasterId) return;
+    const sub = await dvSub();
+    if(!sub) return;
+    const st = await myAccess({action:'push_state', subscription: sub.toJSON()});
+    if(st.on && st.here) return;
+    await myAccess({action:'push_save', subscription: sub.toJSON(), kinds: kept.kinds});
+  }catch(e){ /* the next load tries again */ }
+}
+
+// ── r43: A TAPPED NOTIFICATION ──
+// /manager#chat=12&at=1 (a table's conversation), #reqchat=5&at=1 (a big party's),
+// #day=2026-10-27&b=40&at=1 (the day, that table in the middle) — #request= is r42's.
+// A change by the team: #dish=12&at=1 (that dish, open), #go=team|menu|settings&at=1.
+// at= is the restaurant, for someone at more than one.
+let NF_DAY = null, NF_DISH = null, NF_SETTINGS = false;
+function nfParse(){
+  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings)((?:&(?:b|at)=\d+)*)$/.exec(window.location.hash || '');
+  if(!m) return null;
+  const out = { kind:m[1], value:m[2], at:null, b:null };
+  m[3].split('&').filter(Boolean).forEach(function(p){ const kv = p.split('='); out[kv[0]] = Number(kv[1]); });
+  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings)$/.test(m[2]) : /^\d+$/.test(m[2]);
+  if(!ok || (out.b && m[1] !== 'day')) return null;
+  return out;
+}
+// Where a change notification goes: the tab (Team, Menu), Settings, or one dish open on the Menu.
+function nfPlace(n){
+  if(n.kind === 'dish'){ NF_DISH = Number(n.value); n = { kind:'go', value:'menu' }; }
+  if(n.value === 'settings'){ TAB = 'reservations'; NF_SETTINGS = true; return; }      // rvStart opens Settings
+  TAB = allowedTabs().includes(n.value) ? n.value : 'reservations';
+}
+function nfShowDish(){
+  if(!NF_DISH || TAB !== 'menu' || !DISHES_LOADED) return;
+  const id = NF_DISH; NF_DISH = null;
+  const d = rowFor(id);
+  if(!d){ showToast('That dish is not on this menu any more.'); return; }
+  openDishId = id; MG_Q = '';
+  MG_SIDE = isDrinkRow(d) ? 'drinks' : 'food';
+  render();
+  const el = document.getElementById('dish-' + id);
+  if(el) el.scrollIntoView({ block:'start' });
+}
+function nfAt(at){
+  if(!at || !ACCESS || !RESTAURANT || String(at) === String(RESTAURANT.id)) return;
+  if(ACCESS.restaurants.some(r => String(r.id) === String(at))) switchRestaurant(at);
+}
+function nfFromHash(){
+  const n = nfParse();
+  if(!n || !ACCESS || !RESTAURANT) return false;
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
+  nfAt(n.at);
+  if(n.kind === 'chat'){ msgOpenThread(Number(n.value)); return true; }
+  if(n.kind === 'reqchat'){ rqChatOpen(Number(n.value)); return true; }
+  if(n.kind === 'go' || n.kind === 'dish'){
+    if(MSG.open) msgHide();
+    nfPlace(n);
+    if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#' + TAB);
+    window.scrollTo(0, 0);
+    mountPage();
+    nfShowDish();
+    return true;
+  }
+  NF_DAY = { date:n.value, b:n.b };
+  if(MSG.open) msgHide();
+  if(TAB !== 'reservations' || RV.view !== 'day'){ TAB = 'reservations'; RV.view = 'day'; mountPage(); }
+  else rvStart();
+  return true;
+}
+// The app already open when a notification is tapped: /sw.js tells this page where to go.
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message', function(ev){
+    const m = ev.data || {};
+    if(m.hf !== 'open' || typeof m.url !== 'string' || m.url.indexOf('/manager#') !== 0) return;
+    const hash = m.url.slice(8);
+    if(window.location.hash === hash) window.dispatchEvent(new HashChangeEvent('hashchange'));
+    else window.location.hash = hash;
+  });
 }
 
 // ── r34: THE SANITARY INSPECTION GRADE ──
