@@ -30,6 +30,7 @@
 
 import { makeLimiter, allow, keyFor } from './auth.js';
 import { sb, tasterIdFromRequest, loadAccess, accessProblem, canEditDishes } from './roles.js';
+import { tellChange } from './changes.js';      // r43: a notification to the owners and managers
 
 export const TOP_KINDS = ['starters', 'entree', 'salads', 'drinks'];
 export const TOP_DEFAULT = 5;
@@ -104,9 +105,9 @@ export async function menuset(req, res, body, action) {
   if (!(await allow(writes ? writeLimiter : readLimiter, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many changes at once. Wait a moment and try again.' });
   }
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
   const problem = accessProblem(access);
-  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });
 
   const rid = Number(body.restaurantId);
   if (!Number.isInteger(rid) || rid < 1) return res.status(400).json({ error: 'Which restaurant?' });
@@ -171,6 +172,9 @@ async function topSave(res, rid, body, tasterId) {
     if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : ORDER_NOT_READY });
     row.caves_hidden = hidden;
   }
+  // r43: as it was, for the notification
+  const was = await sb(`/menu_settings?restaurant_id=eq.${rid}&select=*&limit=1`);
+  const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
   // Insert the row the first time, change it after (restaurant_id is the key).
   const saved = await sb('/menu_settings?on_conflict=restaurant_id', {
     method: 'POST',
@@ -181,7 +185,37 @@ async function topSave(res, rid, body, tasterId) {
     if (missing(saved)) return res.status(409).json({ error: NOT_READY });
     return res.status(502).json({ error: failWords('save the Top Rated settings', saved) });
   }
+  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden });
+  if (what) await tellChange(rid, tasterId, what, { go: 'menu' });
   return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at, order: orderOf(saved.data[0]) });
+}
+
+// r43: "changed Top Rated: Appetizers 5 → 3; Drinks off", "changed the order of the menu's sections", …
+const TOP_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', drinks: 'Drinks' };
+const CAVE_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', sides: 'Sides', desserts: 'Desserts', wines: 'Wines',
+  cocktails: 'Cocktails', beers: 'Beers', spirits: 'Spirits', shots: 'Shots', 'drinks-other': 'Other drinks' };
+export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden }) {
+  const parts = [];
+  if (hasTop) {
+    const a = topOf(prev), b = topOf(now), tops = [];
+    TOP_KINDS.forEach((k) => {
+      if (a[k] === b[k]) return;
+      tops.push(`${TOP_WORDS[k]} ${b[k] === 0 ? 'off' : a[k] === 0 ? 'on (' + b[k] + ')' : a[k] + ' → ' + b[k]}`);
+    });
+    if (tops.length) parts.push('changed Top Rated: ' + tops.join(', '));
+  }
+  if (hasOrder) {
+    const a = orderOf(prev), b = orderOf(now);
+    if (JSON.stringify(a.main) !== JSON.stringify(b.main)) parts.push('changed the order of the menu\'s sections');
+    if (JSON.stringify(a.drinks) !== JSON.stringify(b.drinks)) parts.push('changed the order of the drinks\' sections');
+  }
+  if (hasHidden) {
+    const a = orderOf(prev).hidden, b = orderOf(now).hidden;
+    const off = b.filter((k) => !a.includes(k)).map((k) => CAVE_WORDS[k] || k), on = a.filter((k) => !b.includes(k)).map((k) => CAVE_WORDS[k] || k);
+    if (off.length) parts.push('took ' + off.join(', ') + ' off the menu');
+    if (on.length) parts.push('put ' + on.join(', ') + ' back on the menu');
+  }
+  return parts.length ? parts.join('; ') : null;
 }
 
 // The order of one part of the menu: every dish of it, in the new order. The
@@ -230,5 +264,6 @@ async function orderSave(res, rid, body, tasterId, access) {
       if (!logged.ok) console.error('[menuset] change log write failed', logged.status);
     } catch (e) { console.error('[menuset] change log threw', e && e.message); }
   }
+  if (changed.length) await tellChange(rid, tasterId, `changed the order of ${cat ? String(cat).trim() : 'the dishes'} on the menu`, { go: 'menu' });
   return res.status(200).json({ ok: true, order: ids.map((id, i) => ({ id, sort_order: i + 1 })), changed: changed.length });
 }
