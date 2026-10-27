@@ -241,6 +241,18 @@ const TASTER_MODAL_HTML = `
         <button class="t-btn-ghost" onclick="goTStep(0)">← Back</button>
       </div>
 
+      <!-- STEP 30 (r43): a staff account on a phone or computer it has not used yet -->
+      <div class="t-step" id="t-step-30">
+        <div class="t-label">Confirm this device</div>
+        <div class="t-sub" id="dev-sent-to">This account works for a restaurant, so a new phone or computer needs a code. We sent a 4-digit code by text message to your phone.</div>
+        <input class="t-input t-input-code" id="dev-otp" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0000" maxlength="4" autocomplete="one-time-code" aria-label="The 4-digit code">
+        <div class="t-err" id="dev-otp-err"></div>
+        <button class="t-btn" id="dev-otp-btn" onclick="confirmDevice()">Confirm</button>
+        <div class="t-resend">Didn't get it? <a onclick="resendDeviceCode()">Send a new code</a></div>
+        <div class="t-hint">After this, this device is trusted for 60 days.</div>
+        <button class="t-btn-ghost" onclick="pendingDevice=null;goTStep(1)">← Back</button>
+      </div>
+
       <!-- STEP 20: RESET - phone -->
       <div class="t-step" id="t-step-20">
         <div class="t-label">Reset your PIN</div>
@@ -942,18 +954,83 @@ async function doLogin(){
   const btn=document.querySelector('#t-step-1 .t-btn');
   btn.disabled=true;btn.textContent='Logging in…';
   try{
-    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,pin})});
+    // r43: the device key this browser keeps for this phone number (a staff account's trusted device)
+    const key=hfDeviceKey(phone);
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,pin,devices:key?[key]:[],app:hfIsApp()})});
     const d=await res.json();
     if(res.ok&&d.success){
       saveSession(d.taster,d.session);
       document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+(d.taster.username?' ('+d.taster.username+')':'')+'!';
       goTStep(99);
+    }else if(res.ok&&d.needDevice){
+      // r43: a staff account on a new phone or computer: the code from the text message first
+      pendingDevice={challenge:d.challenge,phone:phone};
+      document.getElementById('dev-sent-to').textContent='This account works for a restaurant, so a new phone or computer needs a code. We sent a 4-digit code by text message to '+(d.phoneHint||'your phone')+'.';
+      document.getElementById('dev-otp').value='';
+      document.getElementById('dev-otp-err').style.display='none';
+      goTStep(30);
+      setTimeout(function(){try{document.getElementById('dev-otp').focus();}catch(e){}},60);
     }else{
       err.textContent=d.error||'Invalid phone or PIN. Please try again.';
       err.style.display='block';
     }
   }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
   btn.disabled=false;btn.textContent='Log In';
+}
+
+// ── r43: TRUSTED DEVICES (accounts with a role at a restaurant) ──
+// A staff account logs in on a trusted device only: the first time on a phone or
+// computer, a code goes by text message, and the server gives this browser a key
+// for that phone number (kept here, in hf_devices; the server keeps only its
+// SHA-256). Logging out keeps the key: the device stays trusted for its 60 days,
+// and the PIN is still asked every time. Guests never see any of this.
+let pendingDevice=null;      // {challenge, phone} between the PIN and the code
+function hfIsApp(){try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}}
+function hfDeviceKeys(){try{const o=JSON.parse(localStorage.getItem('hf_devices')||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{};}catch(e){return {};}}
+function hfDeviceKey(phone){const k=hfDeviceKeys()[phone];return typeof k==='string'&&/^[A-Za-z0-9_-]{43}$/.test(k)?k:null;}
+function hfKeepDevice(phone,key){
+  try{
+    const o=hfDeviceKeys();delete o[phone];o[phone]=key;
+    const names=Object.keys(o);while(names.length>5)delete o[names.shift()];    // a few accounts at most on one device
+    localStorage.setItem('hf_devices',JSON.stringify(o));
+  }catch(e){}
+}
+async function confirmDevice(){
+  const box=document.getElementById('dev-otp'),err=document.getElementById('dev-otp-err');
+  const code=(box.value||'').replace(/\D/g,'');
+  err.style.display='none';
+  if(!pendingDevice){goTStep(1);return;}
+  if(code.length!==4){err.textContent='Enter the 4-digit code.';err.style.display='block';return;}
+  const btn=document.getElementById('dev-otp-btn');
+  btn.disabled=true;btn.textContent='Checking…';
+  try{
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'device',challenge:pendingDevice.challenge,code:code,app:hfIsApp()})});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      if(d.device&&d.device.key)hfKeepDevice(pendingDevice.phone,d.device.key);
+      pendingDevice=null;
+      saveSession(d.taster,d.session);
+      document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+(d.taster.username?' ('+d.taster.username+')':'')+'!';
+      goTStep(99);
+    }else if(d.reason==='challenge'){
+      pendingDevice=null;
+      goTStep(1);
+      const le=document.getElementById('login-err');le.textContent=d.error||'Please log in again.';le.style.display='block';
+    }else{err.textContent=d.error||'That code did not work. Please try again.';err.style.display='block';}
+  }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Confirm';
+}
+async function resendDeviceCode(){
+  const err=document.getElementById('dev-otp-err');
+  err.style.display='none';
+  if(!pendingDevice){goTStep(1);return;}
+  try{
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'device_resend',challenge:pendingDevice.challenge})});
+    const d=await res.json();
+    if(res.ok&&d.success){showToast('A new code is on its way to '+(d.phoneHint||'your phone'));document.getElementById('dev-otp').value='';}
+    else if(d.reason==='challenge'){pendingDevice=null;goTStep(1);const le=document.getElementById('login-err');le.textContent=d.error||'Please log in again.';le.style.display='block';}
+    else{err.textContent=d.error||'Could not send a new code.';err.style.display='block';}
+  }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
 }
 
 // ── TURNSTILE ──
@@ -1032,10 +1109,11 @@ async function doResetPin(){
   const btn=document.querySelector('#t-step-22 .t-btn');
   btn.disabled=true;btn.textContent='Saving…';
   try{
-    const res=await fetch('/api/reset-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({verificationTicket:pendingResetTicket,phone_number:phone,pin})});
+    const res=await fetch('/api/reset-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({verificationTicket:pendingResetTicket,phone_number:phone,pin,app:hfIsApp()})});
     const d=await res.json();
     if(res.ok&&d.success){
       pendingResetTicket=null;
+      if(d.device&&d.device.key)hfKeepDevice(phone,d.device.key);   // r43: a staff account: this device is trusted
       saveSession(d.taster,d.session);
       document.getElementById('t-welcome-msg').textContent='Welcome back, '+d.taster.first_name+(d.taster.username?' ('+d.taster.username+')':'')+'!';
       goTStep(99);
