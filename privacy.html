@@ -206,7 +206,7 @@
     <tr>
       <td data-label="Information">Messages about a table or a big-party request<br><span style="font-weight:300;">if you or the restaurant write</span></td>
       <td data-label="Why we have it">So you can write to the restaurant about your table instead of calling &mdash; running late, an allergy, something you left behind &mdash; and read their answer. The restaurant can also write to you first about your table. Both of you can send photos and PDF files (a photo is made smaller on your phone before it is sent). We keep what is written, the files, when, and whether it has been read.</td>
-      <td data-label="Who can see it"><strong>You and the restaurant</strong>: its owners and managers, and the members of its staff the restaurant has allowed to answer guests. Their messages are signed with the first name of the person who wrote. Nobody else. A photo or file opens only through a link that works for one hour, given to the people in that conversation. The conversation closes when you arrive; you can open it again (see below).</td>
+      <td data-label="Who can see it"><strong>You and the restaurant</strong>: its owners and managers, and the members of its staff the restaurant has allowed to answer guests. Their messages are signed with the first name of the person who wrote. Nobody else. A photo or file opens only through a link that works for one hour, given to the people in that conversation. If a member of that staff has turned on notifications, your first name and the first words of your message also show in a notification on their phone or computer. The conversation closes when you arrive; you can open it again (see below).</td>
     </tr>
     <tr>
       <td data-label="Information">Email address<br><span style="font-weight:300;">when you book a table, or ask for a big one</span></td>
@@ -217,6 +217,16 @@
       <td data-label="Information">Support messages<br><span style="font-weight:300;">if you manage a restaurant and write to Seb&rsquo;s Analytics</span></td>
       <td data-label="Why we have it">So a restaurant&rsquo;s owners and managers can ask Seb&rsquo;s Analytics for help from Settings, and read the answer there. We keep what you write, your first name, when, and whether it has been read. When a message arrives, the other side gets an email with it, at the email address on their account.</td>
       <td data-label="Who can see it"><strong>The owners and managers of that restaurant, and Seb&rsquo;s Analytics.</strong> Nobody else &mdash; not the restaurant&rsquo;s other staff, and not guests.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Your phones and computers<br><span style="font-weight:300;">if you work at a restaurant</span></td>
+      <td data-label="Why we have it">An account with a role at a restaurant (crew, managers, owners) opens only on a phone or computer confirmed with a code sent by text message. For each one we keep a name such as &ldquo;iPhone &middot; Safari&rdquo; (from what your browser says it is), when it was added, last used and last confirmed, and until when it is trusted (60 days). The device keeps a random key; we keep only a scrambled form of it. If you turn on notifications, we also keep the address your device&rsquo;s notification service gives for it, and which notifications you chose.</td>
+      <td data-label="Who can see it"><strong>You and us.</strong> You see them in the manager page&rsquo;s Settings, and can remove any of them: a removed device is logged out at once.</td>
+    </tr>
+    <tr>
+      <td data-label="Information">Changes you make to a restaurant<br><span style="font-weight:300;">if you work there</span></td>
+      <td data-label="Why we have it">So that its owners and managers know who changed what, and when: the team, the menu and its prices, the hours and holidays, the rewards and the settings. Each change is sent as a notification with your first name, your handle and the time. Changes to dishes are also kept in the menu&rsquo;s history.</td>
+      <td data-label="Who can see it"><strong>That restaurant&rsquo;s owners and managers, and us.</strong> Not the rest of its staff.</td>
     </tr>
     <tr>
       <td data-label="Information">IP address</td>
@@ -233,7 +243,7 @@
 
 <h2>Cookies and what stays on your phone</h2>
 
-<p>We do not use cookies or tracking pixels. We do store two small pieces of information in your own browser, on your own device: the fact that you are logged in, and any dishes you have saved as favourites. They never leave your device, and clearing your browser data removes them.</p>
+<p>We do not use cookies or tracking pixels. We do store two small pieces of information in your own browser, on your own device: the fact that you are logged in, and any dishes you have saved as favourites. If you work at a restaurant, your browser also keeps the key that makes it a trusted device for your account. They never leave your device, and clearing your browser data removes them.</p>
 
 <h2>Checking in at a restaurant</h2>
 
@@ -278,11 +288,12 @@
     <tr><th>Company</th><th>What they do</th><th>What they receive</th></tr>
   </thead>
   <tbody>
-    <tr><td data-label="Company">Twilio</td><td data-label="What they do">Sends your verification text message.</td><td data-label="What they receive">Your phone number.</td></tr>
+    <tr><td data-label="Company">Twilio</td><td data-label="What they do">Sends your verification text messages, including the code that confirms a new phone or computer for a restaurant&rsquo;s staff.</td><td data-label="What they receive">Your phone number.</td></tr>
     <tr><td data-label="Company">Supabase</td><td data-label="What they do">Stores the database, and the photos and files sent in conversations (in private storage).</td><td data-label="What they receive">Everything listed above.</td></tr>
     <tr><td data-label="Company">Vercel</td><td data-label="What they do">Runs the website.</td><td data-label="What they receive">Information as it passes through, including your IP address.</td></tr>
     <tr><td data-label="Company">Cloudflare</td><td data-label="What they do">Checks that a real person is signing up, not a machine.</td><td data-label="What they receive">Technical signals from your browser.</td></tr>
     <tr><td data-label="Company">Resend</td><td data-label="What they do">Sends the emails about your booking: the confirmation, the reminder, the link to cancel or to write to the restaurant, and (without an account) the one email saying the restaurant answered or wrote to you. When you ask for a big table, it sends the restaurant an email saying so. For restaurant owners and managers, it also sends the email that says a support message arrived.</td><td data-label="What they receive">Your email address, your first name, and the email itself with the details of that booking. For a big-party request: the restaurant&rsquo;s addresses, with your first name, how many people and the day &mdash; not your phone, your email or your words. Never the words of your messages to a restaurant. A support email carries the words of that support message. Resend keeps a copy of each email it sends for a limited time.</td></tr>
+    <tr><td data-label="Company">Apple, Google, Mozilla and Microsoft</td><td data-label="What they do">Their notification services carry the notifications a restaurant&rsquo;s staff turn on to their phones and computers.</td><td data-label="What they receive">The notification sealed so that only that device can open it, and the device&rsquo;s notification address. They cannot read what it says.</td></tr>
     <tr><td data-label="Company">Upstash</td><td data-label="What they do">Counts login attempts to block attacks.</td><td data-label="What they receive">A scrambled form of your phone number, IP address and, when you book, email address &mdash; not the originals.</td></tr>
   </tbody>
 </table>
@@ -299,6 +310,8 @@
 <p><strong>Bookings are kept as the restaurant&rsquo;s reservation book.</strong> If you ask us to delete your account &mdash; or a booking, even one you made without an account &mdash; we replace your name, phone number and email address on those bookings with a placeholder. The restaurant keeps only the count.</p>
 
 <p><strong>Messages about a table are kept 90 days after the table, then deleted</strong> &mdash; for you and for the restaurant, every message in the conversation, with its photos and files (a file chosen but never sent is deleted the next day). Until then the conversation can be opened again: you can write about something you left behind as often as you need for 24 hours after it first closes (usually when you arrive), and once more after that; the restaurant can open it at any time. The link in a booking email works for the same 90 days, so that you can write without an account; after that it opens nothing.</p>
+
+<p><strong>The list of a staff account&rsquo;s phones and computers</strong>, the removed ones included, is kept with the account as a record of where it was opened, and deleted with it. A device&rsquo;s notifications stop and its notification address is deleted when the device is removed, when notifications are turned off on it, or when its notification service says it no longer takes them.</p>
 
 <p><strong>Support messages</strong> between a restaurant and Seb&rsquo;s Analytics are kept while the restaurant uses Seb&rsquo;s Analytics, and deleted when it leaves. You can ask us to delete yours sooner.</p>
 
@@ -323,7 +336,7 @@
 
 <h2>Keeping it safe</h2>
 
-<p>Your PIN is stored scrambled, protected by a secret key held outside the database, so that even someone who obtained a copy of the database could not work out your PIN. Access to customer information is restricted to the server itself; the code that runs in your browser cannot read it. Nothing online is ever perfectly safe, and we do not claim otherwise &mdash; but if there is ever a breach affecting your information, we will tell you.</p>
+<p>Your PIN is stored scrambled, protected by a secret key held outside the database, so that even someone who obtained a copy of the database could not work out your PIN. Access to customer information is restricted to the server itself; the code that runs in your browser cannot read it. Accounts that work at a restaurant also need a phone or computer confirmed with a code sent by text message, and when one is added, the account gets an email about it (if it has an email address). Nothing online is ever perfectly safe, and we do not claim otherwise &mdash; but if there is ever a breach affecting your information, we will tell you.</p>
 
 <h2>Changes</h2>
 
