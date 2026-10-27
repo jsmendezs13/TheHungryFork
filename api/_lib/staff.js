@@ -31,6 +31,8 @@ import { loadBooking, todayIn, clockIn, cleanDate, cleanText } from './booking.j
 import { cleanArrivalToken } from './qr.js';
 import { waitingOnly, addHandles } from './guests.js';
 import { staffLoyalty, cleanLoyalty, visitFromTable, undoVisitFromTable } from './loyalty.js';
+// r43 (Sebastian, 26 Oct 22:56): every change to the settings is a notification to the owners and managers.
+import { tellChange, describeRules, describeLoyalty, describeHours, dayWords, clock12 } from './changes.js';
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -132,12 +134,12 @@ export async function staff(req, res, body, action, helpers = {}) {
 
 // ── WHO IS ASKING ─────────────────────────────────────────────────────────────
 // Answers the request itself and returns null when the caller may not go on.
-async function gate(res, tasterId, restaurantId, need) {
+async function gate(res, tasterId, restaurantId, need, req) {
   const rid = Number(restaurantId);
   if (!Number.isInteger(rid) || rid < 1) { res.status(400).json({ error: 'Which restaurant?' }); return null; }
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
   const problem = accessProblem(access);
-  if (problem) { res.status(problem.status).json({ error: problem.error }); return null; }
+  if (problem) { res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) }); return null; }
   const level = levelAt(access, rid);
   if (level < need) {
     res.status(403).json({
@@ -177,7 +179,7 @@ async function settingsFor(res, rid) {
 
 // ── THE DAY CAROUSEL ──────────────────────────────────────────────────────────
 async function days(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew, req);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
   if (!s) return;
@@ -209,7 +211,7 @@ function dressDay(r) {
 
 // ── ONE DAY: THE BOOKINGS, THE ROOMS, THE REQUESTS ────────────────────────────
 async function day(req, res, body, tasterId, helpers = {}) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew, req);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
   if (!s) return;
@@ -395,9 +397,9 @@ async function scan(req, res, body, tasterId) {
   // Who is asking comes first, so a real token and a made-up one go the same
   // way: someone with no role anywhere never makes the table be looked up
   // (review, 1 Oct).
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43
   const problem = accessProblem(access);
-  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });
   const staffSomewhere = access.isPlatformAdmin
     || Object.values(access.byRestaurant || {}).some((e) => e && e.level >= LEVEL.crew);
   if (!staffSomewhere) return res.status(404).json(NOT_HERE);
@@ -450,7 +452,7 @@ async function mark(req, res, body, tasterId) {
   // table only, and only Arrived. Everything else still needs a manager.
   const scanned = to === 'seated' && cleanArrivalToken(body.token) && sameToken(row.arrival_token, cleanArrivalToken(body.token));
   delete row.arrival_token;                 // never goes back to the page
-  const who = await gate(res, tasterId, row.restaurant_id, scanned ? LEVEL.crew : LEVEL.manager);
+  const who = await gate(res, tasterId, row.restaurant_id, scanned ? LEVEL.crew : LEVEL.manager, req);
   if (!who) return;
   await addHandles([row]);                  // after the check: nobody else's table is looked at
 
@@ -551,7 +553,7 @@ async function answer(req, res, body, tasterId, helpers) {
     return res.status(404).json({ error: ACCEPT_REFUSED.gone });
   }
   const q = found.data[0];
-  const who = await gate(res, tasterId, q.restaurant_id, LEVEL.manager);
+  const who = await gate(res, tasterId, q.restaurant_id, LEVEL.manager, req);
   if (!who) return;
   if (q.status !== 'new') return res.status(409).json({ error: ACCEPT_REFUSED.answered });
 
@@ -652,10 +654,12 @@ function offsetAt(ms, timezone) {
 // The restaurant's own rules for its own rewards. Managers and owners choose;
 // crew see them. The count of dishes so far is never touched from here.
 async function saveLoyalty(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const clean = cleanLoyalty(body.loyalty);
   if (clean.error) return res.status(400).json({ error: clean.error });
+  const was = await sb(`/loyalty_settings?restaurant_id=eq.${who.rid}&select=*&limit=1`);       // r43: as it was
+  const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
   const saved = await sb('/loyalty_settings?on_conflict=restaurant_id', {
     method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
     body: JSON.stringify({ restaurant_id: who.rid, ...clean.row, updated_at: new Date().toISOString(), updated_by: tasterId }),
@@ -666,6 +670,8 @@ async function saveLoyalty(req, res, body, tasterId) {
     });
   }
   console.log('[staff:loyalty] taster', tasterId, 'saved rewards for', who.rid, JSON.stringify(clean.row));
+  const what = describeLoyalty(prev, clean.row);
+  if (what) await tellChange(who.rid, tasterId, what, { go: 'settings' });
   return res.status(200).json({ success: true, loyalty: await staffLoyalty(who.rid) });
 }
 
@@ -692,10 +698,12 @@ export async function gradeOf(rid, timezone = 'America/New_York') {
 }
 
 async function saveGrade(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const grade = body.grade === null || body.grade === '' || body.grade === 'none' ? null : body.grade;
   if (grade !== null && !(typeof grade === 'string' && GRADES.includes(grade))) return res.status(400).json({ error: 'The grade is A, B, C, or none.' });
+  const was = await sb(`/restaurants?id=eq.${who.rid}&select=sanitary_grade`);                 // r43: as it was
+  const prevGrade = was.ok && Array.isArray(was.data) && was.data[0] ? was.data[0].sanitary_grade || null : null;
   const saved = await sb(`/restaurants?id=eq.${who.rid}`, {
     method: 'PATCH', headers: { Prefer: 'return=representation' },
     body: JSON.stringify({ sanitary_grade: grade, sanitary_grade_at: new Date().toISOString(), sanitary_grade_by: tasterId }),
@@ -713,13 +721,16 @@ async function saveGrade(req, res, body, tasterId) {
     return res.status(502).json({ error: 'Could not save the grade (the database answered ' + st + '). Please try again.' });
   }
   console.log('[staff:grade] taster', tasterId, 'set the grade of', who.rid, 'to', grade || 'none');
+  if (prevGrade !== grade) {
+    await tellChange(who.rid, tasterId, grade ? `set the sanitary grade on the menu: ${prevGrade || 'none'} → ${grade}` : `took the sanitary grade off the menu (it was ${prevGrade})`, { go: 'settings' });
+  }
   const s = await loadBooking(who.rid).catch(() => null);
   const tz = (s && s.settings && s.settings.timezone) || 'America/New_York';
   return res.status(200).json({ success: true, grade: await gradeOf(who.rid, tz) });
 }
 
 async function settingsRead(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.crew, req);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
   if (!s) return;
@@ -808,7 +819,7 @@ const NUMBER_RULES = {
 const SWITCH_RULES = { enabled: 'is_enabled', emailEnabled: 'email_enabled', autoReleaseLate: 'auto_release_late' };
 
 async function saveRules(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
   if (!s) return;
@@ -853,6 +864,8 @@ async function saveRules(req, res, body, tasterId) {
     return res.status(502).json({ error: 'Could not save the rules (the database answered ' + saved.status + ').' });
   }
   console.log('[staff:rules] taster', tasterId, 'changed', Object.keys(patch).join(','), 'at', who.rid);
+  const what = describeRules(s.settings, patch);
+  if (what) await tellChange(who.rid, tasterId, what, { go: 'settings' });
   return res.status(200).json({ success: true, rules: rulesOut(saved.data[0]) });
 }
 
@@ -909,7 +922,7 @@ async function requestMailOut(rid, st) {
 }
 
 async function saveRequestMail(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
   if (!s) return;
@@ -933,6 +946,11 @@ async function saveRequestMail(req, res, body, tasterId) {
     return res.status(502).json({ error: 'Could not save it (the database answered ' + saved.status + ').' });
   }
   console.log('[staff:request-mail] taster', tasterId, 'set', body.staff ? 'team on' : 'team off', to.length, 'addresses at', who.rid);
+  const before = Array.isArray(s.settings.request_mail_to) ? s.settings.request_mail_to : [];
+  const parts = [];
+  if ((s.settings.request_mail_staff !== false) !== body.staff) parts.push(`owners and managers ${body.staff ? 'on' : 'off'}`);
+  if (JSON.stringify([...before].sort()) !== JSON.stringify([...to].sort())) parts.push(`other addresses ${before.length} → ${to.length}${before.length === to.length ? ' (changed)' : ''}`);
+  if (parts.length) await tellChange(who.rid, tasterId, `changed who gets the emails about big parties: ${parts.join('; ')}`, { go: 'settings' });
   return res.status(200).json({ success: true, requestMail: await requestMailOut(who.rid, saved.data[0]) });
 }
 
@@ -976,20 +994,21 @@ function hoursKey(list) {
 }
 
 async function saveHours(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const checked = checkHours(body.hours);
   if (checked.error) return res.status(400).json({ error: checked.error });
 
   // The page sends the hours its editor started from. If someone else saved
   // different hours in the meantime, this save would silently undo theirs: say
-  // so and send theirs back instead.
+  // so and send theirs back instead. (r43: read every time, for the notification.)
+  const now = await sb(`/restaurant_hours?restaurant_id=eq.${who.rid}&select=weekday,opens_at,closes_at`);
+  const current = now.ok && Array.isArray(now.data)
+    ? now.data.map((h) => ({ weekday: h.weekday, opens: String(h.opens_at).slice(0, 5), closes: String(h.closes_at).slice(0, 5) })) : null;
   if (Array.isArray(body.base)) {
-    const now = await sb(`/restaurant_hours?restaurant_id=eq.${who.rid}&select=weekday,opens_at,closes_at`);
-    if (!now.ok || !Array.isArray(now.data)) {
+    if (!current) {
       return res.status(502).json({ error: 'Could not read the hours (the database answered ' + now.status + '). Nothing was changed.' });
     }
-    const current = now.data.map((h) => ({ weekday: h.weekday, opens: String(h.opens_at).slice(0, 5), closes: String(h.closes_at).slice(0, 5) }));
     if (hoursKey(current) !== hoursKey(body.base)) {
       return res.status(409).json({
         error: 'Someone else changed the hours a moment ago. Their hours are on the screen now; make your change again.',
@@ -1009,12 +1028,14 @@ async function saveHours(req, res, body, tasterId) {
     });
   }
   console.log('[staff:hours] taster', tasterId, 'saved', checked.hours.length, 'services at', who.rid);
+  const what = current ? describeHours(current, checked.hours) : 'changed the opening hours';
+  if (what) await tellChange(who.rid, tasterId, what, { go: 'settings' });
   return res.status(200).json({ success: true, hours: checked.hours });
 }
 
 // ── HOLIDAYS AND SPECIAL DAYS ─────────────────────────────────────────────────
 async function closure(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const s = await settingsFor(res, who.rid);
   if (!s) return;
@@ -1027,6 +1048,9 @@ async function closure(req, res, body, tasterId) {
       method: 'DELETE', headers: { Prefer: 'return=representation' },
     });
     if (!gone.ok) return res.status(502).json({ error: 'Could not remove that day (the database answered ' + gone.status + ').' });
+    if (Array.isArray(gone.data) && gone.data.length) {
+      await tellChange(who.rid, tasterId, `removed the special day ${dayWords(date)}: open as usual`, { go: 'settings' });
+    }
     return res.status(200).json({ success: true, removed: date });
   }
   if (body.op !== 'add') return res.status(400).json({ error: 'Add or remove?' });
@@ -1055,12 +1079,15 @@ async function closure(req, res, body, tasterId) {
   const hits = await sb(`/reservations?restaurant_id=eq.${who.rid}&local_date=in.(${date},${addDays(date, 1)})` +
                         '&status=in.(booked,seated)&select=id,local_date,local_time&limit=1000');
   const bookedTables = hits.ok && Array.isArray(hits.data) ? hits.data.filter((h) => inServiceDay(h, date)).length : 0;
+  const why = cleanText(body.reason, 80);
+  await tellChange(who.rid, tasterId, (opens ? `set special hours on ${dayWords(date)}: ${clock12(opens)}–${clock12(closes)}` : `closed the restaurant on ${dayWords(date)}`)
+    + (why ? ` (${why})` : '') + (bookedTables ? ` · ${bookedTables} table${bookedTables === 1 ? '' : 's'} already booked` : ''), { go: 'settings' });
   return res.status(200).json({ success: true, date, opens, closes, bookedTables });
 }
 
 // ── ROOMS ─────────────────────────────────────────────────────────────────────
 async function area(req, res, body, tasterId) {
-  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager);
+  const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
   const name = String(body.name || '').trim().replace(/\s+/g, ' ').replace(/[<>"]/g, '');
   if (name.length < 2 || name.length > 40) return res.status(400).json({ error: 'A room name is 2 to 40 letters.' });
@@ -1076,6 +1103,7 @@ async function area(req, res, body, tasterId) {
     });
     if (made.status === 409) return res.status(409).json({ error: `There is already a room called "${name}".` });
     if (!made.ok) return res.status(502).json({ error: 'Could not add the room (the database answered ' + made.status + ').' });
+    await tellChange(who.rid, tasterId, `added the room ${name} (${seats} seats, ${tables} tables${active ? '' : ', closed'})`, { go: 'settings' });
     return res.status(200).json({ success: true, area: outArea(made.data[0]) });
   }
   if (body.op !== 'save') return res.status(400).json({ error: 'Add or save?' });
@@ -1089,6 +1117,9 @@ async function area(req, res, body, tasterId) {
       return res.status(409).json({ error: 'Keep at least one room open, or switch Online booking off instead.' });
     }
   }
+  // r43: as it was, for the notification
+  const was = await sb(`/restaurant_areas?id=eq.${id}&restaurant_id=eq.${who.rid}&select=name,seats,tables,is_active`);
+  const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
   // restaurant_id in the filter as well as the id: a room of another restaurant
   // is simply not found.
   const saved = await sb(`/restaurant_areas?id=eq.${id}&restaurant_id=eq.${who.rid}`, {
@@ -1098,6 +1129,14 @@ async function area(req, res, body, tasterId) {
   if (saved.status === 409) return res.status(409).json({ error: `There is already a room called "${name}".` });
   if (!saved.ok) return res.status(502).json({ error: 'Could not save the room (the database answered ' + saved.status + ').' });
   if (!Array.isArray(saved.data) || !saved.data.length) return res.status(404).json({ error: 'That room is not there any more.' });
+  if (prev) {
+    const parts = [];
+    if (prev.name !== name) parts.push(`renamed to ${name}`);
+    if (Number(prev.seats) !== seats) parts.push(`seats ${prev.seats} → ${seats}`);
+    if (Number(prev.tables) !== tables) parts.push(`tables ${prev.tables} → ${tables}`);
+    if (!!prev.is_active !== active) parts.push(active ? 'open for bookings' : 'closed for bookings');
+    if (parts.length) await tellChange(who.rid, tasterId, `changed the room ${prev.name}: ${parts.join('; ')}`, { go: 'settings' });
+  }
   return res.status(200).json({ success: true, area: outArea(saved.data[0]) });
 }
 
