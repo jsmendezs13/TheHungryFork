@@ -62,15 +62,39 @@ export function tasterIdFromRequest(req) {
   }
 }
 
+// r43: the device a staff session belongs to (claim "dev", api/_lib/devices.js), or null.
+export function deviceIdFromRequest(req) {
+  const header = (req && req.headers && req.headers.authorization) || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  if (!token || !process.env.SUPABASE_JWT_SECRET) return null;
+  try {
+    const claims = jwt.verify(token, process.env.SUPABASE_JWT_SECRET, { algorithms: ['HS256'] });
+    const id = Number(claims.dev);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 // Ranked, so "at least a manager" is one comparison instead of a list of
 // role names that someone will forget to update.
 export const LEVEL = { none: 0, crew: 1, manager: 2, owner: 3, platform: 4 };
 
 // Reads the caller's real, current standing straight from the database.
-export async function loadAccess(tasterId) {
-  const [who, roles] = await Promise.all([
+//
+// r43 (Sebastian, 26 Oct): req is the request itself, so the session's device
+// can be checked. An account with a role (or the platform admin) must be on a
+// device that is still trusted (not removed, not past its 60 days): otherwise
+// access.deviceProblem is set and accessProblem answers 401 "log in again". A
+// caller that forgets to pass req is refused for a staff account (fail closed).
+// Before migration 30 (no staff_devices table) nothing is checked.
+export async function loadAccess(tasterId, req) {
+  const dev = req ? deviceIdFromRequest(req) : null;
+  const [who, roles, device] = await Promise.all([
     sb(`/tasters?id=eq.${tasterId}&select=id,first_name,username,is_platform_admin`),
     sb(`/restaurant_roles?taster_id=eq.${tasterId}&select=restaurant_id,role,can_issue_codes`),
+    dev ? sb(`/staff_devices?id=eq.${dev}&taster_id=eq.${Number(tasterId)}&select=id,label,verified_at,trusted_until,last_used_at,revoked_at&limit=1`)
+        : sb(`/staff_devices?taster_id=eq.${Number(tasterId)}&select=id&limit=1`),
   ]);
 
   if (!who.ok || !Array.isArray(who.data) || who.data.length === 0) return null;
@@ -103,13 +127,37 @@ export async function loadAccess(tasterId) {
     }
   });
 
+  // r43: the device. Staff = the platform admin, anyone with a role, or anyone
+  // whose roles could not be read (never skipped on a guess).
+  const isPlatformAdmin = !!who.data[0].is_platform_admin;
+  const staff = isPlatformAdmin || rolesUnavailable || Object.keys(byRestaurant).length > 0;
+  let deviceRow = null, deviceProblem = null, devicesOff = false;
+  if (device && !device.ok && device.status === 404) devicesOff = true;          // before migration 30
+  else if (staff && device && !device.ok) deviceProblem = 'unavailable';      // the check could not be made: not a logout
+  else if (staff) {
+    const row = dev && device && device.ok && Array.isArray(device.data) && device.data.length ? device.data[0] : null;
+    if (row && !row.revoked_at && Date.parse(row.trusted_until) > Date.now()) {
+      deviceRow = row;
+      if (!row.last_used_at || Date.now() - Date.parse(row.last_used_at) > 3600 * 1000) {
+        await sb(`/staff_devices?id=eq.${Number(row.id)}`, {
+          method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ last_used_at: new Date().toISOString() }),
+        });
+      }
+    } else {
+      deviceProblem = !dev ? 'none' : (row && row.revoked_at ? 'removed' : row ? 'expired' : 'unknown');
+    }
+  }
+
   return {
     tasterId: who.data[0].id,
     firstName: who.data[0].first_name,
     handle: who.data[0].username || null,       // r27: shown beside the name (Santiago (Santi_V))
-    isPlatformAdmin: !!who.data[0].is_platform_admin,
+    isPlatformAdmin,
     byRestaurant,
     rolesUnavailable,
+    device: deviceRow,                           // r43: the trusted device of this session (null for guests)
+    deviceProblem,
+    devicesOff,
   };
 }
 
@@ -124,12 +172,22 @@ export async function loadAccess(tasterId) {
 // unreachable would be the opposite of helpful.
 export function accessProblem(access) {
   if (!access) return { status: 401, error: 'Please log in again.' };
+  // r43: when the roles cannot be read, that is the answer (502) — never a logout for a device a guest does not have.
   if (access.rolesUnavailable && !access.isPlatformAdmin) {
     return {
       status: 502,
       error: 'Could not read the permissions table, so we cannot tell what you are allowed to do. '
            + 'This is a problem on our side, not with your account. Please try again in a moment.',
     };
+  }
+  // r43: a staff session on a device that is not (or no longer) trusted.
+  if (access.deviceProblem === 'unavailable') {
+    return { status: 502, error: 'Could not check this device right now. Please try again in a moment.' };
+  }
+  if (access.deviceProblem) {
+    return { status: 401, reason: 'device', error: access.deviceProblem === 'removed'
+      ? 'This device was removed from your account. Please log in again.'
+      : 'Please log in again: this device needs to be confirmed with a code.' };
   }
   return null;
 }
