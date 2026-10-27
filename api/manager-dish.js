@@ -28,6 +28,7 @@
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, canEditDishes, sb, accessProblem } from './_lib/roles.js';
 import { TEXT_FIELDS, isAllergen, DRINK_KINDS, PAIRINGS, DRINK_PRICES } from './_lib/dish-fields.js';
+import { tellChange, describeDish } from './_lib/changes.js';     // r43: a notification to the owners and managers
 
 // Generous, because a manager marking a busy Friday night sold out will click
 // a lot. Tight enough that a stolen session cannot rewrite the whole menu.
@@ -129,9 +130,9 @@ export default async function handler(req, res) {
   const before = found.data[0];
   const restaurantId = before.restaurant_id;
 
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
   const problem = accessProblem(access);
-  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });
 
   if (!canEditDishes(access, restaurantId)) {
     // Same message whether the account was never a manager or was removed five
@@ -240,5 +241,7 @@ export default async function handler(req, res) {
   }
 
   console.log('[manager-dish] taster', tasterId, 'dish', id, Object.keys(patch).join(','));
+  const what = describeDish(before, patch);
+  if (what) await tellChange(restaurantId, tasterId, what, { dish: id });
   return res.status(200).json({ success: true, dish: updated.data[0] });
 }
