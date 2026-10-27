@@ -55,9 +55,9 @@ export async function support(req, res, body, action) {
   } else if (!(await allow(readLimiter, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
   }
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
   const problem = accessProblem(access);
-  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });
 
   if (action === 'support_unread') return unread(res, access);
   if (action === 'support_thread') return thread(res, access, body);
