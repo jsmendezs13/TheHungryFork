@@ -45,6 +45,7 @@ import { loadBooking, clockIn, cleanDate } from './booking.js';
 import { serviceDateOf, serviceToday, addDays, canMessageAt } from './staff.js';
 import { waitingOnly, addHandles, handlesById } from './guests.js';
 import { makeSlot, claimFile, filesById, fileLinks, fileLine, fileError } from './files.js';
+import { notifyStaff, line } from './push.js';      // r43: the team's phones
 
 export const KEEP_DAYS = 90;
 export const KEEP_MS = KEEP_DAYS * 24 * 3600 * 1000;
@@ -375,15 +376,22 @@ export async function guest(req, res, body, action, helpers = {}) {
         }
       }
     }
-    let fileId = null;
+    let fileId = null, sentKind = null;
     if (hasFile) {
       const claimed = await claimFile(body.fileId, { restaurantId: row.restaurant_id, reservationId: row.id }, { fromGuest: true, keepUntil: keepUntilOf(row) });
       if (claimed.error) return fileError(res, claimed.error);
       fileId = claimed.file.id;
+      sentKind = claimed.file.kind;
     }
     const saved = await addMessage(row, { from_guest: true, author_id: tasterId || null, body: text, ...(fileId ? { file_id: fileId } : {}) });
     if (!saved) return res.status(502).json({ error: 'Your message was not sent. Please try again.' });
     console.log('[messages] guest wrote about', row.code, fileId ? '(with a file)' : '');
+    // r43: a notification to those who answer guests there (the words, as a message app does).
+    await notifyStaff(row.restaurant_id, 'messages', {
+      title: (place && place.name) || 'Guest message',
+      body: line(firstWordOf(row.guest_name) + ': ' + (text || (sentKind === 'pdf' ? 'sent a PDF' : 'sent a photo'))),
+      url: '/manager#chat=' + Number(row.id) + '&at=' + Number(row.restaurant_id), tag: 'chat-' + Number(row.id),
+    });
     return guestReply(res, row, timezone, place);
   }
   return res.status(400).json({ error: 'Unknown action.' });
@@ -479,7 +487,7 @@ async function inbox(req, res, body, helpers = {}) {
 
   let staff = null;
   if (body.staff) {
-    const access = await loadAccess(tasterId);
+    const access = await loadAccess(tasterId, req);          // r43: the session's device too
     if (access && !accessProblem(access)) {
       // The restaurants this account answers at. Sebastian's count is the
       // restaurants he holds a role at, not every client's (he would always see one).
@@ -507,12 +515,12 @@ async function inbox(req, res, body, helpers = {}) {
 // ── THE RESTAURANT ────────────────────────────────────────────────────────────
 // Who may read and answer at this restaurant. Answers the request itself and
 // returns null when they may not.
-export async function msgAccess(res, tasterId, restaurantId, { hide } = {}) {
+export async function msgAccess(res, tasterId, restaurantId, { hide, req } = {}) {
   const rid = Number(restaurantId);
   if (!Number.isInteger(rid) || rid < 1) { res.status(400).json({ error: 'Which restaurant?' }); return null; }
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
   const problem = accessProblem(access);
-  if (problem) { res.status(problem.status).json({ error: problem.error }); return null; }
+  if (problem) { res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) }); return null; }
   const level = levelAt(access, rid);
   if (level < LEVEL.crew) {
     // A table at another restaurant reads exactly like a table that does not exist.
@@ -546,7 +554,7 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
   if (!found.ok) return res.status(502).json({ error: 'Could not read the table (the database answered ' + found.status + ').' });
   const row = Array.isArray(found.data) && found.data.length ? found.data[0] : null;
   if (!row) return res.status(404).json({ error: NOT_THERE });
-  const who = await msgAccess(res, tasterId, row.restaurant_id, { hide: true });
+  const who = await msgAccess(res, tasterId, row.restaurant_id, { hide: true, req });
   if (!who) return;
   const loaded = await loadBooking(row.restaurant_id);
   const timezone = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
@@ -727,6 +735,8 @@ async function guestHasAccount(row) {
   return got.data.length > 0;
 }
 
+function firstWordOf(name) { return String(name || '').trim().split(/\s+/)[0] || 'A guest'; }
+
 function firstWord(name) {
   return String(name || '').trim().split(/\s+/)[0] || 'Guest';
 }
@@ -759,7 +769,7 @@ function closedNote(th, row, names, timezone) {
 // The conversations whose table is on that day (5 AM to 5 AM, like the list),
 // open and closed, plus the days around it that have any, for the strip.
 async function staffDay(req, res, body, tasterId) {
-  const who = await msgAccess(res, tasterId, body.restaurantId);
+  const who = await msgAccess(res, tasterId, body.restaurantId, { req });
   if (!who) return;
   const loaded = await loadBooking(who.rid);
   const timezone = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
