@@ -23,6 +23,12 @@
 
 import { makeLimiter, allow, keyFor, normalizeUsPhone } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, levelAt, LEVEL, sb, accessProblem } from './_lib/roles.js';
+// r43 (Sebastian, 26 Oct 22:56): every change to the team is a notification to the
+// owners and managers: who did it, what, and when (api/_lib/changes.js).
+import { tellChange, personName } from './_lib/changes.js';
+
+const ROLE_WORD = { owner: 'Owner', manager: 'Manager', crew: 'Crew' };
+const JOB_WORD = { host: 'Host', waiter: 'Waiter', kitchen: 'Kitchen', bar: 'Bar' };
 
 const ROLE_RANK = { crew: LEVEL.crew, manager: LEVEL.manager, owner: LEVEL.owner };
 
@@ -43,9 +49,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Which restaurant?' });
   }
 
-  const access = await loadAccess(tasterId);
+  const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
   const problem = accessProblem(access);
-  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });
 
   const myLevel = levelAt(access, restId);
   if (myLevel < LEVEL.manager) {
@@ -164,6 +170,7 @@ export default async function handler(req, res) {
     await syncAdminFlag(target.id);
 
     console.log('[roles] taster', tasterId, 'granted', role, 'to', target.id, 'at', restId);
+    await tellChange(restId, tasterId, `added ${await personName(target.id, { full: true })} to the team as ${ROLE_WORD[role]}`, { go: 'team' });
     return res.status(200).json({
       success: true,
       added: {
@@ -199,13 +206,14 @@ export default async function handler(req, res) {
     await syncAdminFlag(target.taster_id);
 
     console.log('[roles] taster', tasterId, 'revoked', target.role, 'from', target.taster_id);
+    await tellChange(restId, tasterId, `removed ${await personName(target.taster_id, { full: true })} (${ROLE_WORD[target.role] || target.role}) from the team`, { go: 'team' });
     return res.status(200).json({ success: true });
   }
 
   // ── CREW CODE PERMISSION ────────────────────────────────────────────────
   if (action === 'codes') {
     const rowId = Number(req.body.roleId);
-    const row = await sb(`/restaurant_roles?id=eq.${rowId}&select=id,restaurant_id,role`);
+    const row = await sb(`/restaurant_roles?id=eq.${rowId}&select=id,restaurant_id,role,taster_id,can_issue_codes`);
     if (!row.ok || !Array.isArray(row.data) || row.data.length === 0) {
       return res.status(404).json({ error: 'That role no longer exists.' });
     }
@@ -221,6 +229,10 @@ export default async function handler(req, res) {
       body: JSON.stringify({ can_issue_codes: !!canIssueCodes }),
     });
     if (!saved.ok) return res.status(500).json({ error: 'Could not save that.' });
+    if (!!target.can_issue_codes !== !!canIssueCodes) {
+      const who = await personName(target.taster_id, { full: true });
+      await tellChange(restId, tasterId, canIssueCodes ? `let ${who} give rewards` : `stopped ${who} from giving rewards`, { go: 'team' });
+    }
     return res.status(200).json({ success: true });
   }
 
@@ -242,6 +254,9 @@ export default async function handler(req, res) {
     if (target.role !== 'crew') {
       return res.status(400).json({ error: 'Managers and owners always answer guests. This is for crew.' });
     }
+    // r43: as it was, for the notification (before migration 19 these columns are not there: no words then)
+    const was = await sb(`/restaurant_roles?id=eq.${rowId}&select=taster_id,can_message,job`);
+    const prev = was.ok && Array.isArray(was.data) && was.data[0] ? was.data[0] : null;
     let patch;
     if (action === 'messages') {
       if (typeof canMessage !== 'boolean') return res.status(400).json({ error: 'On or off?' });
@@ -260,6 +275,15 @@ export default async function handler(req, res) {
       });
     }
     console.log('[roles] taster', tasterId, 'set', Object.keys(patch)[0], 'for role', rowId, 'at', restId);
+    if (prev) {
+      const who = await personName(prev.taster_id, { full: true });
+      if (action === 'messages' && !!prev.can_message !== !!patch.can_message) {
+        await tellChange(restId, tasterId, patch.can_message ? `let ${who} answer guest messages` : `stopped ${who} from answering guest messages`, { go: 'team' });
+      }
+      if (action === 'job' && (prev.job || null) !== patch.job) {
+        await tellChange(restId, tasterId, `set ${who}'s job: ${JOB_WORD[prev.job] || 'none'} → ${JOB_WORD[patch.job] || 'none'}`, { go: 'team' });
+      }
+    }
     return res.status(200).json({ success: true, canMessage: saved.data && saved.data[0] ? !!saved.data[0].can_message : undefined,
                                   job: saved.data && saved.data[0] ? saved.data[0].job || null : undefined });
   }
