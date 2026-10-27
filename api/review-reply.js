@@ -135,9 +135,9 @@ export default async function handler(req, res) {
       });
     }
   } else {
-    const access = await loadAccess(tasterId);
+    const access = await loadAccess(tasterId, req);         // r43: req, so the session's device is checked
     const problem = accessProblem(access);
-    if (problem) return res.status(problem.status).json({ error: problem.error });
+    if (problem) return res.status(problem.status).json({ error: problem.error, ...(problem.reason ? { reason: problem.reason } : {}) });
 
     if (!canReplyToReviews(access, review.restaurant_id)) {
       return res.status(403).json({ error: 'You do not have permission to reply for this restaurant.' });
