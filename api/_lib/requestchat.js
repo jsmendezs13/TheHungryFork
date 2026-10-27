@@ -30,6 +30,7 @@ import { loadBooking, todayIn } from './booking.js';
 import { cleanBody, staffName, whenLabel, msgAccess, MAX_BODY, KEEP_MS } from './messages.js';
 import { handlesById, addHandles } from './guests.js';
 import { makeSlot, claimFile, filesById, fileLinks, fileError, moveFiles } from './files.js';
+import { notifyStaff, line } from './push.js';      // r43: the team's phones
 
 const guestSend = makeLimiter({ requests: 12,  window: '10 m', prefix: 'resv:reqmsg:send' });
 const guestRead = makeLimiter({ requests: 900, window: '10 m', prefix: 'resv:reqmsg:read' });
@@ -233,6 +234,12 @@ export async function guestRequestChat(req, res, body, action) {
     }
     const saved = await addMessage(q, { from_guest: true, author_id: tasterId, body: text, ...(fileId ? { file_id: fileId } : {}) });
     if (!saved) return res.status(502).json({ error: 'Your message was not sent. Please try again.' });
+    // r43: a notification to those who answer guests there.
+    await notifyStaff(q.restaurant_id, 'messages', {
+      title: (place && place.name) || 'Guest message',
+      body: line((String(q.guest_name || '').trim().split(/\s+/)[0] || 'A guest') + ' (big party): ' + (text || (fileId ? 'sent a file' : ''))),
+      url: '/manager#reqchat=' + Number(q.id) + '&at=' + Number(q.restaurant_id), tag: 'reqchat-' + Number(q.id),
+    });
     console.log('[requestchat] guest wrote about request', q.id);
     return reply();
   }
@@ -332,7 +339,7 @@ export async function staffRequestChat(req, res, body, action, helpers = {}) {
   const q = found.row;
   if (!q) return res.status(404).json({ error: NOT_THERE });
   // The restaurant is the request's own, never the page's.
-  const who = await msgAccess(res, tasterId, q.restaurant_id, { hide: true });
+  const who = await msgAccess(res, tasterId, q.restaurant_id, { hide: true, req });
   if (!who) return;
   const loaded = await loadBooking(q.restaurant_id);
   const timezone = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
