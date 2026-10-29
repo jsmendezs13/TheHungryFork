@@ -236,7 +236,7 @@ export function icsFor({ code, startIso, minutes, restaurant, party, siteHost })
 // on purpose: a dark email is repainted unpredictably by dark-mode inboxes.
 const INK = '#2B211A', MUTED = '#6F6255', RED = '#C8261B', PAPER = '#FCF9F4', LINE = '#E9E0D3', HEAD = '#1E1714';
 
-function layout({ preheader, restaurantName, heading, intro, when, rows, notice, write, button, footer, qr }) {
+function layout({ preheader, restaurantName, heading, intro, when, rows, notice, share, write, button, footer, qr }) {
   const e = escapeHtml;
   const rowHtml = rows.map(([label, value, strong]) =>
     `<tr><td style="padding:9px 0;border-top:1px solid ${LINE};font:13px/1.4 Arial,Helvetica,sans-serif;color:${MUTED};width:110px;vertical-align:top;">${e(label)}</td>` +
@@ -260,7 +260,10 @@ function layout({ preheader, restaurantName, heading, intro, when, rows, notice,
     ${qr ? qrBlock(qr) : ''}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}</table>
   </td></tr>
-  ${notice ? `<tr><td style="padding:10px 24px 4px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};">${notice}</td></tr>` : ''}
+  ${notice ? `<tr><td style="padding:10px 24px 4px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};">${notice}</td></tr>` : ''}${share ? `<tr><td style="padding:18px 24px 4px;">
+    <p style="margin:0 0 10px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${INK};">${share.lead}</p>
+    <a href="${e(share.href)}" style="display:inline-block;padding:13px 22px;background:${INK};border:1px solid ${INK};border-radius:999px;font:bold 13px/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#ffffff;text-decoration:none;">${e(share.label)}</a>
+  </td></tr>` : ''}
   ${write ? `<tr><td style="padding:18px 24px 4px;">
     <p style="margin:0 0 10px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${INK};">${write.lead}</p>
     <a href="${e(write.href)}" style="display:inline-block;padding:13px 22px;background:${RED};border:1px solid ${RED};border-radius:999px;font:bold 13px/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#ffffff;text-decoration:none;">${e(write.label)}</a>
@@ -319,7 +322,24 @@ function textDetails({ when, party, areaName, code, restaurant, withQr }) {
 
 // qrCid: the table's QR is attached under this name (api/_lib/qr.js). Without
 // it the email shows the code instead, exactly as before.
-export function confirmationEmail({ restaurant, timezone, at, party, areaName, code, guestName, graceMinutes, holdMinutes, link, talk, siteHost, qrCid }) {
+// r44: "Share the table" — Option A of the pictures Sebastian chose (29 Oct):
+// one dark button, between the details and "Write to the restaurant".
+function shareButton(href, withQr) {
+  return {
+    lead: withQr ? 'Coming with friends? Send them the table: the day, the time, the address and your QR code.'
+                 : 'Coming with friends? Send them the table: the day, the time and the address.',
+    label: 'Share the table',
+    href,
+  };
+}
+function shareLine(share) {
+  // The address is the guest's own (the same link as Cancel and Write): it opens the picture to send, and says so.
+  return share ? [`Coming with friends? Send them a picture of the table from here (this link is only for you): ${share}`, ''] : [];
+}
+
+// share: the address of the share screen (reservations#share=<the link>), or
+// null — then the email is exactly as before r44.
+export function confirmationEmail({ restaurant, timezone, at, party, areaName, code, guestName, graceMinutes, holdMinutes, link, talk, share, siteHost, qrCid }) {
   const when = whenIn(timezone, at);
   const first = greetingName(guestName);
   const late = graceMinutes
@@ -336,6 +356,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
     rows: detailRows({ party, areaName, code, restaurant, withQr: !!qrCid }),
     notice: `${escapeHtml(late)}<br>The calendar file is attached — open it to put the table in your phone.`
             + (link ? '' : `<br>${escapeHtml(callToCancel(restaurant))}`),
+    share: share ? shareButton(share, !!qrCid) : null,
     write: talk ? { ...writeButton(restaurant), href: talk } : null,
     button: link ? { lead: 'Can\'t make it? Cancelling takes a minute and gives the table to somebody else.',
                      label: 'Cancel this table', href: link } : null,
@@ -345,6 +366,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
     `${restaurant.name} — your table is booked.`, '',
     textDetails({ when, party, areaName, code, restaurant, withQr: !!qrCid }), '',
     late, '',
+    ...shareLine(share),
     talk ? `A question, or something to tell us? Write to the restaurant: ${talk}` : null,
     talk ? '' : null,
     link ? `Can't make it? Cancel here: ${link}` : callToCancel(restaurant), '',
@@ -359,7 +381,7 @@ export function confirmationEmail({ restaurant, timezone, at, party, areaName, c
   };
 }
 
-export function reminderEmail({ restaurant, timezone, at, party, areaName, code, guestName, link, talk, siteHost, now, qrCid }) {
+export function reminderEmail({ restaurant, timezone, at, party, areaName, code, guestName, link, talk, share, siteHost, now, qrCid }) {
   const when = whenIn(timezone, at);
   const day = relativeDay(timezone, at, now);
   const first = greetingName(guestName);
@@ -373,6 +395,7 @@ export function reminderEmail({ restaurant, timezone, at, party, areaName, code,
     qr: qrCid ? { cid: qrCid, code } : null,
     rows: detailRows({ party, areaName, code, restaurant, withQr: !!qrCid }),
     notice: link ? null : escapeHtml(callToCancel(restaurant)),
+    share: share ? shareButton(share, !!qrCid) : null,
     write: talk ? { ...writeButton(restaurant), href: talk } : null,
     button: link ? { lead: 'Plans changed? Tell us now and somebody else can have the table.',
                      label: 'Cancel this table', href: link } : null,
@@ -381,6 +404,7 @@ export function reminderEmail({ restaurant, timezone, at, party, areaName, code,
   const text = [
     `${restaurant.name} — see you ${day.toLowerCase() === 'today' || day.toLowerCase() === 'tomorrow' ? day.toLowerCase() : 'soon'}.`, '',
     textDetails({ when, party, areaName, code, restaurant, withQr: !!qrCid }), '',
+    ...shareLine(share),
     talk ? `A question, or something to tell us? Write to the restaurant: ${talk}` : null,
     talk ? '' : null,
     link ? `Plans changed? Cancel here: ${link}` : callToCancel(restaurant), '',
