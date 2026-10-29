@@ -115,6 +115,7 @@ export default async function handler(req, res) {
   if (action === 'cancel')      return cancel(req, res, body);
   if (action === 'link')        return byLink(req, res, body);
   if (action === 'cancel_link') return cancelByLink(req, res, body);
+  if (action === 'share_link')  return shareByLink(req, res, body);     // r44: "Share the table" in the emails
   // Messages about a table, and the bell.
   if (action === 'msg_list' || action === 'msg_send' || action === 'inbox' || action === 'msg_upload' || action === 'msg_files') {
     return guest(req, res, body, action, {
@@ -590,6 +591,14 @@ function menuUrlOf(settings) {
   return /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(site) ? site + '/menu' : null;
 }
 
+// r44 (Sebastian, 29 Oct): "Share the table" in the emails opens the share
+// screen with the email's own link (the same one as Cancel and Write). It is
+// here and not in _lib/email.js so the two files can go up in either order.
+function shareUrl(settings, token) {
+  const site = (settings && settings.site_url) || 'https://thehungryfork.fun';
+  return `${site}/reservations#share=${token}`;
+}
+
 // The table's QR as an image the page can show, or null. Never throws.
 async function qrFor(reservationId, settings) {
   try {
@@ -645,6 +654,7 @@ async function confirmByEmail({ reservationId, email, loaded, timezone, at, part
     holdMinutes:  settings.hold_minutes,
     link:         linkSaved ? cancelUrl(settings, token) : null,
     talk:         linkSaved ? talkUrl(settings, token) : null,
+    share:        linkSaved ? shareUrl(settings, token) : null,     // r44
     siteHost:     hostOf(settings),
   });
 
@@ -1232,6 +1242,52 @@ async function cancelByLink(req, res, body) {
   return res.status(200).json({ success: true, code: row.code });
 }
 
+// ── "SHARE THE TABLE", FROM AN EMAIL (r44) ───────────────────────────────────
+// Sebastian, 29 Oct: the confirmation and the reminder get a "Share the table"
+// button (Option A of his pictures). It opens reservations#share=<the email's
+// own link>, and the page draws the same picture My Reservations shares: the
+// restaurant, the day, the time, the people, the address and the QR. This
+// answer only reads: it never cancels, never opens the conversation, and has
+// no name in it. The QR comes while it is still good at the door, as in My
+// Reservations (a table still to come, or one a few minutes late).
+async function shareByLink(req, res, body) {
+  if (!(await allow(linkLimiter, keyFor(clientIp(req)), { failOpen: true }))) {
+    return res.status(429).json({ error: 'Too many tries from here. Wait a moment, or call the restaurant.' });
+  }
+  const token = cleanToken(body.token);
+  const row = token ? await findByLink(token) : null;
+  if (!row) return res.status(404).json({ error: LINK_GONE });
+
+  const loaded = await loadBooking(row.restaurant_id);
+  const found = loaded && !loaded.error;
+  const settings = found ? loaded.settings : null;
+  const restaurant = found ? loaded.restaurant : { name: 'The restaurant', phone: null, address: null };
+  const timezone = (settings && settings.timezone) || 'America/New_York';
+
+  const more = await sb(`/reservations?id=eq.${Number(row.id)}&select=hold_minutes,arrival_token&limit=1`);
+  const extra = more.ok && Array.isArray(more.data) && more.data.length ? more.data[0] : {};
+  const live = qrTime({ status: row.status, reserved_at: row.reserved_at, hold_minutes: extra.hold_minutes }, Date.now());
+  const qr = live && extra.arrival_token ? await qrDataUrl(settings, extra.arrival_token) : null;
+
+  return res.status(200).json({
+    success: true,
+    table: {
+      code:       row.code,
+      at:         new Date(row.reserved_at).toISOString(),
+      date:       row.local_date,
+      party:      row.party_size,
+      status:     row.status,
+      live,                                   // false: cancelled, arrived, or over — nothing to share
+      restaurant: restaurant.name,
+      phone:      restaurant.phone || null,
+      address:    restaurant.address || null,
+      menuUrl:    menuUrlOf(settings),
+      qr,
+      ...clockIn(timezone, row.reserved_at),
+    },
+  });
+}
+
 // ── THE REMINDER, ONCE A DAY ──────────────────────────────────────────────────
 // vercel.json runs this at 14:00 UTC — 10 in the morning in New York, give or
 // take the hour Vercel's free plan allows. hf_claim_reminders picks the tables
@@ -1367,6 +1423,7 @@ async function remindOne(row, loaded, areaName) {
     at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName, code: row.code,
     guestName: row.guest_name, link: linkSaved ? cancelUrl(settings, token) : null, siteHost: hostOf(settings),
     talk: linkSaved ? talkUrl(settings, token) : null,
+    share: linkSaved ? shareUrl(settings, token) : null,            // r44
     qrCid: qr ? QR_CID : null,
   });
   const sent = await sendEmail({
