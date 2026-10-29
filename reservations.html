@@ -323,6 +323,17 @@ if (window.hfEarlyMine) {
   .rv-share-btn { display:inline-flex; align-items:center; gap:.45em; background:none; border:1px solid rgba(252,249,244,.35); color:var(--white); border-radius:999px;
                   padding:.5rem 1rem; font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
   .rv-share-btn svg { width:1.3em; height:1.3em; flex:none; }
+  /* r44: "Share the table", opened from the button in an email */
+  .rv-share-kick { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red-bright); text-align:center; margin:.9rem 0 .7rem; }
+  .rv-share-pic { display:block; width:min(68vw, 270px); height:auto; margin:0 auto; border-radius:10px; background:#FCF9F4; box-shadow:0 10px 30px rgba(0,0,0,.45); }
+  .rv-share-pic.plain { width:min(52vw, 210px); padding:12px; box-sizing:content-box; }
+  .rv-share-note { text-align:center; margin:1rem .3rem 1rem; }
+  .rv-share-go { display:flex; align-items:center; justify-content:center; gap:.6em; }
+  .rv-share-go svg { width:1.35em; height:1.35em; flex:none; }
+  .rv-share-two { display:flex; gap:10px; }
+  .rv-share-two .rv-ghost { flex:1; min-width:0; font-size:.66rem; letter-spacing:.12em; padding:.8rem .4rem; }
+  .rv-share-hint { text-align:center; font-size:.74rem; margin-top:.8rem; }
+  @media (max-width: 374px) { .rv-share-two .rv-ghost { font-size:.6rem; letter-spacing:.06em; } }   /* a small phone: each on one line */
   .rv-count { display:flex; gap:8px; margin:.75rem 0 .2rem; }
   .rv-count > div { flex:1; background:rgba(252,249,244,.08); border:1px solid rgba(252,249,244,.18); border-radius:10px; text-align:center; padding:.45rem 0; }
   .rv-count b { display:block; font-family:var(--serif); font-size:1.5rem; font-weight:600; line-height:1; }
@@ -755,6 +766,13 @@ if (window.hfEarlyMine) {
     </div>
     <div class="rv-foot">
       <button class="rv-ghost" id="link-book">Book a table</button>
+    </div>
+  </section>
+
+  <!-- 7b · "Share the table", from the button in an email (r44): the picture of the table, for friends -->
+  <section class="rv-step" id="step-share">
+    <div class="rv-scroll" id="share-body">
+      <p class="rv-sub">Looking for your table…</p>
     </div>
   </section>
 
@@ -2014,6 +2032,106 @@ async function openLink(token, talk) {
   }
 }
 
+// ── "Share the table", from an email (r44, Sebastian 29 Oct) ──────────────────
+// reservations#share=<token>: the same link as Cancel and Write in that email,
+// opening the picture My Reservations shares (picture B: the restaurant, the
+// day, the time, the people, the address and the QR) and the phone's share
+// menu. Friends get the picture and the message — never this link. My
+// Reservations itself is not touched: the same shareTable() does the sharing.
+function shareToken() {
+  const m = /^#share=([A-Za-z0-9_-]{32})$/.exec(window.location.hash || '');
+  return m ? m[1] : null;
+}
+let shareSeq = 0;
+async function openShare(token) {
+  const seq = ++shareSeq;          // two email buttons tapped quickly: only the newest one is shown
+  // Out of the address bar once read, like the other links in the emails.
+  if (/^#share=/.test(window.location.hash || '')) {
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) { /* old browser: harmless */ }
+  }
+  if (state.shared && state.shared._url) { try { URL.revokeObjectURL(state.shared._url); } catch (e) { /* gone already */ } }
+  state.shared = null;
+  show('share');
+  const box = el('share-body');
+  box.innerHTML = '<p class="rv-sub">Looking for your table…</p>';
+  let t;
+  try {
+    t = (await api({ action: 'share_link', token })).table;
+  } catch (e) {
+    if (seq !== shareSeq) return;
+    // The link gone (404) or something else (too many tries, no connection): the server's own words under it.
+    const gone = /does not open a table/.test(e.message || '');
+    box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">'
+      + (gone ? 'This link has expired' : 'Could not open your table') + '</h2>'
+      + '<p class="rv-sub" style="margin-top:.6rem;">'
+      + esc(e.data ? e.message : 'No connection. Check your internet, then tap Share the table in the email again.') + '</p></div>';
+    return;
+  }
+  if (seq !== shareSeq) return;
+  if (!t.live) {
+    const gone = t.status === 'cancelled';
+    box.innerHTML = '<div class="rv-done"><h2 style="font-family:var(--serif);font-size:1.8rem;font-weight:600;">'
+      + (gone ? 'This table is cancelled' : 'This table has already started') + '</h2>'
+      + '<p class="rv-sub" style="margin-top:.6rem;">There is nothing to share any more.'
+      + (!gone && t.phone ? ' Call ' + esc(t.phone) + ' if you need the restaurant.' : '') + '</p></div>';
+    return;
+  }
+  const r = { restaurant: t.restaurant, date: t.date, label: t.label, party: t.party, code: t.code,
+              address: t.address, menuUrl: t.menuUrl, qr: t.qr, status: 'booked' };
+  state.shared = r;
+  const what = esc(t.restaurant) + ', ' + esc(dayLabels(t.date).long) + ' at ' + esc(t.label) + ', '
+    + t.party + (t.party === 1 ? ' person' : ' people');
+  const withQr = hasQrImage(r);
+  box.innerHTML = '<p class="rv-share-kick">Share your table</p>'
+    + (withQr
+        ? '<img class="rv-share-pic plain" id="share-pic" src="' + esc(r.qr) + '" alt="The picture to share: ' + what + ', with the QR code">'
+        : '<div class="rv-summary" style="text-align:center;"><h2>' + esc(dayLabels(t.date).long) + ' · ' + esc(t.label) + '</h2>'
+          + '<p>' + esc(t.party + (t.party === 1 ? ' person' : ' people')) + ' · ' + esc(t.restaurant) + '</p></div>')
+    + '<p class="rv-sub rv-share-note">' + (withQr
+        ? 'The picture has the day, the time, the address and the QR. Send it to your friends.'
+        : 'Send your friends the day, the time and the address.') + '</p>'
+    + '<button type="button" class="rv-btn rv-share-go" id="share-go">' + SHARE_ICON + 'Share</button>'
+    + '<div class="rv-share-two">'
+    +   (withQr ? '<button type="button" class="rv-ghost" id="share-save">Save the picture</button>' : '')
+    +   '<button type="button" class="rv-ghost" id="share-copy">Copy the message</button>'
+    + '</div>'
+    + '<p class="rv-sub rv-share-hint">Your phone opens its share menu: WhatsApp, Messages, Mail…</p>';
+  if (withQr) drawSharePicture(r);
+}
+// The picture B, drawn at once: a phone opens its share menu only inside the
+// tap itself, so it must be ready before. Until then (or if it cannot be
+// drawn) the plain QR is on screen, and Share sends it, as My Reservations does.
+async function drawSharePicture(r) {
+  try {
+    const file = await cardFile(r);
+    if (state.shared !== r) return;
+    r._card = file;
+    const pic = el('share-pic');
+    if (pic) { r._url = URL.createObjectURL(file); pic.src = r._url; pic.classList.remove('plain'); }
+  } catch (e) { /* the plain QR stays */ }
+}
+function saveSharePicture(r) {
+  const file = r._card || (hasQrImage(r) ? qrFile(r) : null);
+  if (!file) { showToast('The picture is not ready yet. Try again in a moment.'); return; }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  showToast('The picture is saved.');
+}
+async function copyShareText(r) {
+  try { await navigator.clipboard.writeText(shareText(r, hasQrImage(r))); showToast(hasQrImage(r) ? 'Message copied: paste it in your chat, and send the picture too.' : 'Message copied: paste it in your chat.'); }
+  catch (e) { showToast('Could not copy the message.'); }
+}
+document.addEventListener('click', (event) => {
+  const r = state.shared;
+  if (!r || !el('step-share').classList.contains('on')) return;
+  if (event.target.closest('#share-go')) shareTable(r);
+  else if (event.target.closest('#share-save')) saveSharePicture(r);
+  else if (event.target.closest('#share-copy')) copyShareText(r);
+});
+
 // ── messages with the restaurant (r21, Sebastian 8 Oct) ──────────────────────
 // Instead of calling: the guest writes about their table and the restaurant
 // answers here. No ready-made answers. A key names the conversation on this
@@ -2391,6 +2509,7 @@ window.addEventListener('hashchange', () => {
   const mine = mineHash();
   if (mine) openMine(mine.chat);
   else if (linkToken()) openLink(linkToken(), linkTalks());
+  else if (shareToken()) openShare(shareToken());                 // r44
 });
 
 // ?debug=1 — for finding out, on the phone itself, why a strip will not move
@@ -2451,9 +2570,12 @@ function giveHours(data) {
   // the booking settings say. A guest cancelling does not need free times.
   const fromEmail = linkToken();
   if (fromEmail) openLink(fromEmail, linkTalks());
+  // r44: "Share the table" in an email opens its own screen, the same way.
+  const fromShare = !fromEmail && shareToken();
+  if (fromShare) openShare(fromShare);
   // r27: from the corner menu or the bell the guest's tables open at once, not
   // after the free times (which are still asked for, for the "Book a table" button).
-  const wantsMine = !fromEmail && mineHash();
+  const wantsMine = !fromEmail && !fromShare && mineHash();
   // r29: the free times are asked for after the tables (the tables are what is on
   // screen), but never later than six seconds even if the tables are slow.
   if (wantsMine) await Promise.race([openMine(wantsMine.chat), new Promise((done) => setTimeout(done, 6000))]);
@@ -2470,7 +2592,7 @@ function giveHours(data) {
       el('off-phone').textContent = data.restaurant.phone
         ? 'Call ' + data.restaurant.phone + ' and they will keep a table for you.'
         : 'Please call the restaurant and they will keep a table for you.';
-      if (wantsMine || fromEmail) return;       // the tables (or the email's table) stay on screen
+      if (wantsMine || fromEmail || fromShare) return;       // the tables (or the email's table) stay on screen
       show('off');
       return;
     }
@@ -2484,7 +2606,7 @@ function giveHours(data) {
     giveHours(null);
     el('off-text').textContent = e.message;
     el('off-phone').textContent = 'Please try again in a moment.';
-    if (!fromEmail && !wantsMine) show('off');
+    if (!fromEmail && !fromShare && !wantsMine) show('off');
   }
 })();
 </script>
