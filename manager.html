@@ -707,6 +707,123 @@
   .dv-dev-t b { font-weight:600; }
   .dv-dev-t small { display:block; color:var(--muted); font-size:.72rem; margin-top:.15rem; }
   .dv-this { display:inline-block; font-size:.64rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--green); background:#E6EFE4; border-radius:999px; padding:.12rem .5rem; margin-left:.3rem; vertical-align:1px; }
+  /* r46: the table map (Reservations → Map) and drawing a room */
+  .mp-bar { justify-content:stretch; gap:.45rem; padding:0; background:none; border:none; }
+  .mp-bar .mp-bar-btn { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.45rem; min-width:0; height:2.6rem; padding:0 .4rem;
+    border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--text); font-family:var(--sans); font-size:.72rem; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; text-decoration:none; cursor:pointer; }
+  .mp-bar .mp-bar-btn svg { flex:none; }
+  .mp-head { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:.5rem; margin-bottom:.6rem; }
+  .mp-head .rv-back { justify-self:start; padding:.2rem 0; }
+  .mp-title { font-family:var(--serif); font-size:1.5rem; font-weight:600; text-align:center; white-space:nowrap; }
+  .mp-clock { justify-self:end; font-size:.78rem; font-weight:600; color:var(--muted); letter-spacing:.06em; font-variant-numeric:tabular-nums; }
+  .mp-rooms { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.5rem; }
+  .mp-room { flex:1 1 auto; min-width:5.5rem; height:2.2rem; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--text);
+    font-family:var(--sans); font-size:.8rem; font-weight:600; cursor:pointer; padding:0 .8rem; }
+  .mp-room.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .mp-room.mp-draw { flex:0 0 auto; min-width:0; color:var(--red-dark); border-color:rgba(176,16,21,.35); }
+  .mp-sum { font-size:.76rem; color:var(--muted); text-align:center; margin:.1rem 0 .5rem; }
+  .mp-floor-wrap { display:flex; justify-content:center; overflow-x:auto; padding:2px 0 .6rem; }
+  .mp-floor { position:relative; flex:none; background-color:#FFFDF9;
+    background-image:linear-gradient(#F1EADF 1px, transparent 1px), linear-gradient(90deg, #F1EADF 1px, transparent 1px); }
+  .mp-blk { position:absolute; }
+  .mp-blk.gone { background:var(--off-white); }
+  .mp-blk.bar { background:#8A5A0B; } .mp-blk.door { background:#4C7A4C; } .mp-blk.obj { background:#6E6A66; }
+  .mp-blk-name { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; color:#fff;
+    font-family:var(--sans); font-size:.56rem; font-weight:700; letter-spacing:.14em; overflow:hidden; white-space:nowrap; }
+  .mp-blk-name.tall { writing-mode:vertical-rl; }
+  .mp-band { position:absolute; transform-origin:0 50%; border-radius:999px; box-sizing:border-box; z-index:1; }
+  .mp-t, .dw-t { position:absolute; z-index:2; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    padding:0; border-radius:10px; cursor:pointer; font-family:var(--sans); user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    touch-action:manipulation; overflow:hidden; line-height:1; }
+  .mp-t.round, .dw-t.round { border-radius:999px; }
+  .mp-n { display:flex; align-items:center; gap:2px; font-family:var(--serif); font-weight:700; font-size:calc(var(--c) * .7); line-height:1;
+    font-variant-numeric:lining-nums; font-feature-settings:"lnum" 1; }
+  .mp-n svg { width:calc(var(--c) * .4); height:calc(var(--c) * .4); flex:none; }
+  .mp-res { font-size:calc(var(--c) * .26); font-weight:700; letter-spacing:0; line-height:1.1; }
+  .mp-l { font-size:calc(var(--c) * .39); font-weight:700; line-height:1.15; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .mp-t.free  { background:#fff;    border:1.5px solid #BFB2A1; color:var(--text); } .mp-t.free .mp-l { color:var(--muted); }
+  .mp-t.later { background:#fff;    border:1.5px solid #8FB0E0; color:var(--text); } .mp-t.later .mp-l, .mp-t.later .mp-res { color:#2F5DA8; }
+  .mp-t.hour  { background:#DCE7F7; border:1.5px solid #8FB0E0; color:#10284F; }    .mp-t.hour .mp-l, .mp-t.hour .mp-res { color:#1F3F75; }
+  .mp-t.half  { background:#9DBBE9; border:1.5px solid #4F7CC2; color:#0B1F40; }
+  .mp-t.busy  { background:#1F3F75; border:1.5px solid #1F3F75; color:#fff; }        .mp-t.busy .mp-l { color:#DCE7F7; }
+  .mp-t.late  { background:#F7E3E1; border:2px dashed var(--red); color:var(--red-dark); }
+  .mp-band.free { background:#fff; border:1.5px solid #BFB2A1; } .mp-band.later { background:#fff; border:1.5px solid #8FB0E0; }
+  .mp-band.hour { background:#DCE7F7; border:1.5px solid #8FB0E0; } .mp-band.half { background:#9DBBE9; border:1.5px solid #4F7CC2; }
+  .mp-band.busy { background:#1F3F75; } .mp-band.late { background:#F7E3E1; border:2px dashed var(--red); }
+  .mp-t.pick { box-shadow:0 0 0 2px #FFFDF9, 0 0 0 4px var(--blue); }
+  .mp-t.joining { box-shadow:0 0 0 2px #FFFDF9, 0 0 0 4px var(--ink); }
+  .mp-legend { display:flex; flex-wrap:wrap; justify-content:center; gap:.25rem .7rem; font-size:.68rem; color:var(--muted); margin:.2rem 0 .7rem; }
+  .mp-legend span { display:inline-flex; align-items:center; gap:.3rem; }
+  .mp-legend i { width:11px; height:11px; border-radius:3px; box-sizing:border-box; display:inline-block; }
+  .mp-legend i.free { background:#fff; border:1.5px solid #BFB2A1; } .mp-legend i.later { background:#fff; border:1.5px solid #8FB0E0; }
+  .mp-legend i.hour { background:#DCE7F7; border:1.5px solid #8FB0E0; } .mp-legend i.half { background:#9DBBE9; border:1.5px solid #4F7CC2; }
+  .mp-legend i.busy { background:#1F3F75; } .mp-legend i.late { background:#F7E3E1; border:1.5px dashed var(--red); }
+  .mp-legend .mp-leg-sign { color:#1F3F75; font-weight:600; } .mp-leg-sign svg { width:11px; height:11px; }
+  .mp-legend .mp-leg-how { width:100%; justify-content:center; color:var(--text); }
+  .mp-tray { display:flex; align-items:center; gap:.5rem; background:#fff; border:1px solid var(--border); border-radius:14px; padding:.5rem .6rem; margin-bottom:1rem; }
+  .mp-tray-h { font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--red-dark); white-space:nowrap; }
+  .mp-tray-list { display:flex; flex-wrap:wrap; gap:.35rem; flex:1; min-width:0; }
+  .mp-chip { border:2px dashed var(--red); background:#fff; color:var(--red-dark); border-radius:999px; padding:.35rem .7rem; font-family:var(--sans); font-size:.76rem; font-weight:700; cursor:pointer; }
+  .mp-chip.on { background:var(--red-light); }
+  .mp-undrawn { background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.1rem 1rem; text-align:center; font-size:.86rem; line-height:1.55; color:var(--text); }
+  .mp-undrawn-go { margin-top:.8rem; }
+  .mp-sheet-t { font-family:var(--serif); font-size:1.7rem; font-weight:600; line-height:1.05; }
+  .mp-sheet-s { font-size:.8rem; color:var(--muted); margin:.3rem 0 .8rem; }
+  .mp-sheet-line { background:#fff; border:1px solid var(--border); border-radius:12px; padding:.6rem .75rem; font-size:.82rem; line-height:1.45; margin-bottom:.6rem; }
+  .mp-opts { display:flex; flex-direction:column; gap:.5rem; }
+  .mp-opt { height:2.9rem; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--text); font-family:var(--sans); font-size:.86rem; font-weight:600; cursor:pointer; padding:0 1rem; }
+  .mp-opt.main { background:#1F3F75; border-color:#1F3F75; color:#fff; }
+  .mp-opt.red { color:var(--red-dark); border-color:rgba(176,16,21,.35); }
+  .mp-opt.quiet { color:var(--muted); }
+  .mp-steps { margin:.2rem 0 .8rem 1.1rem; padding:0; font-size:.86rem; line-height:1.6; }
+  #mp-toast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 16px); transform:translateX(-50%); z-index:320; width:min(688px, calc(100% - 32px));
+    display:none; align-items:center; gap:.6rem; background:var(--ink); color:var(--white); border-radius:14px; padding:.7rem .85rem; font-size:.82rem; line-height:1.4;
+    box-shadow:0 12px 30px rgba(21,13,9,.35); box-sizing:border-box; }
+  #mp-toast.on { display:flex; }
+  #mp-toast span { flex:1; }
+  .mp-undo { flex:none; border:1px solid rgba(252,249,244,.5); background:none; color:var(--white); border-radius:999px; padding:.4rem .8rem; font-family:var(--sans);
+    font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; }
+  .mp-toast-x { flex:none; border:none; background:none; color:var(--white); font-size:1.2rem; line-height:1; cursor:pointer; padding:.1rem .3rem; }
+  .dw-hint { margin:0 0 .6rem; font-size:.8rem; line-height:1.45; color:var(--muted); text-align:center; }
+  .dw-tools { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:.35rem; margin-bottom:.5rem; }
+  .dw-tool { height:2.3rem; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--text); font-family:var(--sans); font-size:.74rem; font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:.3rem; cursor:pointer; padding:0 .2rem; min-width:0; }
+  .dw-tool.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .dw-tool i { width:11px; height:11px; border-radius:3px; flex:none; box-sizing:border-box; }
+  .dw-tool i.gone { border:1px dashed #A08F7D; } .dw-tool i.floor { background:#FFFDF9; border:1px solid #CBBFAF; }
+  .dw-tool i.bar { background:#8A5A0B; } .dw-tool i.door { background:#4C7A4C; } .dw-tool i.object { background:#6E6A66; }
+  .dw-name { display:flex; align-items:center; gap:.5rem; background:#fff; border:1px solid var(--border); border-radius:14px; padding:.35rem .5rem .35rem .8rem; margin-bottom:.5rem; font-size:.78rem; }
+  .dw-name label { font-weight:600; white-space:nowrap; } .dw-name .m-input { flex:1; padding:.45rem .6rem; } .dw-name span { color:var(--muted); white-space:nowrap; font-size:.7rem; }
+  .dw-size { display:flex; align-items:center; flex-wrap:wrap; gap:.35rem; font-size:.78rem; color:var(--muted); margin-bottom:.6rem; }
+  .dw-size b { min-width:1.4rem; text-align:center; color:var(--text); }
+  .dw-size .rv-mini { margin-left:auto; }
+  .dw-pm { width:2rem; height:2rem; border-radius:50%; border:1px solid var(--border); background:#fff; font-size:1rem; color:var(--text); cursor:pointer; padding:0; line-height:1; }
+  .dw-grid { position:relative; flex:none; touch-action:none; }
+  .dw-sq { position:absolute; box-sizing:border-box; margin:0; padding:0; cursor:pointer; }
+  .dw-sq.floor { background:#FFFDF9; border:1px solid #EFE6D8; }
+  .dw-sq.gone { background:transparent; border:1px dotted #DDD1C1; }
+  .dw-sq.bar { background:#8A5A0B; border:1px solid #8A5A0B; } .dw-sq.door { background:#4C7A4C; border:1px solid #4C7A4C; } .dw-sq.obj { background:#6E6A66; border:1px solid #6E6A66; }
+  .dw-floor { touch-action:none; }
+  .dw-t { background:#fff; border:1.5px solid #BFB2A1; color:var(--text); cursor:grab; touch-action:none; }
+  .dw-t .mp-l { color:var(--muted); font-weight:500; }
+  .dw-t.sel { border:2px solid var(--blue); }
+  .dw-t.moving { background:#E4ECF8; box-shadow:0 10px 22px rgba(43,33,26,.22); z-index:5; }
+  .dw-t.moving.bad { background:var(--red-light); border:2px dashed var(--red); }
+  .dw-add { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:.2rem 0 .6rem; font-size:.76rem; color:var(--muted); }
+  .dw-add span { margin-left:auto; }
+  .dw-edit { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; background:#fff; border:1px solid var(--border); border-radius:14px; padding:.6rem .75rem; margin-bottom:.6rem; }
+  .dw-edit label { font-family:var(--serif); font-size:1.2rem; font-weight:600; }
+  .dw-edit .m-input { width:4rem; text-align:center; padding:.4rem; }
+  .dw-seats { display:flex; align-items:center; gap:.4rem; font-size:.8rem; margin-left:auto; }
+  .dw-shape { display:flex; gap:.4rem; width:100%; }
+  .dw-shape .rv-mini { flex:1; padding:.45rem; } .dw-shape .rv-mini.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .dw-msg { min-height:1.1rem; font-size:.78rem; color:var(--muted); text-align:center; margin:.2rem 0 .6rem; }
+  .dw-msg.bad { color:var(--red-dark); }
+  .dw-foot { margin-bottom:1.2rem; } .dw-foot .m-save { width:100%; }
+  .dw-foot.two { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; } .dw-foot.two .m-btn { margin:0; }
+  .rv-room-drawn { font-size:.7rem; color:var(--muted); margin-top:.3rem; }
+  .dw-sq.pv { outline:2px solid var(--blue); outline-offset:-2px; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -1004,7 +1121,7 @@ function switchTab(t){
   if(!allowedTabs().includes(t) || t===TAB) return;
   TAB = t;
   if(history.replaceState) history.replaceState(null, '', '#'+t);
-  if(t!=='reservations'){ RV.view = 'day'; document.body.classList.remove('rv-mode'); rvPaintSheet(); }
+  if(t!=='reservations'){ RV.view = 'day'; document.body.classList.remove('rv-mode'); rvPaintSheet(); mpStop(); mpPaintSheet(); mpHideToast(); }
   window.scrollTo(0, 0);
   mountPage();
 }
@@ -2248,6 +2365,7 @@ const RV_ROW = 44;            // pixels between two marks on the clock
 
 function rvReset(){
   msgReset();
+  if(typeof mpReset === 'function') mpReset();          // r46
   Object.assign(RV, { gen: RV.gen + 1, rid: RESTAURANT ? RESTAURANT.id : null, view: 'day', days: [], daysFrom: null, daysTo: null,
     today: null, date: null, day: null, error: null, centerId: null, armed: null, sheet: null, sheetResult: {},
     settings: null, settingsError: null, hoursDraft: null, hoursBase: null, settingsNote: '', typed: {}, forget: [],
@@ -2424,6 +2542,9 @@ function rvRender(){
   const root = document.getElementById('rv-root');
   if(!root) return;
   document.body.classList.toggle('rv-mode', RV.view==='day');
+  // r46: the table map, and drawing a room
+  if(RV.view==='map'){ root.innerHTML = mpHtml(); mpPaintFloor(); mpPaintSheet(); mpPaintToast(); return; }
+  if(RV.view==='draw'){ root.innerHTML = dwHtml(); dwPaintGrid(); mpPaintToast(); return; }
   if(RV.view==='settings'){
     const kept = rvKeptInputs();
     root.innerHTML = rvSettingsHtml();
@@ -2716,9 +2837,8 @@ function rvPaintTop(){
     // r35 (Sebastian, 16 Oct): where the waiter types a guest's code when the QR
     // will not scan — Check In, Show my reward, Show my invite (the six
     // characters under the guest's QR). The page is /checkin.
-    + '<div class="rv-codebar"><span>QR code won\u2019t scan?</span><a class="rv-mini rv-code-link" href="/checkin">'
-    +   '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>'
-    +   'Type the guest\u2019s code</a></div>';
+    // r46 (Sebastian, 29 Oct): that row is now three buttons — Type (the same page), Map, Camera.
+    + mpBarHtml();
   if(q.length){
     const r = q[0];
     const unread = q.reduce((n, x) => n + ((x.chat && Number(x.chat.unread)) || 0), 0);
@@ -4217,14 +4337,17 @@ async function rvHolidayRemove(date){
 
 function rvRoomsHtml(S){
   const edit = S.canEdit;
+  // r46: a room drawn on the table map takes its seats and tables from the drawing (they are not typed here).
   const rooms = S.areas.map(a => edit
     ? '<div class="rv-room"><div class="rv-room-grid">'
       + '<div class="m-field"><div class="m-field-label">Room</div><input class="m-input" id="rv-a-name-'+a.id+'" value="'+esc(a.name)+'" maxlength="40"></div>'
-      + '<div class="m-field"><div class="m-field-label">Seats</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-seats-'+a.id+'" value="'+a.seats+'" min="0" max="500"></div>'
-      + '<div class="m-field"><div class="m-field-label">Tables</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-tables-'+a.id+'" value="'+a.tables+'" min="0" max="200"></div>'
-      + '</div><div class="rv-room-foot"><label class="m-codes" style="margin:0;font-size:.78rem;"><input type="checkbox" id="rv-a-active-'+a.id+'"'+(a.active?' checked':'')+'> Open for bookings</label>'
-      + '<button type="button" class="rv-mini" onclick="rvRoomSave('+a.id+', this)">Save</button></div></div>'
-    : '<div class="rv-hol"><div>'+esc(a.name)+'<small>'+a.seats+' seats · '+a.tables+' tables'+(a.active?'':' · closed for bookings')+'</small></div></div>').join('');
+      + '<div class="m-field"><div class="m-field-label">Seats</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-seats-'+a.id+'" value="'+a.seats+'" min="0" max="500"'+(a.drawn?' disabled':'')+'></div>'
+      + '<div class="m-field"><div class="m-field-label">Tables</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-tables-'+a.id+'" value="'+a.tables+'" min="0" max="200"'+(a.drawn?' disabled':'')+'></div>'
+      + '</div>' + (a.drawn ? '<div class="rv-room-drawn">Seats and tables come from the drawing of this room (Map).</div>' : '')
+      + '<div class="rv-room-foot"><label class="m-codes" style="margin:0;font-size:.78rem;"><input type="checkbox" id="rv-a-active-'+a.id+'"'+(a.active?' checked':'')+'> Open for bookings</label>'
+      + '<span style="display:flex;gap:.4rem;"><button type="button" class="rv-mini" onclick="dwOpen('+a.id+', \'settings\')">'+(a.drawn?'Change the drawing':'Draw the room')+'</button>'
+      + '<button type="button" class="rv-mini" onclick="rvRoomSave('+a.id+', this)">Save</button></span></div></div>'
+    : '<div class="rv-hol"><div>'+esc(a.name)+'<small>'+a.seats+' seats · '+a.tables+' tables'+(a.drawn?' · drawn':'')+(a.active?'':' · closed for bookings')+'</small></div></div>').join('');
   const add = edit ? '<div class="rv-rq-form"><div class="rv-room-grid">'
     + '<div class="m-field"><div class="m-field-label">New room</div><input class="m-input" id="rv-a-name-new" maxlength="40" placeholder="e.g. Terrace"></div>'
     + '<div class="m-field"><div class="m-field-label">Seats</div><input class="m-input" type="number" inputmode="numeric" id="rv-a-seats-new" min="0" max="500"></div>'
@@ -4265,6 +4388,842 @@ async function rvRoomAdd(btn){
     showToast('Added · '+data.area.name);
     rvRender();
   }catch(e){ showToast(e.message); btn.disabled = false; }
+}
+
+// ── THE TABLE MAP (r46) ──
+//
+// Sebastian, 29 Oct (16:55 → 23:10, "I love it! Let's do it!"): under the day's
+// tiles, the old "QR code won't scan?" row is now three buttons — Type (the
+// guest's code), Map, Camera. Map opens the rooms as they are drawn, with every
+// table: free (white), a booking later (its time), within the hour (soft
+// blue), within 30 minutes (stronger blue), busy (dark blue with a clock),
+// late (red dashed). Tap = the usual thing (busy / free / who is sitting);
+// touch and hold = everything else (Reserved, their party is here, join,
+// separate, a walk-in anyway). Each room is drawn once (managers): a rectangle
+// of squares, Remove / Restore / Bar / Door / Object (with its name), then the
+// tables dragged into place.
+//
+// The server (api/_lib/floor.js) decides who may do what and where each
+// booking sits, so every phone shows the same map; this page asks again every
+// few seconds while the map is open.
+
+const MP = { data: null, room: null, error: null, seq: 0, gen: 0, busy: false, fetchedAt: 0, offset: 0,
+             sheet: null, toast: null, toastTimer: null, placing: null, joining: null,
+             lpTimer: null, lpFired: false, timer: null, ticks: 0, width: 0, back: 'day' };
+const MP_ICON = {
+  type: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
+  map: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="2.2"/><rect x="13" y="6.3" width="5" height="4.4" rx="1"/><rect x="6" y="14" width="12" height="4" rx="1"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  pin: '<svg class="mp-pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15 2l7 7-3 1-4 4 1 6-2 2-5-5-6 6-1-1 6-6-5-5 2-2 6 1 4-4z"/></svg>',
+  link: '<svg class="mp-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+};
+const MP_HOLD_MS = 550;           // touch and hold
+
+// The three buttons under the day's tiles.
+function mpBarHtml(){
+  return '<div class="rv-codebar mp-bar" role="group" aria-label="Guests at the door">'
+    + '<a class="mp-bar-btn rv-code-link" href="/checkin" aria-label="Type the guest\u2019s code">'+MP_ICON.type+'Type</a>'
+    + '<button type="button" class="mp-bar-btn" onclick="rvOpenMap()" aria-label="Open the table map">'+MP_ICON.map+'Map</button>'
+    + '<button type="button" class="mp-bar-btn" onclick="mpCameraHelp()" aria-label="Scan a guest\u2019s QR code">'+MP_ICON.camera+'Camera</button>'
+    + '</div>';
+}
+
+function mpReset(){
+  mpStop();
+  Object.assign(MP, { data: null, room: null, error: null, gen: MP.gen + 1, busy: false, sheet: null, toast: null, placing: null, joining: null });
+  mpPaintSheet(); mpPaintToast();
+}
+
+function rvOpenMap(){
+  MP.back = 'day';
+  if(MP.data && RESTAURANT && MP.rid !== RESTAURANT.id) mpReset();
+  RV.view = 'map'; RV.armed = null;
+  render();
+  window.scrollTo(0, 0);
+  mpLoad(false);
+  mpStart();
+}
+function mpBack(){
+  mpStop(); MP.sheet = null; MP.placing = null; MP.joining = null; mpPaintSheet(); mpHideToast();
+  RV.view = MP.back === 'settings' ? 'settings' : 'day';
+  render();
+  window.scrollTo(0, 0);
+  if(RV.view === 'settings') rvLoadSettings(true);
+  else if(!RV.day) rvStart(); else rvLoadDay(RV.date, {quiet: true});
+}
+
+// Every second: the clocks. Every 10 seconds: the map again (unless a finger or a sheet is busy with it).
+function mpStart(){
+  if(MP.timer) return;
+  MP.ticks = 0;
+  MP.timer = setInterval(function(){
+    if(TAB!=='reservations' || RV.view!=='map'){ mpStop(); return; }
+    if(document.visibilityState!=='visible') return;
+    MP.ticks += 1;
+    mpTick();
+    if(MP.ticks % 10 === 0 && !MP.busy && !MP.sheet && !MP.placing && !MP.joining) mpLoad(true);
+    else if(MP.ticks % 30 === 0 && !MP.sheet) mpPaintFloor();
+  }, 1000);
+}
+function mpStop(){ if(MP.timer){ clearInterval(MP.timer); MP.timer = null; } }
+
+async function mpLoad(quiet){
+  const seq = ++MP.seq, gen = MP.gen;
+  try{
+    const data = await rvApi({action:'map_get'});
+    if(seq !== MP.seq || gen !== MP.gen) return;
+    mpTake(data);
+  }catch(e){
+    if(seq !== MP.seq || gen !== MP.gen) return;
+    if(e.status === 401) return;
+    if(!quiet || !MP.data){ MP.error = e.message; MP.errorReason = e.data && e.data.reason; mpPaint(); }
+  }
+}
+
+// A fresh map from the server (after a read or an action).
+function mpTake(data){
+  const keep = MP.data ? JSON.stringify([MP.data.rooms, MP.data.busy, MP.data.joins, MP.data.place, MP.data.waiting, MP.data.bookings]) : null;
+  MP.data = data; MP.rid = RESTAURANT ? RESTAURANT.id : null; MP.error = null;
+  MP.offset = Date.parse(data.now) - Date.now(); MP.fetchedAt = Date.now();
+  const rooms = data.rooms || [];
+  if(!MP.room || !rooms.some(r => r.id === MP.room)) MP.room = (rooms.find(r => r.drawn) || rooms[0] || {}).id || null;
+  const now = JSON.stringify([data.rooms, data.busy, data.joins, data.place, data.waiting, data.bookings]);
+  if(keep !== now || !document.getElementById('mp-floor')) mpPaint();
+  else mpTick();
+}
+function mpNow(){ return Date.now() + MP.offset; }
+
+// ── THE PIECES OF THE MAP ──
+function mpRoom(){ return MP.data && (MP.data.rooms || []).find(r => r.id === MP.room) || null; }
+// One place for a party: a table, or tables joined today. Its key is its first table.
+function mpUnits(room){
+  const joins = (MP.data.joins || []).filter(j => j.areaId === room.id);
+  const inJoin = {};
+  joins.forEach(j => j.tables.forEach(n => { inJoin[n] = j; }));
+  const seatsOf = {};
+  room.tables.forEach(t => { seatsOf[t.n] = t.seats; });
+  const out = [];
+  room.tables.slice().sort((a, b) => a.n - b.n).forEach(t => {
+    const j = inJoin[t.n];
+    if(!j) out.push({ key: t.n, members: [t.n], seats: t.seats, joinId: null });
+    else if(j.tables[0] === t.n) out.push({ key: t.n, members: j.tables.slice(), seats: j.tables.reduce((n, m) => n + (seatsOf[m] || 0), 0), joinId: j.id });
+  });
+  return out;
+}
+function mpUnitOf(n){
+  const room = mpRoom();
+  return room ? mpUnits(room).find(u => u.members.includes(n)) || null : null;
+}
+function mpName(u){ return (u.members.length > 1 ? 'Tables ' : 'Table ') + u.members.join('+'); }
+function mpBookingsOn(key){
+  const D = MP.data, out = [];
+  (D.bookings || []).forEach(b => { if(D.place[b.id] === key && b.status === 'booked') out.push(b); });
+  return out.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+}
+function mpBusyOf(u){ return (MP.data.busy || []).find(s => s.tables.some(n => u.members.includes(n))) || null; }
+function mpBooking(id){ return (MP.data.bookings || []).find(b => b.id === id) || null; }
+function mpShort(label){ return String(label || '').replace(/\s?[AP]M$/i, ''); }
+function mpSince(ms){
+  const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h ? h + 'h ' + String(m).padStart(2, '0') + 'm' : m + ':' + String(sec).padStart(2, '0');
+}
+// What a place shows now: busy (a clock), late, a booking soon, later, or free.
+function mpState(u){
+  const now = mpNow(), s = mpBusyOf(u);
+  if(s) return { k: 'busy', label: mpSince(now - Date.parse(s.since)), session: s, next: null };
+  const next = mpBookingsOn(u.key)[0] || null;
+  if(next){
+    const d = (Date.parse(next.at) - now) / 60000;
+    const k = d < 0 ? 'late' : d <= 30 ? 'half' : d <= 60 ? 'hour' : 'later';
+    return { k, label: d < 0 ? 'Late ' + Math.floor(-d) + 'm' : mpShort(next.label), next, pinned: !!(next.pin && u.members.includes(next.pin)) };
+  }
+  return { k: 'free', label: u.seats + ' seats', next: null };
+}
+const MP_WORD = { free: 'free', later: 'a booking later', hour: 'a booking within the hour', half: 'a booking within 30 minutes', busy: 'busy', late: 'late' };
+
+function mpCell(room){
+  const avail = Math.max(240, (document.getElementById('rv-root') || {}).clientWidth || 340);
+  return Math.max(12, Math.min(34, Math.floor(avail / room.cols)));
+}
+function mpFoot(seats){ return { w: seats <= 4 ? 2 : Math.min(10, Math.ceil(seats / 2)), h: 2 }; }
+
+// The drawing's squares that are not floor: one block per square, and a name in the middle of each group.
+function mpBlocksHtml(room, C){
+  const cells = room.cells || {}, out = [];
+  Object.keys(cells).forEach(k => {
+    const [x, y] = k.split(',').map(Number), v = cells[k];
+    const cls = v === 'gone' ? 'gone' : v === 'Bar' ? 'bar' : v === 'Door' ? 'door' : 'obj';
+    out.push('<div class="mp-blk '+cls+'" style="left:'+(x*C)+'px;top:'+(y*C)+'px;width:'+C+'px;height:'+C+'px"></div>');
+  });
+  mpGroups(room.cols, room.rows, cells).forEach(g => {
+    out.push('<div class="mp-blk-name'+(g.tall?' tall':'')+'" style="left:'+(g.x*C)+'px;top:'+(g.y*C)+'px;width:'+(g.w*C)+'px;height:'+(g.h*C)+'px">'+esc(g.text)+'</div>');
+  });
+  return out.join('');
+}
+// Groups of touching squares with the same thing (a bar, a door, one object): where its name goes.
+function mpGroups(cols, rows, cells){
+  const seen = {}, out = [];
+  const val = (x, y) => cells[x+','+y] || '';
+  for(let y = 0; y < rows; y++) for(let x = 0; x < cols; x++){
+    const v = val(x, y);
+    if(!v || v === 'gone' || seen[x+','+y]) continue;
+    let x0 = x, x1 = x, y0 = y, y1 = y; const stack = [[x, y]]; seen[x+','+y] = true;
+    while(stack.length){
+      const [cx, cy] = stack.pop();
+      x0 = Math.min(x0, cx); x1 = Math.max(x1, cx); y0 = Math.min(y0, cy); y1 = Math.max(y1, cy);
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx, dy]) => {
+        const nx = cx+dx, ny = cy+dy, k = nx+','+ny;
+        if(nx >= 0 && ny >= 0 && nx < cols && ny < rows && !seen[k] && val(nx, ny) === v){ seen[k] = true; stack.push([nx, ny]); }
+      });
+    }
+    const w = x1-x0+1, h = y1-y0+1;
+    if(w < 2 && h < 3) continue;
+    out.push({ x: x0, y: y0, w, h, tall: w < 2, text: (v.indexOf('Object:') === 0 ? v.slice(7) : v).toUpperCase() });
+  }
+  return out;
+}
+
+function mpPaint(){
+  if(TAB!=='reservations' || RV.view!=='map') return;
+  const root = document.getElementById('rv-root');
+  if(!root) return;
+  root.innerHTML = mpHtml();
+  mpPaintFloor(); mpPaintSheet(); mpPaintToast();     // the floor after the frame: it needs the page's width
+}
+function mpHtml(){
+  const D = MP.data;
+  const head = '<div class="mp-head"><button type="button" class="rv-back" onclick="mpBack()">&#8249; '+(MP.back === 'settings' ? 'Settings' : 'Reservations')+'</button>'
+    + '<div class="mp-title">Map</div><div class="mp-clock" id="mp-clock">'+(D ? esc(mpClock()) : '')+'</div></div>';
+  if(MP.error && !D){
+    return head + '<div class="m-err">'+esc(MP.error)+'</div>'
+      + (MP.errorReason === 'migration' ? '' : '<button class="m-btn" onclick="MP.error=null;mpLoad(false)">Try again</button>');
+  }
+  if(!D) return head + '<div class="m-skel"></div><div class="m-skel"></div>';
+  const rooms = D.rooms || [];
+  if(!rooms.length) return head + '<div class="m-empty">This restaurant has no rooms yet. Add one in Settings → Rooms.</div>';
+  const room = mpRoom();
+  const tabs = '<div class="mp-rooms">' + rooms.map(r => '<button type="button" class="mp-room'+(r.id===MP.room?' on':'')+'" onclick="mpPickRoom('+r.id+')">'+esc(r.name)+'</button>').join('')
+    + (D.can.draw ? '<button type="button" class="mp-room mp-draw" onclick="dwOpen('+MP.room+')" aria-label="Draw '+esc(room ? room.name : 'the room')+'">✎ Draw</button>' : '')
+    + '</div>';
+  if(!room.drawn){
+    return head + tabs + '<div class="mp-undrawn"><b>'+esc(room.name)+' is not drawn yet.</b><br>'
+      + (D.can.draw ? 'Draw it once: its shape, then its tables. It takes a few minutes.'
+                      + '<br><button type="button" class="m-save mp-undrawn-go" onclick="dwOpen('+room.id+')">Draw '+esc(room.name)+'</button>'
+                    : 'A manager draws it once, here in Map.')+'</div>';
+  }
+  return head + tabs + '<div class="mp-sum" id="mp-sum"></div>'
+    + '<div class="mp-floor-wrap"><div class="mp-floor" id="mp-floor"></div></div>'
+    + '<div class="mp-legend">'
+    +   '<span><i class="free"></i>Free</span><span><i class="later"></i>Later</span><span><i class="hour"></i>1 hour</span>'
+    +   '<span><i class="half"></i>30 min</span><span><i class="busy"></i>Busy</span><span><i class="late"></i>Late</span>'
+    +   '<span class="mp-leg-sign">'+MP_ICON.pin+'Reserved</span><span class="mp-leg-sign">'+MP_ICON.link+'Joined</span>'
+    +   '<span class="mp-leg-how">Tap a table: busy or free · Touch and hold: Reserved, join and more</span>'
+    + '</div>'
+    + '<div id="mp-tray"></div>';
+}
+
+function mpPaintFloor(){
+  const floor = document.getElementById('mp-floor');
+  const room = mpRoom();
+  if(!floor || !room || !room.drawn) return;
+  const C = mpCell(room);
+  floor.style.width = (room.cols*C)+'px'; floor.style.height = (room.rows*C)+'px';
+  floor.style.backgroundSize = C+'px '+C+'px';
+  const units = mpUnits(room), byNumber = {};
+  room.tables.forEach(t => { byNumber[t.n] = t; });
+  const count = { free: 0, busy: 0, res: 0, late: 0 };
+  let html = mpBlocksHtml(room, C);
+  const tablesHtml = [];
+  units.forEach(u => {
+    const st = mpState(u);
+    if(st.k === 'busy') count.busy += 1; else if(st.k === 'free') count.free += 1; else if(st.k === 'late') count.late += 1; else count.res += 1;
+    const joined = u.members.length > 1;
+    // the band between joined tables, in their colour
+    for(let i = 0; i + 1 < u.members.length; i++){
+      const a = byNumber[u.members[i]], b = byNumber[u.members[i+1]];
+      if(!a || !b) continue;
+      const fa = mpFoot(a.seats), fb = mpFoot(b.seats);
+      const ax = (a.x + fa.w/2)*C, ay = (a.y + fa.h/2)*C, bx = (b.x + fb.w/2)*C, by = (b.y + fb.h/2)*C;
+      const len = Math.hypot(bx-ax, by-ay), deg = Math.atan2(by-ay, bx-ax)*180/Math.PI;
+      html += '<div class="mp-band '+st.k+'" style="left:'+ax+'px;top:'+(ay-Math.max(5, C*0.27))+'px;width:'+len+'px;height:'+Math.max(10, C*0.54)+'px;transform:rotate('+deg+'deg)"></div>';
+    }
+    u.members.forEach(n => {
+      const t = byNumber[n]; if(!t) return;
+      const f = mpFoot(t.seats);
+      const ring = MP.joining !== null ? (u.members.includes(MP.joining) ? ' joining' : ' pick') : MP.placing ? ' pick' : '';
+      const aria = (joined ? 'Tables '+u.members.join('+')+', joined' : 'Table '+n)+', '+u.seats+' seats, '+MP_WORD[st.k]
+        + (st.next ? ', '+st.next.name+' at '+st.next.label : '') + (st.pinned ? ', Reserved' : '') + '. Touch and hold for more.';
+      tablesHtml.push('<button type="button" class="mp-t '+st.k+(t.shape==='round'?' round':'')+ring+'" data-key="'+u.key+'" data-n="'+n+'"'
+        + (st.session ? ' data-since="'+esc(st.session.since)+'"' : '') + (st.k==='late' && st.next ? ' data-late="'+esc(st.next.at)+'"' : '')
+        + ' style="left:'+(t.x*C+3)+'px;top:'+(t.y*C+3)+'px;width:'+(f.w*C-6)+'px;height:'+(f.h*C-6)+'px;--c:'+C+'px"'
+        + ' aria-label="'+esc(aria)+'" onclick="mpTap('+u.key+')" onpointerdown="mpDown(event,'+u.key+')" onpointerup="mpUp()" onpointerleave="mpUp()" onpointercancel="mpUp()"'
+        + ' oncontextmenu="mpCtx(event,'+u.key+')">'
+        + '<span class="mp-n">'+n+(st.pinned ? MP_ICON.pin : '')+(joined ? MP_ICON.link : '')+'</span>'
+        + (st.pinned ? '<span class="mp-res">RESERVED</span>' : '')
+        + (st.k === 'late' ? '<span class="mp-l">Late</span><span class="mp-l mp-late">'+esc(st.label.replace(/^Late /, ''))+'</span>'
+                           : '<span class="mp-l">'+esc(st.label)+'</span>') + '</button>');
+    });
+  });
+  floor.innerHTML = html + tablesHtml.join('');
+  const sum = document.getElementById('mp-sum');
+  if(sum) sum.textContent = count.free+' free · '+count.busy+' busy · '+count.res+' reserved'+(count.late ? ' · '+count.late+' late' : '');
+  mpPaintTray();
+}
+function mpClock(){ return new Intl.DateTimeFormat('en-US', { timeZone: (MP.data && MP.data.timezone) || 'America/New_York', hour: 'numeric', minute: '2-digit' }).format(new Date(mpNow())); }
+// The clocks on busy tables, the minutes on late ones, the time at the top.
+function mpTick(){
+  const c = document.getElementById('mp-clock');
+  if(c && MP.data) c.textContent = mpClock();
+  const now = mpNow();
+  document.querySelectorAll('#mp-floor .mp-t[data-since] .mp-l').forEach(el => {
+    el.textContent = mpSince(now - Date.parse(el.parentNode.getAttribute('data-since')));
+  });
+  document.querySelectorAll('#mp-floor .mp-t[data-late] .mp-late').forEach(el => {
+    el.textContent = Math.max(0, Math.floor((now - Date.parse(el.parentNode.getAttribute('data-late'))) / 60000)) + 'm';
+  });
+}
+
+function mpPickRoom(id){ if(id === MP.room) return; MP.room = id; MP.placing = null; MP.joining = null; mpHideToast(); mpPaint(); }
+
+// "No table yet": the bookings of this room the map could not seat.
+function mpPaintTray(){
+  const host = document.getElementById('mp-tray');
+  if(!host || !MP.data) return;
+  const D = MP.data;
+  const list = (D.waiting || []).map(mpBooking).filter(b => b && (!b.areaId || b.areaId === MP.room));
+  if(!list.length){ host.innerHTML = ''; return; }
+  host.innerHTML = '<div class="mp-tray"><span class="mp-tray-h">No table yet</span><div class="mp-tray-list">'
+    + list.map(b => '<button type="button" class="mp-chip'+(MP.placing===b.id?' on':'')+'" onclick="mpPick('+b.id+')">'+esc(b.first)+' · '+b.party+' · '+esc(mpShort(b.label))+'</button>').join('')
+    + '</div></div>';
+}
+
+// ── TAP, AND TOUCH AND HOLD ──
+function mpDown(e, key){
+  if(e && e.button && e.button !== 0) return;
+  clearTimeout(MP.lpTimer); MP.lpFired = false;
+  MP.lpTimer = setTimeout(function(){ MP.lpFired = true; mpMenu(key); }, MP_HOLD_MS);
+}
+function mpUp(){ clearTimeout(MP.lpTimer); }
+function mpCtx(e, key){ if(e) e.preventDefault(); clearTimeout(MP.lpTimer); MP.lpFired = true; mpMenu(key); }
+
+function mpTap(key){
+  if(MP.lpFired){ MP.lpFired = false; return; }
+  if(MP.busy || !MP.data) return;
+  const u = mpUnitOf(key);
+  if(!u) return;
+  if(MP.joining !== null){ mpJoinWith(u); return; }
+  if(MP.placing){ const b = mpBooking(MP.placing); if(b) mpDo({action:'map_pin', bookingId: b.id, table: u.key}); return; }
+  const st = mpState(u), D = MP.data;
+  if(st.k === 'busy'){
+    const s = st.session, who = s.bookingId ? mpBooking(s.bookingId) : null;
+    mpOpenSheet(mpName(u), u.seats+' seats · '+mpRoom().name+' · busy '+mpSince(mpNow() - Date.parse(s.since)),
+      [who ? who.name+' · '+rvPeople(who.party)+' · booked '+who.label : 'A walk-in, since '+mpClockAt(s.since)+'.'],
+      [mpOpt('Table is free', 'main', () => mpFree(u, s))]);
+    return;
+  }
+  const soon = mpBookingsOn(u.key).find(b => Date.parse(b.at) - mpNow() < D.settings.holdMinutes*60000);
+  if(soon){
+    const opts = [];
+    if(D.can.bookings) opts.push(mpOpt(soon.first+'\u2019s party · '+rvPeople(soon.party)+' · '+mpShort(soon.label), 'main', () => mpSeat(u, soon)));
+    opts.push(mpOpt('A walk-in', D.can.bookings ? '' : 'main', () => mpSeat(u, null)));
+    mpOpenSheet('Who is sitting at '+mpName(u).toLowerCase()+'?', u.seats+' seats · '+mpRoom().name,
+      D.can.bookings ? [] : [soon.first+'\u2019s party ('+mpShort(soon.label)+')? Scan their QR code with the Camera, or ask a manager: crew don\u2019t change bookings.'], opts);
+    return;
+  }
+  mpSeat(u, null);
+}
+function mpClockAt(iso){ return new Intl.DateTimeFormat('en-US', { timeZone: MP.data.timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(iso)); }
+
+function mpMenu(key){
+  if(MP.busy || !MP.data) return;
+  MP.sheetAt = Date.now();          // a held finger is still down: see mpFresh
+  const u = mpUnitOf(key);
+  if(!u) return;
+  const D = MP.data, room = mpRoom(), st = mpState(u), can = D.can;
+  const joinOpts = [mpOpt('Join with another table', '', () => mpStartJoin(u))];
+  if(u.members.length > 1) joinOpts.push(mpOpt('Separate the tables', '', () => mpSeparate(u)));
+  if(st.k === 'busy'){
+    mpOpenSheet(mpName(u), u.seats+' seats · '+room.name, [], [mpOpt('Table is free', 'main', () => mpFree(u, st.session))].concat(joinOpts));
+    return;
+  }
+  const r = st.next;
+  if(r){
+    const kept = st.pinned;
+    const lines = [kept ? 'Reserved for '+r.first+': this table is kept for them and does not move.'
+                        : 'Not Reserved: if this table gets busy, '+r.first+' moves to another free table.'];
+    let opts = [];
+    if(can.bookings){
+      opts.push(kept ? mpOpt('Remove Reserved ('+r.first+' can move)', '', () => mpDo({action:'map_pin', bookingId: r.id, table: null}))
+                     : mpOpt('Reserved for '+r.first+' (keep this table)', 'main', () => mpDo({action:'map_pin', bookingId: r.id, table: u.key})));
+      opts.push(mpOpt(r.first+'\u2019s party is here', '', () => mpSeat(u, r)));
+    } else lines.push('Only a manager can change a booking.');
+    opts = opts.concat(joinOpts);
+    if(can.bookings) opts.push(mpOpt('Seat a walk-in here anyway', 'red', () => mpSeat(u, null, true)));
+    if(can.bookings && st.k === 'late') opts.push(mpOpt('No-show ('+r.first+')', 'red', () => mpNoShow(r)));
+    mpOpenSheet(mpName(u), u.seats+' seats · '+room.name+' · '+r.first+' at '+mpShort(r.label), lines, opts);
+    return;
+  }
+  // free: a walk-in, join, or keep a booking of this room here
+  let opts = [mpOpt('Seat a walk-in', 'main', () => mpSeat(u, null))].concat(joinOpts);
+  if(can.bookings){
+    const could = (D.bookings || []).filter(b => b.status === 'booked' && (!b.areaId || b.areaId === room.id) && b.party <= u.seats && !(b.pin && u.members.includes(b.pin)))
+      .sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).slice(0, 3);
+    opts = opts.concat(could.map(b => mpOpt('Reserved for '+b.first+' ('+mpShort(b.label)+' · '+b.party+')', '', () => mpDo({action:'map_pin', bookingId: b.id, table: u.key}))));
+  }
+  mpOpenSheet(mpName(u), u.seats+' seats · '+room.name+' · free', [], opts);
+}
+
+// "No table yet": tap one, then the table (a manager). The tables glow while choosing.
+function mpPick(id){
+  const b = mpBooking(id);
+  if(!b) return;
+  if(!MP.data.can.bookings){ mpShowToast('A manager chooses a table for '+b.first+'.'); return; }
+  if(MP.placing === id){ MP.placing = null; mpHideToast(); mpPaintFloor(); return; }
+  MP.placing = id; MP.joining = null;
+  mpShowToast('Tap a table for '+b.first+' ('+rvPeople(b.party)+', '+mpShort(b.label)+'). Too small? Touch and hold a table to join two.', null, 60000);
+  mpPaintFloor();
+}
+
+// ── THE ACTIONS (each answer is the whole map again) ──
+async function mpDo(body, undoMaker){
+  if(MP.busy) return null;
+  MP.busy = true; MP.sheet = null; mpPaintSheet();
+  const gen = MP.gen;
+  try{
+    const data = await rvApi(body);
+    if(gen !== MP.gen) return null;
+    MP.placing = null; MP.joining = null;
+    mpTake(data);
+    mpPaintFloor();
+    const said = mpSaid(data.done);
+    mpShowToast(said.text, said.undo);
+    return data;
+  }catch(e){
+    if(gen !== MP.gen) return null;
+    if(e.data && e.data.rooms) mpTake(e.data);
+    MP.placing = null; MP.joining = null;
+    mpPaintFloor();
+    // a walk-in a booking needs: a manager may seat them anyway, from the message itself
+    if(e.status === 409 && e.data && e.data.reason === 'needed' && body.action === 'map_seat' && !body.force && MP.data && MP.data.can.bookings){
+      mpShowToast(e.message, function(){ return mpDo(Object.assign({}, body, {force: true})); }, 12000, 'Seat anyway');
+      return null;
+    }
+    if(e.status !== 401) mpShowToast(e.message);
+    return null;
+  }finally{
+    MP.busy = false;
+  }
+}
+// What just happened, in words, and how to undo it.
+function mpSaid(done){
+  if(!done) return { text: 'Done.' };
+  const name = (tables) => (tables.length > 1 ? 'Tables ' : 'Table ') + tables.join('+');
+  if(done.kind === 'seat'){
+    let text = done.walkIn ? name(done.tables)+(done.tables.length > 1 ? ' are' : ' is')+' busy: the clock is running.'
+                           : done.who+'\u2019s party is at '+name(done.tables).toLowerCase()+'. The clock is running.';
+    (done.moved || []).forEach(m => { text += ' '+m.who+' ('+mpShort(m.label)+') moved to '+name(m.to).toLowerCase()+'.'; });
+    (done.noTable || []).forEach(w => { text += ' '+w+' has no table now.'; });
+    const unpinned = done.unpinned || [];
+    return { text, undo: async function(){
+      const ok = await mpDo({action:'map_unseat', sessionId: done.sessionId});
+      for(const p of unpinned){ if(ok) await mpDo({action:'map_pin', bookingId: p.bookingId, table: p.table}); }
+      if(ok) mpShowToast('Undone.');
+    } };
+  }
+  if(done.kind === 'free') return { text: name(done.tables || [])+(done.tables && done.tables.length > 1 ? ' are' : ' is')+' free.'+(done.minutes !== null && done.minutes !== undefined ? ' It was busy '+mpMinutes(done.minutes)+'.' : ''),
+    undo: async function(){ if(await mpDo({action:'map_reopen', sessionId: done.sessionId})) mpShowToast('Undone: busy again.'); } };
+  if(done.kind === 'pin'){
+    const b = mpBooking(done.bookingId);
+    const text = done.table ? 'Table '+done.table+' is Reserved for '+done.who+' ('+mpShort(done.label)+').'
+                            : done.who+' is no longer Reserved: they can move to any free table.';
+    return { text, undo: async function(){ if(await mpDo({action:'map_pin', bookingId: done.bookingId, table: done.was})) mpShowToast('Undone.'); } };
+  }
+  if(done.kind === 'join'){
+    let text = 'Tables '+done.tables.join('+')+' are joined: '+done.seats+' seats.';
+    (done.came || []).forEach(c => { text += ' '+c.who+' ('+rvPeople(c.party)+', '+mpShort(c.label)+') is now on '+done.tables.join('+')+'.'; });
+    return { text, undo: async function(){ if(await mpDo({action:'map_separate', joinId: done.joinId})) mpShowToast('Undone: separate again.'); } };
+  }
+  if(done.kind === 'separate'){
+    const t = done.tables || [];
+    return { text: 'Tables '+t.join('+')+' are separate again.', undo: t.length < 2 ? null : async function(){
+      let a = [t[0]];
+      for(let i = 1; i < t.length; i++){ if(!(await mpDo({action:'map_join', a: a, b: [t[i]]}))) return; a = a.concat([t[i]]); }
+      mpShowToast('Undone: joined again.');
+    } };
+  }
+  if(done.kind === 'unseat') return { text: 'Undone.' };
+  if(done.kind === 'reopen') return { text: 'Undone: busy again.' };
+  return { text: 'Saved.' };
+}
+function mpMinutes(m){ return m < 60 ? m+' min' : Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'; }
+
+function mpSeat(u, booking, force){ return mpDo(Object.assign({action:'map_seat', tables: u.members}, booking ? {bookingId: booking.id} : {}, force ? {force: true} : {})); }
+function mpFree(u, s){ return mpDo({action:'map_free', sessionId: s.id}); }
+function mpSeparate(u){ return mpDo({action:'map_separate', joinId: u.joinId}); }
+function mpStartJoin(u){
+  MP.sheet = null; mpPaintSheet();
+  MP.joining = u.key; MP.placing = null;
+  mpShowToast('Tap the table to join with '+mpName(u).toLowerCase()+'.', null, 60000);
+  mpPaintFloor();
+}
+function mpJoinWith(u){
+  const a = mpUnitOf(MP.joining);
+  if(!a || a.key === u.key){ MP.joining = null; mpHideToast(); mpPaintFloor(); return; }
+  return mpDo({action:'map_join', a: a.members, b: u.members});
+}
+async function mpNoShow(b){
+  MP.sheet = null; mpPaintSheet();
+  try{
+    await rvApi({action:'staff_mark', id: b.id, to: 'no_show'});
+    mpShowToast(b.first+' is a no-show. The table is free for others.');
+    mpLoad(true);
+  }catch(e){ mpShowToast(e.message); }
+}
+
+// ── THE SHEET AND THE MESSAGE AT THE BOTTOM ──
+let MP_OPTS = [];
+function mpOpt(label, kind, go){ return { label, kind: kind || '', go }; }
+function mpOpenSheet(title, sub, lines, opts){
+  if(MP.toast && MP.joining === null && !MP.placing) mpHideToast();
+  MP.sheet = { title, sub, lines: lines || [], opts: (opts || []).concat([mpOpt('Cancel', 'quiet', mpCloseSheet)]) };
+  mpPaintSheet();
+}
+function mpCloseSheet(){ MP.sheet = null; mpPaintSheet(); }
+function mpPaintSheet(){
+  let host = document.getElementById('mp-sheet-host');
+  if(!host){ host = document.createElement('div'); host.id = 'mp-sheet-host'; document.body.appendChild(host); }
+  const S = MP.sheet;
+  if(!S || TAB!=='reservations' || RV.view!=='map'){ host.innerHTML = ''; MP_OPTS = []; return; }
+  MP_OPTS = S.opts;
+  host.innerHTML = '<div class="rv-scrim" onclick="mpScrimTap()"></div>'
+    + '<div class="rv-sheet mp-sheet" role="dialog" aria-label="'+esc(S.title)+'"><div class="rv-grab"></div>'
+    + '<div class="mp-sheet-t">'+esc(S.title)+'</div><div class="mp-sheet-s">'+esc(S.sub)+'</div>'
+    + S.lines.map(l => '<div class="mp-sheet-line">'+esc(l)+'</div>').join('')
+    + '<div class="mp-opts">'+S.opts.map((o, i) => '<button type="button" class="mp-opt '+o.kind+'" onclick="mpOptGo('+i+')">'+esc(o.label)+'</button>').join('')+'</div>'
+    + '</div>';
+}
+// The finger that held a table lifts where the sheet just appeared: not a tap on the sheet.
+function mpFresh(){ return Date.now() - (MP.sheetAt || 0) < 500; }
+function mpScrimTap(){ if(!mpFresh()) mpCloseSheet(); }
+function mpOptGo(i){ if(mpFresh()) return; const o = MP_OPTS[i]; if(o && o.go) o.go(); }
+
+function mpShowToast(text, undo, ms, label){
+  MP.toast = { text, undo: undo || null, label: label || 'Undo' };
+  clearTimeout(MP.toastTimer);
+  MP.toastTimer = setTimeout(mpHideToast, ms || (undo ? 9000 : 5000));
+  mpPaintToast();
+}
+function mpHideToast(){
+  clearTimeout(MP.toastTimer); MP.toast = null;
+  if(MP.joining !== null || MP.placing){ MP.joining = null; MP.placing = null; mpPaintFloor(); }
+  mpPaintToast();
+}
+function mpPaintToast(){
+  let host = document.getElementById('mp-toast');
+  if(!host){ host = document.createElement('div'); host.id = 'mp-toast'; host.setAttribute('role', 'status'); document.body.appendChild(host); }
+  const T = MP.toast;
+  if(!T || TAB!=='reservations' || (RV.view!=='map' && RV.view!=='draw')){ host.innerHTML = ''; host.className = ''; return; }
+  host.className = 'on';
+  host.innerHTML = '<span>'+esc(T.text)+'</span>'
+    + (T.undo ? '<button type="button" class="mp-undo" onclick="mpUndo()">'+esc(T.label || 'Undo')+'</button>' : '')
+    + '<button type="button" class="mp-toast-x" aria-label="Close the message" onclick="mpHideToast()">&times;</button>';
+}
+async function mpUndo(){
+  const T = MP.toast;
+  if(!T || !T.undo || MP.busy) return;
+  const go = T.undo;
+  MP.toast = null; mpPaintToast();
+  await go();
+}
+
+// Camera: for now the phone's own camera (the QR opens this page with the table and Arrived); scanning inside the page comes next.
+function mpCameraHelp(){
+  RV.sheet = null;
+  let host = document.getElementById('mp-sheet-host');
+  if(!host){ host = document.createElement('div'); host.id = 'mp-sheet-host'; document.body.appendChild(host); }
+  host.innerHTML = '<div class="rv-scrim" onclick="mpCameraClose()"></div>'
+    + '<div class="rv-sheet mp-sheet" role="dialog" aria-label="Scan a guest\u2019s QR code"><div class="rv-grab"></div>'
+    + '<div class="mp-sheet-t">Scan a guest\u2019s QR code</div>'
+    + '<ol class="mp-steps"><li>Open your phone\u2019s <b>Camera</b> app.</li><li>Point it at the QR code on the guest\u2019s phone or in their email.</li>'
+    + '<li>Tap the link that appears: this page opens with their table and an <b>Arrived</b> button.</li></ol>'
+    + '<div class="mp-sheet-line">Scanning right here, without leaving this page, comes in the next part of the map.</div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt quiet" onclick="mpCameraClose()">Close</button></div></div>';
+}
+function mpCameraClose(){ const host = document.getElementById('mp-sheet-host'); if(host) host.innerHTML = ''; }
+
+window.addEventListener('resize', function(){
+  if(TAB==='reservations' && RV.view==='map') mpPaintFloor();
+  if(TAB==='reservations' && RV.view==='draw') dwPaint();
+});
+
+
+// ── DRAWING A ROOM (r46) ──
+//
+// Two steps, like the pictures Sebastian approved: 1 the shape (a rectangle of
+// squares; Remove, Restore, Bar, Door, Object with its name — tap a square or
+// drag across several), 2 the tables (add round or square, drag into place,
+// tap one to change its number, seats or shape). Save sends the whole room;
+// the server checks it all again.
+
+const DW = { areaId: null, name: '', step: 'shape', cols: 12, rows: 16, cells: {}, tables: [], version: 0,
+             tool: 'gone', objName: '', sel: null, drag: null, paint: null, msg: '', bad: false, saving: false, others: {}, back: 'map' };
+
+async function dwOpen(areaId, from){
+  DW.back = from === 'settings' ? 'settings' : 'map';
+  if(!MP.data || MP.rid !== (RESTAURANT && RESTAURANT.id)){
+    try{ mpTake(await rvApi({action:'map_get'})); }
+    catch(e){ showToast(e.message); return; }
+  }
+  const room = (MP.data.rooms || []).find(r => r.id === areaId);
+  if(!room){ showToast('That room is not there any more.'); return; }
+  if(!MP.data.can.draw){ showToast('Only a manager can draw the rooms.'); return; }
+  mpStop(); MP.sheet = null; mpPaintSheet(); mpHideToast();
+  const others = {};
+  (MP.data.rooms || []).forEach(r => { if(r.id !== areaId) r.tables.forEach(t => { others[t.n] = r.name; }); });
+  Object.assign(DW, { areaId, name: room.name, step: 'shape', version: room.version || 0, others,
+    cols: room.drawn ? room.cols : 12, rows: room.drawn ? room.rows : 16,
+    cells: Object.assign({}, room.cells || {}), tables: room.tables.map(t => Object.assign({}, t)),
+    tool: 'gone', objName: '', sel: null, drag: null, paint: null, msg: '', bad: false, saving: false });
+  RV.view = 'draw';
+  render();
+  window.scrollTo(0, 0);
+}
+function dwBack(){
+  if(DW.step === 'tables'){ DW.step = 'shape'; DW.sel = null; DW.msg = ''; dwPaint(); return; }
+  dwLeave();
+}
+function dwLeave(){
+  if(DW.back === 'settings'){ RV.view = 'settings'; render(); rvLoadSettings(true); return; }
+  RV.view = 'map'; MP.room = DW.areaId; render(); mpLoad(true); mpStart();
+}
+function dwPaint(){
+  if(TAB!=='reservations' || RV.view!=='draw') return;
+  const root = document.getElementById('rv-root');
+  if(!root) return;
+  const y = window.scrollY;
+  root.innerHTML = dwHtml();
+  dwPaintGrid();
+  window.scrollTo(0, y);
+}
+function dwHtml(){
+  const shape = DW.step === 'shape';
+  const head = '<div class="mp-head"><button type="button" class="rv-back" onclick="dwBack()">&#8249; '+(shape ? (DW.back === 'settings' ? 'Settings' : 'Map') : 'Shape')+'</button>'
+    + '<div class="mp-title">'+esc(DW.name)+' · '+(shape ? 'shape' : 'tables')+'</div><div class="mp-clock">'+(shape ? '1' : '2')+' OF 2</div></div>';
+  if(shape){
+    const TOOLS = [['gone','Remove'],['floor','Restore'],['Bar','Bar'],['Door','Door'],['Object','Object']];
+    return head + '<p class="dw-hint">Pick a tool, then tap a square — or drag from one corner to another to fill a rectangle. No table can go on a bar, a door or an object.</p>'
+      + '<div class="dw-tools">' + TOOLS.map(([k, w]) => '<button type="button" class="dw-tool'+(DW.tool===k?' on':'')+'" onclick="dwTool(\''+k+'\')" aria-pressed="'+(DW.tool===k)+'"><i class="'+k.toLowerCase()+'"></i>'+w+'</button>').join('') + '</div>'
+      + (DW.tool === 'Object' ? '<div class="dw-name"><label for="dw-obj">Object name</label><input id="dw-obj" class="m-input" maxlength="24" placeholder="Piano, Column, Plants…" value="'+esc(DW.objName)+'" oninput="DW.objName=this.value"><span>then tap squares</span></div>' : '')
+      + '<div class="dw-size"><span>Wide</span><button type="button" class="dw-pm" aria-label="One square narrower" onclick="dwSize(\'cols\',-1)">−</button><b>'+DW.cols+'</b><button type="button" class="dw-pm" aria-label="One square wider" onclick="dwSize(\'cols\',1)">+</button>'
+      + '<span>Long</span><button type="button" class="dw-pm" aria-label="One square shorter" onclick="dwSize(\'rows\',-1)">−</button><b>'+DW.rows+'</b><button type="button" class="dw-pm" aria-label="One square longer" onclick="dwSize(\'rows\',1)">+</button>'
+      + '<button type="button" class="rv-mini" onclick="dwStartOver()">Start over</button></div>'
+      + '<div class="mp-floor-wrap"><div class="dw-grid" id="dw-grid"></div></div>'
+      + '<div class="mp-sum" id="dw-sum"></div>'
+      + '<div class="dw-msg'+(DW.bad?' bad':'')+'" role="status">'+esc(DW.msg)+'</div>'
+      + '<div class="dw-foot"><button type="button" class="m-save dw-next" onclick="dwNext()">Next: add the tables &#8250;</button></div>';
+  }
+  const t = DW.sel !== null ? DW.tables.find(x => x.n === DW.sel) : null;
+  const seats = DW.tables.reduce((n, x) => n + x.seats, 0);
+  return head + '<p class="dw-hint">Drag each table to its place. Tap one to change its number, seats or shape.</p>'
+    + '<div class="mp-floor-wrap"><div class="mp-floor dw-floor" id="dw-grid"></div></div>'
+    + '<div class="dw-add"><button type="button" class="rv-mini" onclick="dwAdd(\'round\')">+ Round table</button><button type="button" class="rv-mini" onclick="dwAdd(\'square\')">+ Square table</button>'
+    + '<span>'+DW.tables.length+' table'+(DW.tables.length===1?'':'s')+' · '+seats+' seats</span></div>'
+    + (t ? '<div class="dw-edit"><label for="dw-num">Table</label><input id="dw-num" class="m-input" inputmode="numeric" maxlength="3" value="'+t.n+'" onchange="dwNumber(this.value)">'
+         + '<div class="dw-seats"><button type="button" class="dw-pm" aria-label="Fewer seats" onclick="dwSeats(-1)">−</button><b>'+t.seats+' seats</b><button type="button" class="dw-pm" aria-label="More seats" onclick="dwSeats(1)">+</button></div>'
+         + '<div class="dw-shape"><button type="button" class="rv-mini'+(t.shape==='round'?' on':'')+'" onclick="dwShape(\'round\')">Round</button><button type="button" class="rv-mini'+(t.shape==='square'?' on':'')+'" onclick="dwShape(\'square\')">Square</button>'
+         + '<button type="button" class="rv-mini red" onclick="dwRemove()">Remove</button></div></div>' : '')
+    + '<div class="dw-msg'+(DW.bad?' bad':'')+'" role="status">'+esc(DW.msg)+'</div>'
+    + '<div class="dw-foot two"><button type="button" class="m-save" onclick="dwSave(this)"'+(DW.saving?' disabled':'')+'>Save the room</button>'
+    + '<button type="button" class="m-btn" onclick="dwLeave()">Cancel</button></div>';
+}
+function dwCell(){
+  const avail = Math.max(240, (document.getElementById('rv-root') || {}).clientWidth || 340);
+  return Math.max(12, Math.min(34, Math.floor(avail / DW.cols)));
+}
+function dwPaintGrid(){
+  const g = document.getElementById('dw-grid');
+  if(!g) return;
+  const C = dwCell(), room = { cols: DW.cols, rows: DW.rows, cells: DW.cells };
+  g.style.width = (DW.cols*C)+'px'; g.style.height = (DW.rows*C)+'px';
+  if(DW.step === 'shape'){
+    let html = '';
+    for(let y = 0; y < DW.rows; y++) for(let x = 0; x < DW.cols; x++){
+      const v = DW.cells[x+','+y] || '';
+      html += '<button type="button" class="dw-sq '+dwCls(v)+'" data-x="'+x+'" data-y="'+y+'" style="left:'+(x*C)+'px;top:'+(y*C)+'px;width:'+C+'px;height:'+C+'px"'
+        + ' aria-label="Square '+(x+1)+', '+(y+1)+': '+esc(!v ? 'floor' : v === 'gone' ? 'not part of the room' : v.replace(/^Object:/, ''))+'"></button>';
+    }
+    mpGroups(DW.cols, DW.rows, DW.cells).forEach(gr => {
+      html += '<div class="mp-blk-name'+(gr.tall?' tall':'')+'" style="left:'+(gr.x*C)+'px;top:'+(gr.y*C)+'px;width:'+(gr.w*C)+'px;height:'+(gr.h*C)+'px">'+esc(gr.text)+'</div>';
+    });
+    g.innerHTML = html;
+    g.onpointerdown = dwPaintStart;
+    const floor = DW.rows*DW.cols - Object.keys(DW.cells).length, count = {};
+    Object.values(DW.cells).forEach(v => { if(v !== 'gone'){ const k = v.replace(/^Object:/, ''); count[k] = (count[k]||0)+1; } });
+    const sum = document.getElementById('dw-sum');
+    if(sum) sum.textContent = DW.cols+' × '+DW.rows+' squares · '+floor+' floor'+(Object.keys(count).length ? ' · '+Object.keys(count).map(k => k+' '+count[k]).join(' · ') : '');
+    return;
+  }
+  g.style.backgroundSize = C+'px '+C+'px';
+  let html = mpBlocksHtml(room, C);
+  DW.tables.forEach(t => {
+    const f = mpFoot(t.seats), drag = DW.drag && DW.drag.n === t.n ? DW.drag : null;
+    const x = drag ? drag.x : t.x, y = drag ? drag.y : t.y, ok = !drag || dwFits(t, x, y);
+    html += '<button type="button" class="dw-t'+(t.shape==='round'?' round':'')+(DW.sel===t.n?' sel':'')+(drag?(ok?' moving':' moving bad'):'')+'" data-n="'+t.n+'"'
+      + ' style="left:'+(x*C+3)+'px;top:'+(y*C+3)+'px;width:'+(f.w*C-6)+'px;height:'+(f.h*C-6)+'px;--c:'+C+'px"'
+      + ' aria-label="Table '+t.n+', '+t.seats+' seats, '+t.shape+'. Drag to move, tap to change."><span class="mp-n">'+t.n+'</span><span class="mp-l">'+t.seats+' seats</span></button>';
+  });
+  g.innerHTML = html;
+  g.onpointerdown = dwDragStart;
+}
+
+// Shape: tap or drag across squares. The first square decides: painting it, or taking it off.
+function dwTool(k){ DW.tool = k; dwPaint(); }
+function dwSize(field, d){
+  const lo = 4, hi = field === 'cols' ? 30 : 40;
+  DW[field] = Math.max(lo, Math.min(hi, DW[field] + d));
+  Object.keys(DW.cells).forEach(k => { const [x, y] = k.split(',').map(Number); if(x >= DW.cols || y >= DW.rows) delete DW.cells[k]; });
+  dwPaint();
+}
+function dwStartOver(){ DW.cells = {}; DW.msg = ''; dwPaint(); }
+function dwValue(){
+  if(DW.tool === 'floor') return null;
+  if(DW.tool === 'Object'){
+    const name = String(DW.objName || '').trim().replace(/[<>"\\]/g, '').slice(0, 24);
+    return 'Object:' + (name || 'Object');
+  }
+  return DW.tool;
+}
+function dwSquareAt(e){
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  return el && el.classList && el.classList.contains('dw-sq') ? el : null;
+}
+function dwCls(v){ return !v ? 'floor' : v === 'gone' ? 'gone' : v === 'Bar' ? 'bar' : v === 'Door' ? 'door' : 'obj'; }
+// A tap fills one square; a drag fills the rectangle from the first square to the finger (shown as it goes,
+// written when the finger lifts). The first square decides: painting the tool, or taking it off.
+function dwPaintStart(e){
+  const sq = dwSquareAt(e);
+  if(!sq) return;
+  e.preventDefault();
+  const x0 = Number(sq.dataset.x), y0 = Number(sq.dataset.y), want = dwValue();
+  DW.paint = { erase: want === null || DW.cells[x0+','+y0] === want, want, x0, y0, x1: x0, y1: y0 };
+  dwPaintPreview();
+  const g = document.getElementById('dw-grid');
+  try{ g.setPointerCapture(e.pointerId); }catch(_){}
+  g.onpointermove = function(ev){
+    const P = DW.paint, s = dwSquareAt(ev);
+    if(!P || !s) return;
+    const x = Number(s.dataset.x), y = Number(s.dataset.y);
+    if(x !== P.x1 || y !== P.y1){ P.x1 = x; P.y1 = y; dwPaintPreview(); }
+  };
+  g.onpointerup = g.onpointercancel = function(){
+    const P = DW.paint; DW.paint = null; g.onpointermove = null;
+    if(P){
+      const [a, b, c, d] = dwRect(P);
+      for(let y = b; y <= d; y++) for(let x = a; x <= c; x++){ if(P.erase) delete DW.cells[x+','+y]; else DW.cells[x+','+y] = P.want; }
+    }
+    dwPaintGrid();
+  };
+}
+function dwRect(P){ return [Math.min(P.x0, P.x1), Math.min(P.y0, P.y1), Math.max(P.x0, P.x1), Math.max(P.y0, P.y1)]; }
+function dwPaintPreview(){
+  const P = DW.paint; if(!P) return;
+  const [a, b, c, d] = dwRect(P);
+  document.querySelectorAll('#dw-grid .dw-sq').forEach(el => {
+    const x = Number(el.dataset.x), y = Number(el.dataset.y), inside = x >= a && x <= c && y >= b && y <= d;
+    el.className = 'dw-sq ' + dwCls(inside ? (P.erase ? '' : P.want) : (DW.cells[x+','+y] || '')) + (inside ? ' pv' : '');
+  });
+}
+function dwNext(){
+  if(DW.rows*DW.cols - Object.keys(DW.cells).length < 4){ DW.msg = 'Leave some floor for the tables.'; DW.bad = true; dwPaint(); return; }
+  DW.step = 'tables'; DW.msg = ''; DW.bad = false;
+  const stuck = DW.tables.filter(t => !dwFits(t, t.x, t.y));
+  if(stuck.length){ DW.msg = 'Table'+(stuck.length>1?'s ':' ')+stuck.map(t => t.n).join(', ')+' '+(stuck.length>1?'are':'is')+' on something now: drag '+(stuck.length>1?'them':'it')+' to the floor.'; DW.bad = true; }
+  dwPaint();
+}
+
+// Tables: where one may stand (inside, on the floor, on top of no other).
+function dwFits(t, x, y, ignore){
+  const f = mpFoot(t.seats);
+  if(x < 0 || y < 0 || x + f.w > DW.cols || y + f.h > DW.rows) return false;
+  for(let i = 0; i < f.w; i++) for(let j = 0; j < f.h; j++) if(DW.cells[(x+i)+','+(y+j)]) return false;
+  return !DW.tables.some(o => {
+    if(o.n === t.n || o === ignore) return false;
+    const g = mpFoot(o.seats);
+    return x < o.x + g.w && o.x < x + f.w && y < o.y + g.h && o.y < y + f.h;
+  });
+}
+function dwFreeNumber(){
+  const used = new Set(DW.tables.map(t => t.n).concat(Object.keys(DW.others).map(Number)));
+  let n = 1; while(used.has(n)) n += 1;
+  return n;
+}
+function dwAdd(shape){
+  const t = { n: dwFreeNumber(), seats: shape === 'round' ? 2 : 4, shape, x: 0, y: 0 };
+  for(let y = 0; y < DW.rows; y++) for(let x = 0; x < DW.cols; x++){
+    if(dwFits(t, x, y)){ t.x = x; t.y = y; DW.tables.push(t); DW.sel = t.n; DW.msg = 'Table '+t.n+' added. Drag it to its place.'; DW.bad = false; dwPaint(); return; }
+  }
+  DW.msg = 'There is no free space left in this room.'; DW.bad = true; dwPaint();
+}
+function dwDragStart(e){
+  const el = e.target.closest ? e.target.closest('.dw-t') : null;
+  if(!el) return;
+  e.preventDefault();
+  const n = Number(el.dataset.n), t = DW.tables.find(x => x.n === n), C = dwCell();
+  const g = document.getElementById('dw-grid'), box = g.getBoundingClientRect();
+  const offX = Math.floor((e.clientX - box.left) / C) - t.x, offY = Math.floor((e.clientY - box.top) / C) - t.y;
+  DW.drag = { n, x: t.x, y: t.y, moved: false, sx: e.clientX, sy: e.clientY };
+  try{ g.setPointerCapture(e.pointerId); }catch(_){}
+  g.onpointermove = function(ev){
+    const d = DW.drag; if(!d) return;
+    if(Math.abs(ev.clientX - d.sx) + Math.abs(ev.clientY - d.sy) > 6) d.moved = true;
+    if(!d.moved) return;
+    const x = Math.floor((ev.clientX - box.left) / C) - offX, y = Math.floor((ev.clientY - box.top) / C) - offY;
+    if(x !== d.x || y !== d.y){ d.x = x; d.y = y; dwPaintGrid(); }
+  };
+  g.onpointerup = g.onpointercancel = function(){
+    const d = DW.drag; DW.drag = null; g.onpointermove = null;
+    if(!d) return;
+    if(!d.moved){ DW.sel = DW.sel === n ? null : n; DW.msg = ''; DW.bad = false; dwPaint(); return; }
+    if(dwFits(t, d.x, d.y)){ t.x = d.x; t.y = d.y; DW.msg = ''; DW.bad = false; }
+    else { DW.msg = 'No room for table '+t.n+' there.'; DW.bad = true; }
+    dwPaint();
+  };
+}
+function dwSelected(){ return DW.tables.find(x => x.n === DW.sel) || null; }
+function dwNumber(v){
+  const t = dwSelected(); if(!t) return;
+  const n = Number(String(v).trim());
+  if(!Number.isInteger(n) || n < 1 || n > 999){ DW.msg = 'A table number is 1 to 999.'; DW.bad = true; dwPaint(); return; }
+  if(n !== t.n && DW.tables.some(x => x.n === n)){ DW.msg = 'Table '+n+' is already in this room.'; DW.bad = true; dwPaint(); return; }
+  if(DW.others[n]){ DW.msg = 'Table '+n+' is in '+DW.others[n]+'. Each number is used once in the restaurant.'; DW.bad = true; dwPaint(); return; }
+  t.n = n; DW.sel = n; DW.msg = ''; DW.bad = false; dwPaint();
+}
+function dwSeats(d){
+  const t = dwSelected(); if(!t) return;
+  const seats = Math.max(1, Math.min(20, t.seats + d));
+  if(!dwFits(Object.assign({}, t, { seats }), t.x, t.y, t)){ DW.msg = 'No room for '+seats+' seats here: drag the table to a bigger space first.'; DW.bad = true; dwPaint(); return; }
+  t.seats = seats; DW.msg = ''; DW.bad = false; dwPaint();
+}
+function dwShape(s){ const t = dwSelected(); if(t){ t.shape = s; dwPaint(); } }
+function dwRemove(){ DW.tables = DW.tables.filter(x => x.n !== DW.sel); DW.sel = null; DW.msg = ''; dwPaint(); }
+
+async function dwSave(btn){
+  const stuck = DW.tables.filter(t => !dwFits(t, t.x, t.y));
+  if(stuck.length){ DW.msg = 'Table '+stuck[0].n+' is on something or outside the room: drag it to the floor first.'; DW.bad = true; dwPaint(); return; }
+  DW.saving = true; if(btn) btn.disabled = true;
+  try{
+    const data = await rvApi({action:'map_save', areaId: DW.areaId, version: DW.version, cols: DW.cols, rows: DW.rows, cells: DW.cells,
+                              tables: DW.tables.map(t => ({ n: t.n, seats: t.seats, shape: t.shape, x: t.x, y: t.y }))});
+    DW.saving = false;
+    mpTake(data);
+    const seats = DW.tables.reduce((n, x) => n + x.seats, 0);
+    showToast('Saved · '+DW.name+': '+DW.tables.length+' tables, '+seats+' seats. Online booking counts them now.');
+    RV.settings = null;
+    dwLeave();
+  }catch(e){
+    DW.saving = false;
+    DW.msg = e.message; DW.bad = true; dwPaint();
+  }
 }
 
 // ── GUEST MESSAGES (r21) ──
