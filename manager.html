@@ -2297,6 +2297,7 @@ function rvNowMinutes(){
 }
 function rvTel(phone){
   const raw = String(phone||''), dial = raw.replace(/[^\d+]/g,'');
+  if(!dial) return '';                      // r45: an online booking may have no phone (the email is required instead)
   const us = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(dial);
   const shown = us ? '('+us[1]+') '+us[2]+'-'+us[3] : raw;
   return '<a class="rv-tel" href="tel:'+esc(dial)+'">'+esc(shown)+'</a>';
@@ -2760,7 +2761,7 @@ function rvCard(b){
     + '<div class="rv-w-in">'
     +   '<div class="rv-when"><span>'+esc(b.label)+'</span><em>'+esc(b.code)+'</em></div>'
     +   '<div class="rv-name"><span class="rv-name-text">'+whoHtml(b.name, b.handle)+chips+'</span>'+msgSign(b)+'</div>'
-    +   '<div class="rv-meta">'+rvPeople(b.party)+(b.areaName?' · '+esc(b.areaName):'')+' · '+rvTel(b.phone)+'</div>'
+    +   '<div class="rv-meta">'+rvPeople(b.party)+(b.areaName?' · '+esc(b.areaName):'')+(rvTel(b.phone)?' · '+rvTel(b.phone):'')+'</div>'
     +   (b.email ? '<div class="rv-meta rv-email">'+MAIL_ICON+rvMail(b.email)+'</div>' : '')
     +   (b.notes ? '<div class="rv-note">&ldquo;'+esc(b.notes)+'&rdquo;</div>' : '')
     + '</div>'
@@ -4775,7 +4776,7 @@ function msgTopHtml(t){
   if(t.kind === 'request') return rqTopHtml(t);
   const b = t.booking;
   const first = String(b.name || '').trim().split(/\s+/)[0] || 'The guest';
-  const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+' · '+rvTel(b.phone)+(b.email ? ' · '+rvMail(b.email) : '');
+  const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+(rvTel(b.phone) ? ' · '+rvTel(b.phone) : '')+(b.email ? ' · '+rvMail(b.email) : '');
   // r42: nobody has written yet — the restaurant starts it, and is told where the guest will read it.
   if(t.fresh) return '<div class="mg-sub">'+sub+'</div><div class="mg-fresh">'+msgFreshText(t, first, b)+'</div>';
   const state = t.open
@@ -4790,7 +4791,7 @@ function msgFreshText(t, first, b){
   return '<b>Nobody has written yet.</b> Write to '+who+' about this table: '
     + (t.guestReads === 'account' ? who+' sees it on the bell of the website.'
        : t.guestReads === 'email' ? who+' has no account, so we email them once to say you wrote (never your words), with a button back to this conversation.'
-       : who+' has no account and gave no email, so they may never see it. Better call: '+rvTel(b.phone)+'.');
+       : who+' has no account and gave no email, so they may never see it.'+(rvTel(b.phone) ? ' Better call: '+rvTel(b.phone)+'.' : ''));
 }
 // The top of a request's conversation: the day asked for, the people, the phone, and where the guest reads it.
 function rqTopHtml(t){
