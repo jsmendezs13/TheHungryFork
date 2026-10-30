@@ -56,6 +56,7 @@ import {
   partyRequestEmail,
 } from './_lib/email.js';
 import { staff, requestMailList } from './_lib/staff.js';
+import { floor } from './_lib/floor.js';      // r46: the table map (Reservations → Map)
 import { forgetOldFiles } from './_lib/files.js';
 import { notifyStaff, line } from './_lib/push.js';     // r43: notifications on the staff's phones
 import { guest, staffMessages, chatSummaries, KEEP_MS } from './_lib/messages.js';
@@ -140,6 +141,8 @@ export default async function handler(req, res) {
   // The confirmation email is lent to the staff side, so a big party the
   // manager says yes to hears about it the same way an online booking does.
   // r30: and the request's conversation follows the table it becomes.
+  // r46: the table map — the rooms drawn, the busy tables, the joined tables, Reserved.
+  if (action.startsWith('map_')) return floor(req, res, body, action);
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
 }
