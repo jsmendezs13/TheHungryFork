@@ -3,8 +3,12 @@
    widget was once added to one page and not the other; keeping one copy is how
    that stops happening. Edit here, never in the pages. */
 
-  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--ink); color: var(--white); padding: .8rem 1.6rem; border-radius: 999px; font-size: .85rem; font-weight: 500; z-index: 9999; transition: transform .3s; pointer-events: none; font-family: var(--sans); box-shadow: var(--shadow-md); }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+  /* r47 (Sebastian, 30 Oct: no black messages): only when something did not happen — white, dark red words */
+  .toast { position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 1.2rem); left: 50%; transform: translateX(-50%) translateY(140%); opacity: 0;
+    width: max-content; max-width: min(440px, calc(100% - 32px)); box-sizing: border-box; background: #fff; color: #8E0D11; border: 1px solid rgba(176,16,21,.3);
+    padding: .7rem 1rem; border-radius: 12px; font-size: .85rem; font-weight: 500; line-height: 1.4; text-align: center; z-index: 9999;
+    transition: transform .25s, opacity .25s; pointer-events: none; font-family: var(--sans); box-shadow: 0 8px 24px rgba(43,33,26,.14); }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
   /* ── TASTER MODAL ── */
   .t-overlay { display:none; position:fixed; inset:0; background:rgba(20,16,13,.6); z-index:800; align-items:center; justify-content:center; padding:1rem; }
