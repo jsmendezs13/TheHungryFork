@@ -42,11 +42,13 @@
 // big-party request (requestToRestaurant below).
 
 import crypto from 'node:crypto';
-import { makeLimiter, allow, keyFor, clientIp, normalizeUsPhone, validateName } from './_lib/auth.js';
+import dns from 'node:dns';
+import { parsePhoneNumberFromString as parseFullPhone } from 'libphonenumber-js/max';   // r45: the full list of real numbers
+import { makeLimiter, allow, keyFor, clientIp, validateName } from './_lib/auth.js';
 import { sb, tasterIdFromRequest } from './_lib/roles.js';
 import {
   DEFAULT_RESTAURANT_ID, loadBooking, publicSettings, todayIn, clockIn,
-  freeSlots, isOpenOn, cleanDate, cleanParty, cleanPhone, cleanText, cleanEmail, BOOK_MESSAGES,
+  freeSlots, isOpenOn, cleanDate, cleanParty, cleanText, cleanEmail, BOOK_MESSAGES,
 } from './_lib/booking.js';
 import {
   emailReady, senderFor, newLinkToken, saveLink, cancelUrl, talkUrl, cleanToken, hashToken,
@@ -322,12 +324,16 @@ async function book(req, res, body) {
   if (!name || !name.ok || name.value.length < 2) {
     return res.status(400).json({ error: (name && name.error) || 'Please write the name for the table.' });
   }
-  const phone = cleanPhone(body.phone, normalizeUsPhone);
-  if (!phone) return res.status(400).json({ error: 'Please write a phone number the restaurant can call.' });
+  // r45: the phone is optional; when written, a real US number.
+  const typedPhone = String(body.phone || '').trim();
+  const phone = typedPhone ? usPhone(typedPhone) : null;
+  if (typedPhone && !phone) return res.status(400).json({ error: PHONE_WRONG, reason: 'phone' });
   // The email is required (Sebastian, 7 Oct): the QR code and the confirmation
   // go there, and a guest without them is a guest the door cannot find.
   const email = requiredEmail(body.email);
   if (!email) return res.status(400).json({ error: EMAIL_NEEDED, reason: 'email' });
+  const typo = typoProblem(body);                                          // r45: "Did you mean …@gmail.com?"
+  if (typo) return res.status(400).json(typo);
 
   const party = cleanParty(body.party, 50);
   if (!party) return res.status(400).json({ error: BOOK_MESSAGES.bad_party, reason: 'bad_party' });
@@ -353,15 +359,19 @@ async function book(req, res, body) {
       error: 'Too many bookings from this connection. Please call the restaurant instead.',
     });
   }
-  if (!(await allow(bookPhoneLimit, keyFor(phone), { failOpen: false }))) {
+  const noMail = await mailProblem(email);                                 // r45: a domain that receives mail
+  if (noMail) return res.status(400).json(noMail);
+  // r45: counted on the phone when there is one, else on the email's mailbox.
+  if (!(await allow(bookPhoneLimit, keyFor(phone || 'mail:' + mailboxKey(email)), { failOpen: false }))) {
     return res.status(429).json({
-      error: 'That number already has several bookings today. Please call the restaurant instead.',
+      error: (phone ? 'That number' : 'That email') + ' already has several bookings today. Please call the restaurant instead.',
     });
   }
 
   // ── one table per phone, per day ─────────────────────────────────────────
   // Sebastian's rule (2 Oct): one phone number gets one table a day at a
-  // restaurant online; a second one is a phone call. So a party of twelve
+  // restaurant online; a second one is a phone call. r45: the phone is optional,
+  // so the email counts too: the same phone OR the same email. So a party of twelve
   // cannot book two tables of six and skip the request the manager answers.
   // secondTable() below gives the two answers; it runs again right after the
   // booking, so two bookings sent at the same moment cannot both stay.
@@ -369,9 +379,9 @@ async function book(req, res, body) {
     timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(at);
   const day = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'long', month: 'long', day: 'numeric' }).format(at);
-  const sameDay = { req, res, restaurantId, phone, localDate, day, name: name.value, loaded, timezone };
+  const sameDay = { req, res, restaurantId, phone, email, localDate, day, name: name.value, loaded, timezone };
 
-  const before = await tablesThatDay(restaurantId, phone, localDate);
+  const before = await tablesThatDay(restaurantId, { phone, email }, localDate);
   if (before.length) return secondTable(sameDay, before);
 
   // ── the database decides ─────────────────────────────────────────────────
@@ -379,14 +389,14 @@ async function book(req, res, body) {
   // appear in their own screens later. Nobody has to be signed in to eat here.
   const tasterId = tasterIdFromRequest(req);
 
-  const booked = await sb('/rpc/hf_book', {
+  const bookWith = (p) => sb('/rpc/hf_book', {
     method: 'POST',
     body: JSON.stringify({
       p_restaurant: restaurantId,
       p_slot:       at.toISOString(),
       p_party:      party,
       p_name:       name.value,
-      p_phone:      phone,
+      p_phone:      p,
       p_email:      email,
       p_taster:     tasterId,
       p_notes:      notes,
@@ -394,6 +404,9 @@ async function book(req, res, body) {
       p_created_by: null,
     }),
   });
+  let booked = await bookWith(phone);
+  // r45: before migration 31 the database still needs a phone ("not null", 23502): an empty one, until it runs.
+  if (!booked.ok && !phone && booked.data && booked.data.code === '23502') booked = await bookWith('');
 
   if (!booked.ok || !Array.isArray(booked.data) || !booked.data.length) {
     console.error('[reservations:book] hf_book failed', booked.status, booked.data?.message);
@@ -412,7 +425,7 @@ async function book(req, res, body) {
 
   // Two bookings for this phone and day sent at the same moment both passed
   // the check above. The older one stays; this one is given straight back.
-  const after = await tablesThatDay(restaurantId, phone, localDate);
+  const after = await tablesThatDay(restaurantId, { phone, email }, localDate);
   const earlier = after.filter((r) => Number(r.id) < Number(result.reservation_id));
   if (earlier.length) {
     const stamp = new Date().toISOString();
@@ -476,6 +489,7 @@ async function book(req, res, body) {
     holdMinutes: booking.holdMinutes,
     restaurant:  loaded.restaurant,
     emailSent,
+    emailOff: !emailReady(loaded.settings),        // r45: the restaurant sends no emails (so the page says nothing about one)
     ...clockIn(timezone, at),
   });
 }
@@ -483,14 +497,18 @@ async function book(req, res, body) {
 const EMAIL_NEEDED = 'Please write your email: your QR code and the confirmation go there.';
 
 // ── a second table for the same phone, the same day ──────────────────────────
-// The tables this phone already has at this restaurant that day, oldest first.
-async function tablesThatDay(restaurantId, phone, localDate) {
-  const got = await sb(
-    `/reservations?restaurant_id=eq.${restaurantId}&guest_phone=eq.${encodeURIComponent(phone)}` +
-    `&local_date=eq.${localDate}&status=in.(booked,seated)` +
-    `&select=id,code,reserved_at,party_size,guest_name,guest_email,guest_phone,taster_id,area_id,status,hold_minutes,confirmation_sent_at&order=id.asc&limit=5`
-  );
-  return got.ok && Array.isArray(got.data) ? got.data : [];
+// The tables this phone (r45: or this email) already has at this restaurant that day, oldest first.
+async function tablesThatDay(restaurantId, { phone, email }, localDate) {
+  const base = `/reservations?restaurant_id=eq.${restaurantId}&local_date=eq.${localDate}&status=in.(booked,seated)` +
+    `&select=id,code,reserved_at,party_size,guest_name,guest_email,guest_phone,taster_id,area_id,status,hold_minutes,confirmation_sent_at&order=id.asc&limit=5`;
+  const asks = [];
+  if (phone) asks.push(sb(base + `&guest_phone=eq.${encodeURIComponent(phone)}`));
+  if (email) asks.push(sb(base + `&guest_email=eq.${encodeURIComponent(email)}`));
+  const byId = new Map();
+  (await Promise.all(asks)).forEach((got) => {
+    if (got.ok && Array.isArray(got.data)) got.data.forEach((r) => byId.set(Number(r.id), r));
+  });
+  return [...byId.values()].sort((a, b) => Number(a.id) - Number(b.id));
 }
 
 // "José Álvarez" and "jose  alvarez" are the same guest.
@@ -514,12 +532,15 @@ function sameName(a, b) {
 async function secondTable({ req, res, phone, localDate, day, name, loaded, timezone, race }, rows) {
   const restaurantPhone = (loaded.restaurant && loaded.restaurant.phone) || null;
   const callLine = `For a second table the same day, please call the restaurant${restaurantPhone ? ': ' + restaurantPhone : ''}.`;
+  // r45: which of the two it was (the phone, or the email).
+  const by = phone && rows.some((r) => r.guest_phone === phone) ? 'phone' : 'email';
+  const what = by === 'phone' ? 'This phone number' : 'This email';
   const row = rows.find((r) => sameName(r.guest_name, name));
   if (!row) {
     return res.status(409).json({
       reason: 'one_per_day',
-      error: `This phone number already has a table at ${loaded.restaurant.name} on ${day}. ${callLine}`,
-      day, phone: restaurantPhone,
+      error: `${what} already has a table at ${loaded.restaurant.name} on ${day}. ${callLine}`,
+      day, phone: restaurantPhone, by,
     });
   }
   // Theirs: the account that booked it, or an account on that same phone number
@@ -538,7 +559,7 @@ async function secondTable({ req, res, phone, localDate, day, name, loaded, time
       if (area.ok && Array.isArray(area.data) && area.data.length) areaName = area.data[0].name;
     }
     return res.status(200).json({
-      success: true, already: true, day, date: localDate, phone: restaurantPhone,
+      success: true, already: true, day, date: localDate, phone: restaurantPhone, by,
       code: row.code, qr: await qrFor(row.id, loaded.settings),
       at: new Date(row.reserved_at).toISOString(), party: row.party_size, areaName,
       ...clockIn(timezone, row.reserved_at),
@@ -573,7 +594,7 @@ async function secondTable({ req, res, phone, localDate, day, name, loaded, time
     }
   }
   return res.status(200).json({
-    success: true, already: true, day, date: localDate, phone: restaurantPhone, resent, recent,
+    success: true, already: true, day, date: localDate, phone: restaurantPhone, resent, recent, by,
   });
 }
 
@@ -582,6 +603,124 @@ async function secondTable({ req, res, phone, localDate, day, name, loaded, time
 function requiredEmail(value) {
   const email = cleanEmail(value);
   return email && sendableAddress(email) ? email : null;
+}
+
+// ── r45 (Sebastian, 29 Oct): a real phone number and an email that can receive mail ──
+// No text message and no email is sent to check them: the phone number is checked
+// against the full list of numbers that exist (libphonenumber's complete one —
+// real area codes and lengths, for every country), and the email's domain must be
+// one that receives mail (its MX record in DNS), with the common typos caught.
+const PHONE_KINDS_REFUSED = ['TOLL_FREE', 'PREMIUM_RATE', 'SHARED_COST', 'VOICEMAIL', 'UAN', 'PAGER'];
+export function realPhone(input, { tollFree = false } = {}) {
+  let raw = String(input || '').trim();
+  if (!raw || raw.length > 30) return null;
+  // "00 44 …" (how Europe dials out) means "+44 …". ("011 44 …", the US way, the library reads by itself.)
+  const bare = raw.replace(/[\s().-]/g, '');
+  if (/^00\d/.test(bare)) raw = '+' + bare.slice(2);
+  // Mexico dropped the "1" after +52 for mobiles in 2019; many saved contacts still have it.
+  if (/^\+?521\d{10}$/.test(raw.replace(/[\s().-]/g, ''))) raw = '+52' + raw.replace(/[\s().-]/g, '').replace(/^\+?521/, '');
+  let parsed = null;
+  try { parsed = parseFullPhone(raw, 'US'); } catch { parsed = null; }
+  if (!parsed) return null;
+  if (!parsed.isValid()) {
+    // A new US/Canada area code that the library's list does not have yet must not cost a guest their
+    // table: the shape of a North American number is enough (area code and exchange not starting with
+    // 0 or 1, neither one an N11 like 411 or 911), unless it is one digit ten times (222 222 2222).
+    const nat = String(parsed.nationalNumber || '');
+    const northAmerican = parsed.countryCallingCode === '1' && /^[2-9]\d{2}[2-9]\d{6}$/.test(nat)
+      && !/^[2-9]11/.test(nat) && !/^\d{3}[2-9]11/.test(nat) && !/^(\d)\1{9}$/.test(nat);
+    return northAmerican && parsed.isPossible() ? parsed.number : null;
+  }
+  const kind = parsed.getType();
+  if (PHONE_KINDS_REFUSED.indexOf(kind) >= 0 && !(tollFree && kind === 'TOLL_FREE')) return null;   // nobody answers an 800 number for a table
+  return parsed.number;                                                        // +13475550160, +447911123456
+}
+// r45 (Sebastian, 29 Oct 17:47): "phone number has to be optional, but email is the one that has to be obligatory",
+// and a phone, when written, is a US one ("+1", as the log-in): foreign numbers simply leave it empty.
+const PHONE_WRONG = 'Please check the phone number (10 digits), or leave it empty: it is optional.';
+const PHONE_WRONG_REQUEST = 'Please check the phone number (10 digits): for a big party the restaurant calls you.';
+// A written phone: a real one with +1, or null.
+function usPhone(typed, opts) {
+  const phone = realPhone(typed, opts);
+  return phone && phone.startsWith('+1') ? phone : null;
+}
+
+const EMAIL_TYPOS = {
+  'gmial.com': 'gmail.com', 'gmal.com': 'gmail.com', 'gmaill.com': 'gmail.com', 'gamil.com': 'gmail.com', 'gnail.com': 'gmail.com',
+  'gmail.co': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.cm': 'gmail.com', 'gmail.om': 'gmail.com', 'gmai.com': 'gmail.com',
+  'gmali.com': 'gmail.com', 'gmail.comm': 'gmail.com', 'gmsil.com': 'gmail.com', 'gmail.cim': 'gmail.com', 'gmail.vom': 'gmail.com',
+  'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com', 'hotmai.com': 'hotmail.com', 'hotmail.co': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotmil.com': 'hotmail.com',
+  'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'yahoo.co': 'yahoo.com', 'yahoo.con': 'yahoo.com', 'yhoo.com': 'yahoo.com',
+  'outlok.com': 'outlook.com', 'outllok.com': 'outlook.com', 'outlook.co': 'outlook.com', 'outlook.con': 'outlook.com',
+  'iclod.com': 'icloud.com', 'icoud.com': 'icloud.com', 'icloud.co': 'icloud.com', 'icloud.con': 'icloud.com',
+  'aol.co': 'aol.com', 'aol.con': 'aol.com',
+};
+export function emailTypo(email) {
+  const at = String(email || '').lastIndexOf('@');
+  if (at < 1) return null;
+  const fix = EMAIL_TYPOS[String(email).slice(at + 1).toLowerCase()];
+  return fix ? String(email).slice(0, at) + '@' + fix : null;
+}
+const MAIL_DOMAINS = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'hotmail.com', 'outlook.com', 'live.com', 'msn.com',
+  'icloud.com', 'me.com', 'mac.com', 'aol.com', 'proton.me', 'protonmail.com', 'comcast.net', 'verizon.net', 'att.net', 'sbcglobal.net',
+  'gmx.com', 'mail.com', 'yahoo.es', 'hotmail.es', 'outlook.es', 'yahoo.com.mx', 'hotmail.co.uk', 'yahoo.co.uk']);
+const domainSeen = new Map();          // domain → { ok, at }: a warm function asks DNS once per 10 minutes
+let dnsWorks = { ok: true, at: 0 };
+function after(ms, fn) { return setTimeout(fn, ms); }     // cleared as soon as the answer comes (never left running)
+function dnsTry(fn, name, ms) {
+  let t;
+  return Promise.race([dns.promises[fn](name), new Promise((ok, no) => { t = after(ms, () => no(Object.assign(new Error('slow'), { code: 'ETIMEOUT' }))); })])
+    .finally(() => clearTimeout(t));
+}
+async function resolverWorks() {
+  if (Date.now() - dnsWorks.at < 5 * 60 * 1000) return dnsWorks.ok;
+  let ok = false;
+  try { ok = (await dnsTry('resolveMx', 'gmail.com', 1500)).length > 0; } catch { ok = false; }
+  dnsWorks = { ok, at: Date.now() };
+  return ok;
+}
+async function hasAddress(domain) {
+  for (const fn of ['resolve4', 'resolve6']) {
+    try { if ((await dnsTry(fn, domain, 1500)).length) return true; }
+    catch (err) { if (!err || (err.code !== 'ENODATA' && err.code !== 'ENOTFOUND')) return true; }
+  }
+  return false;
+}
+async function domainAnswer(domain) {
+  try {
+    const mx = await dnsTry('resolveMx', domain, 2000);
+    if (mx.some((m) => m && m.exchange && m.exchange !== '.')) return true;
+    return mx.length ? false : hasAddress(domain);              // "MX 0 ." (a null MX) means: no mail here
+  } catch (err) {
+    if (err && err.code === 'ENODATA') return hasAddress(domain);              // no MX: mail goes to the domain itself
+    if (err && err.code === 'ENOTFOUND') return !(await resolverWorks());      // no such domain (if DNS answers at all)
+    return true;                                                                // slow or broken DNS never costs a guest their table
+  }
+}
+export async function emailDomainOk(email) {
+  const domain = String(email || '').split('@')[1] || '';
+  if (!domain) return false;
+  if (MAIL_DOMAINS.has(domain)) return true;
+  const seen = domainSeen.get(domain);
+  if (seen && Date.now() - seen.at < 10 * 60 * 1000) return seen.ok;
+  let ok = true;
+  let t;
+  try { ok = await Promise.race([domainAnswer(domain), new Promise((r) => { t = after(3000, () => r(true)); })]); } catch { ok = true; }
+  clearTimeout(t);
+  if (domainSeen.size > 500) domainSeen.clear();          // a small memory, never a growing one
+  domainSeen.set(domain, { ok, at: Date.now() });
+  return ok;
+}
+// For the booking and the big-party request: null when all is well. The typo is answered at once;
+// the DNS question is asked only after the address's booking limit (it can take a few seconds).
+function typoProblem(body) {
+  const typo = emailTypo(String(body.email || '').trim());
+  return typo ? { error: 'Did you mean ' + typo + '? Please check your email.', reason: 'email', suggest: typo } : null;
+}
+async function mailProblem(email) {
+  return email && !(await emailDomainOk(email))
+    ? { error: 'That email can’t receive mail. Please check what comes after the @.', reason: 'email' }
+    : null;
 }
 
 // The restaurant's menu, for the message a guest shares with friends.
@@ -704,7 +843,9 @@ async function answerByEmail({ reservationId, staffName, loaded, timezone, openi
   if (!row || !row.guest_email) return false;
   // An account: booked while logged in, or an account on the table's phone number.
   if (row.taster_id) return false;
-  const account = await sb(`/tasters?phone_number=eq.${encodeURIComponent(row.guest_phone)}&select=id&limit=1`);
+  const account = row.guest_phone
+    ? await sb(`/tasters?phone_number=eq.${encodeURIComponent(row.guest_phone)}&select=id&limit=1`)
+    : { ok: true, data: [] };                                                     // r45: no phone, no account on it
   if (!account.ok || !Array.isArray(account.data) || account.data.length) return false;   // unknown counts as "has one": no email
   const to = sendableAddress(row.guest_email);
   if (!to) return false;
@@ -813,10 +954,13 @@ async function request(req, res, body) {
   if (!name || !name.ok || name.value.length < 2) {
     return res.status(400).json({ error: (name && name.error) || 'Please write your name.' });
   }
-  const phone = cleanPhone(body.phone, normalizeUsPhone);
-  if (!phone) return res.status(400).json({ error: 'Please write a phone number the restaurant can call.' });
+  if (!String(body.phone || '').trim()) return res.status(400).json({ error: 'Please write a phone number the restaurant can call.', reason: 'phone' });
+  const phone = usPhone(body.phone, { tollFree: true });                   // r45: a real US number (a company's 800 too)
+  if (!phone) return res.status(400).json({ error: PHONE_WRONG_REQUEST, reason: 'phone' });
   const email = requiredEmail(body.email);
   if (!email) return res.status(400).json({ error: 'Please write your email: if the restaurant says yes, your confirmation and QR code go there.', reason: 'email' });
+  const typo = typoProblem(body);                                          // r45: "Did you mean …@gmail.com?"
+  if (typo) return res.status(400).json(typo);
 
   const party = cleanParty(body.party, booking.maxPartyRequest || 40);
   if (!party) {
@@ -841,6 +985,8 @@ async function request(req, res, body) {
       error: 'Too many requests from here today. Please call the restaurant instead.',
     });
   }
+  const noMail = await mailProblem(email);                                 // r45: a domain that receives mail
+  if (noMail) return res.status(400).json(noMail);
 
   const created = await sb('/reservation_requests', {
     method: 'POST',
