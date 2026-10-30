@@ -1912,7 +1912,7 @@ function qrFile(r) {
   return new File([bytes], 'table-qr-' + String(r.code).replace(/[^A-Za-z0-9-]/g, '') + '.png', { type: 'image/png' });
 }
 let sharing = false;
-async function shareTable(r) {
+async function shareTable(r, btn) {
   if (sharing) return;                               // a second tap while the share sheet is open
   sharing = true;
   // Some phones never answer when their share sheet is closed a certain way:
@@ -1926,10 +1926,10 @@ async function shareTable(r) {
       waited = true;
       await Promise.race([mineQr(r), new Promise((ok) => setTimeout(ok, 3000))]);
     }
-    await shareNow(r, waited);
+    await shareNow(r, waited, btn);
   } finally { clearTimeout(unstick); sharing = false; }
 }
-async function shareNow(r, waited) {
+async function shareNow(r, waited, btn) {
   const withQr = hasQrImage(r);
   const text = shareText(r, withQr);
   const title = 'A table at ' + r.restaurant;
@@ -1964,16 +1964,15 @@ async function shareNow(r, waited) {
   }
   // The picture B already carries the day, the time and the address; the plain QR does not.
   const card = !!file && file === r._card;
-  showToast(copied
-    ? (file ? 'Message copied and the picture saved: paste the message in your chat and add the picture.' : 'Message copied: paste it in your chat.')
-    : (file ? (card ? 'The picture of your table is saved: send it in your chat.' : 'The QR picture is saved. Send it with the day, the time and the address.')
-            : 'Could not copy the message.'));
+  // r47: no black message — the button says what happened (the picture is in the computer's downloads)
+  if (copied || file) doneOn(btn, copied ? (file ? 'Copied ✓ · picture saved' : 'Copied ✓') : 'Picture saved ✓', 3000);
+  else showToast('Could not copy the message.');
 }
 document.addEventListener('click', (event) => {
   const b = event.target.closest('.rv-share-btn');
   if (!b || !state.mine) return;
   const r = state.mine[Number(b.dataset.share)];
-  if (r) shareTable(r);
+  if (r) shareTable(r, b);
 });
 
 // My Reservations: show or hide a table's QR code.
@@ -2044,11 +2043,9 @@ document.addEventListener('click', async (event) => {
     // token in the link, needs nothing else).
     if (button.dataset.link) {
       await api({ action: 'cancel_link', token: button.dataset.link });
-      showToast('Your table is cancelled. Thank you for telling us.');
       openLink(button.dataset.link, false);
     } else {
       await api({ action: 'cancel', id: Number(button.dataset.id) });
-      showToast('Your table is cancelled. Thank you for telling us.');
       openMine();
     }
   } catch (e) {
@@ -2195,16 +2192,16 @@ function saveSharePicture(r) {
   a.href = url; a.download = file.name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
-  showToast('The picture is saved.');
+  doneOn(el('share-save'), 'Saved ✓');
 }
 async function copyShareText(r) {
-  try { await navigator.clipboard.writeText(shareText(r, hasQrImage(r))); showToast(hasQrImage(r) ? 'Message copied: paste it in your chat, and send the picture too.' : 'Message copied: paste it in your chat.'); }
+  try { await navigator.clipboard.writeText(shareText(r, hasQrImage(r))); doneOn(el('share-copy'), 'Copied ✓'); }
   catch (e) { showToast('Could not copy the message.'); }
 }
 document.addEventListener('click', (event) => {
   const r = state.shared;
   if (!r || !el('step-share').classList.contains('on')) return;
-  if (event.target.closest('#share-go')) shareTable(r);
+  if (event.target.closest('#share-go')) shareTable(r, el('share-go'));
   else if (event.target.closest('#share-save')) saveSharePicture(r);
   else if (event.target.closest('#share-copy')) copyShareText(r);
 });
