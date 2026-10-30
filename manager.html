@@ -777,14 +777,16 @@
   .mp-opt.red { color:var(--red-dark); border-color:rgba(176,16,21,.35); }
   .mp-opt.quiet { color:var(--muted); }
   .mp-steps { margin:.2rem 0 .8rem 1.1rem; padding:0; font-size:.86rem; line-height:1.6; }
-  #mp-toast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 16px); transform:translateX(-50%); z-index:320; width:min(688px, calc(100% - 32px));
-    display:none; align-items:center; gap:.6rem; background:var(--ink); color:var(--white); border-radius:14px; padding:.7rem .85rem; font-size:.82rem; line-height:1.4;
-    box-shadow:0 12px 30px rgba(21,13,9,.35); box-sizing:border-box; }
+  /* r47 (Sebastian: no black messages): a light bar, a few words, Undo */
+  #mp-toast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 16px); transform:translateX(-50%); z-index:320; width:min(560px, calc(100% - 32px));
+    display:none; align-items:center; gap:.6rem; background:#fff; color:var(--text); border:1px solid var(--border); border-radius:14px; padding:.55rem .7rem .55rem .9rem;
+    font-size:.82rem; line-height:1.4; box-shadow:0 8px 24px rgba(43,33,26,.14); box-sizing:border-box; }
+  #mp-toast.bad { color:#8E0D11; border-color:rgba(176,16,21,.3); }
   #mp-toast.on { display:flex; }
   #mp-toast span { flex:1; }
-  .mp-undo { flex:none; border:1px solid rgba(252,249,244,.5); background:none; color:var(--white); border-radius:999px; padding:.4rem .8rem; font-family:var(--sans);
+  .mp-undo { flex:none; border:1px solid #1F3F75; background:#fff; color:#1F3F75; border-radius:999px; padding:.4rem .8rem; font-family:var(--sans);
     font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; }
-  .mp-toast-x { flex:none; border:none; background:none; color:var(--white); font-size:1.2rem; line-height:1; cursor:pointer; padding:.1rem .3rem; }
+  .mp-toast-x { flex:none; border:none; background:none; color:var(--muted); font-size:1.2rem; line-height:1; cursor:pointer; padding:.1rem .3rem; }
   .dw-hint { margin:0 0 .6rem; font-size:.8rem; line-height:1.45; color:var(--muted); text-align:center; }
   .dw-tools { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:.35rem; margin-bottom:.5rem; }
   .dw-tool { height:2.3rem; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--text); font-family:var(--sans); font-size:.74rem; font-weight:600;
@@ -824,6 +826,14 @@
   .dw-foot.two { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; } .dw-foot.two .m-btn { margin:0; }
   .rv-room-drawn { font-size:.7rem; color:var(--muted); margin-top:.3rem; }
   .dw-sq.pv { outline:2px solid var(--blue); outline-offset:-2px; }
+  .dw-objs { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; margin-bottom:.45rem; }
+  .dw-objs-h { font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-right:.2rem; }
+  .dw-obj { border:1px solid var(--border); background:#fff; color:var(--text); border-radius:999px; padding:.35rem .75rem; font-family:var(--sans); font-size:.76rem; font-weight:600; cursor:pointer; }
+  .dw-obj::before { content:''; display:inline-block; width:9px; height:9px; border-radius:2px; background:#6E6A66; margin-right:.35rem; vertical-align:-1px; }
+  .dw-obj.new::before { display:none; }
+  .dw-obj.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .dw-obj.new { color:var(--blue); border-style:dashed; } .dw-obj.new.on { background:#fff; color:var(--blue); border-color:var(--blue); }
+  .dw-turn, .dw-turn-room { color:var(--blue); border-color:rgba(47,93,168,.4); }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -1622,7 +1632,6 @@ async function coDone(){
     return;
   }
   CO = CO_IDLE(); render();
-  showToast('New order saved. The menu shows it now.');
 }
 // The switch of a part of the menu: its cave on the menu, or not. Saves at once, like the other switches.
 async function caveShow(cave){
@@ -1633,7 +1642,6 @@ async function caveShow(cave){
   try{
     const d = await rvApi({ action:'menu_top_save', hidden:next });
     CAVE_HIDDEN = d.order && Array.isArray(d.order.hidden) ? d.order.hidden : next;
-    showToast((CAVE_LABEL[cave] || cave)+(off ? ': hidden from the menu' : ': on the menu again'));
   }catch(e){
     CAVE_HIDDEN = was; showToast(e.message);
   }
@@ -1760,7 +1768,6 @@ async function arrDone(){
   DISHES_ROWS = DISHES_ROWS.map(d => moved.indexOf(d) >= 0 ? moved[k++] : d);
   ARR = null;
   render();
-  showToast('New order saved. The menu shows it now.');
   return true;
 }
 
@@ -1895,7 +1902,6 @@ function kindField(d){
 async function setKind(id, kind){
   const d = rowFor(id); if(!d || d.drink_kind === kind) return;
   const saved = await save(id, { drink_kind: kind });
-  if(saved) showToast('Saved · '+(isSpiritKind(kind) && kind !== 'spirit' ? 'Spirit · ' : '')+DRINK_KIND_LABEL[kind]);
 }
 function pairField(d, which){
   const col = which==='wine' ? 'pair_wine_id' : 'pair_cocktail_id';
@@ -1931,7 +1937,6 @@ async function setPair(id, which, drinkId){
   const saved = await save(id, { [col]: drinkId, [which]: null });
   if(!saved) return;
   const x = drinkId ? rowFor(drinkId) : null;
-  showToast((which==='wine' ? 'Sommelier\'s Recommendation' : 'Suggested Cocktail')+': '+(x ? x.name : 'none'));
 }
 
 // ── ALLERGENS ──
@@ -2041,7 +2046,6 @@ function classifySection(d){
 async function toggleAllergen(dishId, key, checked){
   const d = rowFor(dishId); if(!d) return;
   const saved = await save(dishId, { [key]: !!checked });
-  if(saved) showToast(checked ? 'Allergen added' : 'Allergen removed');
 }
 
 
@@ -2141,7 +2145,6 @@ async function addPerson(){
     });
     if(!res.ok){ showToast(data.error||'Could not add that person.'); }
     else {
-      showToast(whoText(data.added.name, data.added.username)+' is now '+ROLE_LABEL[data.added.role]);
       phoneEl.value='';
       await loadPeople();
       return;
@@ -2160,7 +2163,6 @@ async function removePerson(roleId){
       body:JSON.stringify({action:'revoke', restaurantId:RESTAURANT.id, roleId})
     });
     if(!res.ok){ showToast(data.error||'Could not remove that person.'); return; }
-    showToast('Removed');
     loadPeople();
   }catch(e){ showToast(e.message||'Network error.'); }
 }
@@ -2179,7 +2181,6 @@ async function setAnswers(roleId, on, box){
     if(!res.ok){ showToast(data.error||'Could not save that.'); if(box) box.checked = !on; return; }
     const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
     if(who) who.canMessage = on;
-    showToast((who ? whoText(who.name.split(' ')[0], who.username) : 'They')+(on ? ' answers guest messages now' : ' no longer answers guest messages'));
   }catch(e){ showToast(e.message||'Network error.'); if(box) box.checked = !on; }
 }
 async function setJob(roleId, job){
@@ -2192,7 +2193,6 @@ async function setJob(roleId, job){
     if(!res.ok){ showToast(data.error||'Could not save that.'); loadPeople(); return; }
     const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
     if(who) who.job = job || null;
-    showToast(job ? 'Saved · '+CREW_JOB_LABEL[job] : 'Saved');
   }catch(e){ showToast(e.message||'Network error.'); }
 }
 
@@ -2204,7 +2204,6 @@ async function setCodes(roleId, on){
       body:JSON.stringify({action:'codes', restaurantId:RESTAURANT.id, roleId, canIssueCodes:on})
     });
     if(!res.ok) showToast(data.error||'Could not save that.');
-    else showToast(on?'Can give rewards':'Cannot give rewards');
   }catch(e){ showToast(e.message||'Network error.'); }
 }
 
@@ -2286,7 +2285,6 @@ async function toggleFlag(id, field){
   if(btn) btn.disabled = true;
   const saved = await save(id, { [field]: !current });
   if(btn) btn.disabled = false;
-  if(saved) showToast(labelFor(field)+(!current?' on':' off')+' · '+d.name);
 }
 
 function labelFor(f){
@@ -2300,7 +2298,6 @@ async function saveText(id){
   if(btn){ btn.disabled = true; btn.textContent='Saving…'; }
   const saved = await save(id, changes);
   if(btn){ btn.textContent='Save changes'; btn.disabled = true; }
-  if(saved) showToast('Saved');
 }
 
 // The one path to the server. It replaces the whole row from the response, so
@@ -3094,7 +3091,6 @@ async function rvAct(id, act, btn){
     const data = await rvApi({action:'staff_mark', id: id, to: act});
     if(gen !== RV.gen) return;
     rvApply(data.booking);
-    showToast(RV_DONE[act]+' · '+whoText(b.name, b.handle));
     // Arrived closes the guest's conversation (and Undo opens it): the chat sign follows.
     if(b.chat && (act==='seated' || act==='booked')) rvLoadDay(RV.date, {quiet:true});
   }catch(e){
@@ -3232,7 +3228,6 @@ async function rvScanArrive(btn){
     if(gen !== RV.gen) return;
     sc.done = true; sc.booking = Object.assign({}, sc.booking, data.booking, { canArrive: false });
     sc.visit = data.visit || null;      // r31: the scan was also a visit (a stamp, an invite)
-    showToast('Arrived · '+whoText(data.booking.name, data.booking.handle));
     if(RV.day && RV.day.bookings.some(b => b.id === data.booking.id)){
       rvApply(data.booking);
       rvLoadDay(RV.date, {quiet:true});        // the guest's conversation closed: its chat sign follows
@@ -3356,7 +3351,6 @@ async function rvDecline(id, btn){
 function rvAfterAnswer(id, date){
   RV.day.requests = RV.day.requests.filter(x => x.id!==id);
   if(RV.sheet) RV.sheet.open = null;       // the sheet may have been closed while it saved
-  if(!RV.sheet) showToast(date ? 'Booked' : 'Declined');
   rvPaintSheet(); rvPaintTop();
   if(date){ rvLoadDays(date, true); if(date===RV.date) rvLoadDay(RV.date, {quiet:true}); }
 }
@@ -3593,7 +3587,6 @@ async function dvRemove(id, btn){
     const r = await myAccess({action:'device_remove', id: Number(id)});
     if(r.loggedOut){ dvForget(); logout(); showToast('This device was removed. Log in again to use it.'); boot(); return; }
     DV.devices = (DV.devices || []).filter(x => Number(x.id) !== Number(id));
-    showToast('Removed · '+(d ? d.label : 'device'));
   }catch(e){ if(e.status !== 401) showToast(e.message); }
   dvPaint();
 }
@@ -3623,7 +3616,6 @@ async function dvPushOn(btn){
     const kinds = kept && kept.who === (ACCESS && ACCESS.tasterId) ? kept.kinds : P.allowed.slice();
     const d = await myAccess({action:'push_save', subscription: sub.toJSON(), kinds: kinds});
     P.on = true; P.kinds = d.kinds || kinds; dvKeep(P.kinds);
-    showToast('Notifications are on for this '+dvWhat());
   }catch(e){
     showToast(e && e.message ? e.message : 'Could not turn notifications on.');
   }
@@ -3640,7 +3632,6 @@ async function dvKind(kind){
     const d = await myAccess({action:'push_save', subscription: sub.toJSON(), kinds: kinds});
     P.kinds = d.kinds || kinds; dvKeep(P.kinds);
     const name = (DV_KINDS.find(k => k[0] === kind) || [kind, kind])[1];
-    showToast(name + (P.kinds.includes(kind) ? ': on' : ': off'));
   }catch(e){ if(e.status !== 401) showToast(e.message); P.kinds = P.kinds.includes(kind) ? P.kinds.filter(k => k !== kind) : P.kinds.concat([kind]); }
   P.busy = false; dvPaint();
 }
@@ -3648,7 +3639,7 @@ async function dvTest(btn){
   const sub = await dvSub();
   if(!sub){ DV.push.on = false; dvPaint(); return; }
   if(btn) btn.disabled = true;
-  try{ await myAccess({action:'push_test', subscription: sub.toJSON()}); showToast('Sent: it arrives in a few seconds'); }
+  try{ await myAccess({action:'push_test', subscription: sub.toJSON()}); doneOn(btn, 'Sent ✓', 3000); }
   catch(e){ if(e.status === 410){ DV.push.on = false; dvForget(); dvPaint(); } if(e.status !== 401) showToast(e.message); }
   if(btn) btn.disabled = false;
 }
@@ -3659,7 +3650,6 @@ async function dvPushOff(btn){
   try{
     if(sub){ await myAccess({action:'push_off', subscription: sub.toJSON()}); try{ await sub.unsubscribe(); }catch(e){} }
     P.on = false; P.kinds = []; dvForget();
-    showToast('Notifications are off on this '+dvWhat());
   }catch(e){ if(e.status !== 401) showToast(e.message); }
   P.busy = false; dvPaint();
 }
@@ -3788,7 +3778,6 @@ async function rvGradeSave(btn){
   try{
     const data = await rvApi({action:'staff_grade_save', grade: g || null});
     S.grade = data.grade; RV.gradeDraft = undefined;
-    showToast(g ? 'Saved: your menu shows grade '+g : 'Saved: your menu shows no grade');
   }catch(e){ if(e.status !== 401) showToast(e.message); }
   rvRender();
 }
@@ -3926,8 +3915,6 @@ async function supSend(){
       const box = document.getElementById('rv-s-text');
       if(box) box.value = '';
     }
-    showToast((plat ? 'Sent to '+(d.restaurant ? d.restaurant.name : 'the restaurant') : 'Sent to Seb’s Analytics')
-      + (d.emailed ? (plat ? '. They got an email.' : '. We got an email.') : '.'));
   }catch(e){ if(e.status === 409) SUP.notReady = true; if(e.status !== 401) showToast(e.message); }
   SUP.sending = false;
   const b2 = document.getElementById('sp-send');
@@ -4076,7 +4063,6 @@ async function rvSaveLoyalty(btn){
     RV.forget = ['rv-l-'];
     RV.settings.loyalty = data.loyalty;
     RV.loyaltyDraft = null;
-    showToast('Rewards saved');
     rvRender();
   }catch(e){ showToast(e.message); btn.disabled = false; btn.textContent = 'Save the rewards'; }
 }
@@ -4158,7 +4144,6 @@ async function rvReqMailSave(btn){
     const data = await rvApi({action:'staff_request_mail_save', staff: !!D.staff, to: D.to.map(x => String(x).trim()).filter(Boolean)});
     if(gen !== RV.gen) return;
     RV.settings.requestMail = data.requestMail; RV.reqMailDraft = null;
-    showToast('Saved · emails about big parties');
   }catch(e){ showToast(e.message); btn.disabled = false; return; }
   rvRender();
 }
@@ -4194,7 +4179,6 @@ async function rvSwitch(key, btn){
     if(gen !== RV.gen) return;
     RV.settings.rules = data.rules;
     if(RV.day) RV.day.settings.enabled = data.rules.enabled;
-    showToast({enabled:'Online booking', emailEnabled:'Emails to guests', autoReleaseLate:'Giving away late tables'}[key]+(on?' on':' off'));
   }catch(e){ showToast(e.message); }
   rvRender();
 }
@@ -4216,7 +4200,6 @@ async function rvSaveRules(btn){
     RV.forget = ['rv-r-'];
     RV.settings.rules = data.rules;
     if(RV.day){ RV.day.settings.slotMinutes = data.rules.slotMinutes; }
-    showToast('Rules saved');
     rvRender();
   }catch(e){ showToast(e.message); btn.disabled = false; btn.textContent = 'Save the rules'; }
 }
@@ -4262,7 +4245,6 @@ async function rvSaveHours(btn){
     RV.settings.hours = data.hours.map(h => Object.assign({}, h));
     RV.hoursDraft = data.hours.map(h => Object.assign({}, h));
     RV.hoursBase = data.hours.map(h => Object.assign({}, h));
-    showToast('Hours saved');
     rvRender();
     rvLoadDays(RV.date, true);
   }catch(e){
@@ -4316,7 +4298,6 @@ async function rvHolidayAdd(btn){
     RV.settingsNote = data.bookedTables
       ? esc(rvLong(date))+': '+data.bookedTables+(data.bookedTables===1?' table is':' tables are')+' already booked. Closing the day does not cancel '+(data.bookedTables===1?'it':'them')+' — call the guests.'
       : '';
-    showToast('Saved · '+rvShort(date));
     await rvLoadSettings(true);
     rvLoadDays(RV.date, true);
   }catch(e){ showToast(e.message); btn.disabled = false; }
@@ -4328,7 +4309,6 @@ async function rvHolidayRemove(date){
   try{
     await rvApi({action:'staff_closure', op:'remove', date: date});
     if(gen !== RV.gen) return;
-    showToast('Removed · '+rvShort(date));
     RV.settingsNote = '';
     await rvLoadSettings(true);
     rvLoadDays(RV.date, true);
@@ -4371,7 +4351,6 @@ async function rvRoomSave(id, btn){
     RV.forget = ['rv-a-name-'+id, 'rv-a-seats-'+id, 'rv-a-tables-'+id, 'rv-a-active-'+id];
     const i = RV.settings.areas.findIndex(a => a.id===id);
     if(i >= 0) RV.settings.areas[i] = data.area;
-    showToast('Saved · '+data.area.name);
     rvRender();
   }catch(e){ showToast(e.message); btn.disabled = false; }
 }
@@ -4385,7 +4364,6 @@ async function rvRoomAdd(btn){
     if(gen !== RV.gen) return;
     RV.forget = ['rv-a-name-new', 'rv-a-seats-new', 'rv-a-tables-new'];
     RV.settings.areas.push(data.area);
-    showToast('Added · '+data.area.name);
     rvRender();
   }catch(e){ showToast(e.message); btn.disabled = false; }
 }
@@ -4545,7 +4523,8 @@ function mpCell(room){
   const avail = Math.max(240, (document.getElementById('rv-root') || {}).clientWidth || 340);
   return Math.max(12, Math.min(34, Math.floor(avail / room.cols)));
 }
-function mpFoot(seats){ return { w: seats <= 4 ? 2 : Math.min(10, Math.ceil(seats / 2)), h: 2 }; }
+// r47: a long table can be turned (standing along the room): its squares swap.
+function mpFoot(seats, turned){ const long = seats <= 4 ? 2 : Math.min(10, Math.ceil(seats / 2)); return turned ? { w: 2, h: long } : { w: long, h: 2 }; }
 
 // The drawing's squares that are not floor: one block per square, and a name in the middle of each group.
 function mpBlocksHtml(room, C){
@@ -4642,14 +4621,14 @@ function mpPaintFloor(){
     for(let i = 0; i + 1 < u.members.length; i++){
       const a = byNumber[u.members[i]], b = byNumber[u.members[i+1]];
       if(!a || !b) continue;
-      const fa = mpFoot(a.seats), fb = mpFoot(b.seats);
+      const fa = mpFoot(a.seats, a.turned), fb = mpFoot(b.seats, b.turned);
       const ax = (a.x + fa.w/2)*C, ay = (a.y + fa.h/2)*C, bx = (b.x + fb.w/2)*C, by = (b.y + fb.h/2)*C;
       const len = Math.hypot(bx-ax, by-ay), deg = Math.atan2(by-ay, bx-ax)*180/Math.PI;
       html += '<div class="mp-band '+st.k+'" style="left:'+ax+'px;top:'+(ay-Math.max(5, C*0.27))+'px;width:'+len+'px;height:'+Math.max(10, C*0.54)+'px;transform:rotate('+deg+'deg)"></div>';
     }
     u.members.forEach(n => {
       const t = byNumber[n]; if(!t) return;
-      const f = mpFoot(t.seats);
+      const f = mpFoot(t.seats, t.turned);
       const ring = MP.joining !== null ? (u.members.includes(MP.joining) ? ' joining' : ' pick') : MP.placing ? ' pick' : '';
       const aria = (joined ? 'Tables '+u.members.join('+')+', joined' : 'Table '+n)+', '+u.seats+' seats, '+MP_WORD[st.k]
         + (st.next ? ', '+st.next.name+' at '+st.next.label : '') + (st.pinned ? ', Reserved' : '') + '. Touch and hold for more.';
@@ -4785,7 +4764,7 @@ function mpPick(id){
 }
 
 // ── THE ACTIONS (each answer is the whole map again) ──
-async function mpDo(body, undoMaker){
+async function mpDo(body, quiet){
   if(MP.busy) return null;
   MP.busy = true; MP.sheet = null; mpPaintSheet();
   const gen = MP.gen;
@@ -4795,8 +4774,9 @@ async function mpDo(body, undoMaker){
     MP.placing = null; MP.joining = null;
     mpTake(data);
     mpPaintFloor();
-    const said = mpSaid(data.done);
-    mpShowToast(said.text, said.undo);
+    // r47 (Sebastian: no black messages): a few words only when there is something to undo
+    const said = quiet ? null : mpSaid(data.done);
+    if(said && said.text) mpShowToast(said.text, said.undo); else mpHideToast();
     return data;
   }catch(e){
     if(gen !== MP.gen) return null;
@@ -4805,10 +4785,10 @@ async function mpDo(body, undoMaker){
     mpPaintFloor();
     // a walk-in a booking needs: a manager may seat them anyway, from the message itself
     if(e.status === 409 && e.data && e.data.reason === 'needed' && body.action === 'map_seat' && !body.force && MP.data && MP.data.can.bookings){
-      mpShowToast(e.message, function(){ return mpDo(Object.assign({}, body, {force: true})); }, 12000, 'Seat anyway');
+      mpShowToast(e.message, function(){ return mpDo(Object.assign({}, body, {force: true})); }, 12000, 'Seat anyway', true);
       return null;
     }
-    if(e.status !== 401) mpShowToast(e.message);
+    if(e.status !== 401) mpShowToast(e.message, null, 7000, null, true);
     return null;
   }finally{
     MP.busy = false;
@@ -4816,44 +4796,33 @@ async function mpDo(body, undoMaker){
 }
 // What just happened, in words, and how to undo it.
 function mpSaid(done){
-  if(!done) return { text: 'Done.' };
+  if(!done) return { text: null };
   const name = (tables) => (tables.length > 1 ? 'Tables ' : 'Table ') + tables.join('+');
   if(done.kind === 'seat'){
-    let text = done.walkIn ? name(done.tables)+(done.tables.length > 1 ? ' are' : ' is')+' busy: the clock is running.'
-                           : done.who+'\u2019s party is at '+name(done.tables).toLowerCase()+'. The clock is running.';
-    (done.moved || []).forEach(m => { text += ' '+m.who+' ('+mpShort(m.label)+') moved to '+name(m.to).toLowerCase()+'.'; });
-    (done.noTable || []).forEach(w => { text += ' '+w+' has no table now.'; });
+    let text = done.walkIn ? name(done.tables)+' busy' : done.who+' · '+name(done.tables).toLowerCase();
+    (done.moved || []).forEach(m => { text += ' · '+m.who+' → '+m.to.join('+'); });
+    (done.noTable || []).forEach(w => { text += ' · '+w+': no table'; });
     const unpinned = done.unpinned || [];
     return { text, undo: async function(){
-      const ok = await mpDo({action:'map_unseat', sessionId: done.sessionId});
-      for(const p of unpinned){ if(ok) await mpDo({action:'map_pin', bookingId: p.bookingId, table: p.table}); }
-      if(ok) mpShowToast('Undone.');
+      const ok = await mpDo({action:'map_unseat', sessionId: done.sessionId}, true);
+      for(const p of unpinned){ if(ok) await mpDo({action:'map_pin', bookingId: p.bookingId, table: p.table}, true); }
     } };
   }
-  if(done.kind === 'free') return { text: name(done.tables || [])+(done.tables && done.tables.length > 1 ? ' are' : ' is')+' free.'+(done.minutes !== null && done.minutes !== undefined ? ' It was busy '+mpMinutes(done.minutes)+'.' : ''),
-    undo: async function(){ if(await mpDo({action:'map_reopen', sessionId: done.sessionId})) mpShowToast('Undone: busy again.'); } };
-  if(done.kind === 'pin'){
-    const b = mpBooking(done.bookingId);
-    const text = done.table ? 'Table '+done.table+' is Reserved for '+done.who+' ('+mpShort(done.label)+').'
-                            : done.who+' is no longer Reserved: they can move to any free table.';
-    return { text, undo: async function(){ if(await mpDo({action:'map_pin', bookingId: done.bookingId, table: done.was})) mpShowToast('Undone.'); } };
-  }
+  if(done.kind === 'free') return { text: name(done.tables || [])+' free', undo: function(){ return mpDo({action:'map_reopen', sessionId: done.sessionId}, true); } };
+  if(done.kind === 'pin') return { text: done.table ? 'Reserved for '+done.who : done.who+': not Reserved', undo: function(){ return mpDo({action:'map_pin', bookingId: done.bookingId, table: done.was}, true); } };
   if(done.kind === 'join'){
-    let text = 'Tables '+done.tables.join('+')+' are joined: '+done.seats+' seats.';
-    (done.came || []).forEach(c => { text += ' '+c.who+' ('+rvPeople(c.party)+', '+mpShort(c.label)+') is now on '+done.tables.join('+')+'.'; });
-    return { text, undo: async function(){ if(await mpDo({action:'map_separate', joinId: done.joinId})) mpShowToast('Undone: separate again.'); } };
+    let text = 'Tables '+done.tables.join('+')+' joined';
+    (done.came || []).forEach(c => { text += ' · '+c.who+' sits there'; });
+    return { text, undo: function(){ return mpDo({action:'map_separate', joinId: done.joinId}, true); } };
   }
   if(done.kind === 'separate'){
     const t = done.tables || [];
-    return { text: 'Tables '+t.join('+')+' are separate again.', undo: t.length < 2 ? null : async function(){
+    return { text: t.length < 2 ? null : 'Tables '+t.join('+')+' separated', undo: t.length < 2 ? null : async function(){
       let a = [t[0]];
-      for(let i = 1; i < t.length; i++){ if(!(await mpDo({action:'map_join', a: a, b: [t[i]]}))) return; a = a.concat([t[i]]); }
-      mpShowToast('Undone: joined again.');
+      for(let i = 1; i < t.length; i++){ if(!(await mpDo({action:'map_join', a: a, b: [t[i]]}, true))) return; a = a.concat([t[i]]); }
     } };
   }
-  if(done.kind === 'unseat') return { text: 'Undone.' };
-  if(done.kind === 'reopen') return { text: 'Undone: busy again.' };
-  return { text: 'Saved.' };
+  return { text: null };
 }
 function mpMinutes(m){ return m < 60 ? m+' min' : Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'; }
 
@@ -4875,9 +4844,8 @@ async function mpNoShow(b){
   MP.sheet = null; mpPaintSheet();
   try{
     await rvApi({action:'staff_mark', id: b.id, to: 'no_show'});
-    mpShowToast(b.first+' is a no-show. The table is free for others.');
     mpLoad(true);
-  }catch(e){ mpShowToast(e.message); }
+  }catch(e){ mpShowToast(e.message, null, 7000, null, true); }
 }
 
 // ── THE SHEET AND THE MESSAGE AT THE BOTTOM ──
@@ -4907,8 +4875,8 @@ function mpFresh(){ return Date.now() - (MP.sheetAt || 0) < 500; }
 function mpScrimTap(){ if(!mpFresh()) mpCloseSheet(); }
 function mpOptGo(i){ if(mpFresh()) return; const o = MP_OPTS[i]; if(o && o.go) o.go(); }
 
-function mpShowToast(text, undo, ms, label){
-  MP.toast = { text, undo: undo || null, label: label || 'Undo' };
+function mpShowToast(text, undo, ms, label, bad){
+  MP.toast = { text, undo: undo || null, label: label || 'Undo', bad: !!bad };
   clearTimeout(MP.toastTimer);
   MP.toastTimer = setTimeout(mpHideToast, ms || (undo ? 9000 : 5000));
   mpPaintToast();
@@ -4923,7 +4891,7 @@ function mpPaintToast(){
   if(!host){ host = document.createElement('div'); host.id = 'mp-toast'; host.setAttribute('role', 'status'); document.body.appendChild(host); }
   const T = MP.toast;
   if(!T || TAB!=='reservations' || (RV.view!=='map' && RV.view!=='draw')){ host.innerHTML = ''; host.className = ''; return; }
-  host.className = 'on';
+  host.className = 'on' + (T.bad ? ' bad' : '');
   host.innerHTML = '<span>'+esc(T.text)+'</span>'
     + (T.undo ? '<button type="button" class="mp-undo" onclick="mpUndo()">'+esc(T.label || 'Undo')+'</button>' : '')
     + '<button type="button" class="mp-toast-x" aria-label="Close the message" onclick="mpHideToast()">&times;</button>';
@@ -4966,7 +4934,7 @@ window.addEventListener('resize', function(){
 // the server checks it all again.
 
 const DW = { areaId: null, name: '', step: 'shape', cols: 12, rows: 16, cells: {}, tables: [], version: 0,
-             tool: 'gone', objName: '', sel: null, drag: null, paint: null, msg: '', bad: false, saving: false, others: {}, back: 'map' };
+             tool: 'gone', objName: '', objSel: null, sel: null, drag: null, paint: null, msg: '', bad: false, saving: false, others: {}, back: 'map' };
 
 async function dwOpen(areaId, from){
   DW.back = from === 'settings' ? 'settings' : 'map';
@@ -4983,7 +4951,7 @@ async function dwOpen(areaId, from){
   Object.assign(DW, { areaId, name: room.name, step: 'shape', version: room.version || 0, others,
     cols: room.drawn ? room.cols : 12, rows: room.drawn ? room.rows : 16,
     cells: Object.assign({}, room.cells || {}), tables: room.tables.map(t => Object.assign({}, t)),
-    tool: 'gone', objName: '', sel: null, drag: null, paint: null, msg: '', bad: false, saving: false });
+    tool: 'gone', objName: '', objSel: null, sel: null, drag: null, paint: null, msg: '', bad: false, saving: false });
   RV.view = 'draw';
   render();
   window.scrollTo(0, 0);
@@ -5013,9 +4981,10 @@ function dwHtml(){
     const TOOLS = [['gone','Remove'],['floor','Restore'],['Bar','Bar'],['Door','Door'],['Object','Object']];
     return head + '<p class="dw-hint">Pick a tool, then tap a square — or drag from one corner to another to fill a rectangle. No table can go on a bar, a door or an object.</p>'
       + '<div class="dw-tools">' + TOOLS.map(([k, w]) => '<button type="button" class="dw-tool'+(DW.tool===k?' on':'')+'" onclick="dwTool(\''+k+'\')" aria-pressed="'+(DW.tool===k)+'"><i class="'+k.toLowerCase()+'"></i>'+w+'</button>').join('') + '</div>'
-      + (DW.tool === 'Object' ? '<div class="dw-name"><label for="dw-obj">Object name</label><input id="dw-obj" class="m-input" maxlength="24" placeholder="Piano, Column, Plants…" value="'+esc(DW.objName)+'" oninput="DW.objName=this.value"><span>then tap squares</span></div>' : '')
+      + (DW.tool === 'Object' ? dwObjectsHtml() : '')
       + '<div class="dw-size"><span>Wide</span><button type="button" class="dw-pm" aria-label="One square narrower" onclick="dwSize(\'cols\',-1)">−</button><b>'+DW.cols+'</b><button type="button" class="dw-pm" aria-label="One square wider" onclick="dwSize(\'cols\',1)">+</button>'
       + '<span>Long</span><button type="button" class="dw-pm" aria-label="One square shorter" onclick="dwSize(\'rows\',-1)">−</button><b>'+DW.rows+'</b><button type="button" class="dw-pm" aria-label="One square longer" onclick="dwSize(\'rows\',1)">+</button>'
+      + '<button type="button" class="rv-mini dw-turn-room" onclick="dwTurnRoom()">&#8635; Turn the room</button>'
       + '<button type="button" class="rv-mini" onclick="dwStartOver()">Start over</button></div>'
       + '<div class="mp-floor-wrap"><div class="dw-grid" id="dw-grid"></div></div>'
       + '<div class="mp-sum" id="dw-sum"></div>'
@@ -5031,6 +5000,7 @@ function dwHtml(){
     + (t ? '<div class="dw-edit"><label for="dw-num">Table</label><input id="dw-num" class="m-input" inputmode="numeric" maxlength="3" value="'+t.n+'" onchange="dwNumber(this.value)">'
          + '<div class="dw-seats"><button type="button" class="dw-pm" aria-label="Fewer seats" onclick="dwSeats(-1)">−</button><b>'+t.seats+' seats</b><button type="button" class="dw-pm" aria-label="More seats" onclick="dwSeats(1)">+</button></div>'
          + '<div class="dw-shape"><button type="button" class="rv-mini'+(t.shape==='round'?' on':'')+'" onclick="dwShape(\'round\')">Round</button><button type="button" class="rv-mini'+(t.shape==='square'?' on':'')+'" onclick="dwShape(\'square\')">Square</button>'
+         + (t.seats > 4 ? '<button type="button" class="rv-mini dw-turn" onclick="dwTurn()" aria-label="Turn table '+t.n+'">&#8635; Turn</button>' : '')
          + '<button type="button" class="rv-mini red" onclick="dwRemove()">Remove</button></div></div>' : '')
     + '<div class="dw-msg'+(DW.bad?' bad':'')+'" role="status">'+esc(DW.msg)+'</div>'
     + '<div class="dw-foot two"><button type="button" class="m-save" onclick="dwSave(this)"'+(DW.saving?' disabled':'')+'>Save the room</button>'
@@ -5066,7 +5036,7 @@ function dwPaintGrid(){
   g.style.backgroundSize = C+'px '+C+'px';
   let html = mpBlocksHtml(room, C);
   DW.tables.forEach(t => {
-    const f = mpFoot(t.seats), drag = DW.drag && DW.drag.n === t.n ? DW.drag : null;
+    const f = mpFoot(t.seats, t.turned), drag = DW.drag && DW.drag.n === t.n ? DW.drag : null;
     const x = drag ? drag.x : t.x, y = drag ? drag.y : t.y, ok = !drag || dwFits(t, x, y);
     html += '<button type="button" class="dw-t'+(t.shape==='round'?' round':'')+(DW.sel===t.n?' sel':'')+(drag?(ok?' moving':' moving bad'):'')+'" data-n="'+t.n+'"'
       + ' style="left:'+(x*C+3)+'px;top:'+(y*C+3)+'px;width:'+(f.w*C-6)+'px;height:'+(f.h*C-6)+'px;--c:'+C+'px"'
@@ -5085,13 +5055,60 @@ function dwSize(field, d){
   dwPaint();
 }
 function dwStartOver(){ DW.cells = {}; DW.msg = ''; dwPaint(); }
+// r47: the whole room a quarter turn to the right — squares, bar, door, objects and tables with it (twice = 180°)
+function dwTurnRoom(){
+  if(DW.rows > 30){ DW.msg = 'A room this long cannot be turned (30 squares wide at most).'; DW.bad = true; dwPaint(); return; }
+  const C = DW.cols, R = DW.rows, cells = {};
+  Object.keys(DW.cells).forEach(k => { const [x, y] = k.split(',').map(Number); cells[(R - 1 - y)+','+x] = DW.cells[k]; });
+  DW.tables.forEach(t => {
+    const f = mpFoot(t.seats, t.turned);
+    const nx = R - t.y - f.h, ny = t.x;
+    t.x = nx; t.y = ny; if(t.seats > 4) t.turned = !t.turned;
+  });
+  DW.cols = R; DW.rows = C; DW.cells = cells;
+  DW.msg = 'Turned a quarter to the right. Tap again to keep turning: twice = upside down.'; DW.bad = false;
+  dwPaint();
+}
 function dwValue(){
   if(DW.tool === 'floor') return null;
   if(DW.tool === 'Object'){
-    const name = String(DW.objName || '').trim().replace(/[<>"\\]/g, '').slice(0, 24);
-    return 'Object:' + (name || 'Object');
+    if(DW.objSel !== null) return 'Object:' + DW.objSel;     // a chosen object: paint more of it (the box only renames)
+    let name = String(DW.objName || '').trim().replace(/[<>"\\]/g, '').slice(0, 24);
+    // no name typed: "Object 1", "Object 2"… (each new object its own; rename it any time)
+    if(!name){ const have = dwObjects(); let k = 1; while(have.includes('Object '+k)) k += 1; name = 'Object '+k; }
+    DW.objName = name;
+    return 'Object:' + name;
   }
   return DW.tool;
+}
+// r47 (Sebastian, 30 Oct: "give me the option to name two or more different objects"): the objects of this room,
+// each a chip; "+ New object" starts another one; Rename gives the chosen one a new name everywhere it is.
+function dwObjects(){
+  const seen = [];
+  Object.values(DW.cells).forEach(v => { if(v.indexOf('Object:') === 0 && !seen.includes(v.slice(7))) seen.push(v.slice(7)); });
+  return seen;
+}
+function dwObjectsHtml(){
+  const list = dwObjects(); DW.objList = list;
+  if(DW.objSel !== null && !list.includes(DW.objSel)){ DW.objSel = null; DW.objName = ''; }   // its last square was taken off
+  return '<div class="dw-objs" role="group" aria-label="Objects in this room"><span class="dw-objs-h">Objects</span>'
+    + list.map((n, i) => '<button type="button" class="dw-obj'+(DW.objSel === n ? ' on' : '')+'" aria-pressed="'+(DW.objSel === n)+'" onclick="dwPickObj('+i+')">'+esc(n)+'</button>').join('')
+    + '<button type="button" class="dw-obj new'+(DW.objSel === null ? ' on' : '')+'" onclick="dwNewObj()">+ New object</button></div>'
+    + '<div class="dw-name"><label for="dw-obj">'+(DW.objSel === null ? 'New object' : 'Name')+'</label>'
+    + '<input id="dw-obj" class="m-input" maxlength="24" placeholder="Piano, Column, Plants…" value="'+esc(DW.objName)+'" oninput="DW.objName=this.value">'
+    + (DW.objSel !== null ? '<button type="button" class="rv-mini" onclick="dwRenameObj()">Rename</button>' : '<span>then tap squares</span>') + '</div>';
+}
+function dwPickObj(i){ const n = (DW.objList || [])[i]; if(n === undefined) return; DW.objSel = n; DW.objName = n; DW.msg = ''; DW.bad = false; dwPaint(); }
+function dwNewObj(){
+  DW.objSel = null; DW.objName = ''; DW.msg = ''; DW.bad = false; dwPaint();
+  const i = document.getElementById('dw-obj'); if(i) i.focus();
+}
+function dwRenameObj(){
+  const from = DW.objSel, to = String(DW.objName || '').trim().replace(/[<>"\\]/g, '').slice(0, 24);
+  if(from === null) return;
+  if(!to){ DW.msg = 'Write the new name first.'; DW.bad = true; dwPaint(); return; }
+  Object.keys(DW.cells).forEach(k => { if(DW.cells[k] === 'Object:'+from) DW.cells[k] = 'Object:'+to; });
+  DW.objSel = to; DW.objName = to; DW.msg = ''; DW.bad = false; dwPaint();
 }
 function dwSquareAt(e){
   const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -5120,6 +5137,8 @@ function dwPaintStart(e){
     if(P){
       const [a, b, c, d] = dwRect(P);
       for(let y = b; y <= d; y++) for(let x = a; x <= c; x++){ if(P.erase) delete DW.cells[x+','+y]; else DW.cells[x+','+y] = P.want; }
+      if(DW.tool === 'Object' && !P.erase){ DW.objSel = P.want.slice(7); DW.objName = DW.objSel; dwPaint(); return; }
+      if(DW.tool === 'Object'){ dwPaint(); return; }
     }
     dwPaintGrid();
   };
@@ -5143,12 +5162,12 @@ function dwNext(){
 
 // Tables: where one may stand (inside, on the floor, on top of no other).
 function dwFits(t, x, y, ignore){
-  const f = mpFoot(t.seats);
+  const f = mpFoot(t.seats, t.turned);
   if(x < 0 || y < 0 || x + f.w > DW.cols || y + f.h > DW.rows) return false;
   for(let i = 0; i < f.w; i++) for(let j = 0; j < f.h; j++) if(DW.cells[(x+i)+','+(y+j)]) return false;
   return !DW.tables.some(o => {
     if(o.n === t.n || o === ignore) return false;
-    const g = mpFoot(o.seats);
+    const g = mpFoot(o.seats, o.turned);
     return x < o.x + g.w && o.x < x + f.w && y < o.y + g.h && o.y < y + f.h;
   });
 }
@@ -5202,9 +5221,15 @@ function dwSeats(d){
   const t = dwSelected(); if(!t) return;
   const seats = Math.max(1, Math.min(20, t.seats + d));
   if(!dwFits(Object.assign({}, t, { seats }), t.x, t.y, t)){ DW.msg = 'No room for '+seats+' seats here: drag the table to a bigger space first.'; DW.bad = true; dwPaint(); return; }
-  t.seats = seats; DW.msg = ''; DW.bad = false; dwPaint();
+  t.seats = seats; if(seats <= 4) t.turned = false; DW.msg = ''; DW.bad = false; dwPaint();
 }
 function dwShape(s){ const t = dwSelected(); if(t){ t.shape = s; dwPaint(); } }
+// r47: a long table stands along the room or lies across it (where it is, if there is room)
+function dwTurn(){
+  const t = dwSelected(); if(!t) return;
+  if(!dwFits(Object.assign({}, t, { turned: !t.turned }), t.x, t.y, t)){ DW.msg = 'No room to turn table '+t.n+' here: drag it to a bigger space first.'; DW.bad = true; dwPaint(); return; }
+  t.turned = !t.turned; DW.msg = ''; DW.bad = false; dwPaint();
+}
 function dwRemove(){ DW.tables = DW.tables.filter(x => x.n !== DW.sel); DW.sel = null; DW.msg = ''; dwPaint(); }
 
 async function dwSave(btn){
@@ -5213,11 +5238,9 @@ async function dwSave(btn){
   DW.saving = true; if(btn) btn.disabled = true;
   try{
     const data = await rvApi({action:'map_save', areaId: DW.areaId, version: DW.version, cols: DW.cols, rows: DW.rows, cells: DW.cells,
-                              tables: DW.tables.map(t => ({ n: t.n, seats: t.seats, shape: t.shape, x: t.x, y: t.y }))});
+                              tables: DW.tables.map(t => ({ n: t.n, seats: t.seats, shape: t.shape, x: t.x, y: t.y, turned: !!t.turned && t.seats > 4 }))});
     DW.saving = false;
     mpTake(data);
-    const seats = DW.tables.reduce((n, x) => n + x.seats, 0);
-    showToast('Saved · '+DW.name+': '+DW.tables.length+' tables, '+seats+' seats. Online booking counts them now.');
     RV.settings = null;
     dwLeave();
   }catch(e){
@@ -5946,7 +5969,6 @@ async function msgState(action, id, btn, done, extra){
   try{
     const data = await rvApi(Object.assign({action: action, id: Number(id)}, extra || {}));
     if(gen !== MSG.gen) return;
-    showToast(done+' · '+whoText(data.booking.name, data.booking.handle));
     if(MSG.view === 'thread' && Number(id) === MSG.threadId){ MSG.seq += 1; MSG.thread = data; msgPaint(); }
     else { if(action === 'staff_msg_reopen') MSG.tab = 'open'; msgLoadList(); }
   }catch(e){ showToast(e.message); if(btn) btn.disabled = false; }
