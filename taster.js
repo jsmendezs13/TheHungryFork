@@ -30,7 +30,10 @@ var currentTaster=null, currentSession=null, pendingVerificationTicket=null;
 // ── TOAST ──
 // Was defined identically in both pages; it lives here now because the module
 // below depends on it.
-function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+// r47 (Sebastian, 30 Oct: no black messages): showToast is only for "this did not happen" (white, dark red words);
+// nothing says "done" any more, except a button whose action shows nowhere else (doneOn: "Copied ✓" for 2 s).
+function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.setAttribute('role','alert');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),4500);}
+function doneOn(btn,words,ms){if(!btn||!btn.isConnected)return;if(btn.dataset.was===undefined)btn.dataset.was=btn.innerHTML;btn.textContent=words;btn.classList.add('is-done');clearTimeout(btn._doneT);btn._doneT=setTimeout(function(){if(btn.dataset.was!==undefined){btn.innerHTML=btn.dataset.was;delete btn.dataset.was;}btn.classList.remove('is-done');},ms||2200);}
 
 // ── PHONE CONFIRMATION ──
 //
@@ -465,7 +468,7 @@ function loadSession(){
     }
   }catch(e){}
 }
-function logout(){localStorage.removeItem('hf_taster');try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof HF_INBOX!=='undefined'){HF_INBOX.data=null;HF_INBOX.problem=null;HF_INBOX.who=undefined;}currentTaster=null;currentSession=null;if(typeof closeMyInfo==='function')closeMyInfo();updateNavBtn();showToast('Logged out. See you next time!');}
+function logout(){localStorage.removeItem('hf_taster');try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof HF_INBOX!=='undefined'){HF_INBOX.data=null;HF_INBOX.problem=null;HF_INBOX.who=undefined;}currentTaster=null;currentSession=null;if(typeof closeMyInfo==='function')closeMyInfo();updateNavBtn();/* r47: no message */;}
 
 // ── CORNER ACCOUNT MENU ──
 //
@@ -1027,7 +1030,7 @@ async function resendDeviceCode(){
   try{
     const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'device_resend',challenge:pendingDevice.challenge})});
     const d=await res.json();
-    if(res.ok&&d.success){showToast('A new code is on its way to '+(d.phoneHint||'your phone'));document.getElementById('dev-otp').value='';}
+    if(res.ok&&d.success){const st=document.getElementById('dev-sent-to');if(st)st.textContent='We sent a new 4-digit code by text message to '+(d.phoneHint||'your phone')+'. Type the newest one.';document.getElementById('dev-otp').value='';}
     else if(d.reason==='challenge'){pendingDevice=null;goTStep(1);const le=document.getElementById('login-err');le.textContent=d.error||'Please log in again.';le.style.display='block';}
     else{err.textContent=d.error||'Could not send a new code.';err.style.display='block';}
   }catch(e){err.textContent='Connection error. Please try again.';err.style.display='block';}
@@ -1573,7 +1576,7 @@ function hfvInviteShow(d){
     + (svg?'<div class="hf-v-qr" id="hf-v-qr">'+svg+'</div>':'')
     + '<div class="hf-v-code">'+hfEsc(iv.code||'')+'</div>'
     + '<div class="hf-v-code-note">Your friend scans this with their phone camera and saves it with their own number. One friend, one time.</div>'
-    + '<button class="t-btn" onclick="hfvShareInvite(\''+hfEsc(iv.code||'')+'\')">Send it as a link</button>'
+    + '<button class="t-btn" onclick="hfvShareInvite(\''+hfEsc(iv.code||'')+'\',this)">Send it as a link</button>'
     + '<button class="t-btn-ghost hf-l-back" onclick="hfvShowIdle()">Done</button>';
   hfvToTop();
 }
@@ -1678,7 +1681,7 @@ function hfvRenderLoyalty(){
       open.forEach(function(p){
         html+='<div class="hf-l-share"><span class="hf-l-share-text"><b>'+hfEsc(p.dishName||p.discount)+'</b><span class="hf-l-code">'+hfEsc(p.code)+'</span></span>'
           +'<span class="hf-l-share-btns"><button class="hf-l-btn" onclick="hfvInviteOpen('+Number(p.id)+')">QR</button>'
-          +'<button class="hf-l-btn ghost" onclick="hfvShareInvite(\''+hfEsc(p.code)+'\')">Share</button></span></div>';
+          +'<button class="hf-l-btn ghost" onclick="hfvShareInvite(\''+hfEsc(p.code)+'\',this)">Share</button></span></div>';
       });
       mine.filter(function(p){return p.status!=='open';}).slice(0,3).forEach(function(p){
         html+='<div class="hf-l-past">'+(p.status==='used'?'Used by a friend &#10003;':'Saved by a friend')+' &middot; '+hfEsc(p.dishName||p.discount)+'</div>';
@@ -1726,7 +1729,7 @@ function hfvShowPrize(kind, id){
   hfvToTop();
 }
 
-function hfvShareInvite(code){
+function hfvShareInvite(code,btn){
   const L=HFV.loyalty||{};
   const p=(L.invitesGiven||[]).find(function(x){return x.code===code;})
         ||(HFV.lastInvite&&HFV.lastInvite.code===code?{restaurant:HFV.lastInvite.restaurant,discount:HFV.lastInvite.discount,dishName:HFV.lastInvite.dish}:null);
@@ -1737,7 +1740,7 @@ function hfvShareInvite(code){
     navigator.share({title:p?p.restaurant:'An invite',text:text,url:link}).catch(function(){});
     return;
   }
-  const done=function(){showToast('Invite link copied. Paste it to a friend.');};
+  const done=function(){doneOn(btn,'Link copied ✓');};
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(text+' '+link).then(done,function(){prompt('Copy this link',link);});
   }else prompt('Copy this link',link);
@@ -2287,11 +2290,9 @@ async function hfMeSave(btn){
       hfMeEl('me-code-q').textContent=d.message||('We sent a 6-digit code to '+d.emailPending+'. Type it here, then Save changes.');
       hfMeEl('me-code').hidden=false;hfMeEl('me-email-code').value='';
       try{hfMeEl('me-email-code').focus();}catch(e){}
-      showToast('Saved. Now the code from your email.');
     }else{
       hfMeEl('me-code').hidden=true;hfMeEl('me-email-code').value='';
       if(d.note){var n=hfMeEl('me-promo-note');n.hidden=false;n.textContent=d.note;}
-      showToast('Saved');
     }
   }catch(e){
     if(e.data&&e.data.saved&&e.data.me)hfMeFill(e.data);
@@ -2312,7 +2313,6 @@ async function hfMePinSave(btn){
     var d=await hfMeApi({action:'me_pin',currentPin:cur,newPin:a});
     ['me-pin-cur','me-pin-new','me-pin-new2'].forEach(function(id){hfMeEl(id).value='';});
     hfMeEl('me-pin-panel').hidden=true;
-    showToast(d.message||'Your new PIN is saved');
   }catch(e){hfMeSay('me-pin-err',e.message);}
   btn.disabled=false;
 }
@@ -2353,7 +2353,6 @@ async function hfMePhoneGo(){
       ['me-phone-new','me-phone-pin','me-phone-code'].forEach(function(id){hfMeEl(id).value='';});
       hfPhonePaint(hfMeEl('me-phone-new'));
       hfMeEl('me-phone-panel').hidden=true;hfMeEl('me-phone-btn').textContent='Change';hfMeEl('me-phone-code-box').hidden=true;
-      showToast(done.message||'Your new number is saved');
       btn.textContent='Send the code';
     }
   }catch(e){
