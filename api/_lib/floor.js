@@ -41,10 +41,13 @@ export const UNDO_MINUTES = 15;          // as the database: hf_map_reopen / hf_
 const NEEDS_SQL = 'The table map needs this update\'s SQL step (migration 32). Run it in Supabase, then try again.';
 
 // How many squares a table takes: 2×2 up to 4 seats, then one more square across for every 2 seats.
-export function footprint(seats) {
+// r47: a long table can be turned — then it stands along the room (2 across, long down).
+export function footprint(seats, turned) {
   const n = Number(seats) || 0;
-  return { w: n <= 4 ? 2 : Math.min(10, Math.ceil(n / 2)), h: 2 };
+  const long = n <= 4 ? 2 : Math.min(10, Math.ceil(n / 2));
+  return turned ? { w: 2, h: long } : { w: long, h: 2 };
 }
+const NEEDS_SQL_33 = 'Turning a table needs this update\'s SQL step (migration 33). Run it in Supabase, then save the room again.';
 
 // ── THE ROUTER ───────────────────────────────────────────────────────────────
 export async function floor(req, res, body, action) {
@@ -84,7 +87,7 @@ async function load(res, rid) {
   const [areas, plans, tables, sessions, joins, bookings] = await Promise.all([
     sb(`/restaurant_areas?restaurant_id=eq.${rid}&select=id,name,seats,tables,is_active,sort_order&order=sort_order.asc,id.asc`),
     sb(`/floor_plans?restaurant_id=eq.${rid}&select=area_id,cols,rows,cells,version`),
-    sb(`/floor_tables?restaurant_id=eq.${rid}&select=number,area_id,seats,shape,x,y&order=number.asc`),
+    sb(`/floor_tables?restaurant_id=eq.${rid}&select=*&order=number.asc`),          // * : "turned" only after migration 33
     sb(`/table_sessions?restaurant_id=eq.${rid}&ended_at=is.null&select=id,area_id,tables,reservation_id,auto,started_at&order=id.asc`),
     sb(`/table_joins?restaurant_id=eq.${rid}&service_date=eq.${today}&ended_at=is.null&select=id,area_id,tables&order=id.asc`),
     sb(`/reservations?restaurant_id=eq.${rid}&local_date=in.(${today},${next})&status=in.(booked,seated)` +
@@ -274,7 +277,7 @@ function dress(state, who) {
       return {
         id: a.id, name: a.name, active: !!a.is_active, drawn: !!p,
         cols: p ? p.cols : null, rows: p ? p.rows : null, cells: p ? p.cells : {}, version: p ? p.version : 0,
-        tables: (tablesBy[a.id] || []).map((t) => ({ n: t.number, seats: t.seats, shape: t.shape, x: t.x, y: t.y })),
+        tables: (tablesBy[a.id] || []).map((t) => ({ n: t.number, seats: t.seats, shape: t.shape, x: t.x, y: t.y, turned: !!t.turned && t.seats > 4 })),
       };
     }),
     busy: state.sessions.map((s) => ({ id: s.id, areaId: s.area_id, tables: s.tables, bookingId: s.reservation_id || null, since: s.started_at })),
@@ -583,7 +586,8 @@ export function checkRoom(body) {
     if (!Number.isInteger(seats) || seats < 1 || seats > 20) return { error: `Table ${n}: 1 to 20 seats.` };
     if (shape !== 'round' && shape !== 'square') return { error: `Table ${n}: round or square.` };
     if (!Number.isInteger(x) || !Number.isInteger(y)) return { error: `Table ${n}: where is it?` };
-    const f = footprint(seats);
+    const turned = !!(t && t.turned === true) && seats > 4;
+    const f = footprint(seats, turned);
     if (x < 0 || y < 0 || x + f.w > cols || y + f.h > rows) return { error: `Table ${n} is outside the room.` };
     for (let i = 0; i < f.w; i++) {
       for (let j = 0; j < f.h; j++) {
@@ -593,7 +597,7 @@ export function checkRoom(body) {
         used[k] = n;
       }
     }
-    tables.push({ n, seats, shape, x, y });
+    tables.push(turned ? { n, seats, shape, x, y, turned } : { n, seats, shape, x, y });
   }
   if (new Set(tables.map((t) => t.n)).size !== tables.length) return { error: 'Each table needs its own number.' };
   return { cols, rows, cells, tables };
@@ -608,6 +612,11 @@ async function saveRoom(req, res, body, tasterId) {
   if (!who) return;
   const room = checkRoom(body);
   if (room.error) return res.status(400).json({ error: room.error });
+  if (room.tables.some((t) => t.turned)) {
+    // before migration 33 the database would keep the table, but not the turn: say so instead
+    const has = await sb('/floor_tables?select=turned&limit=1');
+    if (!has.ok && (has.status === 400 || has.status === 404)) return res.status(503).json({ error: NEEDS_SQL_33, reason: 'migration33' });
+  }
   const r = await rpc('hf_map_save', { p_restaurant: who.rid, p_area: areaId, p_cols: room.cols, p_rows: room.rows,
     p_cells: room.cells, p_tables: room.tables, p_version: version, p_by: tasterId });
   if (!r) return res.status(502).json({ error: 'Could not save the room. Please try again.' });
@@ -626,7 +635,7 @@ async function saveRoom(req, res, body, tasterId) {
   }
   const area = await sb(`/restaurant_areas?id=eq.${areaId}&select=name,seats,tables`);
   const a = area.ok && Array.isArray(area.data) ? area.data[0] : null;
-  if (a) await tellChange(who.rid, tasterId, `drew the room ${a.name}: ${a.tables} tables, ${a.seats} seats`, { go: 'settings' });
+  if (a) await tellChange(who.rid, tasterId, `drew the room ${a.name}: ${a.tables} table${a.tables === 1 ? '' : 's'}, ${a.seats} seat${a.seats === 1 ? '' : 's'}`, { go: 'settings' });
   return fresh(res, who, tasterId, { done: { kind: 'save', areaId, version: r.version } });
 }
 
