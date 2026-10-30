@@ -134,7 +134,7 @@ export async function staff(req, res, body, action, helpers = {}) {
 
 // ── WHO IS ASKING ─────────────────────────────────────────────────────────────
 // Answers the request itself and returns null when the caller may not go on.
-async function gate(res, tasterId, restaurantId, need, req) {
+export async function gate(res, tasterId, restaurantId, need, req) {   // r46: the table map (floor.js) asks the same way
   const rid = Number(restaurantId);
   if (!Number.isInteger(rid) || rid < 1) { res.status(400).json({ error: 'Which restaurant?' }); return null; }
   const access = await loadAccess(tasterId, req);           // r43: req, so the session's device is checked
@@ -431,7 +431,7 @@ function sameToken(a, b) {
 }
 
 // ── ARRIVED · NO-SHOW · UNDO · CANCEL ─────────────────────────────────────────
-async function mark(req, res, body, tasterId) {
+export async function mark(req, res, body, tasterId) {   // r46: "their party is here" on the table map is this same Arrived
   const id = Number(body.id);
   const to = String(body.to || '');
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Which table?' });
@@ -750,6 +750,10 @@ async function settingsRead(req, res, body, tasterId) {
     return res.status(502).json({ error: 'Could not read the settings (the database answered '
       + [hours, closures, areas].find((x) => !x.ok).status + ').' });
   }
+  // r46: rooms drawn on the table map take their seats and tables from the drawing (before migration 32: none)
+  const plans = await sb(`/floor_plans?restaurant_id=eq.${who.rid}&select=area_id`);
+  const drawn = new Set(plans.ok && Array.isArray(plans.data) ? plans.data.map((x) => Number(x.area_id)) : []);
+
 
   // A closed day takes away its service, 5 AM to 5 AM: the tables counted are
   // that day's and the small hours after it, not the night before's.
@@ -787,7 +791,7 @@ async function settingsRead(req, res, body, tasterId) {
       closes: c.closes_at ? String(c.closes_at).slice(0, 5) : null, reason: c.reason || null,
       bookedTables: booked[c.closure_date] || 0,
     })),
-    areas: (areas.data || []).map((a) => ({ id: a.id, name: a.name, seats: a.seats, tables: a.tables, active: !!a.is_active })),
+    areas: (areas.data || []).map((a) => ({ id: a.id, name: a.name, seats: a.seats, tables: a.tables, active: !!a.is_active, drawn: drawn.has(Number(a.id)) })),
     numbers: counts.ok ? {
       thisMonth: { from: monthStart, to: today, ...sum(monthStart, today) },
       lastMonth: { from: lastMonthStart, to: addDays(monthStart, -1), ...sum(lastMonthStart, addDays(monthStart, -1)) },
@@ -1091,7 +1095,7 @@ async function area(req, res, body, tasterId) {
   if (!who) return;
   const name = String(body.name || '').trim().replace(/\s+/g, ' ').replace(/[<>"]/g, '');
   if (name.length < 2 || name.length > 40) return res.status(400).json({ error: 'A room name is 2 to 40 letters.' });
-  const seats = Number(body.seats), tables = Number(body.tables);
+  let seats = Number(body.seats), tables = Number(body.tables);
   if (!Number.isInteger(seats) || seats < 0 || seats > 500) return res.status(400).json({ error: 'Seats: a number from 0 to 500.' });
   if (!Number.isInteger(tables) || tables < 0 || tables > 200) return res.status(400).json({ error: 'Tables: a number from 0 to 200 (0 = do not count tables).' });
   const active = body.active !== false;
@@ -1120,6 +1124,10 @@ async function area(req, res, body, tasterId) {
   // r43: as it was, for the notification
   const was = await sb(`/restaurant_areas?id=eq.${id}&restaurant_id=eq.${who.rid}&select=name,seats,tables,is_active`);
   const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
+  // r46: a room drawn on the table map counts what is drawn: its seats and tables are the drawing's, whatever was typed.
+  const plan = await sb(`/floor_plans?area_id=eq.${id}&restaurant_id=eq.${who.rid}&select=area_id`);
+  const isDrawn = plan.ok && Array.isArray(plan.data) && plan.data.length > 0;
+  if (isDrawn && prev) { seats = Number(prev.seats); tables = Number(prev.tables); }
   // restaurant_id in the filter as well as the id: a room of another restaurant
   // is simply not found.
   const saved = await sb(`/restaurant_areas?id=eq.${id}&restaurant_id=eq.${who.rid}`, {
@@ -1137,11 +1145,11 @@ async function area(req, res, body, tasterId) {
     if (!!prev.is_active !== active) parts.push(active ? 'open for bookings' : 'closed for bookings');
     if (parts.length) await tellChange(who.rid, tasterId, `changed the room ${prev.name}: ${parts.join('; ')}`, { go: 'settings' });
   }
-  return res.status(200).json({ success: true, area: outArea(saved.data[0]) });
+  return res.status(200).json({ success: true, area: outArea(saved.data[0], isDrawn) });
 }
 
-function outArea(a) {
-  return { id: a.id, name: a.name, seats: a.seats, tables: a.tables, active: !!a.is_active };
+function outArea(a, drawn = false) {
+  return { id: a.id, name: a.name, seats: a.seats, tables: a.tables, active: !!a.is_active, drawn: !!drawn };
 }
 
 // ── DATES ─────────────────────────────────────────────────────────────────────
