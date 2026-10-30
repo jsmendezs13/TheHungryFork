@@ -267,8 +267,20 @@ if (window.hfEarlyMine) {
 
   /* ── forms ── */
   .rv-field { margin-bottom:.8rem; }
+  /* r45: "Did you mean …@gmail.com?" under an email field */
+  .rv-fix { font-size:.82rem; color:rgba(252,249,244,.85); margin:.45rem 0 0; }
+  .rv-fix button { background:none; border:none; padding:0; color:#FFB4AA; font:inherit; font-weight:600; text-decoration:underline; cursor:pointer; }
   .rv-field label { display:block; font-size:.6rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
     color:rgba(252,249,244,.55); margin-bottom:.3rem; }
+  /* r45 (Sebastian, 29 Oct): "(Optional)" in small letters beside Phone; and the log-in's phone box,
+     "+1 (555) 000-0000" filled in as it is typed (taster.js hfPhoneBox), on this dark form */
+  .rv-opt { text-transform:none; letter-spacing:.02em; font-weight:500; font-size:.68rem; color:rgba(252,249,244,.45); margin-left:.2rem; }
+  .rv-field .hf-phone { margin-bottom:0; }
+  .rv-field .hf-phone > .rv-input { position:relative; z-index:1; background:transparent; padding-left:2.7rem; }
+  .rv-field .hf-phone-ghost, .rv-field .hf-phone-cc { font-family:inherit; font-size:1rem; }
+  .rv-field .hf-phone-ghost { padding:0 .85rem 0 2.7rem; background:rgba(252,249,244,.06); border:1px solid transparent; border-radius:10px; }
+  .rv-field .hf-phone-ghost em { color:rgba(252,249,244,.38); }
+  .rv-field .hf-phone-cc { left:calc(.85rem + 1px); color:var(--white); }
   .rv-input, .rv-area { width:100%; border:1px solid rgba(252,249,244,.24); border-radius:10px; background:rgba(252,249,244,.06);
     color:var(--white); font-family:inherit; font-size:1rem; padding:.7rem .85rem; outline:none; transition:border-color .2s, box-shadow .2s; }
   .rv-input::placeholder, .rv-area::placeholder { color:rgba(252,249,244,.38); font-weight:300; }
@@ -670,10 +682,11 @@ if (window.hfEarlyMine) {
       <p class="rv-err" id="who-err"></p>
       <div class="rv-field"><label for="who-name">Name for the table</label>
         <input class="rv-input" id="who-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name"></div>
-      <div class="rv-field"><label for="who-phone">Phone</label>
-        <input class="rv-input" id="who-phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(347) 555 0134"></div>
+      <div class="rv-field"><label for="who-phone">Phone <span class="rv-opt">(Optional)</span></label>
+        <input class="rv-input" id="who-phone" type="tel" autocomplete="tel" maxlength="30" placeholder="(347) 555 0134"></div>
       <div class="rv-field"><label for="who-email">Email — your QR code is sent here</label>
-        <input class="rv-input" id="who-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com" required></div>
+        <input class="rv-input" id="who-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com" required>
+        <p class="rv-fix" id="who-email-fix" hidden>Did you mean <button type="button" data-fix="who-email"></button>?</p></div>
       <div class="rv-field"><label for="who-notes">Anything we should know? (optional)</label>
         <textarea class="rv-area" id="who-notes" maxlength="400" placeholder="Birthday, high chair, allergies…"></textarea></div>
     </div>
@@ -727,9 +740,10 @@ if (window.hfEarlyMine) {
       <div class="rv-field"><label for="req-name">Your name</label>
         <input class="rv-input" id="req-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name"></div>
       <div class="rv-field"><label for="req-phone">Phone</label>
-        <input class="rv-input" id="req-phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(347) 555 0134"></div>
+        <input class="rv-input" id="req-phone" type="tel" autocomplete="tel" maxlength="30" placeholder="(347) 555 0134"></div>
       <div class="rv-field"><label for="req-email">Email — for your confirmation and QR code</label>
-        <input class="rv-input" id="req-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com" required></div>
+        <input class="rv-input" id="req-email" type="email" autocomplete="email" maxlength="120" placeholder="you@email.com" required>
+        <p class="rv-fix" id="req-email-fix" hidden>Did you mean <button type="button" data-fix="req-email"></button>?</p></div>
       <div class="rv-field"><label for="req-message">What do you need?</label>
         <textarea class="rv-area" id="req-message" maxlength="1000" placeholder="A private room, a set menu, a cake…"></textarea></div>
     </div>
@@ -813,8 +827,9 @@ function rvAfterLogin() {
   if (typeof currentTaster === 'undefined' || !currentTaster) return;
   const fill = (id, v) => { const f = el(id); if (f && !f.value && v) f.value = v; };
   const name = [currentTaster.first_name, currentTaster.last_name].filter(Boolean).join(' ');
-  fill('who-name', name); fill('who-phone', currentTaster.phone_number); fill('who-email', currentTaster.email);
-  fill('req-name', name); fill('req-phone', currentTaster.phone_number); fill('req-email', currentTaster.email);
+  fill('who-name', name); fill('who-email', currentTaster.email);
+  fill('req-name', name); fill('req-email', currentTaster.email);
+  ['who-phone', 'req-phone'].forEach((id) => { if (!el(id).value && currentTaster.phone_number) setPhone(id, currentTaster.phone_number); });
 }
 
 const state = { booking:null, restaurant:null, date:null, party:2, slots:[], chosen:null, closed:false, last:null, ask:0,
@@ -1299,7 +1314,7 @@ function pickSlot(slot) {
     if (!el('who-name').value) {
       el('who-name').value = [currentTaster.first_name, currentTaster.last_name].filter(Boolean).join(' ');
     }
-    if (!el('who-phone').value && currentTaster.phone_number) el('who-phone').value = currentTaster.phone_number;
+    if (!el('who-phone').value && currentTaster.phone_number) setPhone('who-phone', currentTaster.phone_number);
     if (!el('who-email').value && currentTaster.email) el('who-email').value = currentTaster.email;
   }
   show('who');
@@ -1308,9 +1323,11 @@ function pickSlot(slot) {
 
 async function confirmTable() {
   const button = el('who-go');
-  const name = el('who-name').value.trim(), phone = el('who-phone').value.trim();
+  const name = el('who-name').value.trim();
+  // r45: the phone is optional; when written, the ten digits of a US number ("+1" stays in the box).
+  const ten = phoneTen('who-phone'), phone = ten ? '+1' + ten : '';
   if (name.length < 2) return say(el('who-err'), 'Please write the name for the table.');
-  if (phone.replace(/\D/g, '').length < 7) return say(el('who-err'), 'Please write a phone number the restaurant can call.');
+  if (ten && ten.length !== 10) { el('who-phone').focus({ preventScroll: true }); return say(el('who-err'), 'Please finish the phone number (10 digits), or leave it empty: it is optional.'); }
   if (!emailOk(el('who-email').value)) return say(el('who-err'), 'Please write your email: your QR code and the confirmation go there.');
 
   button.disabled = true; button.textContent = 'Taking the table…';
@@ -1347,10 +1364,14 @@ async function confirmTable() {
       + (state.restaurant.phone || 'the restaurant') + '.';
     // Only say "emailed" when the server says Resend took it — never a guess.
     const typed = el('who-email').value.trim();
-    el('done-mail').hidden = !(data.emailSent && typed);
+    // r45: when the email could not be confirmed as sent, say so, so nobody waits for it. (A restaurant
+    // that sends no emails at all — emailOff — says nothing about one, as before.)
+    const unsure = !data.emailSent && !!typed && !data.emailOff;
+    el('done-mail').hidden = !((data.emailSent && typed) || unsure);
     el('done-mail').textContent = data.emailSent && typed
       ? 'We have emailed the confirmation to ' + typed + ', with a link to cancel if your plans change.'
-      : '';
+      : unsure ? 'We could not confirm the email to ' + typed + '. If it does not arrive in a few minutes, use a screenshot of this '
+               + (hasQr ? 'QR code' : 'code') + ' at the door.' : '';
     if (data.already) {
       // Their own table again. The QR goes to the email saved with it, never
       // onto this screen (unless it is their account): see api/reservations.js.
@@ -1376,6 +1397,9 @@ async function confirmTable() {
       openRequest();
     } else {
       say(el('who-err'), e.message);
+      // r45: point at the field to fix
+      if (e.reason === 'email') { showEmailFix('who-email', e.data && e.data.suggest); el('who-email').focus({ preventScroll: true }); }
+      if (e.reason === 'phone') el('who-phone').focus({ preventScroll: true });
     }
   } finally {
     button.disabled = false; button.textContent = 'Confirm the table';
@@ -1388,6 +1412,56 @@ function emailOk(value) {
   const v = String(value || '').trim();
   return v.length <= 120 && /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z0-9-]{2,}$/i.test(v);
 }
+
+// r45: the common slips after the @ (the server has the same list, and also
+// asks DNS whether the domain receives mail at all). Shown as a suggestion the
+// guest taps; nothing is changed without them.
+const EMAIL_TYPOS = {
+  'gmial.com': 'gmail.com', 'gmal.com': 'gmail.com', 'gmaill.com': 'gmail.com', 'gamil.com': 'gmail.com', 'gnail.com': 'gmail.com',
+  'gmail.co': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.cm': 'gmail.com', 'gmail.om': 'gmail.com', 'gmai.com': 'gmail.com',
+  'gmali.com': 'gmail.com', 'gmail.comm': 'gmail.com', 'gmsil.com': 'gmail.com', 'gmail.cim': 'gmail.com', 'gmail.vom': 'gmail.com',
+  'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com', 'hotmai.com': 'hotmail.com', 'hotmail.co': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotmil.com': 'hotmail.com',
+  'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'yahoo.co': 'yahoo.com', 'yahoo.con': 'yahoo.com', 'yhoo.com': 'yahoo.com',
+  'outlok.com': 'outlook.com', 'outllok.com': 'outlook.com', 'outlook.co': 'outlook.com', 'outlook.con': 'outlook.com',
+  'iclod.com': 'icloud.com', 'icoud.com': 'icloud.com', 'icloud.co': 'icloud.com', 'icloud.con': 'icloud.com',
+  'aol.co': 'aol.com', 'aol.con': 'aol.com',
+};
+function emailTypo(value) {
+  const v = String(value || '').trim(), at = v.lastIndexOf('@');
+  if (at < 1) return null;
+  const fix = EMAIL_TYPOS[v.slice(at + 1).toLowerCase()];
+  return fix ? v.slice(0, at) + '@' + fix : null;
+}
+function showEmailFix(id, suggestion) {
+  const box = el(id + '-fix');
+  if (!box) return;
+  const fix = suggestion || emailTypo(el(id).value);
+  box.hidden = !fix;
+  if (fix) box.querySelector('button').textContent = fix;
+}
+// r45: the log-in's phone box ("+1 (555) 000-0000", taster.js) on both forms; a number put in from an account is shaped.
+function phoneTen(id) {
+  const v = el(id).value || '';
+  return typeof hfPhoneTen === 'function' ? hfPhoneTen(v) : v.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '').slice(0, 10);
+}
+function setPhone(id, value) {
+  if (typeof hfPhoneSet === 'function') hfPhoneSet(id, value); else el(id).value = value;
+}
+['who-phone', 'req-phone'].forEach((id) => { if (typeof hfPhoneBox === 'function') hfPhoneBox(el(id)); });
+
+['who-email', 'req-email'].forEach((id) => {
+  el(id).addEventListener('blur', () => showEmailFix(id));
+  el(id).addEventListener('input', () => { if (!el(id + '-fix').hidden) showEmailFix(id); });
+});
+document.addEventListener('click', (event) => {
+  const b = event.target.closest('[data-fix]');
+  if (!b) return;
+  const input = el(b.dataset.fix);
+  input.value = b.textContent;
+  el(b.dataset.fix + '-fix').hidden = true;
+  say(el(b.dataset.fix === 'who-email' ? 'who-err' : 'req-err'), '');
+  input.focus({ preventScroll: true });
+});
 
 // The done screen has three looks: booked; "you already have a table that
 // day" (the same guest again); and "one table per phone each day" (another
@@ -1407,11 +1481,12 @@ function againNotice(data) {
   state.callPhone = data.phone || state.restaurant.phone || null;
   doneLook('notice');
   el('done-title').textContent = 'You already have a table that day';
-  el('done-name').textContent = 'This phone number already has a table at ' + state.restaurant.name
+  el('done-name').textContent = (data.by === 'email' ? 'This email' : 'This phone number') + ' already has a table at ' + state.restaurant.name
     + (data.day ? ' on ' + data.day : ' that day') + '.';
   el('done-qr').hidden = true; el('done-qr-note').hidden = true;
   el('done-where').textContent = data.resent ? 'We sent your QR code again to the email you booked with.'
     : data.recent ? 'We sent your QR code to the email you booked with a few minutes ago. Please look in your inbox.'
+    : data.by === 'email' ? 'To see it, look for its email in your inbox, or call the restaurant.'
     : 'To see it, log in with this phone number, or call the restaurant.';
   el('done-hold').textContent = 'For a second table the same day, please call the restaurant'
     + (state.callPhone ? ': ' + state.callPhone : '') + '.';
@@ -1421,8 +1496,8 @@ function againNotice(data) {
 function onePerDay(data) {
   state.callPhone = data.phone || state.restaurant.phone || null;
   doneLook('one');
-  el('done-title').textContent = 'One table per phone each day';
-  el('done-name').textContent = 'This phone number already has a table at ' + state.restaurant.name
+  el('done-title').textContent = 'One table per guest each day';
+  el('done-name').textContent = (data.by === 'email' ? 'This email' : 'This phone number') + ' already has a table at ' + state.restaurant.name
     + (data.day ? ' on ' + data.day : ' that day') + '.';
   el('done-qr').hidden = true; el('done-qr-note').hidden = true;
   el('done-where').textContent = 'For a second table the same day, please call the restaurant'
@@ -1481,7 +1556,7 @@ function openRequest() {
   if (!date.value) date.value = state.date || (state.booking && state.booking.today) || '';
   if (typeof currentTaster !== 'undefined' && currentTaster) {
     if (!el('req-name').value) el('req-name').value = [currentTaster.first_name, currentTaster.last_name].filter(Boolean).join(' ');
-    if (!el('req-phone').value && currentTaster.phone_number) el('req-phone').value = currentTaster.phone_number;
+    if (!el('req-phone').value && currentTaster.phone_number) setPhone('req-phone', currentTaster.phone_number);
     if (!el('req-email').value && currentTaster.email) el('req-email').value = currentTaster.email;
   }
   say(el('req-err'), '');
@@ -1490,12 +1565,12 @@ function openRequest() {
 
 async function sendRequest() {
   const button = el('req-go');
-  const name = el('req-name').value.trim(), phone = el('req-phone').value.trim();
+  const name = el('req-name').value.trim(), ten = phoneTen('req-phone'), phone = ten.length === 10 ? '+1' + ten : '';
   const party = Number(el('req-people').value), date = el('req-date').value;
   if (!party || party < 1) return say(el('req-err'), 'Please say how many people are coming.');
   if (!date) return say(el('req-err'), 'Please pick a day.');
   if (name.length < 2) return say(el('req-err'), 'Please write your name.');
-  if (phone.replace(/\D/g, '').length < 7) return say(el('req-err'), 'Please write a phone number the restaurant can call.');
+  if (!phone) return say(el('req-err'), 'Please write a phone number the restaurant can call (10 digits): for a big party they call you.');
   if (!emailOk(el('req-email').value)) return say(el('req-err'), 'Please write your email: if the restaurant says yes, your confirmation and QR code go there.');
 
   button.disabled = true; button.textContent = 'Sending…';
@@ -1511,12 +1586,14 @@ async function sendRequest() {
       message:  el('req-message').value.trim(),
     });
     el('sent-text').textContent = state.restaurant.name + ' has your request for ' + party + ' people on '
-      + dayLabels(date).long + '. They will call you on ' + phone
+      + dayLabels(date).long + '. They will call you on ' + el('req-phone').value.trim()
       // r30: logged in, the request (and anything the restaurant writes about it) is in My Reservations.
       + (typeof currentSession !== 'undefined' && currentSession ? ', or write to you in My Reservations.' : '.');
     show('sent');
   } catch (e) {
     say(el('req-err'), e.message);
+    if (e.reason === 'email') { showEmailFix('req-email', e.data && e.data.suggest); el('req-email').focus({ preventScroll: true }); }
+    if (e.reason === 'phone') el('req-phone').focus({ preventScroll: true });
   } finally {
     button.disabled = false; button.textContent = 'Send the request';
   }
