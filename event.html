@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+// r50 · An event's page (/event?k=<key>): the guest reads it and buys tickets. The event is asked for in the first
+// line, before the fonts. The guest pays on Square's own page; the money goes to the restaurant (no fee for Seb's
+// Analytics). The server: api/_lib/events.js (event_get, event_buy).
+window.hfEvKey = (function () { try { return new URLSearchParams(location.search).get('k') || ''; } catch (e) { return ''; } })();
+window.hfEvSession = (function () { try { var r = JSON.parse(localStorage.getItem('hf_taster') || 'null'); return r && typeof r.session === 'string' ? r.session : ''; } catch (e) { return ''; } })();
+window.hfEvAsk = (function () {
+  try {
+    var h = { 'Content-Type': 'application/json' };
+    if (window.hfEvSession) h.Authorization = 'Bearer ' + window.hfEvSession;
+    return fetch('/api/reservations', { method: 'POST', headers: h, body: JSON.stringify({ action: 'event_get', key: window.hfEvKey }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .catch(function () { return { ok: false, d: { error: 'Could not reach the site. Check your connection and try again.' } }; });
+  } catch (e) { return null; }
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<meta name="theme-color" content="#140D0A">
+<title>Event tickets</title>
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root { --red:#B01015; --red-bright:#E23B2E; --white:#FCF9F4; --muted:#B9AC9F; --quiet:#8A7B6E; --line:rgba(252,249,244,.14); --ink:#140D0A;
+          --card:rgba(252,249,244,.06); --serif:'Cormorant Garamond', Georgia, serif; --sans:'Inter','Segoe UI',system-ui,sans-serif; --green:#7FCB95; }
+  html { background:var(--ink); }
+  body { min-height:100vh; font-family:var(--sans); color:var(--white); background:radial-gradient(120% 60% at 50% 0%, #2A1712 0%, var(--ink) 70%); -webkit-font-smoothing:antialiased; }
+  .top { position:sticky; top:0; z-index:5; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; height:58px; background:rgba(20,13,10,.94);
+         border-bottom:1px solid rgba(226,59,46,.55); }
+  .top a { color:var(--red-bright); font-size:1.7rem; text-decoration:none; text-align:center; line-height:58px; }
+  .top h1 { font-family:var(--serif); font-weight:600; font-size:1.7rem; text-align:center; }
+  main { max-width:520px; margin:0 auto; padding:18px 16px 40px; }
+  .hero { border:1px solid var(--line); border-radius:18px; padding:22px 18px 18px; background:linear-gradient(140deg, #4A1A12 0%, #22120D 60%, #170E0B 100%); min-height:150px;
+          display:flex; flex-direction:column; justify-content:flex-end; }
+  .when { font-size:.7rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#F08C7F; }
+  .hero h2 { font-family:var(--serif); font-weight:700; font-size:2.2rem; line-height:1.08; margin-top:4px; }
+  .rest { font-size:.8rem; color:var(--muted); margin-top:6px; }
+  .price { display:flex; justify-content:space-between; align-items:baseline; margin:18px 2px 8px; }
+  .price b { font-family:var(--serif); font-size:1.9rem; font-weight:700; } .price small { font-family:var(--serif); font-size:1rem; color:var(--muted); margin-left:4px; }
+  .price .left { font-size:.95rem; color:var(--muted); } .price .left.low { color:#F08C7F; }
+  .about { font-size:1rem; line-height:1.5; color:#E9E0D3; margin:4px 2px 10px; white-space:pre-line; }
+  .inc { list-style:none; margin:4px 2px 14px; } .inc li { font-size:.98rem; padding:4px 0 4px 24px; position:relative; color:#E9E0D3; }
+  .inc li::before { content:'✓'; position:absolute; left:2px; color:var(--green); }
+  .box { border:1px solid var(--line); background:var(--card); border-radius:16px; padding:16px; margin-top:6px; }
+  .qty { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; } .qty span { color:var(--muted); }
+  .step { display:flex; align-items:center; gap:14px; }
+  .step button { width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--white); font-size:1.4rem; cursor:pointer; }
+  .step button:disabled { opacity:.35; cursor:default; }
+  .step b { font-family:var(--serif); font-size:1.6rem; min-width:28px; text-align:center; }
+  .field { display:block; width:100%; margin-top:10px; padding:14px; border-radius:10px; border:1px solid var(--line); background:rgba(252,249,244,.08); color:var(--white);
+           font-family:var(--sans); font-size:1rem; }
+  .field::placeholder { color:#8F8278; } .field.bad { border-color:var(--red-bright); }
+  .pay { display:block; width:100%; margin-top:18px; padding:18px 12px; border:none; border-radius:999px; background:var(--red-bright); color:#fff; font-family:var(--sans);
+         font-size:.86rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; box-shadow:0 8px 28px rgba(226,59,46,.35); }
+  .pay:disabled { opacity:.6; cursor:default; }
+  .fine { text-align:center; font-size:.78rem; color:var(--muted); line-height:1.5; margin-top:12px; }
+  .err { background:rgba(176,16,21,.18); border:1px solid rgba(226,59,46,.5); color:#FFD9D4; border-radius:12px; padding:12px 14px; margin-top:12px; font-size:.92rem; }
+  .state { border:1px solid var(--line); background:var(--card); border-radius:16px; padding:18px; margin-top:12px; text-align:center; }
+  .state b { display:block; font-family:var(--serif); font-size:1.6rem; } .state span { display:block; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .note { border-radius:12px; padding:10px 12px; font-size:.82rem; margin-bottom:12px; background:rgba(143,176,224,.15); border:1px solid rgba(143,176,224,.4); color:#DCE7F7; }
+  .skel { height:150px; border-radius:18px; background:rgba(252,249,244,.06); }
+  a.plain { color:#F08C7F; }
+</style>
+</head>
+<body>
+<div class="top"><a href="/" aria-label="Back to the restaurant">&#8249;</a><h1>Events</h1><span></span></div>
+<main id="ev"><div class="skel"></div></main>
+<script>
+var EVP = { d: null, qty: 1, busy: false, err: null, field: null };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function cents(c) { return '$' + (c / 100).toFixed(2).replace(/\.00$/, ''); }
+var WHY = { sold_out: ['Sold out', 'There are no tickets left.'], closed: ['Ticket sales have closed', 'Call the restaurant to ask.'],
+            over: ['This event is over', ''], cancelled: ['This event was cancelled', 'If you bought tickets, the restaurant refunds you on Square.'],
+            not_on_sale: ['Tickets are not on sale yet', 'Check again soon, or call the restaurant.'], draft: ['Draft', 'Publish it in the Events tab to sell tickets.'] };
+function paint() {
+  var host = document.getElementById('ev'), d = EVP.d;
+  if (!d) return;
+  if (d.error) { host.innerHTML = '<div class="state"><b>Not found</b><span>' + esc(d.error) + '</span></div>'; return; }
+  var e = d.event, r = d.restaurant;
+  document.title = e.name + ' · ' + r.name;
+  var max = Math.max(1, Math.min(e.max, e.left));
+  if (EVP.qty > max) EVP.qty = max;
+  var sum = cents(e.priceCents * EVP.qty);
+  var taxWord = e.taxMode === 'added' ? ' + tax' : '';
+  var html = (e.draft ? '<div class="note">Draft: only your team sees this page.</div>' : '')
+    + (d.sandbox ? '<div class="note">Square test mode: test cards only, no real money.</div>' : '')
+    + '<div class="hero"><div class="when">' + esc(e.short) + ' · ' + esc(e.hours) + (e.room ? ' · ' + esc(e.room) : '') + '</div>'
+    + '<h2>' + esc(e.name) + '</h2><div class="rest">' + esc(r.name) + (r.address ? ' · ' + esc(r.address) : '') + '</div></div>'
+    + '<div class="price"><div><b>' + esc(e.price) + '</b><small>per person' + (e.taxMode === 'added' ? ' + tax' : e.taxMode === 'included' ? ', tax included' : '') + '</small></div>'
+    + (e.state === 'on_sale' ? '<span class="left' + (e.left <= 5 ? ' low' : '') + '" id="ev-left">' + e.left + ' left</span>' : '') + '</div>'
+    + (e.about ? '<p class="about">' + esc(e.about) + '</p>' : '');
+  var inc = (e.included || '').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  if (e.adultsOnly) inc.push('21 and over (bring an ID)');
+  if (inc.length) html += '<ul class="inc">' + inc.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+  if (e.state !== 'on_sale') {
+    var w = WHY[e.state] || WHY.not_on_sale;
+    html += '<div class="state" id="ev-state"><b>' + esc(w[0]) + '</b>' + (w[1] ? '<span>' + esc(w[1]) + (r.phone && e.state !== 'over' ? ' ' + esc(r.phone) : '') + '</span>' : '') + '</div>';
+    host.innerHTML = html; return;
+  }
+  var bad = function (k) { return EVP.field === k ? ' bad' : ''; };
+  html += '<div class="box"><div class="qty"><span>Tickets</span><div class="step"><button type="button" aria-label="One ticket less" id="ev-minus" ' + (EVP.qty <= 1 ? 'disabled' : '') + ' onclick="qty(-1)">−</button>'
+    + '<b id="ev-qty">' + EVP.qty + '</b><button type="button" aria-label="One ticket more" id="ev-plus" ' + (EVP.qty >= max ? 'disabled' : '') + ' onclick="qty(1)">+</button></div></div>'
+    + '<input class="field' + bad('name') + '" id="ev-name" autocomplete="name" placeholder="Your name" maxlength="80" value="' + esc(EVP.name || '') + '" oninput="EVP.name=this.value;clr()">'
+    + '<input class="field' + bad('email') + '" id="ev-email" type="email" autocomplete="email" placeholder="Email (the tickets go here)" maxlength="120" value="' + esc(EVP.email || '') + '" oninput="EVP.email=this.value;clr()">'
+    + '<input class="field' + bad('phone') + '" id="ev-phone" type="tel" autocomplete="tel" placeholder="Phone (optional)" maxlength="20" value="' + esc(EVP.phone || '') + '" oninput="EVP.phone=this.value;clr()"></div>'
+    + (EVP.err ? '<div class="err" role="alert" id="ev-err">' + esc(EVP.err) + '</div>' : '')
+    + '<button type="button" class="pay" id="ev-pay" ' + (EVP.busy ? 'disabled' : '') + ' onclick="buy()">' + (EVP.busy ? 'Opening Square…' : 'Pay ' + sum + taxWord + ' with Square →') + '</button>'
+    + '<p class="fine">You pay on Square’s secure page. The money goes to ' + esc(r.name) + '. Your tickets come back here and by email' + (EVP.qty > 1 ? ': one for each person, to share.' : '.') + '</p>';
+  host.innerHTML = html;
+}
+// typing again: the last problem goes away (without drawing the page again, so the keyboard stays)
+function clr() { var e = document.getElementById('ev-err'); if (e) e.remove(); EVP.err = null; EVP.field = null;
+  document.querySelectorAll('.field.bad').forEach(function (x) { x.classList.remove('bad'); }); }
+function qty(n) { EVP.qty = Math.max(1, EVP.qty + n); EVP.err = null; EVP.field = null; paint(); }
+function buy() {
+  if (EVP.busy) return;
+  EVP.name = document.getElementById('ev-name').value; EVP.email = document.getElementById('ev-email').value; EVP.phone = document.getElementById('ev-phone').value;
+  EVP.busy = true; EVP.err = null; EVP.field = null; paint();
+  var h = { 'Content-Type': 'application/json' };
+  if (window.hfEvSession) h.Authorization = 'Bearer ' + window.hfEvSession;
+  fetch('/api/reservations', { method: 'POST', headers: h, body: JSON.stringify({ action: 'event_buy', key: window.hfEvKey, quantity: EVP.qty,
+      name: EVP.name, email: EVP.email, phone: EVP.phone }) })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    .then(function (x) {
+      if (x.ok && x.d.url) { try { sessionStorage.setItem('hf_ev_order', x.d.order); } catch (e) {} window.location.assign(x.d.url); return; }
+      EVP.busy = false; EVP.err = x.d.error || 'Something went wrong. Please try again.'; EVP.field = x.d.reason || null;
+      if (x.d.reason === 'sold_out' || x.d.reason === 'closed' || x.d.reason === 'not_on_sale') return load();
+      paint();
+    })
+    .catch(function () { EVP.busy = false; EVP.err = 'Could not reach the site. Check your connection and try again.'; paint(); });
+}
+function load() {
+  var h = { 'Content-Type': 'application/json' };
+  if (window.hfEvSession) h.Authorization = 'Bearer ' + window.hfEvSession;
+  return fetch('/api/reservations', { method: 'POST', headers: h, body: JSON.stringify({ action: 'event_get', key: window.hfEvKey }) })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    .then(take).catch(function () { take({ ok: false, d: { error: 'Could not reach the site. Check your connection and try again.' } }); });
+}
+function take(x) { var keep = EVP.err; EVP.d = x.ok ? x.d : { error: (x.d && x.d.error) || 'This event is not here.' }; if (keep && EVP.d.event && EVP.d.event.state !== 'on_sale') EVP.err = null; paint(); }
+if (window.hfEvAsk) window.hfEvAsk.then(take); else load();
+</script>
+</body>
+</html>
