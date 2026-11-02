@@ -259,6 +259,8 @@ async function day(req, res, body, tasterId, helpers = {}) {
     dressed.forEach((b) => { b.email = emails[b.id] || null; });
   }
   const live = dressed.filter((b) => b.status !== 'cancelled');
+  // r48 (Sebastian, 30 Oct 16:54: "a sign that shows the capacity in real time"): today only, the seats in use now.
+  const inUse = date === today ? await seatsInUse(who.rid, areaList, dressed) : null;
 
   // The chat sign on a card whose guest has written, and the count on the
   // messages bubble — only for those who answer guests.
@@ -313,6 +315,7 @@ async function day(req, res, body, tasterId, helpers = {}) {
       cancelled: dressed.length - live.length,
     },
     bookings: dressed,
+    inUse,
     areas: areaList.filter((a) => a.is_active).map((a) => ({ id: a.id, name: a.name, seats: a.seats })),
     requests: requestRows.map((q) => {
       const out = dressRequest(q, withEmail.has(Number(q.id)), canMessage ? (requestChats[q.id] || null) : null);
@@ -344,6 +347,32 @@ export function inServiceDay(r, date) {
 // serviceDate: the day whose list this card is on. A table in the small hours
 // after it counts its minutes past midnight (12:30 AM = 24:30), so the clock on
 // the page keeps rolling forward instead of jumping back to the morning.
+// r48: the seats in use right now, of the open rooms' seats — every busy table on the map counts its seats (a walk-in
+// too); a party marked Arrived that sits at no table on the map (a room not drawn, or the map not opened since)
+// counts its people. Before migration 32 (no map): the Arrived parties only.
+export async function seatsInUse(rid, areaList, dressed) {
+  const open = areaList.filter((a) => a.is_active);
+  const of = open.reduce((n, a) => n + (Number(a.seats) || 0), 0);
+  const openIds = new Set(open.map((a) => Number(a.id)));
+  const [tables, sessions] = await Promise.all([
+    sb(`/floor_tables?restaurant_id=eq.${rid}&select=number,seats`),
+    sb(`/table_sessions?restaurant_id=eq.${rid}&ended_at=is.null&select=area_id,tables,reservation_id`),
+  ]);
+  const map = tables.ok && sessions.ok && Array.isArray(tables.data) && Array.isArray(sessions.data);
+  const seatsOf = {};
+  if (map) tables.data.forEach((t) => { seatsOf[t.number] = Number(t.seats) || 0; });
+  let used = 0;
+  const atTable = new Set();
+  if (map) {
+    sessions.data.forEach((x) => {
+      if (x.reservation_id) atTable.add(Number(x.reservation_id));
+      if (openIds.has(Number(x.area_id))) (x.tables || []).forEach((n) => { used += seatsOf[n] || 0; });
+    });
+  }
+  dressed.forEach((b) => { if (b.status === 'seated' && !atTable.has(Number(b.id))) used += Number(b.party) || 0; });
+  return { used: Math.min(used, of), of };
+}
+
 export function dressBooking(r, timezone, areaName, now, canEdit, serviceDate) {
   const [hh, mm] = String(r.local_time || '00:00').split(':').map(Number);
   const late = serviceDate && r.local_date !== serviceDate ? 1440 : 0;
@@ -869,7 +898,7 @@ async function saveRules(req, res, body, tasterId) {
   }
   console.log('[staff:rules] taster', tasterId, 'changed', Object.keys(patch).join(','), 'at', who.rid);
   const what = describeRules(s.settings, patch);
-  if (what) await tellChange(who.rid, tasterId, what, { go: 'settings' });
+  if (what) await tellChange(who.rid, tasterId, what, { go: 'map' });        // r48: the rules are on the map now
   return res.status(200).json({ success: true, rules: rulesOut(saved.data[0]) });
 }
 
@@ -1095,9 +1124,10 @@ async function area(req, res, body, tasterId) {
   if (!who) return;
   const name = String(body.name || '').trim().replace(/\s+/g, ' ').replace(/[<>"]/g, '');
   if (name.length < 2 || name.length > 40) return res.status(400).json({ error: 'A room name is 2 to 40 letters.' });
-  let seats = Number(body.seats), tables = Number(body.tables);
-  if (!Number.isInteger(seats) || seats < 0 || seats > 500) return res.status(400).json({ error: 'Seats: a number from 0 to 500.' });
-  if (!Number.isInteger(tables) || tables < 0 || tables > 200) return res.status(400).json({ error: 'Tables: a number from 0 to 200 (0 = do not count tables).' });
+  // r48 (Sebastian, 30 Oct 16:42: "the number of tables depends on the number of tables you draw"): seats and
+  // tables are never typed any more. A new room starts with none (draw it); a room keeps what it has (its drawing's,
+  // or — not drawn yet — what it had before r48) until it is drawn. Whatever a page sends for them is not used.
+  let seats = 0, tables = 0;
   const active = body.active !== false;
 
   if (body.op === 'add') {
@@ -1107,7 +1137,7 @@ async function area(req, res, body, tasterId) {
     });
     if (made.status === 409) return res.status(409).json({ error: `There is already a room called "${name}".` });
     if (!made.ok) return res.status(502).json({ error: 'Could not add the room (the database answered ' + made.status + ').' });
-    await tellChange(who.rid, tasterId, `added the room ${name} (${seats} seats, ${tables} tables${active ? '' : ', closed'})`, { go: 'settings' });
+    await tellChange(who.rid, tasterId, `added the room ${name}${active ? '' : ' (closed)'}: draw it on the map`, { go: 'map' });
     return res.status(200).json({ success: true, area: outArea(made.data[0]) });
   }
   if (body.op !== 'save') return res.status(400).json({ error: 'Add or save?' });
@@ -1124,10 +1154,11 @@ async function area(req, res, body, tasterId) {
   // r43: as it was, for the notification
   const was = await sb(`/restaurant_areas?id=eq.${id}&restaurant_id=eq.${who.rid}&select=name,seats,tables,is_active`);
   const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
-  // r46: a room drawn on the table map counts what is drawn: its seats and tables are the drawing's, whatever was typed.
+  if (!prev) return res.status(404).json({ error: 'That room is not there any more.' });
+  // r46: a room drawn on the table map counts what is drawn. r48: no room's seats or tables are typed: they stay.
   const plan = await sb(`/floor_plans?area_id=eq.${id}&restaurant_id=eq.${who.rid}&select=area_id`);
   const isDrawn = plan.ok && Array.isArray(plan.data) && plan.data.length > 0;
-  if (isDrawn && prev) { seats = Number(prev.seats); tables = Number(prev.tables); }
+  seats = Number(prev.seats); tables = Number(prev.tables);
   // restaurant_id in the filter as well as the id: a room of another restaurant
   // is simply not found.
   const saved = await sb(`/restaurant_areas?id=eq.${id}&restaurant_id=eq.${who.rid}`, {
@@ -1140,10 +1171,8 @@ async function area(req, res, body, tasterId) {
   if (prev) {
     const parts = [];
     if (prev.name !== name) parts.push(`renamed to ${name}`);
-    if (Number(prev.seats) !== seats) parts.push(`seats ${prev.seats} → ${seats}`);
-    if (Number(prev.tables) !== tables) parts.push(`tables ${prev.tables} → ${tables}`);
     if (!!prev.is_active !== active) parts.push(active ? 'open for bookings' : 'closed for bookings');
-    if (parts.length) await tellChange(who.rid, tasterId, `changed the room ${prev.name}: ${parts.join('; ')}`, { go: 'settings' });
+    if (parts.length) await tellChange(who.rid, tasterId, `changed the room ${prev.name}: ${parts.join('; ')}`, { go: 'map' });
   }
   return res.status(200).json({ success: true, area: outArea(saved.data[0], isDrawn) });
 }
@@ -1166,3 +1195,4 @@ function addMonths(date, n) {
 function daysBetween(a, b) {
   return Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
 }
+  
