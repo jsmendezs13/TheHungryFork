@@ -956,6 +956,90 @@
   .cap-mini { display:block; align-self:stretch; height:4px; border-radius:999px; background:#EFE7DC; overflow:hidden; margin:.3rem .35rem .15rem; }
   .cap-mini i { display:block; height:100%; border-radius:999px; }
   .rv-tile.cap-tile small { display:block; font-size:.5rem; color:var(--muted); letter-spacing:.02em; margin-top:.05rem; white-space:nowrap; }
+
+  /* ── r50: event tickets ── */
+  .ev-new { width:100%; margin:.2rem 0 .9rem; }
+  .ev-sq { background:#fff; border:1px solid var(--border); border-radius:14px; padding:.85rem 1rem; margin-bottom:.8rem; font-size:.84rem; line-height:1.45; }
+  .ev-sq .m-btn { display:block; width:100%; margin-top:.7rem; }
+  .ev-sq.warn { background:#FBF3E4; border-color:#E6D2A8; color:#7A5310; }
+  .ev-sq.test { background:#EEF3FB; border-color:#C9D7EE; color:#1F3F75; padding:.5rem .8rem; font-size:.76rem; }
+  .ev-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:.9rem 1rem .8rem; margin-bottom:.75rem; box-shadow:var(--shadow-sm); }
+  .ev-card.cancelled, .ev-card.over { opacity:.72; }
+  .ev-when { font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--red); }
+  .ev-name { font-family:var(--serif); font-size:1.45rem; font-weight:700; line-height:1.15; margin:.15rem 0 .35rem; }
+  .ev-meta { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem .55rem; font-size:.78rem; color:var(--muted); }
+  .ev-chip { font-size:.6rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; border-radius:999px; padding:.22rem .55rem; background:var(--off-white); color:var(--text); }
+  .ev-chip.on_sale { background:#E3F1E6; color:#2E7D4F; } .ev-chip.sold_out { background:var(--red-light); color:var(--red-dark); }
+  .ev-chip.draft { background:#EEF3FB; color:#1F3F75; } .ev-chip.not_on_sale { background:#FBF3E4; color:#7A5310; }
+  .ev-room { font-size:.62rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#1F3F75; }
+  .ev-bar { height:6px; border-radius:999px; background:#EFE7DC; overflow:hidden; margin:.65rem 0 .35rem; }
+  .ev-bar i { display:block; height:100%; border-radius:999px; background:var(--green); }
+  .ev-card.sold_out .ev-bar i { background:var(--red); }
+  .ev-nums { font-size:.78rem; color:var(--muted); } .ev-nums b { color:var(--text); } .ev-nums em { color:var(--red-dark); font-style:normal; font-weight:600; }
+  .ev-acts { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.7rem; }
+  .ev-act { flex:1 1 auto; border:1px solid var(--border); background:#fff; border-radius:999px; padding:.55rem .7rem; font-family:var(--sans); font-size:.66rem; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--text); cursor:pointer; }
+  .ev-act.main { background:var(--ink); border-color:var(--ink); color:var(--white); }
+  .ev-past-h { display:flex; align-items:center; gap:.4rem; width:100%; background:none; border:none; padding:.6rem .2rem; font-family:var(--sans); font-size:.68rem;
+    font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); cursor:pointer; }
+  .ev-past-h[aria-expanded="true"] .mg-caret { transform:rotate(90deg); }
+  .ev-conflicts { background:#FBF3E4; border:1px solid #E6D2A8; color:#7A5310; border-radius:12px; padding:.75rem .9rem; margin-bottom:.8rem; font-size:.8rem; line-height:1.45; }
+  .ev-conflicts .rv-link { display:block; margin-top:.4rem; }
+  .ev-form .m-h { margin-bottom:.6rem; }
+  .ev-f { display:block; margin:.55rem 0 0; }
+  .ev-f > span { display:block; font-size:.62rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:.25rem; }
+  .ev-f .m-input, .ev-f .m-select { width:100%; box-sizing:border-box; }
+  .ev-f textarea.m-input { resize:vertical; font-family:var(--sans); }
+  .ev-f.bad .m-input, .ev-f.bad .m-select { border-color:var(--red); }
+  .ev-row.two { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; } .ev-row.two > .ev-err { grid-column:1 / -1; }
+  .ev-err { color:var(--red-dark); font-size:.76rem; margin-top:.3rem; }
+  .ev-hint { color:var(--muted); font-size:.74rem; margin-top:.3rem; }
+  .ev-sw { display:flex; align-items:center; justify-content:space-between; gap:.8rem; width:100%; margin:.7rem 0 0; padding:.65rem .8rem; background:var(--off-white);
+    border:1px solid var(--border); border-radius:12px; font-family:var(--sans); text-align:left; color:var(--text); cursor:pointer; }
+  .ev-sw-t b { display:block; font-size:.82rem; } .ev-sw-t small { display:block; font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+  .ev-sw i { flex:none; width:42px; height:24px; border-radius:999px; background:#D8CDBE; position:relative; transition:background .15s; }
+  .ev-sw i::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s; }
+  .ev-sw.on i { background:var(--green); } .ev-sw.on i::after { left:21px; }
+  .ev-btns { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; margin-top:1rem; } .ev-btns .m-btn { margin:0; padding-left:.6rem; padding-right:.6rem; }
+  .ev-btns .m-btn:only-child { grid-column:1 / -1; }
+  .m-btn.quiet { background:#fff; color:var(--text); border:1px solid var(--border); }
+  .ev-cancel { display:block; margin:1rem auto 0; background:none; border:none; color:var(--red-dark); font-family:var(--sans); font-size:.76rem; text-decoration:underline; cursor:pointer; }
+  .ev-g-h { margin:.3rem 0 .8rem; }
+  .ev-order { background:#fff; border:1px solid var(--border); border-radius:14px; padding:.7rem .85rem; margin-bottom:.55rem; }
+  .ev-order.held { opacity:.7; } .ev-order.refunded { opacity:.6; }
+  .ev-o-top { display:flex; justify-content:space-between; gap:.6rem; font-size:.9rem; } .ev-o-top span { color:var(--muted); font-size:.78rem; }
+  .ev-o-sub { font-size:.76rem; color:var(--muted); margin-top:.15rem; word-break:break-word; }
+  .ev-o-warn { font-size:.74rem; color:var(--red-dark); margin-top:.3rem; }
+  .ev-tix { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.55rem; }
+  .ev-tk { display:inline-flex; align-items:center; gap:.35rem; font-size:.74rem; border-radius:999px; padding:.3rem .55rem; background:var(--off-white); }
+  .ev-tk.in { background:#E3F1E6; color:#2E7D4F; font-weight:600; } .ev-tk.void { color:var(--muted); text-decoration:line-through; }
+  .ev-tk.void .rv-link { text-decoration:none; }
+  .ev-let { border:none; background:var(--ink); color:#fff; border-radius:999px; padding:.4rem .75rem; font-family:var(--sans); font-size:.66rem; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+  .ev-day { display:flex; flex-direction:column; align-items:flex-start; gap:.1rem; width:100%; margin:.55rem 0 0; padding:.6rem .85rem; text-align:left; background:#EEF3FB;
+    border:1px solid #C9D7EE; border-radius:12px; color:#10284F; font-family:var(--sans); cursor:pointer; }
+  .ev-day b { font-size:.86rem; } .ev-day span { font-size:.74rem; color:#3A5788; }
+  .ev-day-k { font-size:.58rem !important; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#1F3F75 !important; }
+  .mp-ev { display:flex; flex-direction:column; gap:.1rem; margin:0 0 .6rem; padding:.6rem .85rem; background:#EEF3FB; border:1px solid #C9D7EE; border-radius:12px; color:#10284F; }
+  .mp-ev.now { background:#1F3F75; border-color:#1F3F75; color:#fff; } .mp-ev.now span, .mp-ev.now .ev-day-k { color:#DCE7F7 !important; }
+  .mp-ev b { font-size:.86rem; } .mp-ev span { font-size:.74rem; color:#3A5788; }
+  .tl-row.tl-ev-row .tl-n { font-size:.56rem; font-weight:700; letter-spacing:.12em; color:#1F3F75; line-height:40px; }
+  .tl-evbar { position:absolute; top:6px; height:28px; box-sizing:border-box; border-radius:8px; background:repeating-linear-gradient(135deg, #DCE7F7 0 8px, #EEF3FB 8px 16px);
+    border:1.5px solid #8FB0E0; color:#10284F; font-size:.7rem; font-weight:700; padding:0 8px; line-height:25px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ev-sheet .mp-sheet-t { font-size:1.6rem; }
+  .ev-door.go .mp-sheet-t { color:#2E7D4F; } .ev-door.stop .mp-sheet-t { color:var(--red-dark); }
+  .ev-door { padding-bottom:.2rem; }
+  .ev-gsheet { max-height:82vh; overflow:auto; }
+  .sq-line { font-size:.86rem; margin:.25rem 0; } .sq-line.ok { color:#2E7D4F; font-weight:700; } .sq-line.test { color:#1F3F75; font-size:.78rem; }
+  .sq-note { background:#EEF3FB; border:1px solid #C9D7EE; color:#10284F; border-radius:10px; padding:.5rem .7rem; font-size:.8rem; margin-bottom:.6rem; }
+  .sq-locs { display:flex; flex-direction:column; gap:.45rem; margin-top:.5rem; }
+  .sq-off { display:block; margin-top:.8rem; color:var(--red-dark); }
+  #sq-card .m-btn { margin-top:.7rem; }
+  /* four tabs now (Events): on a small phone they share the row with the gear */
+  .m-tabbar { min-width:0; }
+  .m-tab { min-width:0; }
+  @media (max-width:420px){ .m-tabbar .m-tab { letter-spacing:.05em; padding:.6rem .32rem; font-size:.63rem; } }
+  @media (max-width:340px){ .m-tabbar .m-tab { letter-spacing:.02em; padding:.6rem .2rem; font-size:.58rem; } }
   .rv-moved { font-size:.8rem; color:var(--muted); text-align:center; margin:.4rem 0 1.2rem; }
   .rv-link { border:none; background:none; padding:0; font:inherit; color:var(--red); font-weight:700; text-decoration:underline; cursor:pointer; }
 </style>
@@ -1059,7 +1143,7 @@ let DISHES_ERROR = null;
 
 // Which tab is showing. The address remembers it (#reservations, #menu, #team),
 // so the corner menu's "Manage Reservations" and a refresh land in the right place.
-const TABS = { reservations:'Reservations', menu:'Menu', team:'Team' };
+const TABS = { reservations:'Reservations', menu:'Menu', team:'Team', events:'Events' };   // r50: Events (tickets)
 let TAB = tabFromHash() || 'reservations';
 function tabFromHash(){ const t = (location.hash||'').replace('#',''); return TABS[t] ? t : null; }
 
@@ -1135,7 +1219,11 @@ async function boot(){
       '<div class="m-card">'
     // A table's QR opens this page: say what it is, to staff and to a guest
     // who scanned their own.
-    + (rvScanToken()
+    + (evTicketToken()
+       ? '<div class="m-eyebrow">An event ticket</div>'
+         + '<div class="m-h">Log in to let them in</div>'
+         + '<div class="m-sub">If you work at the restaurant, log in with your phone number and PIN and the ticket opens. If this is your own ticket, there is nothing to do here: show this QR code at the door.</div>'
+       : rvScanToken()
        ? '<div class="m-eyebrow">A table\'s QR code</div>'
          + '<div class="m-h">Log in to open this table</div>'
          + '<div class="m-sub">If you work at the restaurant, log in with your phone number and PIN and the table opens. If this is your own table, there is nothing to do here: show this QR code at the door.</div>'
@@ -1204,8 +1292,10 @@ async function boot(){
   }
   // A table's QR in the address: open that table. 'out' = the session ended
   // while asking; the login card is already up and the QR waits for the log-in.
+  sqFromHash();                                                 // r50: back from Square's page
   if(await rvTakeScan() === 'out') return;
   mountPage();
+  evTakeTicket();                                               // r50: a ticket's QR at the door
   // The role icon in the header, with guest messages waiting, comes here.
   if(window.location.hash === '#messages') msgOpenFromHash();
   if(/^#support/.test(window.location.hash)) supFromHash();     // r34: the link in a support email
@@ -1245,11 +1335,12 @@ function mountPage(){
   else if(TAB==='menu' && !DISHES_LOADED) loadDishes();
   if(TAB==='menu' && TR.rid!==RESTAURANT.id) trLoad();          // r36: the Top Rated caves
   else if(TAB==='team') loadPeople();
+  if(TAB==='events') evStart();                                // r50: the events
 }
 
 function levelHere(){ return RESTAURANT ? Number(RESTAURANT.level)||0 : 0; }
 // Crew (1) see Reservations only; everyone above sees all three.
-function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team'] : ['reservations']; }
+function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team','events'] : ['reservations']; }
 
 function switchTab(t){
   if(!allowedTabs().includes(t) || t===TAB) return;
@@ -1348,6 +1439,7 @@ function render(){
                                                  : trCardHtml() + '<div class="m-empty">This restaurant has no dishes yet.</div>');
     return;
   }
+  if(TAB==='events'){ wrap().innerHTML = top + '<div id="ev-root"></div>'; evPaint(); return; }     // r50
   wrap().innerHTML = top + '<div id="rv-root"></div>';
   rvRender();
 }
@@ -2624,6 +2716,7 @@ async function rvLoadDay(date, opts){
     const listChanged = dayChanged || JSON.stringify(RV.day.bookings) !== JSON.stringify(data.bookings);
     RV.day = data; RV.fetchedAt = Date.now(); RV.error = null;
     RV.date = data.date; RV.today = data.today;
+    evLoadDay(data.date);                            // r50: that day's events (once a minute at most)
     msgFromDay(data);
     if(dayChanged){
       const scanned = RV.scan && RV.scan.booking && data.bookings.some(b => b.id === RV.scan.booking.id) ? RV.scan.booking.id : null;
@@ -2971,6 +3064,7 @@ function rvPaintTop(){
       + (unread ? ' · <em>'+unread+' new message'+(unread===1?'':'s')+'</em>' : '')+'</span>'
       + '<button type="button" class="rv-act no" style="background:#fff;flex:none;" onclick="rvOpenRequests()">'+(d.canEdit?'Answer':'See')+'</button></div>';
   }
+  html += evDayHtml(d.date);                       // r50: the day's events (tap: who has tickets, who is in)
   if(!d.settings.enabled){
     html += '<div class="rv-off">Online booking is switched off. The booking page tells guests to call.'
       + (d.canEdit ? ' Switch it on in <a href="#" onclick="rvOpenSettings();return false;">settings</a>.' : '')+'</div>';
@@ -3561,7 +3655,7 @@ function rvSettingsHtml(){
     + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
     + dvCardHtml()                                     // r43: you and your devices (everyone, crew too)
-    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + rvLoyaltyHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S)
+    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + sqCardHtml() + rvLoyaltyHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S)
     + rvGradeHtml(S) + rvSupportHtml()
     // r48 (Sebastian, 30 Oct 16:42): the Rules and the Rooms are on the Map now
     + '<div class="rv-moved">The rules and the rooms are on the <button type="button" class="rv-link" onclick="rvOpenMap()">Map</button> now.</div>';
@@ -4729,7 +4823,7 @@ function mpHtml(){
                       + '<br><button type="button" class="m-save mp-undrawn-go" onclick="dwOpen('+room.id+')">Draw '+esc(room.name)+'</button>'
                     : 'A manager draws it once, here in Map.')+'</div>' + mpMoreHtml();
   }
-  return head + mpModeHtml() + tabs + '<div id="mp-cap"></div><div class="mp-sum" id="mp-sum"></div>'
+  return head + mpModeHtml() + tabs + '<div id="mp-ev"></div><div id="mp-cap"></div><div class="mp-sum" id="mp-sum"></div>'
     + '<div class="mp-floor-wrap"><div class="mp-floor" id="mp-floor"></div></div>'
     + '<div class="mp-legend">'
     +   '<span><i class="free"></i>Free</span><span><i class="later"></i>Later</span><span><i class="hour"></i>1 hour</span>'
@@ -5464,6 +5558,8 @@ function mpMoreHtml(){
   return '<div class="rv-fold-zone" id="mp-more">' + (S ? rvRulesHtml(S) + mpRoomsHtml(S) : '') + '</div>';
 }
 function mpAfterPaint(){
+  if(MP.data) evLoadDay(MP.data.today);           // r50: today's events (the room's band, and its banner on the map)
+  evPaintMap();
   tlPaint();                                       // r49: the timeline, when it is the one shown
   rvPutBack(rvKeptInputs());
   rvFoldCards(document.getElementById('mp-more'));
@@ -5593,6 +5689,8 @@ function camWhat(text){
   if(!/^https?:$/.test(u.protocol)) return null;
   const arrive = /^#arrive=([0-9a-fA-F]{32})$/.exec(u.hash || '');
   if(/^\/manager(\.html)?$/.test(u.pathname) && arrive) return { kind: 'arrive', token: arrive[1].toLowerCase() };
+  const ticket = /^#ticket=([0-9a-fA-F]{32})$/.exec(u.hash || '');                    // r50: an event ticket
+  if(/^\/manager(\.html)?$/.test(u.pathname) && ticket) return { kind: 'ticket', token: ticket[1].toLowerCase() };
   const t = u.searchParams.get('t');
   if(/^\/checkin(\.html)?$/.test(u.pathname) && t && /^[A-Za-z0-9_-]{8,128}$/.test(t)) return { kind: 'checkin', token: t };
   return null;
@@ -5689,7 +5787,7 @@ function camFound(text){
   if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){}
   camClose();
   if(w.kind === 'checkin'){ window.location.assign('/checkin?t=' + encodeURIComponent(w.token)); return true; }
-  const hash = '#arrive=' + w.token;
+  const hash = (w.kind === 'ticket' ? '#ticket=' : '#arrive=') + w.token;
   if(window.location.hash === hash) window.dispatchEvent(new HashChangeEvent('hashchange'));
   else window.location.hash = hash;
   return true;
@@ -5759,13 +5857,15 @@ function tlModel(){
   const waiting = (D.waiting || []).map(id => byId[id]).filter(b => b && b.status === 'booked'
     && (TL.room === 'all' || !b.areaId || b.areaId === TL.room));
   waiting.forEach(b => { last = Math.max(last, Date.parse(b.at) + HOLD); });
+  const blocks = evRoomBlocks().filter(x => rooms.some(r => r.id === x.area));      // r50: events that take the whole room
+  blocks.forEach(x => { last = Math.max(last, x.e); });
   const start = Math.floor((first + off) / H) * H - off, end = Math.min(start + 16 * H, Math.ceil((last + off) / H) * H - off);
   // capacity, hour by hour (from this hour on): the seats of the tables taken at the busiest quarter of the hour
   const seatsAll = rooms.reduce((n, r) => n + r.tables.reduce((m, t) => m + t.seats, 0), 0);
   const taken = (t) => {
     let used = 0;
     rooms.forEach(room => room.tables.forEach(tb => {
-      if((rows[room.id+':'+tb.n] || []).some(x => x.s <= t && t < x.e)) used += tb.seats;
+      if(blocks.some(x => x.area === room.id && x.s <= t && t < x.e) || (rows[room.id+':'+tb.n] || []).some(x => x.s <= t && t < x.e)) used += tb.seats;
     }));
     return used;
   };
@@ -5776,7 +5876,7 @@ function tlModel(){
     if(!past) for(let q = 0; q < 4; q++){ const t = Math.max(now, h + q * 15 * 60000); if(t < h + H) most = Math.max(most, taken(t)); }
     hours.push({ at: h, label: tlHourLabel(h, off), past, used: most, pct: seatsAll ? Math.round(100 * Math.min(most, seatsAll) / seatsAll) : 0 });
   }
-  return { now, off, start, end, rooms, rows, waiting, hours, seatsAll, HOLD };
+  return { now, off, start, end, rooms, rows, waiting, hours, seatsAll, HOLD, blocks };
 }
 function tlX(ms, M){ return Math.round((ms - M.start) / 60000 * TL.K); }
 function tlBarHtml(bar, M, extraCls){
@@ -5831,6 +5931,11 @@ function tlPaint(){
   }
   M.rooms.forEach(room => {
     html += '<div class="tl-group"><span>'+esc(room.name)+' · '+room.tables.length+'</span></div>';
+    M.blocks.filter(b => b.area === room.id && b.e > M.start && b.s < M.end).forEach(b => {          // r50: the event's band
+      const x = tlX(Math.max(b.s, M.start), M) + 1, w = Math.max(60, tlX(Math.min(b.e, M.end), M) - tlX(Math.max(b.s, M.start), M) - 2);
+      html += '<div class="tl-row tl-ev-row"><div class="tl-n">EVENT</div><div class="tl-lane" style="width:'+W+'px">'
+        + '<div class="tl-evbar" style="left:'+x+'px;width:'+w+'px" title="'+esc(b.name)+'">'+esc(b.hours+' · '+b.name+' · the whole room')+'</div></div></div>';
+    });
     room.tables.slice().sort((a, b) => a.n - b.n).forEach(t => {
       html += '<div class="tl-row" data-row="'+t.n+'"><div class="tl-n"><b>'+t.n+'</b><small>'+t.seats+'</small></div><div class="tl-lane" style="width:'+W+'px">'
         + (M.rows[room.id+':'+t.n] || []).map(bar => tlBarHtml(bar, M)).join('') + '</div></div>';
@@ -5892,6 +5997,434 @@ function rvCapTile(d){
   return '<div class="rv-tile cap-tile" role="img" aria-label="In use now: '+p+'% full, '+u.used+' of '+u.of+' seats">'
     + '<b class="'+lv+'">'+p+'%</b><span>In use</span>'      // r49 (2 Nov 11:21): the word on the same line as the other tiles' words
     + '<span class="cap-mini"><i class="'+lv+'" style="width:'+Math.min(100, p)+'%"></i></span><small>'+u.used+' of '+u.of+' seats</small></div>';
+}
+
+// ── r50 · EVENT TICKETS (Sebastian, 30 Oct 16:42; design approved 2 Nov: "It looks brilliant!") ──
+// A 4th tab, Events: "+ New event", each event with its day and hours, room, price, how many sold, Edit · Guests ·
+// Share the link. Settings → Tickets · Square: the restaurant connects its own Square account (the money goes there;
+// no fee for Seb's Analytics). One ticket per person, each with its own QR, used once at the door: the Camera (or a
+// phone's camera app) opens it here → "Let in". "Take the whole room": the event shows on the day, the Map and the
+// Timeline, and online booking skips that room for its hours. The server: api/_lib/events.js.
+const EV = { rid:null, loaded:false, loading:false, error:null, reason:null, list:[], square:null, rooms:[], canEdit:false,
+             view:'list', form:null, fieldErr:null, busy:false, conflicts:null, guests:null, guestsId:null, pastOpen:false };
+const EV_DAYS = {};                 // date → { list, at } (the events of a service day: the day screen, the Map, the Timeline)
+const SQ = { rid:null, loaded:false, loading:false, data:null, locations:null, note:null, error:null, busy:false };
+const EV_STATE = { draft:'Draft · only your team sees it', on_sale:'On sale', sold_out:'Sold out', closed:'Sales closed', over:'Over',
+                   cancelled:'Cancelled', not_on_sale:'Not on sale · connect Square' };
+const evMoney = c => '$' + (Number(c) / 100).toFixed(2).replace(/\.00$/, '');
+
+async function evStart(){
+  if(EV.rid !== RESTAURANT.id) Object.assign(EV, { rid:RESTAURANT.id, loaded:false, list:[], view:'list', form:null, guests:null, error:null });
+  if(EV.loading) return;
+  EV.loading = true; EV.error = null; evPaint();
+  try{
+    const d = await rvApi({action:'ev_list'});
+    if(EV.rid !== RESTAURANT.id) return;
+    Object.assign(EV, { list:d.events || [], square:d.square || null, rooms:d.rooms || [], canEdit:!!d.canEdit, loaded:true });
+  }catch(e){ EV.error = e.message; EV.reason = e.data && e.data.reason; }
+  EV.loading = false; evPaint();
+}
+function evPaint(){
+  if(TAB !== 'events') return;
+  const host = document.getElementById('ev-root');
+  if(host) host.innerHTML = evHtml();
+}
+function evHtml(){
+  if(EV.error && !EV.loaded) return '<div class="m-err">'+esc(EV.error)+'</div><button class="m-btn" onclick="evStart()">Try again</button>';
+  if(!EV.loaded) return '<div class="m-skel"></div><div class="m-skel"></div>';
+  if(EV.view === 'edit' && EV.form) return evFormHtml();
+  if(EV.view === 'guests') return evGuestsHtml();
+  const now = Date.now();
+  const live = EV.list.filter(e => e.status !== 'cancelled' && Date.parse(e.endsAt) > now);
+  const past = EV.list.filter(e => !(e.status !== 'cancelled' && Date.parse(e.endsAt) > now)).reverse();
+  return evSquareBanner()
+    + (EV.conflicts ? evConflictsHtml(EV.conflicts) : '')
+    + '<button type="button" class="m-btn ev-new" onclick="evNew()">+ New event</button>'
+    + (live.length ? live.map(evCardHtml).join('') : '<div class="m-empty">No events yet. Tap “+ New event”: it starts as a draft only your team sees.</div>')
+    + (past.length ? '<button type="button" class="ev-past-h" aria-expanded="'+EV.pastOpen+'" onclick="EV.pastOpen=!EV.pastOpen;evPaint()"><span class="mg-caret">▸</span> Past and cancelled · '+past.length+'</button>'
+        + (EV.pastOpen ? past.map(evCardHtml).join('') : '') : '');
+}
+function evSquareBanner(){
+  const s = EV.square || {};
+  if(!s.ready) return '<div class="ev-sq warn"><b>Square is not set up on the site yet.</b> Seb’s Analytics adds it once, for every restaurant. You can prepare events as drafts meanwhile.</div>';
+  if(!s.connected) return '<div class="ev-sq"><b>Connect Square to sell tickets.</b> Guests pay on Square’s secure page and the money goes to your own Square account.'
+    + '<button type="button" class="m-btn" onclick="sqConnect()">Connect Square</button></div>';
+  if(!s.location) return '<div class="ev-sq warn"><b>Choose your Square location</b> in <a href="#" onclick="sqOpenSettings();return false;">Settings → Tickets · Square</a>.</div>';
+  return s.sandbox ? '<div class="ev-sq test">Square <b>test mode</b> (Sandbox): test cards, no real money.</div>' : '';
+}
+function evCardHtml(e){
+  const pct = e.total ? Math.min(100, Math.round(100 * (e.sold + e.held) / e.total)) : 0;
+  const acts = [];
+  if(e.status !== 'cancelled' && EV.canEdit) acts.push('<button type="button" class="ev-act" onclick="evEdit('+e.id+')">Edit</button>');
+  acts.push('<button type="button" class="ev-act" onclick="evOpenGuests('+e.id+')">Guests</button>');
+  if(e.status === 'published') acts.push('<button type="button" class="ev-act" data-share="'+e.id+'" onclick="evShare('+e.id+')">Share the link</button>');
+  if(e.status === 'draft' && EV.canEdit) acts.push('<button type="button" class="ev-act main" onclick="evPublish('+e.id+')">Publish</button>');
+  return '<div class="ev-card '+e.state+'" data-ev="'+e.id+'">'
+    + '<div class="ev-when">'+esc(e.short)+' · '+esc(e.hours)+(e.room ? ' · '+esc(e.room) : '')+'</div>'
+    + '<div class="ev-name">'+esc(e.name)+'</div>'
+    + '<div class="ev-meta"><span class="ev-chip '+e.state+'">'+esc(EV_STATE[e.state] || e.state)+'</span>'
+    +   '<span>'+esc(e.price)+' per person'+(e.taxMode === 'added' ? ' + tax' : e.taxMode === 'included' ? ' (tax incl.)' : '')+'</span>'
+    +   (e.takeRoom ? '<span class="ev-room">The whole room</span>' : '')+'</div>'
+    + '<div class="ev-bar" role="img" aria-label="'+e.sold+' of '+e.total+' sold"><i style="width:'+pct+'%"></i></div>'
+    + '<div class="ev-nums"><b>'+e.sold+' of '+e.total+' sold</b>'+(e.held ? ' · '+e.held+' paying now' : '')+' · '+esc(e.paid)+' in Square'
+    +   (e.inside ? ' · '+e.inside+' inside' : '')+(e.over ? ' · <em>'+e.over+' over the limit</em>' : '')+'</div>'
+    + '<div class="ev-acts">'+acts.join('')+'</div></div>';
+}
+function evConflictsHtml(c){
+  if(!c.list.length) return '';
+  return '<div class="ev-conflicts"><b>'+c.list.length+' '+(c.list.length === 1 ? 'table is' : 'tables are')+' already booked in '+esc(c.room)+' during “'+esc(c.name)+'”:</b> '
+    + c.list.map(b => esc(b.name)+' ('+esc(b.time)+', '+b.party+')').join(' · ')
+    + '. Move them to another room or call them. New online bookings already skip that room then.'
+    + '<button type="button" class="rv-link" onclick="EV.conflicts=null;evPaint()">OK</button></div>';
+}
+async function evShare(id){
+  const e = EV.list.find(x => x.id === id); if(!e) return;
+  try{ if(navigator.share){ await navigator.share({ title:e.name, text:e.name+' · '+e.short+', '+e.hours, url:e.link }); return; } }catch(err){ if(err && err.name === 'AbortError') return; }
+  try{ await navigator.clipboard.writeText(e.link); }catch(err){ showToast('Copy this link: '+e.link); return; }
+  const b = document.querySelector('[data-share="'+id+'"]'); if(b){ b.textContent = 'Copied ✓'; setTimeout(() => { if(b.isConnected) b.textContent = 'Share the link'; }, 2500); }
+}
+
+// ── the form ──
+function evNext(days){ const d = new Date(Date.now() + days * 86400000); return d.toISOString().slice(0, 10); }
+function evNew(){
+  if(!EV.canEdit) return;
+  EV.form = { id:null, name:'', date:evNext(7), start:'19:00', end:'22:00', areaId:'', takeRoom:false, price:'', total:'40', taxMode:'added', taxRate:'8.875',
+              max:'10', closeHours:'2', about:'', included:'', adultsOnly:false, status:'draft' };
+  EV.fieldErr = null; EV.view = 'edit'; evPaint(); window.scrollTo(0, 0);
+}
+function evEdit(id){
+  const e = EV.list.find(x => x.id === id); if(!e) return;
+  EV.form = { id:e.id, name:e.name, date:e.date, start:e.start, end:e.end, areaId:e.areaId ? String(e.areaId) : '', takeRoom:e.takeRoom,
+              price:(e.priceCents / 100).toFixed(2).replace(/\.00$/, ''), total:String(e.total), taxMode:e.taxMode, taxRate:String(e.taxRate),
+              max:String(e.max), closeHours:String(e.closeHours), about:e.about, included:e.included, adultsOnly:e.adultsOnly, status:e.status, sold:e.sold };
+  EV.fieldErr = null; EV.view = 'edit'; evPaint(); window.scrollTo(0, 0);
+}
+function evF(k, v){ if(EV.form) EV.form[k] = v; }
+function evRoomPicked(){ if(EV.fieldErr && EV.fieldErr.field === 'areaId' && EV.form.areaId) EV.fieldErr = null; evKeep(); evPaint(); }
+// what is typed, kept before the form is drawn again
+function evKeep(){ if(!EV.form) return; document.querySelectorAll('#ev-root [data-f]').forEach(el => { if(el.tagName !== 'BUTTON') EV.form[el.dataset.f] = el.value; }); }
+function evSwitch(k){ if(!EV.form) return; evKeep(); EV.form[k] = !EV.form[k]; if(k === 'takeRoom' && EV.form.takeRoom && !EV.form.areaId) EV.fieldErr = { field:'areaId', error:'To take the whole room, choose the room.' }; evPaint(); }
+function evFormHtml(){
+  const f = EV.form, err = EV.fieldErr || {};
+  const bad = k => err.field === k ? ' bad' : '';
+  const note = k => err.field === k ? '<div class="ev-err" role="alert">'+esc(err.error)+'</div>' : '';
+  const inp = (k, label, type, extra) => '<label class="ev-f'+bad(k)+'"><span>'+label+'</span><input class="m-input" type="'+type+'" value="'+esc(f[k])+'" '+(extra||'')
+    + ' oninput="evF(\''+k+'\', this.value)" data-f="'+k+'"></label>'+note(k);
+  const sw = (k, label, sub) => '<button type="button" class="ev-sw'+(f[k] ? ' on' : '')+'" role="switch" aria-checked="'+!!f[k]+'" data-f="'+k+'" onclick="evSwitch(\''+k+'\')">'
+    + '<span class="ev-sw-t"><b>'+label+'</b><small>'+sub+'</small></span><i aria-hidden="true"></i></button>';
+  const rooms = '<label class="ev-f'+bad('areaId')+'"><span>Room</span><select class="m-select" data-f="areaId" onchange="evF(\'areaId\', this.value);evRoomPicked()">'
+    + '<option value="">No room in particular</option>' + EV.rooms.map(r => '<option value="'+r.id+'"'+(String(r.id) === String(f.areaId) ? ' selected' : '')+'>'+esc(r.name)+'</option>').join('')
+    + '</select></label>'+note('areaId');
+  const tax = '<label class="ev-f'+bad('taxMode')+'"><span>Sales tax</span><select class="m-select" data-f="taxMode" onchange="evF(\'taxMode\', this.value);evKeep();evPaint()">'
+    + [['added','Added on top'],['included','Included'],['none','No tax']].map(([v, w]) => '<option value="'+v+'"'+(f.taxMode === v ? ' selected' : '')+'>'+w+'</option>').join('')
+    + '</select></label>'+note('taxMode');
+  const sold = f.sold ? '<div class="ev-hint">'+f.sold+' tickets are sold: the number for sale cannot go below that.</div>' : '';
+  const pub = f.status === 'published';
+  return '<button type="button" class="rv-back" onclick="evBack()">&#8249; Events</button>'
+    + '<div class="m-card ev-form"><div class="m-h">'+(f.id ? 'Edit event' : 'New event')+'</div>'
+    + inp('name', 'Name', 'text', 'maxlength="80" placeholder="Wine & Steak Night"')
+    + '<div class="ev-row">'+inp('date', 'Day', 'date')+'</div>'
+    + '<div class="ev-row two">'+inp('start', 'Starts', 'time')+inp('end', 'Ends', 'time')+'</div>'
+    + rooms
+    + sw('takeRoom', 'Take the whole room', f.areaId ? 'Online booking skips this room during the event' : 'Choose the room first')
+    + '<div class="ev-row two">'+inp('price', 'Price per person ($)', 'text', 'inputmode="decimal" placeholder="85"')+inp('total', 'Tickets for sale', 'number', 'min="1" max="2000"')+'</div>' + sold
+    + '<div class="ev-row two">'+tax+(f.taxMode === 'none' ? '' : inp('taxRate', 'Tax rate (%)', 'text', 'inputmode="decimal"'))+'</div>'
+    + '<div class="ev-row two">'+inp('max', 'Most per order', 'number', 'min="1" max="20"')+inp('closeHours', 'Sales close (hours before)', 'number', 'min="0" max="168"')+'</div>'
+    + '<label class="ev-f'+bad('about')+'"><span>About it</span><textarea class="m-input" rows="3" maxlength="1200" data-f="about" oninput="evF(\'about\', this.value)">'+esc(f.about)+'</textarea></label>'
+    + '<label class="ev-f'+bad('included')+'"><span>What’s included (one per line)</span><textarea class="m-input" rows="3" maxlength="600" data-f="included" oninput="evF(\'included\', this.value)">'+esc(f.included)+'</textarea></label>'
+    + sw('adultsOnly', '21 and over', 'The page and the tickets say so')
+    + (err.field && !['name','date','start','end','areaId','price','total','taxMode','taxRate','max','closeHours','about','included'].includes(err.field) ? '<div class="ev-err" role="alert">'+esc(err.error)+'</div>' : '')
+    + '<div class="ev-btns">'
+    +   (pub ? '<button type="button" class="m-btn" '+(EV.busy?'disabled':'')+' onclick="evSave(false)">Save</button>'
+             : '<button type="button" class="m-btn quiet" '+(EV.busy?'disabled':'')+' onclick="evSave(false)">Save draft</button>'
+             + '<button type="button" class="m-btn" '+(EV.busy?'disabled':'')+' onclick="evSave(true)">Publish</button>')
+    + '</div>'
+    + (f.id && f.status !== 'cancelled' ? '<button type="button" class="ev-cancel" onclick="evCancelEvent('+f.id+')">Cancel this event</button>' : '')
+    + '</div>';
+}
+function evBack(){ EV.view = 'list'; EV.form = null; EV.guests = null; EV.fieldErr = null; evPaint(); window.scrollTo(0, 0); evStart(); }
+async function evSave(publish){
+  const f = EV.form; if(!f || EV.busy) return;
+  document.querySelectorAll('#ev-root [data-f]').forEach(el => { if(el.tagName !== 'BUTTON') f[el.dataset.f] = el.value; });
+  EV.busy = true; EV.fieldErr = null; evPaint();
+  try{
+    const d = await rvApi({ action:'ev_save', event:{ id:f.id, name:f.name, date:f.date, start:f.start, end:f.end, areaId:f.areaId === '' ? null : Number(f.areaId),
+      takeRoom:!!f.takeRoom, price:f.price, total:Number(f.total), taxMode:f.taxMode, taxRate:f.taxMode === 'none' ? '0' : f.taxRate, max:Number(f.max),
+      closeHours:Number(f.closeHours), about:f.about, included:f.included, adultsOnly:!!f.adultsOnly } });
+    let saved = d.event;
+    if(publish){
+      try{ saved = (await rvApi({ action:'ev_status', id:saved.id, to:'published' })).event; }
+      catch(e){ EV.busy = false; f.id = saved.id; f.status = saved.status; EV.fieldErr = { field:'publish', error:e.message }; evPaint(); return; }
+    }
+    EV.conflicts = d.conflicts && d.conflicts.length ? { list:d.conflicts, room:saved.room, name:saved.name } : null;
+    EV.view = 'list'; EV.form = null; EV.busy = false;
+    await evStart();
+    window.scrollTo(0, 0);
+  }catch(e){
+    EV.busy = false; EV.fieldErr = { field:(e.data && e.data.field) || 'form', error:e.message }; evPaint();
+    const el = document.querySelector('#ev-root .ev-f.bad, #ev-root .ev-err'); if(el) el.scrollIntoView({ block:'center' });
+  }
+}
+async function evPublish(id){
+  try{ await rvApi({ action:'ev_status', id:id, to:'published' }); evStart(); }
+  catch(e){ showToast(e.message); }
+}
+async function evCancelEvent(id){
+  const e = EV.list.find(x => x.id === id);
+  const n = e ? e.orders : 0;
+  if(!confirm('Cancel “'+(e ? e.name : 'this event')+'”? Its tickets stop working at the door.'+(n ? ' Refund the '+n+' '+(n === 1 ? 'order' : 'orders')+' in your Square Dashboard.' : ''))) return;
+  try{ await rvApi({ action:'ev_status', id:id, to:'cancelled' }); EV.view = 'list'; EV.form = null; evStart(); }
+  catch(err){ showToast(err.message); }
+}
+
+// ── the guests (and the door, by hand) ──
+async function evOpenGuests(id){
+  EV.guestsId = id;
+  if(levelHere() >= 2 && TAB !== 'events'){ TAB = 'events'; if(history.replaceState) history.replaceState(null, '', '#events'); mountPage(); }
+  if(TAB === 'events'){ EV.view = 'guests'; EV.guests = null; evPaint(); window.scrollTo(0, 0); }
+  try{
+    const d = await rvApi({ action:'ev_guests', id:id });
+    if(EV.guestsId !== id) return;
+    EV.guests = d;
+  }catch(e){ EV.guests = { error:e.message }; }
+  if(TAB === 'events' && EV.view === 'guests') evPaint(); else evGuestsSheet();
+}
+function evGuestsBody(g){
+  if(!g) return '<div class="m-skel"></div>';
+  if(g.error) return '<div class="m-err">'+esc(g.error)+'</div>';
+  const sold = g.orders.filter(o => o.status === 'paid').reduce((n, o) => n + o.tickets.filter(t => t.status === 'valid').length, 0);
+  const inside = g.orders.reduce((n, o) => n + o.tickets.filter(t => t.usedAt && t.status === 'valid').length, 0);
+  let html = '<div class="ev-g-h"><div class="ev-name">'+esc(g.event.name)+'</div><div class="ev-when">'+esc(g.event.hours)+'</div>'
+    + '<div class="ev-nums"><b>'+inside+' of '+sold+' inside</b></div></div>';
+  if(!g.orders.length) return html + '<div class="m-empty">No tickets sold yet.</div>';
+  g.orders.forEach(o => {
+    html += '<div class="ev-order '+o.status+'" data-order="'+o.id+'"><div class="ev-o-top"><b>'+esc(o.name)+'</b><span>'+o.quantity+' '+(o.quantity === 1 ? 'ticket' : 'tickets')+'</span></div>'
+      + '<div class="ev-o-sub">'
+      + (o.status === 'paid' ? 'Paid '+esc(o.paid || '') : o.status === 'refunded' ? 'Refunded '+esc(o.refunded || '') : 'Paying on Square now…')
+      + (o.refunded && o.status === 'paid' ? ' · '+esc(o.refunded)+' refunded' : '')
+      + (o.phone ? ' · '+rvTel(o.phone) : '')
+      + (o.email ? ' · '+esc(o.email) : '') + '</div>'
+      + (o.overLimit ? '<div class="ev-o-warn">Paid after the event filled up: over the limit.</div>' : '')
+      + (o.emailProblem ? '<div class="ev-o-warn">The email with the tickets did not go: '+esc(o.emailProblem)+'</div>' : '');
+    if(o.status === 'paid'){
+      html += '<div class="ev-tix">' + o.tickets.map(t => {
+        if(t.status === 'void') return '<span class="ev-tk void">'+t.seq+' · cancelled'+(g.canEdit ? ' <button type="button" class="rv-link" onclick="evVoid('+t.id+',false)">Bring back</button>' : '')+'</span>';
+        if(t.usedAt){
+          const undo = Date.now() - Date.parse(t.usedAt) < 15 * 60000 ? ' <button type="button" class="rv-link" onclick="evUnadmit('+t.id+')">Undo</button>' : '';
+          return '<span class="ev-tk in">'+t.seq+' · In '+esc(t.usedClock)+undo+'</span>';
+        }
+        return '<span class="ev-tk"><button type="button" class="ev-let" data-tk="'+t.id+'" onclick="evLetIn('+t.id+')">Let '+t.seq+' in</button>'
+          + (g.canEdit ? '<button type="button" class="rv-link" onclick="evVoid('+t.id+',true)">Cancel</button>' : '')+'</span>';
+      }).join('') + '</div>';
+    }
+    html += '</div>';
+  });
+  return html;
+}
+function evGuestsHtml(){
+  return '<button type="button" class="rv-back" onclick="evBack()">&#8249; Events</button>' + evGuestsBody(EV.guests);
+}
+async function evGuestsAgain(){ if(EV.guestsId) await evOpenGuests(EV.guestsId); }
+async function evLetIn(ticketId){
+  try{
+    const d = await rvApi({ action:'ev_admit', ticketId:ticketId });
+    if(d.state !== 'in') showToast(evStateWords(d).sub || 'Not let in.');
+  }catch(e){ showToast(e.message); }
+  evGuestsAgain();
+}
+async function evUnadmit(ticketId){
+  try{ await rvApi({ action:'ev_unadmit', ticketId:ticketId }); }catch(e){ showToast(e.message); }
+  evGuestsAgain();
+}
+async function evVoid(ticketId, on){
+  if(on && !confirm('Cancel this ticket? It will not open the door. (Refund the money in your Square Dashboard.)')) return;
+  try{ await rvApi({ action:'ev_void', ticketId:ticketId, void:on }); }catch(e){ showToast(e.message); }
+  evGuestsAgain();
+}
+
+// ── a sheet over any screen (the door, crew's guest list) ──
+const EVS = { open:null };
+function evSheetHost(){ let h = document.getElementById('ev-sheet-host'); if(!h){ h = document.createElement('div'); h.id = 'ev-sheet-host'; document.body.appendChild(h); } return h; }
+function evCloseSheet(){ EVS.open = null; evSheetHost().innerHTML = ''; }
+function evSheet(inner, label, cls){
+  EVS.open = label;
+  evSheetHost().innerHTML = '<div class="rv-scrim" onclick="evCloseSheet()"></div><div class="rv-sheet mp-sheet ev-sheet '+(cls||'')+'" role="dialog" aria-label="'+esc(label)+'"><div class="rv-grab"></div>'+inner+'</div>';
+}
+function evGuestsSheet(){
+  evSheet(evGuestsBody(EV.guests) + '<div class="mp-opts"><button type="button" class="mp-opt quiet" onclick="evCloseSheet()">Close</button></div>', 'Guests', 'ev-gsheet');
+}
+
+// ── at the door: a ticket's QR (the Camera, or a phone's camera app → manager#ticket=…) ──
+function evTicketToken(){ const m = /^#ticket=([0-9a-fA-F]{32})$/.exec(window.location.hash || ''); return m ? m[1].toLowerCase() : null; }
+function evStateWords(d){
+  const who = d.name ? d.name + ' · ' + d.event : '';
+  switch(d.state){
+    case 'ok':       return { t:'Ticket '+d.seq+' of '+d.of, sub:who, line:d.day+' · '+d.hours, cls:'go' };
+    case 'in':       return { t:'In ✓', sub:who, line:'Ticket '+d.seq+' of '+d.of+' · let in at '+d.usedClock, cls:'go' };
+    case 'used':     return { t:'Already used', sub:'at '+(d.usedClock || '?')+' · Ticket '+d.seq+' of '+d.of, line:who, cls:'stop' };
+    case 'void':     return { t:'This ticket was cancelled', sub:who, line:'Refunded or cancelled: it does not open the door.', cls:'stop' };
+    case 'event_cancelled': return { t:'This event was cancelled', sub:who, line:'', cls:'stop' };
+    case 'not_now':  return { t:'Not now', sub:who, line:'This ticket is for '+d.day+' · '+d.hours+'.', cls:'stop' };
+    case 'other_restaurant': return { t:'Another restaurant’s ticket', sub:'It does not open the door here.', line:'', cls:'stop' };
+    default:         return { t:'Not a ticket here', sub:'This QR code does not open any ticket.', line:'', cls:'stop' };
+  }
+}
+function evDoor(d, token){
+  const w = evStateWords(d);
+  const opts = [];
+  if(d.state === 'ok') opts.push('<button type="button" class="mp-opt main" id="ev-let" onclick="evAdmitToken(\''+token+'\')">Let in</button>');
+  if(d.state === 'in') opts.push('<button type="button" class="mp-opt" onclick="evUndoDoor('+d.ticketId+',\''+token+'\')">Undo</button>');
+  opts.push('<button type="button" class="mp-opt quiet" onclick="evCloseSheet()">'+(d.state === 'ok' ? 'Cancel' : 'Close')+'</button>');
+  evSheet('<div class="ev-door '+w.cls+'"><div class="mp-sheet-t">'+esc(w.t)+'</div><div class="mp-sheet-s">'+esc(w.sub)+'</div>'
+    + (w.line ? '<div class="mp-sheet-line">'+esc(w.line)+'</div>' : '') + '</div><div class="mp-opts">'+opts.join('')+'</div>', 'Ticket', 'ev-door-sheet');
+}
+let evScanSeq = 0;
+async function evScanToken(token){
+  const mine = ++evScanSeq;
+  evSheet('<div class="mp-sheet-t">Reading the ticket…</div>', 'Ticket');
+  try{
+    const d = await rvApi({ action:'ev_scan', token:token });
+    if(mine !== evScanSeq) return;
+    evDoor(d, token);
+  }catch(e){ if(e.status !== 401) evSheet('<div class="mp-sheet-t">Could not read the ticket</div><div class="mp-sheet-s">'+esc(e.message)+'</div><div class="mp-opts"><button type="button" class="mp-opt quiet" onclick="evCloseSheet()">Close</button></div>', 'Ticket'); }
+}
+async function evAdmitToken(token){
+  const b = document.getElementById('ev-let'); if(b) b.disabled = true;
+  try{ const d = await rvApi({ action:'ev_admit', token:token }); evDoor(d, token); }
+  catch(e){ showToast(e.message); if(b) b.disabled = false; }
+  evRefreshDay();
+}
+async function evUndoDoor(ticketId, token){
+  try{ await rvApi({ action:'ev_unadmit', ticketId:ticketId }); }catch(e){ showToast(e.message); }
+  evScanToken(token); evRefreshDay();
+}
+// boot() and the hash: a ticket's QR in the address → the token leaves the address bar, the sheet opens.
+function evTakeTicket(){
+  const token = evTicketToken();
+  if(!token) return false;
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#' + TAB);
+  evScanToken(token);
+  return true;
+}
+window.addEventListener('hashchange', function(){
+  if(!evTicketToken()) return;
+  if(!currentSession){ boot(); return; }
+  if(!ACCESS || !RESTAURANT) return;
+  evTakeTicket();
+});
+
+// ── the events of a day: on the day screen, the Map and the Timeline ──
+function evDayList(date){ const x = EV_DAYS[date]; return x ? x.list : []; }
+async function evLoadDay(date, force){
+  if(!date || !RESTAURANT) return;
+  const key = RESTAURANT.id + ':' + date, x = EV_DAYS[date];
+  if(!force && x && x.key === key && Date.now() - x.at < 60000) return;
+  EV_DAYS[date] = { key, list:x && x.key === key ? x.list : [], at:Date.now() };
+  try{
+    const d = await rvApi({ action:'ev_day', date:date });
+    const before = JSON.stringify(EV_DAYS[date].list);
+    EV_DAYS[date] = { key, list:d.events || [], at:Date.now() };
+    if(before !== JSON.stringify(d.events || [])) evRepaintPlaces();
+  }catch(e){ /* no events shown: the day still works */ }
+}
+function evRefreshDay(){ if(RV.date) evLoadDay(RV.date, true); if(MP.data) evLoadDay(MP.data.today, true); }
+function evRepaintPlaces(){
+  if(TAB === 'reservations' && RV.view === 'day' && RV.day) rvPaintTop();
+  if(TAB === 'reservations' && RV.view === 'map' && MP.data){ evPaintMap(); tlPaint(); }
+}
+function evDayHtml(date){
+  const list = evDayList(date);
+  if(!list.length) return '';
+  return list.map(e => '<button type="button" class="ev-day" onclick="evOpenGuests('+e.id+')"><span class="ev-day-k">Event</span>'
+    + '<b>'+esc(e.hours)+' · '+esc(e.name)+'</b><span>'+(e.room ? esc(e.room)+(e.takeRoom ? ' (the whole room)' : '')+' · ' : '')
+    + e.sold+' '+(e.sold === 1 ? 'ticket' : 'tickets')+(e.inside ? ' · '+e.inside+' inside' : '')+'</span></button>').join('');
+}
+// The Map: the room's event today, over the room
+function evPaintMap(){
+  const el = document.getElementById('mp-ev');
+  if(!el || !MP.data) return;
+  const now = mpNow();
+  const list = evDayList(MP.data.today).filter(e => e.areaId === MP.room && Date.parse(e.endsAt) > now);
+  el.innerHTML = list.map(e => {
+    const on = Date.parse(e.startsAt) <= now;
+    return '<div class="mp-ev'+(on ? ' now' : '')+'"><span class="ev-day-k">'+(on ? 'Event now' : 'Event today')+'</span><b>'+esc(e.hours)+' · '+esc(e.name)+'</b>'
+      + '<span>'+(e.takeRoom ? 'The whole room: online booking skips it then' : 'The room stays open for bookings')+' · '+e.sold+' '+(e.sold === 1 ? 'ticket' : 'tickets')+'</span></div>';
+  }).join('');
+}
+// The Timeline: the events that take a whole room (a band on the room, and its tables count as taken then)
+function evRoomBlocks(){
+  if(!MP.data) return [];
+  return evDayList(MP.data.today).filter(e => e.takeRoom && e.areaId).map(e => ({ area:e.areaId, s:Date.parse(e.startsAt), e:Date.parse(e.endsAt), name:e.name, hours:e.hours }));
+}
+
+// ── Settings → Tickets · Square ──
+async function sqLoad(){
+  if(SQ.loading || !RESTAURANT) return;
+  if(SQ.rid !== RESTAURANT.id) Object.assign(SQ, { rid:RESTAURANT.id, loaded:false, data:null, locations:null, error:null });
+  SQ.loading = true;
+  try{ const d = await rvApi({ action:'sq_status' }); SQ.data = d.square; SQ.locations = d.locations; SQ.loaded = true; SQ.error = null; }
+  catch(e){ SQ.error = e.message; SQ.loaded = true; }
+  SQ.loading = false; sqPaint();
+}
+function sqPaint(){
+  const el = document.getElementById('sq-card');
+  if(el){ el.outerHTML = sqCardHtml(); rvFoldCards(document.getElementById('rv-root')); }
+}
+const SQ_NOTES = {
+  connected: 'Square is connected.', choose: 'Square is connected: choose the location below.',
+  denied: 'Square was not connected (Allow was not tapped, or this account is not a manager here).',
+  expired: 'That took too long. Tap Connect Square again.', failed: 'Square did not connect. Try again; if it happens again, tell Seb’s Analytics.',
+};
+function sqCardHtml(){
+  if(levelHere() < 2) return '';
+  if(SQ.rid !== RESTAURANT.id || !SQ.loaded) setTimeout(sqLoad, 0);
+  const s = SQ.rid === RESTAURANT.id ? SQ.data : null;
+  let inner;
+  if(SQ.error) inner = '<div class="m-err">'+esc(SQ.error)+'</div>';
+  else if(!s) inner = '<div class="m-sub">Checking Square…</div>';
+  else if(!s.migration) inner = '<div class="m-sub">Event tickets need migration 34 (Supabase).</div>';
+  else if(!s.ready) inner = '<div class="m-sub">Square is not set up on the site yet. Seb’s Analytics adds it once, in Vercel, for every restaurant.</div>';
+  else if(!s.connected) inner = '<div class="m-sub">Sell tickets for your events with your own Square account. Guests pay on Square’s secure page; the money goes straight to you. Seb’s Analytics takes no fee; Square charges its usual online fee.</div>'
+    + '<button type="button" class="m-btn" id="sq-connect" '+(SQ.busy?'disabled':'')+' onclick="sqConnect()">Connect Square</button>';
+  else {
+    const loc = s.location ? '<div class="sq-line">Location: <b>'+esc(s.location.name)+'</b></div>'
+      : '<div class="m-sub">Which of your Square locations sells the tickets?</div><div class="sq-locs">'
+        + (SQ.locations || []).map(l => '<button type="button" class="m-btn quiet" onclick="sqPick(\''+esc(l.id)+'\')">'+esc(l.name)+'</button>').join('') + '</div>';
+    inner = '<div class="sq-line ok">Connected ✓</div>' + loc
+      + (s.sandbox ? '<div class="sq-line test">Test mode (Sandbox): test cards, no real money.</div>' : '')
+      + (s.problem ? '<div class="m-err">Square said: '+esc(s.problem)+'. If tickets stop selling, connect again.</div>' : '')
+      + '<div class="m-sub">Refunds: in your Square Dashboard. The tickets of a full refund stop working by themselves.</div>'
+      + '<button type="button" class="rv-link sq-off" onclick="sqDisconnect()">Disconnect Square</button>';
+  }
+  return '<div class="m-card" id="sq-card"><div class="m-eyebrow">Tickets · Square</div>'
+    + (SQ.note ? '<div class="sq-note">'+esc(SQ.note)+'</div>' : '') + inner + '</div>';
+}
+async function sqConnect(){
+  SQ.busy = true; sqPaint();
+  try{ const d = await rvApi({ action:'sq_connect' }); window.location.assign(d.url); }
+  catch(e){ SQ.busy = false; SQ.note = null; showToast(e.message); sqPaint(); }
+}
+async function sqPick(id){
+  try{ const d = await rvApi({ action:'sq_location', locationId:id }); SQ.data = d.square; SQ.note = null; sqPaint(); }
+  catch(e){ showToast(e.message); }
+}
+async function sqDisconnect(){
+  if(!confirm('Disconnect Square? Events on sale stop selling tickets until you connect again. Tickets already sold still work.')) return;
+  try{ const d = await rvApi({ action:'sq_disconnect' }); SQ.data = d.square; SQ.note = null; sqPaint(); }
+  catch(e){ showToast(e.message); }
+}
+function sqOpenSettings(){ RV_OPEN['tickets-square'] = true; try{ sessionStorage.setItem('hf_rv_open', JSON.stringify(RV_OPEN)); }catch(e){}
+  if(TAB !== 'reservations'){ TAB = 'reservations'; RV.view = 'day'; mountPage(); }
+  rvOpenSettings(); }
+// Back from Square's page: manager#square=connected (choose, denied, expired, failed) → Settings, Tickets · Square open.
+function sqFromHash(){
+  const m = /^#square=([a-z]+)$/.exec(window.location.hash || '');
+  if(!m) return false;
+  SQ.note = SQ_NOTES[m[1]] || null; SQ.loaded = false;
+  RV_OPEN['tickets-square'] = true; try{ sessionStorage.setItem('hf_rv_open', JSON.stringify(RV_OPEN)); }catch(e){}
+  TAB = 'reservations'; NF_SETTINGS = true;
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
+  return true;
 }
 
 // ── GUEST MESSAGES (r21) ──
