@@ -236,7 +236,7 @@ export function icsFor({ code, startIso, minutes, restaurant, party, siteHost })
 // on purpose: a dark email is repainted unpredictably by dark-mode inboxes.
 const INK = '#2B211A', MUTED = '#6F6255', RED = '#C8261B', PAPER = '#FCF9F4', LINE = '#E9E0D3', HEAD = '#1E1714';
 
-function layout({ preheader, restaurantName, heading, intro, when, rows, notice, share, write, button, footer, qr }) {
+function layout({ preheader, restaurantName, heading, intro, when, rows, notice, share, write, button, footer, qr, tickets }) {
   const e = escapeHtml;
   const rowHtml = rows.map(([label, value, strong]) =>
     `<tr><td style="padding:9px 0;border-top:1px solid ${LINE};font:13px/1.4 Arial,Helvetica,sans-serif;color:${MUTED};width:110px;vertical-align:top;">${e(label)}</td>` +
@@ -257,7 +257,7 @@ function layout({ preheader, restaurantName, heading, intro, when, rows, notice,
     <p style="margin:0 0 18px;font:15px/1.5 Arial,Helvetica,sans-serif;color:${INK};">${intro}</p>
     <p style="margin:0;font:600 26px/1.25 Georgia,'Times New Roman',serif;color:${INK};">${e(when.long)}</p>
     <p style="margin:2px 0 16px;font:600 26px/1.25 Georgia,'Times New Roman',serif;color:${RED};">${e(when.time)}</p>
-    ${qr ? qrBlock(qr) : ''}
+    ${qr ? qrBlock(qr) : ''}${tickets ? ticketBlocks(tickets) : ''}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}</table>
   </td></tr>
   ${notice ? `<tr><td style="padding:10px 24px 4px;font:14px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};">${notice}</td></tr>` : ''}${share ? `<tr><td style="padding:18px 24px 4px;">
@@ -289,6 +289,50 @@ function qrBlock({ cid, code }) {
       </td></tr></table>
       <div style="font:13px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};margin-top:8px;">At the door, the staff scan it with their phone.</div>
     </td></tr></table>`;
+}
+
+// r50: the event tickets — one QR per person (Sebastian, 2 Nov: "separate tickets with the possibility to share
+// them"), each attached as its own picture (cid ticket-1, ticket-2…), with a link to share that one ticket.
+function ticketBlocks(list) {
+  const e = escapeHtml;
+  return list.map((t) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:4px 0 18px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:16px;"><tr><td align="center" style="padding:12px 14px 12px;">
+        <div style="font:bold 11px/1.4 Arial,Helvetica,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:${MUTED};margin-bottom:8px;">${e(t.label)}</div>
+        <img src="cid:${e(t.cid)}" width="190" height="190" alt="${e(t.label)}: QR code" style="display:block;width:190px;height:190px;border:0;">
+        <a href="${e(t.share)}" style="display:inline-block;margin-top:10px;padding:10px 18px;border:1px solid ${INK};border-radius:999px;font:bold 12px/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:${INK};text-decoration:none;">Share this ticket</a>
+      </td></tr></table>
+    </td></tr></table>`).join('')
+    + `<p style="margin:0 0 14px;text-align:center;font:13px/1.5 Arial,Helvetica,sans-serif;color:${MUTED};">Each ticket lets one person in, once. At the door, the staff scan it.</p>`;
+}
+
+export function ticketsEmail({ restaurant, timezone, event, order, tickets, link, siteHost }) {
+  const e = escapeHtml;
+  const first = greetingName(order.buyer_name);
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(event.starts_at));
+  const t = (iso) => new Intl.DateTimeFormat('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
+  const hours = `${t(event.starts_at)} – ${t(event.ends_at)}`;
+  const n = tickets.length;
+  const money = (c) => '$' + (c / 100).toFixed(2).replace(/\.00$/, '');
+  const rows = [['Event', e(event.name), true], ['Tickets', e(`${n} ${n === 1 ? 'ticket' : 'tickets'}`)]];
+  if (event.areaName) rows.push(['Room', e(event.areaName)]);
+  rows.push(['Paid', e(money(order.paid_cents || order.total_cents) + (event.tax_mode === 'included' ? ' (tax included)' : event.tax_mode === 'added' ? ' (with tax)' : ''))]);
+  if (restaurant.address) rows.push(['Where', e(restaurant.address)]);
+  if (event.adults_only) rows.push(['Age', '21 and over (bring an ID)']);
+  const subject = `Your ${n === 1 ? 'ticket' : 'tickets'}: ${event.name}, ${day}`;
+  const html = layout({
+    preheader: `${n === 1 ? 'Your ticket' : `Your ${n} tickets`} for ${event.name} at ${restaurant.name}, ${day} at ${t(event.starts_at)}.`,
+    restaurantName: restaurant.name,
+    heading: n === 1 ? 'Your ticket' : 'Your tickets',
+    intro: `${first ? e(first) + ', you' : 'You'}’re in! ${n === 1 ? 'Here is your ticket.' : `Here are your ${n} tickets: send each friend their own.`}`,
+    when: { long: day, time: hours },
+    tickets: tickets.map((x) => ({ cid: x.cid, label: `Ticket ${x.seq} of ${n}`, share: x.share })),
+    rows,
+    button: { lead: 'All your tickets, any time:', href: link, label: 'Open my tickets' },
+    footer: `Sent by ${e(siteHost)} for ${e(restaurant.name)}. Paid with Square; for a refund, contact the restaurant.`,
+  });
+  const text = `${first ? first + ', you' : 'You'}'re in!\n\n${event.name}\n${day}, ${hours}\n${restaurant.address || ''}\n\n`
+    + tickets.map((x) => `Ticket ${x.seq} of ${n}: ${x.share}`).join('\n') + `\n\nAll your tickets: ${link}\n`;
+  return { subject, html, text };
 }
 
 function detailRows({ party, areaName, code, restaurant, withQr }) {
