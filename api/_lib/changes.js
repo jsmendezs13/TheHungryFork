@@ -38,7 +38,7 @@ export function clockAt(timezone, ms = Date.now()) {
 
 // Tell the restaurant's owners and managers. what: the change, after the name
 // ("changed Fork Steak: price $30.00 → $32.00"). place: where the notification
-// opens — { dish: id } or { go: 'team' | 'menu' | 'settings' }.
+// opens — { dish: id } or { go: 'team' | 'menu' | 'settings' | 'map' } (r48: the rules, the rooms, a drawing → the map).
 export async function tellChange(restaurantId, actorId, what, place = {}) {
   try {
     const rid = Number(restaurantId);
@@ -47,8 +47,8 @@ export async function tellChange(restaurantId, actorId, what, place = {}) {
     const tz = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
     const name = (loaded && loaded.restaurant && loaded.restaurant.name) || 'The restaurant';
     const url = place.dish ? `/manager#dish=${Number(place.dish)}&at=${rid}`
-      : `/manager#go=${['team', 'menu', 'settings'].includes(place.go) ? place.go : 'settings'}&at=${rid}`;
-    console.log('[changes]', rid, 'by', actorId + ':', what);
+      : `/manager#go=${['team', 'menu', 'settings', 'map'].includes(place.go) ? place.go : 'settings'}&at=${rid}`;
+    console.log('[changes]', rid, 'by', actorId + ':', what, '→', url);
     return await notifyStaff(rid, 'changes', {
       title: `${name} · Change`,
       body: line(`${who} ${what} · ${clockAt(tz)}`, MAX),
