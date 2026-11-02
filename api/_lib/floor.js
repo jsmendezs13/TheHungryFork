@@ -272,7 +272,8 @@ function dress(state, who) {
     can: { tables: who.level >= LEVEL.crew, bookings: who.level >= LEVEL.manager, draw: who.level >= LEVEL.manager },
     today: state.today, timezone: state.timezone, now: new Date(now).toISOString(),
     settings: state.settings,
-    rooms: state.areas.filter((a) => a.is_active || plans[a.id]).map((a) => {
+    // r48: every room (a closed one too, so it can be drawn before it opens); "active" says which are open
+    rooms: state.areas.map((a) => {
       const p = plans[a.id];
       return {
         id: a.id, name: a.name, active: !!a.is_active, drawn: !!p,
@@ -635,7 +636,7 @@ async function saveRoom(req, res, body, tasterId) {
   }
   const area = await sb(`/restaurant_areas?id=eq.${areaId}&select=name,seats,tables`);
   const a = area.ok && Array.isArray(area.data) ? area.data[0] : null;
-  if (a) await tellChange(who.rid, tasterId, `drew the room ${a.name}: ${a.tables} table${a.tables === 1 ? '' : 's'}, ${a.seats} seat${a.seats === 1 ? '' : 's'}`, { go: 'settings' });
+  if (a) await tellChange(who.rid, tasterId, `drew the room ${a.name}: ${a.tables} table${a.tables === 1 ? '' : 's'}, ${a.seats} seat${a.seats === 1 ? '' : 's'}`, { go: 'map' });
   return fresh(res, who, tasterId, { done: { kind: 'save', areaId, version: r.version } });
 }
 
