@@ -1195,4 +1195,3 @@ function addMonths(date, n) {
 function daysBetween(a, b) {
   return Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
 }
-  
