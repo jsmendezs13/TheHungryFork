@@ -68,6 +68,7 @@ import { profile } from './_lib/profile.js';
 import { support } from './_lib/support.js';      // r34
 import { menuset, publicTop } from './_lib/menuset.js';   // r36
 import { arrivalTokens, qrDataUrl, qrAttachment, QR_CID } from './_lib/qr.js';
+import { eventsPublic, eventsStaff, squareBack, squareEvents, ticketsCron } from './_lib/events.js';   // r50: event tickets (Square)
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
 // Vercel plan's limit, so the run is never cut off halfway through a batch.
@@ -104,6 +105,11 @@ export default async function handler(req, res) {
   // The one GET: Vercel's daily cron, carrying CRON_SECRET. Everybody else who
   // asks with GET gets the same 405 as before.
   if (req.method === 'GET' && isCron(req)) return remind(req, res);
+  // r50: Square. /square-back (the manager back from Square's page, GET) and
+  // /square-events (Square's messages, POST) are this same address (vercel.json).
+  const query = queryOf(req);
+  if (query.get('square') === 'back' && req.method === 'GET') return squareBack(req, res, { searchParams: query });
+  if (query.get('square') === 'events' && req.method === 'POST') return squareEvents(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
@@ -143,8 +149,20 @@ export default async function handler(req, res) {
   // r30: and the request's conversation follows the table it becomes.
   // r46: the table map — the rooms drawn, the busy tables, the joined tables, Reserved.
   if (action.startsWith('map_')) return floor(req, res, body, action);
+  // r50: event tickets — the guest's pages (no account) and the restaurant's Events tab and Settings → Tickets · Square.
+  if (action === 'event_get' || action === 'event_buy' || action === 'tickets_get') return eventsPublic(req, res, body, action);
+  if (action.startsWith('ev_') || action.startsWith('sq_')) return eventsStaff(req, res, body, action);
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
+}
+
+// r50: the query of the address asked (Vercel's req.query, or the address itself), as one URLSearchParams.
+function queryOf(req) {
+  const p = new URLSearchParams();
+  try { new URL(String(req.url || '/'), 'http://x').searchParams.forEach((v, k) => p.set(k, v)); } catch { /* none */ }
+  const q = req.query && typeof req.query === 'object' ? req.query : {};
+  Object.keys(q).forEach((k) => { const v = Array.isArray(q[k]) ? q[k][0] : q[k]; if (typeof v === 'string') p.set(k, v); });
+  return p;
 }
 
 // Vercel sends "Authorization: Bearer <CRON_SECRET>" when it runs the cron. A
@@ -1449,6 +1467,9 @@ async function remind(req, res) {
   // First the forgetting: conversations 90 days after their table. Whatever
   // happens with the emails, this runs.
   const forgotten = await forgetOldMessages();
+  // r50: the event tickets — Square keys renewed, unpaid holds settled, ticket emails not sent yet.
+  const tickets = await ticketsCron();
+  console.log('[reservations:remind] tickets', JSON.stringify(tickets));
   if (!process.env.RESEND_API_KEY) {
     return res.status(200).json({ success: true, forgotten, skipped: 'RESEND_API_KEY is not set in Vercel' });
   }
