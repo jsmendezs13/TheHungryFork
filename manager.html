@@ -834,6 +834,130 @@
   .dw-obj.on { background:var(--ink); color:var(--white); border-color:var(--ink); }
   .dw-obj.new { color:var(--blue); border-style:dashed; } .dw-obj.new.on { background:#fff; color:var(--blue); border-color:var(--blue); }
   .dw-turn, .dw-turn-room { color:var(--blue); border-color:rgba(47,93,168,.4); }
+  /* ── r48: folding cards (Settings; Rules and Rooms on the map) ── */
+  .rv-fold-h { display:flex; align-items:center; gap:.55rem; width:100%; min-height:40px; border:none; background:none; padding:0; margin:0;
+    cursor:pointer; text-align:left; font:inherit; color:inherit; -webkit-tap-highlight-color:transparent; }
+  .rv-fold-h .m-eyebrow { margin:0; }
+  .rv-fold-h .mg-caret { flex:none; }
+  .m-card.rv-fold:not(.open) > :not(.rv-fold-h) { display:none !important; }
+  .m-card.rv-fold:not(.open) { padding-top:.55rem; padding-bottom:.55rem; }
+  .m-card.rv-fold.open > .rv-fold-h { margin-bottom:.7rem; }
+  .m-card.rv-fold.open > .rv-fold-h .mg-caret { transform:rotate(90deg); }
+  .rv-fold-zone { margin-top:1rem; }
+  .rv-room-drawn b { color:var(--text); font-weight:700; }
+  #mp-more .rv-room-foot { flex-wrap:wrap; row-gap:.5rem; }
+  #mp-more .rv-room-foot > span { margin-left:auto; }
+
+  /* ── r48: capacity ── */
+  .cap-sign { background:#fff; border:1px solid var(--border); border-radius:14px; padding:.6rem .8rem .55rem; }
+  .cap-top { display:flex; align-items:baseline; justify-content:space-between; gap:.6rem; }
+  .cap-l { font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .cap-p { font-family:var(--serif); font-size:1.35rem; line-height:1; }
+  .cap-p.low { color:#2E7D4F; } .cap-p.mid { color:#A86A12; } .cap-p.full { color:#B01015; }
+  .cap-bar { height:8px; border-radius:999px; background:#EFE7DC; overflow:hidden; margin:.4rem 0 .3rem; }
+  .cap-bar i { display:block; height:100%; border-radius:999px; }
+  i.low { background:#3E9A64; } i.mid { background:#D9932B; } i.full { background:#C8262B; }
+  .cap-n { font-size:.74rem; color:var(--muted); }
+  .cap-all { font-size:.74rem; color:var(--muted); margin:.35rem .2rem 0; }
+  .cap-all b { color:var(--text); }
+  #mp-cap { margin:.2rem 0 .5rem; }
+  .cap-day { display:grid; grid-template-columns:minmax(120px, 34%) 1fr; gap:.5rem; margin:.6rem 0 .2rem; align-items:stretch; }
+  .cap-day > :only-child { grid-column:1 / -1; }
+  .cap-hours { background:#fff; border:1px solid var(--border); border-radius:14px; padding:.45rem .5rem .35rem; min-width:0; }
+  .cap-hours-t { font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 .2rem .15rem; }
+  .cap-row { display:flex; gap:.25rem; overflow-x:auto; scrollbar-width:none; }
+  .cap-row::-webkit-scrollbar { display:none; }
+  .cap-h { flex:1 0 30px; display:flex; flex-direction:column; align-items:center; gap:.12rem; border-radius:8px; padding:.15rem 0 .1rem; }
+  .cap-h.now { background:#F3ECE2; box-shadow:inset 0 0 0 1px var(--border); }
+  .cap-hp { font-size:.6rem; font-weight:700; color:var(--text); }
+  .cap-hb { width:12px; height:30px; border-radius:4px; background:#EFE7DC; display:flex; align-items:flex-end; overflow:hidden; }
+  .cap-hb i { display:block; width:100%; border-radius:4px; }
+  .cap-hl { font-size:.6rem; color:var(--muted); text-transform:lowercase; }
+  .cap-h.now .cap-hl { color:var(--text); font-weight:700; }
+
+  /* ── r48: "+" a room ── */
+  .mp-room.mp-add { flex:none; min-width:44px; font-size:1.15rem; font-weight:600; color:var(--blue); border-color:rgba(47,93,168,.4); }
+  .mp-room.off { color:var(--muted); border-style:dashed; }
+  #mp-add-host .m-input { width:100%; box-sizing:border-box; margin:.2rem 0 .3rem; }
+  .mp-add-err { font-size:.8rem; color:#8E0D11; min-height:1.1em; }
+  .mp-add-err:empty { display:none; }
+
+  /* ── r48: the camera inside the page ── */
+  .cam { position:fixed; inset:0; z-index:900; background:#0E0A08; color:#fff; display:flex; flex-direction:column; }
+  .cam video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .cam-frame { position:absolute; left:50%; top:46%; width:min(68vw, 300px); aspect-ratio:1; transform:translate(-50%, -50%); border-radius:22px;
+    box-shadow:0 0 0 2000px rgba(14,10,8,.45); outline:3px solid rgba(255,255,255,.92); outline-offset:-3px; pointer-events:none; }
+  .cam-top { position:relative; padding:calc(env(safe-area-inset-top, 0px) + 1rem) 1.2rem .8rem; text-align:center; display:flex; flex-direction:column; gap:.3rem;
+    background:linear-gradient(rgba(14,10,8,.75), rgba(14,10,8,0)); }
+  .cam-top b { font-family:var(--serif); font-size:1.35rem; font-weight:500; }
+  .cam-top span { font-size:.88rem; line-height:1.4; opacity:.92; }
+  .cam-top span.bad { color:#FFD7D2; }
+  .cam-foot { position:absolute; left:0; right:0; bottom:0; display:flex; gap:.6rem; padding:1rem 1.2rem calc(env(safe-area-inset-bottom, 0px) + 1.1rem);
+    background:linear-gradient(rgba(14,10,8,0), rgba(14,10,8,.8)); }
+  .cam-btn { flex:1; text-align:center; text-decoration:none; border:1px solid rgba(255,255,255,.55); background:rgba(255,255,255,.08); color:#fff; border-radius:999px;
+    padding:.8rem 1rem; font-family:var(--sans); font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
+  .cam-btn.main { background:#fff; color:var(--ink); border-color:#fff; }
+  /* ── r49: Map | Timeline ── */
+  .mp-mode { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; background:var(--white); border:1px solid var(--border); border-radius:999px; margin:.1rem 0 .6rem; }
+  .mp-mode-b { border:none; border-radius:999px; padding:.55rem 0; background:none; color:var(--text); font-family:var(--sans); font-size:.68rem; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
+  .mp-mode-b.on { background:var(--ink); color:var(--white); }
+  .tl-rooms { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.4rem; }
+  .tl-rooms .mp-room { flex:1 1 auto; min-width:3.6rem; }
+  .tl-note { font-size:.74rem; color:#6F6255; text-align:center; margin:.1rem 0 .5rem; }
+  .tl-scroll { height:max(380px, calc(100vh - 300px)); height:max(380px, calc(100dvh - 300px)); overflow:auto; background:var(--white); border:1px solid var(--border);
+    border-radius:18px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+  .tl-grid { position:relative; padding-bottom:8px; }
+  .tl-head { position:sticky; top:0; z-index:6; display:flex; height:54px; background:var(--white); border-bottom:1px solid var(--border); }
+  .tl-corner { position:sticky; left:0; z-index:7; width:62px; flex:none; background:var(--white); display:flex; align-items:flex-end; justify-content:center; padding-bottom:9px;
+    box-sizing:border-box; border-right:1px solid var(--border); }
+  .tl-corner span { font-size:.56rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .tl-hours { position:relative; flex:none; }
+  .tl-h { position:absolute; top:7px; font-size:.62rem; font-weight:600; letter-spacing:.08em; color:#6F6255; white-space:nowrap; padding-left:5px; border-left:1px solid #D9CDBD; line-height:1; }
+  .tl-cap { position:absolute; top:26px; height:20px; border-radius:6px; background:#F3ECE2; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .tl-cap i { position:absolute; left:0; top:0; bottom:0; opacity:.9; }
+  .tl-cap b { position:relative; font-size:.66rem; font-weight:700; }
+  .tl-cap.low i { background:#CFE8D8; } .tl-cap.low b { color:#2E7D4F; }
+  .tl-cap.mid i { background:#F4DDB6; } .tl-cap.mid b { color:#8A5A0B; }
+  .tl-cap.full i { background:#F3C9C6; } .tl-cap.full b { color:#B01015; }
+  .tl-cap.past { color:var(--muted); font-size:.7rem; background:none; }
+  .tl-now-chip { position:absolute; top:4px; transform:translateX(-50%); background:var(--red); color:#fff; font-size:.56rem; font-weight:700; border-radius:999px; padding:2px 5px; z-index:2; }
+  .tl-vline { position:absolute; top:54px; bottom:0; width:1px; background:#EFE6D8; }
+  .tl-nowline { position:absolute; top:54px; bottom:0; width:2px; margin-left:-1px; background:var(--red); z-index:4; pointer-events:none; }
+  .tl-group { position:relative; z-index:2; height:28px; display:flex; align-items:center; background:var(--off-white); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .tl-group span { position:sticky; left:0; padding-left:12px; font-size:.6rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#6F6255; white-space:nowrap; }
+  .tl-group.red span { color:var(--red-dark); }
+  .tl-row { position:relative; z-index:2; display:flex; height:40px; border-bottom:1px solid #F1EADF; }
+  .tl-n { position:sticky; left:0; z-index:5; width:62px; flex:none; border-right:1px solid var(--border); background:var(--white); display:flex; align-items:baseline;
+    justify-content:center; gap:4px; line-height:40px; }
+  .tl-n b { font-family:var(--serif); font-size:1.2rem; font-weight:700; }
+  .tl-n small { font-size:.62rem; color:#6F6255; }
+  .tl-lane { position:relative; flex:none; }
+  .tl-bar { position:absolute; top:6px; height:28px; box-sizing:border-box; border-radius:8px; font-family:var(--sans); font-size:.7rem; font-weight:700; text-align:left;
+    padding:0 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .tl-bar.later { background:#fff; border:1.5px solid #8FB0E0; color:#1F3F75; }
+  .tl-bar.hour { background:#DCE7F7; border:1.5px solid #8FB0E0; color:#10284F; }
+  .tl-bar.half { background:#9DBBE9; border:1.5px solid #4F7CC2; color:#0B1F40; }
+  .tl-bar.busy { background:#1F3F75; border:1.5px solid #1F3F75; color:#fff; }
+  .tl-bar.late { background:#F7E3E1; border:2px dashed var(--red); color:var(--red-dark); }
+  .tl-bar.waiting { border:2px dashed var(--red); }
+  .tl-legend .tl-leg-cap { width:100%; justify-content:center; color:var(--text); }
+
+  /* ── r49: "In use now" as a tile on the day ── */
+  .rv-tiles.five { grid-template-columns:repeat(5,1fr); gap:.3rem; }
+  /* 2 Nov 11:21 (his picture): every tile the same way — the number at the top, the word under it, all on one line
+     (Requests is a button: a button centres what is in it, so it sat lower when "In use" made the row taller) */
+  .rv-tiles .rv-tile { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; }
+  button.rv-tile { line-height:inherit; letter-spacing:inherit; font-size:inherit; margin:0; }
+  .rv-tiles .rv-tile > span:not(.cap-mini) { margin-top:.3rem; }
+  .rv-tiles.five .rv-tile { padding:.5rem .15rem; min-width:0; }
+  .rv-tiles.five .rv-tile span { letter-spacing:.08em; }
+  .rv-tile.cap-tile b.low { color:#2E7D4F; } .rv-tile.cap-tile b.mid { color:#A86A12; } .rv-tile.cap-tile b.full { color:#B01015; }
+  .cap-mini { display:block; align-self:stretch; height:4px; border-radius:999px; background:#EFE7DC; overflow:hidden; margin:.3rem .35rem .15rem; }
+  .cap-mini i { display:block; height:100%; border-radius:999px; }
+  .rv-tile.cap-tile small { display:block; font-size:.5rem; color:var(--muted); letter-spacing:.02em; margin-top:.05rem; white-space:nowrap; }
+  .rv-moved { font-size:.8rem; color:var(--muted); text-align:center; margin:.4rem 0 1.2rem; }
+  .rv-link { border:none; background:none; padding:0; font:inherit; color:var(--red); font-weight:700; text-decoration:underline; cursor:pointer; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -2451,6 +2575,7 @@ async function rvStart(){
   if(RV.rid !== RESTAURANT.id) rvReset();
   if(NF_DAY){ RV.date = NF_DAY.date; RV.wantCenter = NF_DAY.b || null; RV.view = 'day'; NF_DAY = null; }   // r43: a notification's day
   if(NF_SETTINGS){ NF_SETTINGS = false; RV.view = 'settings'; RV.settings = null; }                       // r43: a change to the settings
+  if(NF_MAP){ NF_MAP = false; RV.settings = null; rvOpenMap(); return; }                                 // r48: a change to the rules or rooms
   rvRender();
   if(RV.view === 'settings'){ rvLoadSettings(true); return; }
   await Promise.all([ rvLoadDays(RV.date), rvLoadDay(RV.date, {quiet: !!RV.day}) ]);
@@ -2540,11 +2665,12 @@ function rvRender(){
   if(!root) return;
   document.body.classList.toggle('rv-mode', RV.view==='day');
   // r46: the table map, and drawing a room
-  if(RV.view==='map'){ root.innerHTML = mpHtml(); mpPaintFloor(); mpPaintSheet(); mpPaintToast(); return; }
+  if(RV.view==='map'){ root.innerHTML = mpHtml(); mpAfterPaint(); mpPaintFloor(); mpPaintSheet(); mpPaintToast(); return; }
   if(RV.view==='draw'){ root.innerHTML = dwHtml(); dwPaintGrid(); mpPaintToast(); return; }
   if(RV.view==='settings'){
     const kept = rvKeptInputs();
     root.innerHTML = rvSettingsHtml();
+    rvFoldCards(root);                               // r48: each title opens and closes its part
     rvPutBack(kept);
     supAfterPaint();
     return;
@@ -2827,10 +2953,11 @@ function rvPaintTop(){
   const c = same ? d.counts : null;
   const tile = (n, label, red) => '<div class="rv-tile'+(red?' red':'')+'"><b>'+(c ? n : '·')+'</b><span>'+label+'</span></div>';
   const q = d.requests || [];
-  let html = rvScanHtml() + '<div class="rv-tiles">'
+  const capT = rvCapTile(d);                 // r49: "In use now", the fifth tile (today)
+  let html = rvScanHtml() + '<div class="rv-tiles'+(capT ? ' five' : '')+'">'
     + tile(c && c.tables, 'Tables') + tile(c && c.people, 'People') + tile(c && c.arrived, 'Arrived')
     + '<button type="button" class="rv-tile'+(q.length?' red':'')+'" onclick="rvOpenRequests()"><b>'+q.length+'</b><span>'+(q.length===1?'Request':'Requests')+'</span></button>'
-    + '</div>'
+    + capT + '</div>'
     // r35 (Sebastian, 16 Oct): where the waiter types a guest's code when the QR
     // will not scan — Check In, Show my reward, Show my invite (the six
     // characters under the guest's QR). The page is /checkin.
@@ -3434,8 +3561,10 @@ function rvSettingsHtml(){
     + (edit ? '' : '<div class="rv-readonly">You can see everything here. Only a manager can change it.</div>')
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
     + dvCardHtml()                                     // r43: you and your devices (everyone, crew too)
-    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + rvLoyaltyHtml(S) + rvRulesHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S) + rvRoomsHtml(S)
-    + rvGradeHtml(S) + rvSupportHtml();
+    + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + rvLoyaltyHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S)
+    + rvGradeHtml(S) + rvSupportHtml()
+    // r48 (Sebastian, 30 Oct 16:42): the Rules and the Rooms are on the Map now
+    + '<div class="rv-moved">The rules and the rooms are on the <button type="button" class="rv-link" onclick="rvOpenMap()">Map</button> now.</div>';
 }
 
 // ── r43: YOU AND YOUR DEVICES (Sebastian, 26 Oct) ──
@@ -3519,7 +3648,7 @@ async function dvLoad(){
   DV.loaded = true; DV.loading = false;
   dvPaint();
 }
-function dvPaint(){ const el = document.getElementById('dv-card'); if(el) el.outerHTML = dvCardHtml(); }
+function dvPaint(){ const el = document.getElementById('dv-card'); if(el){ el.outerHTML = dvCardHtml(); rvFoldCards(document.getElementById('rv-root')); } }
 
 function dvCardHtml(){
   const head = '<div class="m-card" id="dv-card"><div class="m-eyebrow">You and your devices</div>';
@@ -3673,13 +3802,13 @@ async function dvResync(){
 // #day=2026-10-27&b=40&at=1 (the day, that table in the middle) — #request= is r42's.
 // A change by the team: #dish=12&at=1 (that dish, open), #go=team|menu|settings&at=1.
 // at= is the restaurant, for someone at more than one.
-let NF_DAY = null, NF_DISH = null, NF_SETTINGS = false;
+let NF_DAY = null, NF_DISH = null, NF_SETTINGS = false, NF_MAP = false;
 function nfParse(){
-  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings)((?:&(?:b|at)=\d+)*)$/.exec(window.location.hash || '');
+  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map)((?:&(?:b|at)=\d+)*)$/.exec(window.location.hash || '');
   if(!m) return null;
   const out = { kind:m[1], value:m[2], at:null, b:null };
   m[3].split('&').filter(Boolean).forEach(function(p){ const kv = p.split('='); out[kv[0]] = Number(kv[1]); });
-  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings)$/.test(m[2]) : /^\d+$/.test(m[2]);
+  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings|map)$/.test(m[2]) : /^\d+$/.test(m[2]);
   if(!ok || (out.b && m[1] !== 'day')) return null;
   return out;
 }
@@ -3687,6 +3816,7 @@ function nfParse(){
 function nfPlace(n){
   if(n.kind === 'dish'){ NF_DISH = Number(n.value); n = { kind:'go', value:'menu' }; }
   if(n.value === 'settings'){ TAB = 'reservations'; NF_SETTINGS = true; return; }      // rvStart opens Settings
+  if(n.value === 'map'){ TAB = 'reservations'; NF_MAP = true; return; }                // r48: rvStart opens the Map
   TAB = allowedTabs().includes(n.value) ? n.value : 'reservations';
 }
 function nfShowDish(){
@@ -3930,7 +4060,7 @@ function supGo(id){
 function supToSettings(){
   TAB = 'reservations';
   if(history.replaceState) history.replaceState(null, '', '#reservations');
-  RV.view = 'settings'; RV.armed = null; SUP.scrollTo = true;
+  RV.view = 'settings'; RV.armed = null; SUP.scrollTo = true; rvFoldTap('support', true);
   render(); window.scrollTo(0, 0);
   rvLoadSettings(false);
 }
@@ -4090,7 +4220,7 @@ function rvSwitchesHtml(S){
     + sw('emailEnabled', R.emailEnabled, 'Emails to guests', S.email.ready
         ? 'Confirmation, reminder and cancel link, sent from '+esc(S.email.from)+'.'
         : 'Not set up for this restaurant yet. Ask Seb\'s Analytics.', !S.email.ready)
-    + sw('autoReleaseLate', R.autoReleaseLate, 'Give away the table of a late guest', 'After the wait below, a guest who has not arrived stops holding their seats online.')
+    + sw('autoReleaseLate', R.autoReleaseLate, 'Give away the table of a late guest', 'After the wait set in Map → The rules, a guest who has not arrived stops holding their seats online.')
     + '</div>';
 }
 
@@ -4402,7 +4532,7 @@ function mpBarHtml(){
   return '<div class="rv-codebar mp-bar" role="group" aria-label="Guests at the door">'
     + '<a class="mp-bar-btn rv-code-link" href="/checkin" aria-label="Type the guest\u2019s code">'+MP_ICON.type+'Type</a>'
     + '<button type="button" class="mp-bar-btn" onclick="rvOpenMap()" aria-label="Open the table map">'+MP_ICON.map+'Map</button>'
-    + '<button type="button" class="mp-bar-btn" onclick="mpCameraHelp()" aria-label="Scan a guest\u2019s QR code">'+MP_ICON.camera+'Camera</button>'
+    + '<button type="button" class="mp-bar-btn" onclick="camOpen()" aria-label="Scan a guest\u2019s QR code">'+MP_ICON.camera+'Camera</button>'
     + '</div>';
 }
 
@@ -4416,9 +4546,11 @@ function rvOpenMap(){
   MP.back = 'day';
   if(MP.data && RESTAURANT && MP.rid !== RESTAURANT.id) mpReset();
   RV.view = 'map'; RV.armed = null;
+  if(typeof TL !== 'undefined') TL.kept = false;      // r49: the timeline opens at now
   render();
   window.scrollTo(0, 0);
   mpLoad(false);
+  mpLoadSettings();               // r48: the Rules and the Rooms, below the map
   mpStart();
 }
 function mpBack(){
@@ -4440,7 +4572,8 @@ function mpStart(){
     MP.ticks += 1;
     mpTick();
     if(MP.ticks % 10 === 0 && !MP.busy && !MP.sheet && !MP.placing && !MP.joining) mpLoad(true);
-    else if(MP.ticks % 30 === 0 && !MP.sheet) mpPaintFloor();
+    if(MP.ticks % 30 === 0 && !MP.sheet && !MP.lpTimer){ mpPaintFloor(); tlPaint(); }   // r49: every 30 s the colours and the timeline follow the clock
+                                                       // (r46 had "else if" here: 30 is a multiple of 10, so it never ran)
   }, 1000);
 }
 function mpStop(){ if(MP.timer){ clearInterval(MP.timer); MP.timer = null; } }
@@ -4466,7 +4599,7 @@ function mpTake(data){
   const rooms = data.rooms || [];
   if(!MP.room || !rooms.some(r => r.id === MP.room)) MP.room = (rooms.find(r => r.drawn) || rooms[0] || {}).id || null;
   const now = JSON.stringify([data.rooms, data.busy, data.joins, data.place, data.waiting, data.bookings]);
-  if(keep !== now || !document.getElementById('mp-floor')) mpPaint();
+  if(keep !== now || !document.getElementById(MP.mode === 'timeline' ? 'tl-scroll' : 'mp-floor')) mpPaint();   // r49: the timeline is not drawn again for nothing
   else mpTick();
 }
 function mpNow(){ return Date.now() + MP.offset; }
@@ -4567,30 +4700,36 @@ function mpPaint(){
   const root = document.getElementById('rv-root');
   if(!root) return;
   root.innerHTML = mpHtml();
+  mpAfterPaint();                                      // r48: the Rules and Rooms as they were (typed, open)
   mpPaintFloor(); mpPaintSheet(); mpPaintToast();     // the floor after the frame: it needs the page's width
 }
 function mpHtml(){
   const D = MP.data;
   const head = '<div class="mp-head"><button type="button" class="rv-back" onclick="mpBack()">&#8249; '+(MP.back === 'settings' ? 'Settings' : 'Reservations')+'</button>'
-    + '<div class="mp-title">Map</div><div class="mp-clock" id="mp-clock">'+(D ? esc(mpClock()) : '')+'</div></div>';
+    + '<div class="mp-title">'+(MP.mode === 'timeline' ? 'Timeline' : 'Map')+'</div><div class="mp-clock" id="mp-clock">'+(D ? esc(mpClock()) : '')+'</div></div>';
   if(MP.error && !D){
     return head + '<div class="m-err">'+esc(MP.error)+'</div>'
       + (MP.errorReason === 'migration' ? '' : '<button class="m-btn" onclick="MP.error=null;mpLoad(false)">Try again</button>');
   }
   if(!D) return head + '<div class="m-skel"></div><div class="m-skel"></div>';
   const rooms = D.rooms || [];
-  if(!rooms.length) return head + '<div class="m-empty">This restaurant has no rooms yet. Add one in Settings → Rooms.</div>';
+  if(!rooms.length) return head + (D.can.draw ? '<div class="mp-rooms"><button type="button" class="mp-room mp-add" onclick="mpAddRoom()" aria-label="Add a room">+</button></div>' : '')
+    + '<div class="m-empty">This restaurant has no rooms yet.'+(D.can.draw ? ' Tap <b>+</b> to add one, then draw it.' : '')+'</div>' + mpMoreHtml();
   const room = mpRoom();
-  const tabs = '<div class="mp-rooms">' + rooms.map(r => '<button type="button" class="mp-room'+(r.id===MP.room?' on':'')+'" onclick="mpPickRoom('+r.id+')">'+esc(r.name)+'</button>').join('')
+  // r49: the timeline of the night (Map | Timeline)
+  if(MP.mode === 'timeline') return head + mpModeHtml() + tlHtml() + mpMoreHtml();
+  const tabs = '<div class="mp-rooms">' + rooms.map(r => '<button type="button" class="mp-room'+(r.id===MP.room?' on':'')+(r.active === false ? ' off' : '')+'" onclick="mpPickRoom('+r.id+')"'
+      + (r.active === false ? ' title="Closed for bookings"' : '')+'>'+esc(r.name)+(r.active === false ? ' · closed' : '')+'</button>').join('')
+    + (D.can.draw ? '<button type="button" class="mp-room mp-add" onclick="mpAddRoom()" aria-label="Add a room">+</button>' : '')
     + (D.can.draw ? '<button type="button" class="mp-room mp-draw" onclick="dwOpen('+MP.room+')" aria-label="Draw '+esc(room ? room.name : 'the room')+'">✎ Draw</button>' : '')
     + '</div>';
   if(!room.drawn){
-    return head + tabs + '<div class="mp-undrawn"><b>'+esc(room.name)+' is not drawn yet.</b><br>'
+    return head + mpModeHtml() + tabs + '<div class="mp-undrawn"><b>'+esc(room.name)+' is not drawn yet.</b><br>'
       + (D.can.draw ? 'Draw it once: its shape, then its tables. It takes a few minutes.'
                       + '<br><button type="button" class="m-save mp-undrawn-go" onclick="dwOpen('+room.id+')">Draw '+esc(room.name)+'</button>'
-                    : 'A manager draws it once, here in Map.')+'</div>';
+                    : 'A manager draws it once, here in Map.')+'</div>' + mpMoreHtml();
   }
-  return head + tabs + '<div class="mp-sum" id="mp-sum"></div>'
+  return head + mpModeHtml() + tabs + '<div id="mp-cap"></div><div class="mp-sum" id="mp-sum"></div>'
     + '<div class="mp-floor-wrap"><div class="mp-floor" id="mp-floor"></div></div>'
     + '<div class="mp-legend">'
     +   '<span><i class="free"></i>Free</span><span><i class="later"></i>Later</span><span><i class="hour"></i>1 hour</span>'
@@ -4598,7 +4737,7 @@ function mpHtml(){
     +   '<span class="mp-leg-sign">'+MP_ICON.pin+'Reserved</span><span class="mp-leg-sign">'+MP_ICON.link+'Joined</span>'
     +   '<span class="mp-leg-how">Tap a table: busy or free · Touch and hold: Reserved, join and more</span>'
     + '</div>'
-    + '<div id="mp-tray"></div>';
+    + '<div id="mp-tray"></div>' + mpMoreHtml();
 }
 
 function mpPaintFloor(){
@@ -4647,6 +4786,7 @@ function mpPaintFloor(){
   const sum = document.getElementById('mp-sum');
   if(sum) sum.textContent = count.free+' free · '+count.busy+' busy · '+count.res+' reserved'+(count.late ? ' · '+count.late+' late' : '');
   mpPaintTray();
+  mpPaintCap();                                         // r48: the seats in use now
 }
 function mpClock(){ return new Intl.DateTimeFormat('en-US', { timeZone: (MP.data && MP.data.timezone) || 'America/New_York', hour: 'numeric', minute: '2-digit' }).format(new Date(mpNow())); }
 // The clocks on busy tables, the minutes on late ones, the time at the top.
@@ -4680,10 +4820,10 @@ function mpPaintTray(){
 function mpDown(e, key){
   if(e && e.button && e.button !== 0) return;
   clearTimeout(MP.lpTimer); MP.lpFired = false;
-  MP.lpTimer = setTimeout(function(){ MP.lpFired = true; mpMenu(key); }, MP_HOLD_MS);
+  MP.lpTimer = setTimeout(function(){ MP.lpTimer = null; MP.lpFired = true; mpMenu(key); }, MP_HOLD_MS);
 }
-function mpUp(){ clearTimeout(MP.lpTimer); }
-function mpCtx(e, key){ if(e) e.preventDefault(); clearTimeout(MP.lpTimer); MP.lpFired = true; mpMenu(key); }
+function mpUp(){ clearTimeout(MP.lpTimer); MP.lpTimer = null; }   // r49: null = no finger down (the 30 s repaint waits)
+function mpCtx(e, key){ if(e) e.preventDefault(); clearTimeout(MP.lpTimer); MP.lpTimer = null; MP.lpFired = true; mpMenu(key); }
 
 function mpTap(key){
   if(MP.lpFired){ MP.lpFired = false; return; }
@@ -5247,6 +5387,511 @@ async function dwSave(btn){
     DW.saving = false;
     DW.msg = e.message; DW.bad = true; dwPaint();
   }
+}
+
+// ── r48 · Sebastian, 30 Oct 16:42 and 16:54 ──
+// 1 · The Rules and the Rooms live on the Map now (below the room), and a room's tables and seats are its drawing's
+//     (a room not drawn yet keeps what it had until it is drawn; a new room starts with none). "+" adds a room.
+// 2 · Settings: every title opens and closes its part, as the Menu's parts do.
+// 3 · Capacity: a sign on the Map (now, this room and all rooms) and on the day (now, and hour by hour).
+// 4 · Camera: the phone's camera opens inside the page and reads the guest's QR.
+
+// ── FOLDING CARDS (Settings, and Rules / Rooms on the map) ──
+let RV_OPEN = {};
+try{ RV_OPEN = JSON.parse(sessionStorage.getItem('hf_rv_open') || '{}') || {}; }catch(e){ RV_OPEN = {}; }
+function rvFoldKey(eb){ return eb.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'card'; }
+// Every card with a title (.m-eyebrow) directly in this box: the title becomes a button; closed until opened.
+function rvFoldCards(box){
+  if(!box) return;
+  box.querySelectorAll(':scope > .m-card').forEach(card => {
+    if(card.classList.contains('rv-fold')) return;
+    const eb = card.querySelector(':scope > .m-eyebrow');
+    if(!eb) return;
+    const key = rvFoldKey(eb), open = !!RV_OPEN[key];
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'rv-fold-h'; btn.setAttribute('aria-expanded', String(open));
+    btn.innerHTML = '<span class="mg-caret" aria-hidden="true">▸</span><span class="m-eyebrow" role="heading" aria-level="3"></span>';
+    btn.lastChild.textContent = eb.textContent;
+    btn.addEventListener('click', function(){ rvFoldTap(key); });
+    card.replaceChild(btn, eb);
+    card.classList.add('rv-fold'); card.dataset.fold = key;
+    card.classList.toggle('open', open);
+  });
+}
+function rvFoldTap(key, open){
+  const now = open === undefined ? !RV_OPEN[key] : !!open;
+  if(now) RV_OPEN[key] = true; else delete RV_OPEN[key];
+  try{ sessionStorage.setItem('hf_rv_open', JSON.stringify(RV_OPEN)); }catch(e){}
+  document.querySelectorAll('.m-card.rv-fold').forEach(c => {
+    if(c.dataset.fold !== key) return;
+    c.classList.toggle('open', now);
+    const b = c.querySelector(':scope > .rv-fold-h'); if(b) b.setAttribute('aria-expanded', String(now));
+  });
+}
+
+// ── CAPACITY ──
+function capLevel(p){ return p >= 85 ? 'full' : p >= 60 ? 'mid' : 'low'; }
+function capPct(u){ return u.of ? Math.round(100 * u.used / u.of) : 0; }
+function capSignHtml(label, u, short){
+  const p = capPct(u);
+  return '<div class="cap-sign" role="img" aria-label="'+esc(label)+': '+p+'% full, '+u.used+' of '+u.of+' seats in use">'
+    + '<div class="cap-top"><span class="cap-l">'+esc(label)+'</span><b class="cap-p '+capLevel(p)+'">'+p+'%</b></div>'
+    + '<div class="cap-bar"><i class="'+capLevel(p)+'" style="width:'+Math.min(100, p)+'%"></i></div>'
+    + '<div class="cap-n">'+u.used+' of '+u.of+' seats'+(short ? '' : ' in use')+'</div></div>';
+}
+// The map: the room shown, and (with two drawn rooms or more) all of them — every busy table counts its seats.
+function mpUse(room){
+  const seatsOf = {};
+  room.tables.forEach(t => { seatsOf[t.n] = t.seats; });
+  const of = room.tables.reduce((n, t) => n + t.seats, 0);
+  let used = 0;
+  (MP.data.busy || []).forEach(b => { if(b.areaId === room.id) b.tables.forEach(n => { used += seatsOf[n] || 0; }); });
+  return { used: Math.min(used, of), of };
+}
+function mpPaintCap(){
+  const el = document.getElementById('mp-cap');
+  if(!el || !MP.data) return;
+  const room = mpRoom();
+  if(!room || !room.drawn){ el.innerHTML = ''; return; }
+  const drawn = (MP.data.rooms || []).filter(r => r.drawn && r.active !== false);
+  const all = drawn.reduce((s, r) => { const u = mpUse(r); return { used: s.used + u.used, of: s.of + u.of }; }, { used: 0, of: 0 });
+  el.innerHTML = capSignHtml('Now · '+room.name, mpUse(room))
+    + (drawn.length > 1 ? '<div class="cap-all">All rooms: <b>'+capPct(all)+'%</b> · '+all.used+' of '+all.of+' seats</div>' : '');
+}
+// ── RULES AND ROOMS ON THE MAP ──
+function mpMoreHtml(){
+  const S = RV.settings;
+  return '<div class="rv-fold-zone" id="mp-more">' + (S ? rvRulesHtml(S) + mpRoomsHtml(S) : '') + '</div>';
+}
+function mpAfterPaint(){
+  tlPaint();                                       // r49: the timeline, when it is the one shown
+  rvPutBack(rvKeptInputs());
+  rvFoldCards(document.getElementById('mp-more'));
+  if(!RV.settings && !MP_SET.busy) mpLoadSettings();
+}
+function mpPaintMore(){
+  const el = document.getElementById('mp-more');
+  if(!el) return;
+  const kept = rvKeptInputs();
+  el.outerHTML = mpMoreHtml();
+  rvPutBack(kept);
+  rvFoldCards(document.getElementById('mp-more'));
+}
+const MP_SET = { seq: 0, busy: false };
+async function mpLoadSettings(){
+  const seq = ++MP_SET.seq, gen = RV.gen;
+  MP_SET.busy = true;
+  try{
+    const data = await rvApi({action:'staff_settings'});
+    if(seq !== MP_SET.seq || gen !== RV.gen) return;
+    RV.settings = data; RV.settingsError = null;
+    if(!RV.hoursDraft){ RV.hoursDraft = data.hours.map(h => Object.assign({}, h)); RV.hoursBase = data.hours.map(h => Object.assign({}, h)); }
+  }catch(e){ if(seq !== MP_SET.seq) return; RV.settingsError = e.message; }
+  finally{ if(seq === MP_SET.seq) MP_SET.busy = false; }
+  mpPaintMore();
+}
+// r48 (Sebastian: "the number of tables depends on the number of tables you draw"): nothing here is typed.
+function mpRoomNums(a){
+  const n = (x, w) => x+' '+w+(x === 1 ? '' : 's');
+  if(a.drawn) return '<b>'+n(a.tables, 'table')+' · '+n(a.seats, 'seat')+'</b> · from its drawing';
+  if(a.seats || a.tables) return '<b>'+n(a.tables, 'table')+' · '+n(a.seats, 'seat')+'</b> · until you draw it';
+  return '<b>No tables yet</b> · draw it to sell it online';
+}
+function mpRoomsHtml(S){
+  const edit = S.canEdit;
+  const rooms = (S.areas || []).map(a => edit
+    ? '<div class="rv-room" id="rv-room-'+a.id+'"><div class="m-field" style="margin-bottom:.4rem;"><div class="m-field-label">Room</div><input class="m-input" id="rv-a-name-'+a.id+'" value="'+esc(a.name)+'" maxlength="40"></div>'
+      + '<div class="rv-room-drawn">'+mpRoomNums(a)+'</div>'
+      + '<div class="rv-room-foot"><label class="m-codes" style="margin:0;font-size:.78rem;"><input type="checkbox" id="rv-a-active-'+a.id+'"'+(a.active?' checked':'')+'> Open for bookings</label>'
+      + '<span style="display:flex;gap:.4rem;"><button type="button" class="rv-mini" onclick="mpDrawRoom('+a.id+')">'+(a.drawn?'Change the drawing':'Draw the room')+'</button>'
+      + '<button type="button" class="rv-mini" onclick="mpRoomSave('+a.id+', this)">Save</button></span></div></div>'
+    : '<div class="rv-hol"><div>'+esc(a.name)+'<small>'+mpRoomNums(a).replace(/<\/?b>/g, '')+(a.active?'':' · closed for bookings')+'</small></div></div>').join('');
+  const add = edit ? '<div class="rv-rq-form"><div class="m-field"><div class="m-field-label">New room</div>'
+    + '<input class="m-input" id="rv-a-name-new" maxlength="40" placeholder="e.g. Terrace"></div>'
+    + '<div class="m-actions"><button type="button" class="m-save" onclick="mpRoomAdd(this)">+ Add the room</button></div></div>' : '';
+  return '<div class="m-card"><div class="m-eyebrow">Rooms</div>'
+    + '<div class="m-sub" style="font-size:.74rem;">Each room sells the tables and seats of its drawing. A party is only offered a time if it fits in one room.</div>'
+    + rooms + add + '</div>';
+}
+function mpRoomOf(id){ return RV.settings && (RV.settings.areas || []).find(a => a.id === id) || null; }
+async function mpRoomSave(id, btn){
+  const a = mpRoomOf(id), gen = RV.gen;
+  if(!a) return;
+  btn.disabled = true;
+  try{
+    const data = await rvApi({action:'staff_area', op:'save', id: id, name: document.getElementById('rv-a-name-'+id).value,
+                              active: document.getElementById('rv-a-active-'+id).checked, seats: a.seats, tables: a.tables});
+    if(gen !== RV.gen) return;
+    RV.forget = ['rv-a-name-'+id, 'rv-a-active-'+id];
+    Object.assign(a, data.area);
+    mpPaintMore();
+    mpLoad(true);
+  }catch(e){ showToast(e.message); btn.disabled = false; }
+}
+async function mpRoomAdd(btn){
+  const box = document.getElementById('rv-a-name-new');
+  const name = box ? box.value.trim() : '';
+  if(name.length < 2){ showToast('Write the room’s name (2 to 40 letters).'); return; }
+  btn.disabled = true;
+  const area = await mpAddArea(name).catch(e => { showToast(e.message); return null; });
+  if(!area){ btn.disabled = false; return; }
+  RV.forget = ['rv-a-name-new'];
+  mpPaintMore();
+}
+async function mpAddArea(name){
+  const data = await rvApi({action:'staff_area', op:'add', name: name, seats: 0, tables: 0, active: true});
+  if(RV.settings && !mpRoomOf(data.area.id)) RV.settings.areas.push(data.area);
+  MP.room = data.area.id;
+  await mpLoad(true);
+  return data.area;
+}
+function mpDrawRoom(id){
+  if(MP.data && !(MP.data.rooms || []).some(r => r.id === id)){ showToast('Save the room first.'); return; }
+  dwOpen(id);
+}
+// "+" next to the rooms: a name, then straight to drawing it.
+function mpAddRoom(){
+  let host = document.getElementById('mp-add-host');
+  if(!host){ host = document.createElement('div'); host.id = 'mp-add-host'; document.body.appendChild(host); }
+  host.innerHTML = '<div class="rv-scrim" onclick="mpAddClose()"></div>'
+    + '<div class="rv-sheet mp-sheet" role="dialog" aria-label="Add a room"><div class="rv-grab"></div>'
+    + '<div class="mp-sheet-t">Add a room</div>'
+    + '<div class="mp-sheet-line">Give it a name, then draw it: its tables and seats come from the drawing.</div>'
+    + '<input class="m-input" id="mp-new-room" maxlength="40" placeholder="e.g. Terrace" autocomplete="off" oninput="document.getElementById(\'mp-new-err\').textContent=\'\'" onkeydown="if(event.key===\'Enter\')mpAddGo()">'
+    + '<div class="mp-add-err" id="mp-new-err" role="alert"></div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="mp-add-go" onclick="mpAddGo()">Add it and draw it</button>'
+    + '<button type="button" class="mp-opt quiet" onclick="mpAddClose()">Cancel</button></div></div>';
+  const i = document.getElementById('mp-new-room'); if(i) i.focus();
+}
+function mpAddClose(){ const host = document.getElementById('mp-add-host'); if(host) host.innerHTML = ''; }
+async function mpAddGo(){
+  const box = document.getElementById('mp-new-room'), err = document.getElementById('mp-new-err'), btn = document.getElementById('mp-add-go');
+  const name = box ? box.value.trim() : '';
+  if(name.length < 2){ if(err) err.textContent = 'Write the room’s name (2 to 40 letters).'; return; }
+  if(btn) btn.disabled = true;
+  try{
+    const area = await mpAddArea(name);
+    mpAddClose();
+    dwOpen(area.id);
+  }catch(e){ if(err) err.textContent = e.message; if(btn) btn.disabled = false; }
+}
+
+// ── THE CAMERA, INSIDE THE PAGE ──
+// The guest's QR is a link: <site>/manager#arrive=<token> (a table) or <site>/checkin?t=<token> (a visit, a prize, an
+// invite). The camera reads it here and opens it here (any address of ours: the token is what the server checks).
+// BarcodeDetector where the phone has it (Android's Chrome); elsewhere (iPhone) jsQR, this site's own copy, loaded the
+// first time the camera opens. Nothing is sent anywhere: the picture never leaves the phone.
+const CAM = { stream: null, timer: 0, detector: null, busy: false, said: 0, lib: null };
+function camHost(){
+  let host = document.getElementById('cam-host');
+  if(!host){ host = document.createElement('div'); host.id = 'cam-host'; document.body.appendChild(host); }
+  return host;
+}
+function camWhat(text){
+  let u;
+  try{ u = new URL(String(text || '').trim()); }catch(e){ return null; }
+  if(!/^https?:$/.test(u.protocol)) return null;
+  const arrive = /^#arrive=([0-9a-fA-F]{32})$/.exec(u.hash || '');
+  if(/^\/manager(\.html)?$/.test(u.pathname) && arrive) return { kind: 'arrive', token: arrive[1].toLowerCase() };
+  const t = u.searchParams.get('t');
+  if(/^\/checkin(\.html)?$/.test(u.pathname) && t && /^[A-Za-z0-9_-]{8,128}$/.test(t)) return { kind: 'checkin', token: t };
+  return null;
+}
+async function camOpen(){
+  const host = camHost();
+  host.innerHTML = '<div class="cam" role="dialog" aria-label="Scan a guest’s QR code">'
+    + '<video id="cam-video" playsinline muted autoplay></video><div class="cam-frame" aria-hidden="true"></div>'
+    + '<div class="cam-top"><b>Scan a guest’s QR code</b><span id="cam-say">Opening the camera…</span></div>'
+    + '<div class="cam-foot"><a class="cam-btn" href="/checkin">Type the code</a><button type="button" class="cam-btn main" onclick="camClose()">Close</button></div></div>';
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ camNoCamera('This browser cannot open the camera here.'); return; }
+  try{
+    CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  }catch(e){
+    camNoCamera(e && e.name === 'NotAllowedError'
+      ? 'The camera is blocked for this page. On an iPhone: Settings → Apps → Safari → Camera → Allow (in the app on your Home Screen, tap Camera again and choose Allow).'
+      : 'The camera did not open' + (e && e.name ? ' (' + e.name + ')' : '') + '.');
+    return;
+  }
+  if(!document.getElementById('cam-video')){ camStop(); return; }          // closed while asking
+  const v = document.getElementById('cam-video');
+  v.srcObject = CAM.stream;
+  try{ await v.play(); }catch(e){}
+  camSay('Point it at the QR code on the guest’s phone or in their email.');
+  try{
+    if('BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats()).includes('qr_code')) CAM.detector = new BarcodeDetector({ formats: ['qr_code'] });
+  }catch(e){ CAM.detector = null; }
+  if(!CAM.detector && !window.jsQR){
+    try{ await camLoadLib(); }catch(e){ camNoCamera('The QR reader did not load. Check the connection and try again.'); return; }
+  }
+  camLoop();
+}
+function camLoadLib(){
+  if(CAM.lib) return CAM.lib;
+  CAM.lib = new Promise(function(ok, no){
+    const s = document.createElement('script'); s.src = '/jsqr.min.js'; s.async = true;
+    s.onload = function(){ window.jsQR ? ok() : no(new Error('jsQR')); };
+    s.onerror = function(){ CAM.lib = null; no(new Error('jsQR')); };
+    document.head.appendChild(s);
+  });
+  return CAM.lib;
+}
+function camSay(text, bad){ const el = document.getElementById('cam-say'); if(el){ el.textContent = text; el.classList.toggle('bad', !!bad); } }
+function camNoCamera(why){
+  camStop();
+  const host = camHost();
+  host.innerHTML = '<div class="rv-scrim" onclick="camClose()"></div>'
+    + '<div class="rv-sheet mp-sheet" role="dialog" aria-label="Scan a guest’s QR code"><div class="rv-grab"></div>'
+    + '<div class="mp-sheet-t">Scan a guest’s QR code</div>'
+    + '<div class="mp-add-err" role="alert" style="margin-bottom:.6rem;">'+esc(why)+'</div>'
+    + '<ol class="mp-steps"><li>Open your phone’s <b>Camera</b> app.</li><li>Point it at the QR code on the guest’s phone or in their email.</li>'
+    + '<li>Tap the link that appears: this page opens with their table and an <b>Arrived</b> button.</li></ol>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt" onclick="camOpen()">Try again</button><button type="button" class="mp-opt quiet" onclick="camClose()">Close</button></div></div>';
+}
+function camLoop(){
+  clearTimeout(CAM.timer);
+  CAM.timer = setTimeout(async function(){
+    const v = document.getElementById('cam-video');
+    if(!v || !CAM.stream) return;
+    if(v.readyState >= 2 && v.videoWidth && !CAM.busy){
+      CAM.busy = true;
+      let text = null;
+      try{ text = await camRead(v); }catch(e){ text = null; }
+      CAM.busy = false;
+      if(text && camFound(text)) return;
+    }
+    camLoop();
+  }, 160);
+}
+let CAM_CANVAS = null;
+async function camRead(v){
+  if(CAM.detector){
+    const got = await CAM.detector.detect(v);
+    return got && got[0] ? got[0].rawValue : null;
+  }
+  if(!window.jsQR) return null;
+  const w = v.videoWidth, h = v.videoHeight, k = Math.min(1, 720 / Math.max(w, h));
+  const cw = Math.round(w * k), ch = Math.round(h * k);
+  if(!CAM_CANVAS) CAM_CANVAS = document.createElement('canvas');
+  CAM_CANVAS.width = cw; CAM_CANVAS.height = ch;
+  const g = CAM_CANVAS.getContext('2d', { willReadFrequently: true });
+  g.drawImage(v, 0, 0, cw, ch);
+  const img = g.getImageData(0, 0, cw, ch);
+  const code = window.jsQR(img.data, cw, ch, { inversionAttempts: 'dontInvert' });
+  return code ? code.data : null;
+}
+// A QR read: a table → this page with the table and Arrived; a visit, a prize or an invite → the check-in page.
+function camFound(text){
+  const w = camWhat(text);
+  if(!w){
+    if(Date.now() - CAM.said > 2500){ CAM.said = Date.now(); camSay('That QR code is not a table, a visit or a reward here.', true); }
+    return false;
+  }
+  if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){}
+  camClose();
+  if(w.kind === 'checkin'){ window.location.assign('/checkin?t=' + encodeURIComponent(w.token)); return true; }
+  const hash = '#arrive=' + w.token;
+  if(window.location.hash === hash) window.dispatchEvent(new HashChangeEvent('hashchange'));
+  else window.location.hash = hash;
+  return true;
+}
+function camStop(){
+  clearTimeout(CAM.timer); CAM.timer = 0; CAM.busy = false;
+  if(CAM.stream){ CAM.stream.getTracks().forEach(t => { try{ t.stop(); }catch(e){} }); CAM.stream = null; }
+}
+function camClose(){ camStop(); const host = document.getElementById('cam-host'); if(host) host.innerHTML = ''; }
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState !== 'visible' && CAM.stream) camClose(); });
+window.addEventListener('pagehide', function(){ camStop(); });
+
+// ── r49 · THE TIMELINE (Sebastian, 29 Oct design "the same night as a timeline", approved; 2 Nov: "we had that before,
+// the map and the timeline, what happened with it?") and the capacity hour by hour on top of it (30 Oct 16:54).
+// Map | Timeline at the top of the Map page. Each line is a table; a booking keeps its table for the hold (90 min);
+// busy tables run from when they sat down; the red line is now. On top, hour by hour: how full the rooms shown will be
+// (the seats of the tables taken at the busiest quarter of that hour — the busy ones, and the ones a booking holds).
+// Tap a bar: who, when, and "See it on the map".
+const TL = { room: 'all', K: 1.5, sx: 0, sy: 0, kept: false };   // 1.5 px per minute (90 px an hour); where the timeline was scrolled
+try{ MP.mode = sessionStorage.getItem('hf_mp_mode') === 'timeline' ? 'timeline' : 'map'; }catch(e){ MP.mode = 'map'; }
+function mpModeHtml(){
+  const b = (k, w) => '<button type="button" class="mp-mode-b'+(MP.mode===k?' on':'')+'" aria-pressed="'+(MP.mode===k)+'" onclick="mpSetMode(\''+k+'\')">'+w+'</button>';
+  return '<div class="mp-mode" role="group" aria-label="Map or timeline">' + b('map', 'Map') + b('timeline', 'Timeline') + '</div>';
+}
+function mpSetMode(k){
+  if(MP.mode === k) return;
+  MP.mode = k; MP.placing = null; MP.joining = null; TL.kept = false; mpHideToast();
+  try{ sessionStorage.setItem('hf_mp_mode', k); }catch(e){}
+  mpPaint();
+}
+// the restaurant's clock: minutes of the local day for a moment (one offset for the night: good enough for a service)
+function tlOffset(ms){
+  const p = {};
+  new Intl.DateTimeFormat('en-US', { timeZone: MP.data.timezone || 'America/New_York', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    .formatToParts(new Date(ms)).forEach(x => { p[x.type] = x.value; });
+  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute) - Math.floor(ms / 60000) * 60000;
+}
+function tlHourLabel(ms, off){ const h = new Date(ms + off).getUTCHours(); return (h % 12 || 12) + (h < 12 ? ' AM' : ' PM'); }
+function tlKind(atMs, now){ const d = (atMs - now) / 60000; return d < 0 ? 'late' : d <= 30 ? 'half' : d <= 60 ? 'hour' : 'later'; }
+// Everything the timeline draws, from the map's own data (the same placement every phone sees).
+function tlModel(){
+  const D = MP.data, now = mpNow(), HOLD = (Number(D.settings && D.settings.holdMinutes) || 90) * 60000, H = 3600000;
+  const rooms = (D.rooms || []).filter(r => r.drawn && (TL.room === 'all' || TL.room === r.id));
+  const off = tlOffset(now);
+  const byId = {}; (D.bookings || []).forEach(b => { byId[b.id] = b; });
+  const unitTables = (room, key) => { const u = mpUnits(room).find(x => x.key === key); return u ? u.members : [key]; };
+  // the bars, per table
+  const rows = {};                                              // "room:table" → bars
+  const add = (room, n, bar) => { (rows[room.id+':'+n] = rows[room.id+':'+n] || []).push(bar); };
+  let first = now - 60 * 60000, last = now + 3 * H;
+  rooms.forEach(room => {
+    (D.busy || []).filter(s => s.areaId === room.id).forEach(s => {
+      const since = Date.parse(s.since), end = Math.max(now, since + HOLD), b = s.bookingId ? byId[s.bookingId] : null;
+      first = Math.min(first, since); last = Math.max(last, end);
+      s.tables.forEach(n => add(room, n, { s: since, e: end, k: 'busy', who: b, session: s, table: n }));
+    });
+    (D.bookings || []).forEach(b => {
+      const key = D.place[b.id];
+      if(b.status !== 'booked' || key === undefined || key === null) return;
+      const members = unitTables(room, key);
+      if(!room.tables.some(t => t.n === members[0])) return;
+      const at = Date.parse(b.at);
+      last = Math.max(last, at + HOLD);
+      members.forEach(n => add(room, n, { s: at, e: at + HOLD, k: tlKind(at, now), who: b, table: n, members }));
+    });
+  });
+  const waiting = (D.waiting || []).map(id => byId[id]).filter(b => b && b.status === 'booked'
+    && (TL.room === 'all' || !b.areaId || b.areaId === TL.room));
+  waiting.forEach(b => { last = Math.max(last, Date.parse(b.at) + HOLD); });
+  const start = Math.floor((first + off) / H) * H - off, end = Math.min(start + 16 * H, Math.ceil((last + off) / H) * H - off);
+  // capacity, hour by hour (from this hour on): the seats of the tables taken at the busiest quarter of the hour
+  const seatsAll = rooms.reduce((n, r) => n + r.tables.reduce((m, t) => m + t.seats, 0), 0);
+  const taken = (t) => {
+    let used = 0;
+    rooms.forEach(room => room.tables.forEach(tb => {
+      if((rows[room.id+':'+tb.n] || []).some(x => x.s <= t && t < x.e)) used += tb.seats;
+    }));
+    return used;
+  };
+  const hours = [];
+  for(let h = start; h < end; h += H){
+    const past = h + H <= now;
+    let most = 0;
+    if(!past) for(let q = 0; q < 4; q++){ const t = Math.max(now, h + q * 15 * 60000); if(t < h + H) most = Math.max(most, taken(t)); }
+    hours.push({ at: h, label: tlHourLabel(h, off), past, used: most, pct: seatsAll ? Math.round(100 * Math.min(most, seatsAll) / seatsAll) : 0 });
+  }
+  return { now, off, start, end, rooms, rows, waiting, hours, seatsAll, HOLD };
+}
+function tlX(ms, M){ return Math.round((ms - M.start) / 60000 * TL.K); }
+function tlBarHtml(bar, M, extraCls){
+  const x = tlX(Math.max(bar.s, M.start), M) + 1, w = Math.max(34, tlX(Math.min(bar.e, M.end), M) - tlX(Math.max(bar.s, M.start), M) - 2);
+  const mins = Math.max(0, Math.floor((M.now - bar.s) / 60000));
+  const who = bar.who ? bar.who.first : 'Walk-in';
+  const label = bar.k === 'busy' ? who + ' · ' + mpMinutes(mins)
+    : who + ' · ' + bar.who.party + (bar.who.pin ? ' · Reserved' : '') + (bar.members && bar.members.length > 1 ? ' · ' + bar.members.join('+') : '');
+  const id = bar.k === 'busy' ? 's' + bar.session.id : 'b' + bar.who.id;
+  return '<button type="button" class="tl-bar '+bar.k+(extraCls||'')+'" style="left:'+x+'px;width:'+w+'px" data-bar="'+id+'" data-n="'+(bar.table || '')+'"'
+    + ' aria-label="'+esc((bar.table ? 'Table '+bar.table+': ' : '')+label)+'" onclick="tlTap(\''+id+'\','+(bar.table || 0)+')">'+esc(label)+'</button>';
+}
+function tlHtml(){
+  const D = MP.data;
+  const drawn = (D.rooms || []).filter(r => r.drawn);
+  if(TL.room !== 'all' && !drawn.some(r => r.id === TL.room)) TL.room = 'all';
+  const chips = '<div class="tl-rooms">' + [['all', 'All']].concat(drawn.map(r => [r.id, r.name])).map(([id, name]) =>
+    '<button type="button" class="mp-room'+(TL.room===id?' on':'')+'" onclick="tlPickRoom('+(id === 'all' ? '\'all\'' : id)+')">'+esc(name)+'</button>').join('') + '</div>';
+  if(!drawn.length) return chips.replace('<div class="tl-rooms">', '<div class="tl-rooms" hidden>') + '<div class="mp-undrawn"><b>No room is drawn yet.</b><br>The timeline shows the tables of the rooms drawn on the Map.</div>';
+  const hold = Number(D.settings && D.settings.holdMinutes) || 90;
+  return chips + '<div class="tl-note">Each line is a table. A booking keeps its table '+hold+' minutes; two can’t overlap.</div>'
+    + '<div class="tl-scroll" id="tl-scroll"></div>'
+    + '<div class="mp-legend tl-legend"><span><i class="later"></i>Later</span><span><i class="hour"></i>1 hour</span><span><i class="half"></i>30 min</span>'
+    + '<span><i class="busy"></i>Busy</span><span><i class="late"></i>Late</span><span class="tl-leg-cap">% = how full, hour by hour</span></div>';
+}
+function tlPaint(){
+  const box = document.getElementById('tl-scroll');
+  if(!box || !MP.data) return;
+  const M = tlModel(), W = tlX(M.end, M), LEFT = 62;
+  let html = '<div class="tl-grid" style="width:'+(LEFT + W)+'px">';
+  // the head: the hours, and under them how full each hour will be
+  html += '<div class="tl-head"><div class="tl-corner"><span>Full</span></div><div class="tl-hours" style="width:'+W+'px">';
+  M.hours.forEach(h => {
+    const x = tlX(h.at, M);
+    html += '<div class="tl-h" style="left:'+x+'px">'+esc(h.label)+'</div>'
+      + '<div class="tl-cap '+(h.past ? 'past' : capLevel(h.pct))+'" style="left:'+(x + 3)+'px;width:'+(TL.K * 60 - 6)+'px"'
+      + (h.past ? ' aria-label="'+esc(h.label)+': past"' : ' aria-label="'+esc(h.label)+': '+h.pct+'% full, '+h.used+' of '+M.seatsAll+' seats"')+'>'
+      + (h.past ? '·' : '<i style="width:'+Math.min(100, h.pct)+'%"></i><b>'+h.pct+'%</b>')+'</div>';
+  });
+  html += '<div class="tl-now-chip" style="left:'+tlX(M.now, M)+'px">'+esc(mpClock().replace(/\s?[AP]M$/, ''))+'</div></div></div>';
+  // the lines: hour lines, the now line
+  M.hours.forEach(h => { html += '<div class="tl-vline" style="left:'+(LEFT + tlX(h.at, M))+'px"></div>'; });
+  html += '<div class="tl-nowline" style="left:'+(LEFT + tlX(M.now, M))+'px"></div>';
+  // "No table yet"
+  if(M.waiting.length){
+    html += '<div class="tl-group red"><span>No table yet · '+M.waiting.length+'</span></div>';
+    M.waiting.forEach(b => {
+      const at = Date.parse(b.at);
+      html += '<div class="tl-row"><div class="tl-n">–</div><div class="tl-lane" style="width:'+W+'px">'
+        + tlBarHtml({ s: at, e: at + M.HOLD, k: tlKind(at, M.now), who: b, table: 0 }, M, ' waiting') + '</div></div>';
+    });
+  }
+  M.rooms.forEach(room => {
+    html += '<div class="tl-group"><span>'+esc(room.name)+' · '+room.tables.length+'</span></div>';
+    room.tables.slice().sort((a, b) => a.n - b.n).forEach(t => {
+      html += '<div class="tl-row" data-row="'+t.n+'"><div class="tl-n"><b>'+t.n+'</b><small>'+t.seats+'</small></div><div class="tl-lane" style="width:'+W+'px">'
+        + (M.rows[room.id+':'+t.n] || []).map(bar => tlBarHtml(bar, M)).join('') + '</div></div>';
+    });
+  });
+  html += '</div>';
+  box.innerHTML = html;
+  // the map asks again every 10 seconds and draws itself again when something changed: the timeline stays where the
+  // finger left it (the first time, and after Map | Timeline or a room chip: now, a third from the left)
+  if(TL.kept){ box.scrollLeft = TL.sx; box.scrollTop = TL.sy; } else tlScrollToNow();
+  box.onscroll = function(){ TL.sx = box.scrollLeft; TL.sy = box.scrollTop; TL.kept = true; };
+}
+function tlScrollToNow(){
+  const box = document.getElementById('tl-scroll');
+  if(!box || !MP.data) return;
+  const M = tlModel();
+  box.scrollLeft = Math.max(0, tlX(M.now, M) - (box.clientWidth - 62) * 0.35);
+  TL.sx = box.scrollLeft; TL.sy = box.scrollTop; TL.kept = true;
+}
+function tlPickRoom(id){ if(TL.room === id) return; TL.room = id; TL.kept = false; mpCloseSheet(); mpPaint(); }
+// A bar tapped: who, when — and the map with that room.
+function tlTap(id, table){
+  const D = MP.data, now = mpNow(), byId = {};
+  (D.bookings || []).forEach(b => { byId[b.id] = b; });
+  const room = (D.rooms || []).find(r => r.tables.some(t => t.n === table)) || null;
+  const t = room ? room.tables.find(x => x.n === table) : null;
+  const where = t ? t.seats + ' seats · ' + room.name : '';
+  const toMap = room ? [mpOpt('See it on the map', 'main', function(){ mpCloseSheet(); MP.room = room.id; mpSetMode('map'); })] : [];
+  if(id[0] === 's'){
+    const s = (D.busy || []).find(x => 's' + x.id === id); if(!s) return;
+    const b = s.bookingId ? byId[s.bookingId] : null, mins = Math.max(0, Math.floor((now - Date.parse(s.since)) / 60000));
+    mpOpenSheet((s.tables.length > 1 ? 'Tables ' : 'Table ') + s.tables.join('+'), where + ' · busy ' + mpMinutes(mins),
+      [b ? b.name + ' · ' + rvPeople(b.party) + ' · since ' + mpClockAt(s.since) : 'A walk-in, since ' + mpClockAt(s.since)], toMap);
+    return;
+  }
+  const b = byId[id.slice(1)]; if(!b) return;
+  const late = Math.floor((now - Date.parse(b.at)) / 60000);
+  const key = D.place[b.id];
+  if(key === undefined || key === null){
+    mpOpenSheet(b.name, rvPeople(b.party) + ' · ' + mpShort(b.label),
+      ['No table can take ' + rvPeople(b.party) + ' at ' + b.label + ' yet. On the map, tap this booking under "No table yet", then a table.'],
+      [mpOpt('See it on the map', 'main', function(){ mpCloseSheet(); if(b.areaId) MP.room = b.areaId; mpSetMode('map'); })]);
+    return;
+  }
+  mpOpenSheet('Table ' + (table || key), where,
+    [b.name + ' · ' + rvPeople(b.party) + ' · ' + b.label + (late > 0 ? ' · late ' + late + ' min' : '')
+      + (b.pin ? ' · Reserved: kept on this table' : ' · not Reserved: moves if this table gets busy')], toMap);
+}
+
+// ── r49 · the day: "In use now" as a fifth tile (Sebastian, 2 Nov, his picture: next to Tables · People · Arrived ·
+// Requests; the r48 row under Type · Map · Camera is gone — the hours are on the Timeline). Today only.
+function rvCapTile(d){
+  if(!d || d.date !== RV.date || d.date !== d.today) return '';
+  const seats = (d.areas || []).reduce((n, a) => n + (Number(a.seats) || 0), 0);
+  if(!seats) return '';
+  const u = d.inUse ? { used: d.inUse.used, of: d.inUse.of || seats }
+                    : { used: (d.bookings || []).filter(b => b.status === 'seated').reduce((n, b) => n + b.party, 0), of: seats };
+  const p = capPct(u), lv = capLevel(p);
+  return '<div class="rv-tile cap-tile" role="img" aria-label="In use now: '+p+'% full, '+u.used+' of '+u.of+' seats">'
+    + '<b class="'+lv+'">'+p+'%</b><span>In use</span>'      // r49 (2 Nov 11:21): the word on the same line as the other tiles' words
+    + '<span class="cap-mini"><i class="'+lv+'" style="width:'+Math.min(100, p)+'%"></i></span><small>'+u.used+' of '+u.of+' seats</small></div>';
 }
 
 // ── GUEST MESSAGES (r21) ──
