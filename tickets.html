@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+// r50 · The tickets. /tickets?o=<order> — the buyer's page (Square sends them back here after paying, and the email
+// links here): one ticket per person, each with its own QR (the restaurant's logo in the middle) and its own Share
+// (Sebastian, 2 Nov: "separate tickets with the possibility to share them"). /tickets?t=<ticket> — one shared ticket.
+// Each ticket lets one person in, once. The server asks Square whether the order is paid (api/_lib/events.js).
+window.hfTk = (function () { try { var q = new URLSearchParams(location.search); return { o: q.get('o') || '', t: q.get('t') || '' }; } catch (e) { return { o: '', t: '' }; } })();
+window.hfTkAsk = (function () {
+  try {
+    return fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(window.hfTk.o ? { action: 'tickets_get', o: window.hfTk.o } : { action: 'tickets_get', t: window.hfTk.t }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .catch(function () { return { ok: false, d: { error: 'Could not reach the site. Check your connection and try again.' } }; });
+  } catch (e) { return null; }
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<meta name="theme-color" content="#140D0A">
+<meta name="referrer" content="no-referrer">
+<title>My tickets</title>
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root { --red:#B01015; --red-bright:#E23B2E; --white:#FCF9F4; --muted:#B9AC9F; --line:rgba(252,249,244,.14); --ink:#140D0A; --card:rgba(252,249,244,.06);
+          --serif:'Cormorant Garamond', Georgia, serif; --sans:'Inter','Segoe UI',system-ui,sans-serif; }
+  html { background:var(--ink); }
+  body { min-height:100vh; font-family:var(--sans); color:var(--white); background:radial-gradient(120% 60% at 50% 0%, #2A1712 0%, var(--ink) 70%); -webkit-font-smoothing:antialiased; }
+  .top { position:sticky; top:0; z-index:5; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; height:58px; background:rgba(20,13,10,.94); border-bottom:1px solid rgba(226,59,46,.55); }
+  .top a { color:var(--red-bright); font-size:1.7rem; text-decoration:none; text-align:center; line-height:58px; }
+  .top h1 { font-family:var(--serif); font-weight:600; font-size:1.7rem; text-align:center; }
+  main { max-width:520px; margin:0 auto; padding:22px 16px 44px; text-align:center; }
+  .k { font-size:.7rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:#F08C7F; }
+  h2 { font-family:var(--serif); font-weight:700; font-size:2.4rem; line-height:1.1; margin:6px 0 4px; }
+  .sub { color:#E9E0D3; font-size:1rem; line-height:1.55; }
+  .tk { position:relative; margin:22px auto 0; max-width:320px; border:1px solid var(--line); background:var(--card); border-radius:20px; padding:14px 14px 16px; }
+  .tk-n { font-size:.66rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .qr { background:#FCF9F4; border-radius:16px; padding:12px; } .qr svg { display:block; width:100%; height:auto; }
+  .tk.used .qr, .tk.void .qr { display:none; }
+  .tk-used { padding:40px 10px; font-family:var(--serif); font-size:1.5rem; color:var(--muted); }
+  .share { display:block; width:100%; margin-top:12px; padding:13px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--white); font-family:var(--sans);
+           font-size:.76rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
+  .door { color:#E9E0D3; font-size:.95rem; margin:18px auto 0; max-width:360px; line-height:1.5; }
+  .money { text-align:left; border:1px solid var(--line); background:var(--card); border-radius:16px; padding:14px 16px; margin-top:22px; }
+  .money div { display:flex; justify-content:space-between; padding:3px 0; color:#E9E0D3; } .money .t { color:var(--white); font-weight:600; padding-top:6px; }
+  .btn { display:block; width:100%; margin-top:16px; padding:17px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--white); font-family:var(--sans);
+         font-size:.82rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; text-decoration:none; }
+  .btn.main { background:var(--red-bright); border-color:var(--red-bright); }
+  .fine { color:var(--muted); font-size:.82rem; margin-top:14px; line-height:1.5; }
+  .state { border:1px solid var(--line); background:var(--card); border-radius:16px; padding:20px; margin-top:16px; }
+  .state b { display:block; font-family:var(--serif); font-size:1.7rem; } .state span { display:block; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .skel { height:300px; border-radius:18px; background:rgba(252,249,244,.06); }
+</style>
+</head>
+<body>
+<div class="top"><a href="/" aria-label="Back to the restaurant">&#8249;</a><h1 id="tk-title">My tickets</h1><span></span></div>
+<main id="tk"><div class="skel"></div></main>
+<script>
+var TK = { d: null, tries: 0, timer: 0 };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function ticketHtml(t, e, shareable) {
+  var cls = t.status === 'void' ? ' void' : t.usedAt ? ' used' : '';
+  return '<div class="tk' + cls + '" data-seq="' + t.seq + '"><div class="tk-n">Ticket ' + t.seq + ' of ' + t.of + '</div>'
+    + (t.status === 'void' ? '<div class="tk-used">Cancelled</div>' : t.usedAt ? '<div class="tk-used">Used at ' + esc(t.usedClock) + '</div>' : '')
+    + (t.qr && !t.usedAt ? '<div class="qr" role="img" aria-label="QR code of ticket ' + t.seq + '">' + t.qr + '</div>' : '')
+    + (shareable && t.qr && !t.usedAt ? '<button type="button" class="share" data-share="' + t.seq + '" onclick="share(' + t.seq + ')">Share this ticket</button>' : '')
+    + '</div>';
+}
+function paint() {
+  var host = document.getElementById('tk'), d = TK.d;
+  if (!d) return;
+  if (d.error) { host.innerHTML = '<div class="state"><b>No tickets here</b><span>' + esc(d.error) + '</span></div>'; return; }
+  var e = d.event, o = d.order;
+  var whenLine = esc(e.short) + ' · ' + esc(e.hours) + (e.room ? ' · ' + esc(e.room) : '');
+  if (d.view === 'ticket') {
+    document.getElementById('tk-title').textContent = 'Your ticket';
+    var t = d.tickets[0];
+    if (e.cancelled) { host.innerHTML = '<div class="state"><b>This event was cancelled</b><span>' + esc(e.name) + '</span></div>'; return; }
+    host.innerHTML = '<div class="k">' + esc(d.restaurant.name) + '</div><h2>' + esc(e.name) + '</h2><p class="sub">' + whenLine + '</p>'
+      + (o.status === 'paid' ? ticketHtml(t, e, false) : '<div class="state"><b>This ticket does not work</b><span>It was refunded or cancelled.</span></div>')
+      + (o.status === 'paid' && !t.usedAt && t.status === 'valid' ? '<p class="door">Show it at the door. It lets one person in, once.' + (e.adultsOnly ? ' 21 and over: bring an ID.' : '') + '</p>' : '')
+      + '<button type="button" class="btn" onclick="cal()">Add to calendar</button>'
+      + (d.restaurant.address ? '<p class="fine">' + esc(d.restaurant.address) + '</p>' : '');
+    return;
+  }
+  document.title = 'Tickets · ' + e.name;
+  if (e.cancelled) { host.innerHTML = '<div class="state"><b>This event was cancelled</b><span>' + esc(e.name) + '. The restaurant refunds you on Square.</span></div>'; return; }
+  if (o.status === 'held') {
+    host.innerHTML = '<div class="k">' + esc(d.restaurant.name) + '</div><h2>One moment…</h2><p class="sub">Waiting for Square to say your payment went through.</p>'
+      + (o.payUrl ? '<a class="btn main" href="' + esc(o.payUrl) + '">Back to Square to pay</a>' : '')
+      + '<p class="fine">Your ' + (o.quantity === 1 ? 'ticket is' : o.quantity + ' tickets are') + ' kept for you for a few minutes.</p>';
+    return;
+  }
+  if (o.status === 'expired' || o.status === 'cancelled') {
+    host.innerHTML = '<div class="state"><b>Not paid</b><span>This order was not paid in time, so the tickets went back on sale.</span></div>'
+      + '<a class="btn main" href="' + esc(e.link) + '">See the event</a>';
+    return;
+  }
+  if (o.status === 'refunded') {
+    host.innerHTML = '<div class="state"><b>Refunded</b><span>' + esc(o.refunded || '') + ' went back to your card. These tickets no longer open the door.</span></div>';
+    return;
+  }
+  var n = o.quantity;
+  host.innerHTML = '<div class="k">Paid · Thank you</div><h2>You’re in' + (o.firstName ? ', ' + esc(o.firstName) : '') + '!</h2>'
+    + '<p class="sub">' + n + ' ' + (n === 1 ? 'ticket' : 'tickets') + ' · ' + esc(e.name) + '<br>' + whenLine + '</p>'
+    + d.tickets.map(function (t) { return ticketHtml(t, e, n > 1); }).join('')
+    + '<p class="door">' + (n > 1 ? 'Send each friend their own ticket. ' : '') + 'Show it at the door: each ticket lets one person in, once.' + (e.adultsOnly ? ' 21 and over: bring an ID.' : '') + '</p>'
+    + '<div class="money"><div><span>' + n + ' × ' + esc(o.unit) + '</span><span>' + esc(o.sub) + '</span></div>'
+    + (o.tax ? '<div><span>Tax</span><span>' + esc(o.tax) + '</span></div>' : '')
+    + '<div class="t"><span>Paid on Square' + (o.taxMode === 'included' ? ' (tax included)' : '') + '</span><span>' + esc(o.total) + '</span></div>'
+    + (o.refunded ? '<div><span>Refunded</span><span>' + esc(o.refunded) + '</span></div>' : '') + '</div>'
+    + '<button type="button" class="btn" onclick="cal()">Add to calendar</button>'
+    + '<p class="fine">' + (o.emailed ? 'We emailed your tickets too.' : 'Your tickets are also on their way by email.') + (d.restaurant.address ? '<br>' + esc(d.restaurant.address) : '') + '</p>';
+}
+function share(seq) {
+  var t = TK.d.tickets.find(function (x) { return x.seq === seq; }); if (!t) return;
+  var e = TK.d.event, text = 'Your ticket for ' + e.name + ' · ' + e.short + ', ' + e.hours;
+  var done = function () { var b = document.querySelector('[data-share="' + seq + '"]'); if (b) { b.textContent = 'Copied ✓'; setTimeout(function () { b.textContent = 'Share this ticket'; }, 2500); } };
+  if (navigator.share) { navigator.share({ title: e.name, text: text, url: t.link }).catch(function () {}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(t.link).then(done, function () { window.prompt('Copy this link:', t.link); });
+  else window.prompt('Copy this link:', t.link);
+}
+function cal() {
+  var e = TK.d.event, r = TK.d.restaurant;
+  var z = function (iso) { return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); };
+  var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//The Hungry Fork//Tickets//EN', 'BEGIN:VEVENT', 'UID:' + e.key + '-' + Date.now() + '@hungryfork',
+    'DTSTAMP:' + z(new Date().toISOString()), 'DTSTART:' + z(e.startsAt), 'DTEND:' + z(e.endsAt), 'SUMMARY:' + (e.name + ' · ' + r.name).replace(/[,;\n]/g, ' '),
+    'LOCATION:' + String(r.address || '').replace(/[,;\n]/g, ' '), 'DESCRIPTION:' + location.href, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.download = 'event.ics';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function take(x) {
+  TK.d = x.ok ? x.d : { error: (x.d && x.d.error) || 'This link does not open any tickets.' };
+  paint();
+  // Back from Square: the payment may take a few seconds to reach Square's records — ask again (a minute at most).
+  if (TK.d.order && TK.d.order.status === 'held' && TK.tries < 20) { TK.tries += 1; clearTimeout(TK.timer); TK.timer = setTimeout(load, 3000); }
+}
+function load() {
+  fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(window.hfTk.o ? { action: 'tickets_get', o: window.hfTk.o } : { action: 'tickets_get', t: window.hfTk.t }) })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    .then(take).catch(function () { take({ ok: false, d: { error: 'Could not reach the site. Check your connection and try again.' } }); });
+}
+if (window.hfTkAsk) window.hfTkAsk.then(take); else load();
+</script>
+</body>
+</html>
