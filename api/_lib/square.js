@@ -28,7 +28,8 @@ const TIMEOUT_MS = 9000;
 export function squareConfig() {
   const appId = String(process.env.SQUARE_APP_ID || '').trim();
   const secret = String(process.env.SQUARE_APP_SECRET || '').trim();
-  const ready = /^(sandbox-)?sq0idp-[A-Za-z0-9_-]{6,}$/.test(appId) && secret.length >= 16;
+  // Square's Application IDs: sq0idp-… (production) and sandbox-sq0idb-… (Sandbox); the letter after sq0id is not fixed
+  const ready = /^(sandbox-)?sq0id[a-z]-[A-Za-z0-9_-]{6,}$/.test(appId) && secret.length >= 16;
   const sandbox = appId.startsWith('sandbox-');
   // SQUARE_BASE only on the test bench (a pretend Square); never set in Vercel.
   const base = String(process.env.SQUARE_BASE || '').trim()
