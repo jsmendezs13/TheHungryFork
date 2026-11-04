@@ -1040,6 +1040,39 @@
   .m-tab { min-width:0; }
   @media (max-width:420px){ .m-tabbar .m-tab { letter-spacing:.05em; padding:.6rem .32rem; font-size:.63rem; } }
   @media (max-width:340px){ .m-tabbar .m-tab { letter-spacing:.02em; padding:.6rem .2rem; font-size:.58rem; } }
+
+  /* ── r51 · month / day / year and AM / PM boxes (the browser's own box stays underneath, hidden) ── */
+  .us-native { position:absolute !important; width:1px !important; height:1px !important; opacity:0 !important; pointer-events:none !important;
+               margin:0 !important; padding:0 !important; border:0 !important; overflow:hidden; }
+  .ev-f, .m-field, .rv-svc, .rv-stack { position:relative; }
+  .us-box { display:flex; flex-wrap:wrap; gap:.4rem; width:100%; min-width:0; }
+  .ev-f > span.us-box { display:flex; font-size:inherit; font-weight:400; letter-spacing:normal; text-transform:none; color:inherit; margin:0; }   /* not a field's title */
+  .us-box .m-select { width:auto; min-width:0; padding-right:1.6rem; }
+  .us-date .us-m { flex:1.7 1 0; } .us-date .us-dd { flex:.9 1 0; } .us-date .us-y { flex:1.15 1 0; }
+  .us-time { display:flex; } .us-time .us-tm { flex:1 1 auto; width:100%; }
+  .us-w { flex-basis:100%; color:var(--muted); font-size:.74rem; min-height:1em; }
+  .rv-svc .us-box { width:auto; flex:1 1 0; } .rv-svc .us-time .us-tm { width:100%; }
+  .ev-f.bad .us-box .m-select { border-color:var(--red); }
+
+  /* ── r51 · the event's photo in the form ── */
+  .ev-photo .ev-ph { width:100%; aspect-ratio:16 / 10; border-radius:12px; border:1px solid var(--border); background:#170E0B center 40% / cover no-repeat; }
+  .ev-ph-acts { display:flex; align-items:center; gap:.8rem; margin-top:.5rem; }
+  .ev-ph-btn { display:inline-block; border:1px solid var(--border); background:#fff; border-radius:999px; padding:.5rem .9rem; font-size:.66rem; font-weight:700;
+               letter-spacing:.12em; text-transform:uppercase; color:var(--text); cursor:pointer; }
+  .ev-ph-rm { background:none; border:none; padding:.3rem; color:var(--red); font-size:.82rem; text-decoration:underline; cursor:pointer; font-family:var(--sans); }
+  .ev-ph-add { display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:16 / 7; border:1.5px dashed #D2C2B0; border-radius:12px;
+               background:#FCF8F2; color:var(--text); font-size:.86rem; font-weight:600; cursor:pointer; }
+  .ev-ph-add.busy { cursor:default; color:var(--muted); font-weight:500; }
+  .ev-photo .ev-hint { display:block; }
+
+  /* ── r51 · share the link (a computer): the picture, Copy the link, Save the picture ── */
+  .ev-share-wrap { position:fixed; inset:0; z-index:200; background:rgba(20,13,10,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .ev-share { background:#FBF8F3; border-radius:18px; width:min(420px, 100%); max-height:calc(100vh - 32px); overflow:auto; padding:16px; box-shadow:0 18px 50px rgba(0,0,0,.35); }
+  .ev-share-h { display:flex; justify-content:space-between; align-items:center; gap:.6rem; margin-bottom:.7rem; font-size:.95rem; }
+  .ev-share-x { background:none; border:none; font-size:1.6rem; line-height:1; cursor:pointer; color:var(--text); padding:0 .3rem; }
+  .ev-share-img { display:block; width:100%; border-radius:12px; }
+  .ev-share-link { margin:.7rem 0 .2rem; font-size:.8rem; color:var(--muted); word-break:break-all; }
+  .ev-share-btns { display:flex; gap:.5rem; margin-top:.6rem; } .ev-share-btns .m-btn { flex:1 1 0; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; line-height:1.35; padding:.85rem 1rem; }   /* a button and a link: the same two lines */
   .rv-moved { font-size:.8rem; color:var(--muted); text-align:center; margin:.4rem 0 1.2rem; }
   .rv-link { border:none; background:none; padding:0; font:inherit; color:var(--red); font-weight:700; text-decoration:underline; cursor:pointer; }
 </style>
@@ -6020,7 +6053,7 @@ async function evStart(){
   try{
     const d = await rvApi({action:'ev_list'});
     if(EV.rid !== RESTAURANT.id) return;
-    Object.assign(EV, { list:d.events || [], square:d.square || null, rooms:d.rooms || [], canEdit:!!d.canEdit, loaded:true });
+    Object.assign(EV, { list:d.events || [], square:d.square || null, rooms:d.rooms || [], canEdit:!!d.canEdit, loaded:true, tz:d.timezone || null });
   }catch(e){ EV.error = e.message; EV.reason = e.data && e.data.reason; }
   EV.loading = false; evPaint();
 }
@@ -6077,26 +6110,29 @@ function evConflictsHtml(c){
     + '. Move them to another room or call them. New online bookings already skip that room then.'
     + '<button type="button" class="rv-link" onclick="EV.conflicts=null;evPaint()">OK</button></div>';
 }
-async function evShare(id){
-  const e = EV.list.find(x => x.id === id); if(!e) return;
-  try{ if(navigator.share){ await navigator.share({ title:e.name, text:e.name+' · '+e.short+', '+e.hours, url:e.link }); return; } }catch(err){ if(err && err.name === 'AbortError') return; }
-  try{ await navigator.clipboard.writeText(e.link); }catch(err){ showToast('Copy this link: '+e.link); return; }
-  const b = document.querySelector('[data-share="'+id+'"]'); if(b){ b.textContent = 'Copied ✓'; setTimeout(() => { if(b.isConnected) b.textContent = 'Share the link'; }, 2500); }
-}
+// evShare: r51.js (the link with a picture of the event)
 
 // ── the form ──
-function evNext(days){ const d = new Date(Date.now() + days * 86400000); return d.toISOString().slice(0, 10); }
+// r51: from the restaurant's today (its time zone), not the UTC day (after 7 PM in New York that was already tomorrow)
+function evToday(){
+  try{ if(EV.tz) return new Intl.DateTimeFormat('en-CA', { timeZone:EV.tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date()); }catch(e){ /* below */ }
+  if(typeof RV !== 'undefined' && RV.today) return RV.today;
+  const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function evNext(days){ const base = new Date(evToday() + 'T12:00:00'); base.setDate(base.getDate() + days);
+  return base.getFullYear() + '-' + String(base.getMonth() + 1).padStart(2, '0') + '-' + String(base.getDate()).padStart(2, '0'); }
 function evNew(){
   if(!EV.canEdit) return;
   EV.form = { id:null, name:'', date:evNext(7), start:'19:00', end:'22:00', areaId:'', takeRoom:false, price:'', total:'40', taxMode:'added', taxRate:'8.875',
-              max:'10', closeHours:'2', about:'', included:'', adultsOnly:false, status:'draft' };
+              max:'10', closeHours:'2', about:'', included:'', adultsOnly:false, status:'draft', photo:null, photoNew:null, photoRemove:false };
   EV.fieldErr = null; EV.view = 'edit'; evPaint(); window.scrollTo(0, 0);
 }
 function evEdit(id){
   const e = EV.list.find(x => x.id === id); if(!e) return;
   EV.form = { id:e.id, name:e.name, date:e.date, start:e.start, end:e.end, areaId:e.areaId ? String(e.areaId) : '', takeRoom:e.takeRoom,
               price:(e.priceCents / 100).toFixed(2).replace(/\.00$/, ''), total:String(e.total), taxMode:e.taxMode, taxRate:String(e.taxRate),
-              max:String(e.max), closeHours:String(e.closeHours), about:e.about, included:e.included, adultsOnly:e.adultsOnly, status:e.status, sold:e.sold };
+              max:String(e.max), closeHours:String(e.closeHours), about:e.about, included:e.included, adultsOnly:e.adultsOnly, status:e.status, sold:e.sold,
+              photo:e.photo || null, photoNew:null, photoRemove:false };
   EV.fieldErr = null; EV.view = 'edit'; evPaint(); window.scrollTo(0, 0);
 }
 function evF(k, v){ if(EV.form) EV.form[k] = v; }
@@ -6123,6 +6159,7 @@ function evFormHtml(){
   return '<button type="button" class="rv-back" onclick="evBack()">&#8249; Events</button>'
     + '<div class="m-card ev-form"><div class="m-h">'+(f.id ? 'Edit event' : 'New event')+'</div>'
     + inp('name', 'Name', 'text', 'maxlength="80" placeholder="Wine & Steak Night"')
+    + evPhotoField(f, err)
     + '<div class="ev-row">'+inp('date', 'Day', 'date')+'</div>'
     + '<div class="ev-row two">'+inp('start', 'Starts', 'time')+inp('end', 'Ends', 'time')+'</div>'
     + rooms
@@ -6133,7 +6170,7 @@ function evFormHtml(){
     + '<label class="ev-f'+bad('about')+'"><span>About it</span><textarea class="m-input" rows="3" maxlength="1200" data-f="about" oninput="evF(\'about\', this.value)">'+esc(f.about)+'</textarea></label>'
     + '<label class="ev-f'+bad('included')+'"><span>What’s included (one per line)</span><textarea class="m-input" rows="3" maxlength="600" data-f="included" oninput="evF(\'included\', this.value)">'+esc(f.included)+'</textarea></label>'
     + sw('adultsOnly', '21 and over', 'The page and the tickets say so')
-    + (err.field && !['name','date','start','end','areaId','price','total','taxMode','taxRate','max','closeHours','about','included'].includes(err.field) ? '<div class="ev-err" role="alert">'+esc(err.error)+'</div>' : '')
+    + (err.field && !['name','photo','date','start','end','areaId','price','total','taxMode','taxRate','max','closeHours','about','included'].includes(err.field) ? '<div class="ev-err" role="alert">'+esc(err.error)+'</div>' : '')
     + '<div class="ev-btns">'
     +   (pub ? '<button type="button" class="m-btn" '+(EV.busy?'disabled':'')+' onclick="evSave(false)">Save</button>'
              : '<button type="button" class="m-btn quiet" '+(EV.busy?'disabled':'')+' onclick="evSave(false)">Save draft</button>'
@@ -6142,7 +6179,7 @@ function evFormHtml(){
     + (f.id && f.status !== 'cancelled' ? '<button type="button" class="ev-cancel" onclick="evCancelEvent('+f.id+')">Cancel this event</button>' : '')
     + '</div>';
 }
-function evBack(){ EV.view = 'list'; EV.form = null; EV.guests = null; EV.fieldErr = null; evPaint(); window.scrollTo(0, 0); evStart(); }
+function evBack(){ if(EV.form && EV.form.photoNew) URL.revokeObjectURL(EV.form.photoNew.url); EV.view = 'list'; EV.form = null; EV.guests = null; EV.fieldErr = null; evPaint(); window.scrollTo(0, 0); evStart(); }
 async function evSave(publish){
   const f = EV.form; if(!f || EV.busy) return;
   document.querySelectorAll('#ev-root [data-f]').forEach(el => { if(el.tagName !== 'BUTTON') f[el.dataset.f] = el.value; });
@@ -6152,6 +6189,9 @@ async function evSave(publish){
       takeRoom:!!f.takeRoom, price:f.price, total:Number(f.total), taxMode:f.taxMode, taxRate:f.taxMode === 'none' ? '0' : f.taxRate, max:Number(f.max),
       closeHours:Number(f.closeHours), about:f.about, included:f.included, adultsOnly:!!f.adultsOnly } });
     let saved = d.event;
+    f.id = saved.id;
+    const photoProblem = await evPhotoAfterSave(f, saved.id);         // r51: the photo goes with the saved event
+    if(photoProblem) showToast('The event is saved, but not its photo: ' + photoProblem);
     if(publish){
       try{ saved = (await rvApi({ action:'ev_status', id:saved.id, to:'published' })).event; }
       catch(e){ EV.busy = false; f.id = saved.id; f.status = saved.status; EV.fieldErr = { field:'publish', error:e.message }; evPaint(); return; }
@@ -6426,6 +6466,328 @@ function sqFromHash(){
   if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#reservations');
   return true;
 }
+
+// ── r51 · THE EVENT'S PHOTO, THE SHARED PICTURE, MONTH / DAY / YEAR (Sebastian, 3 Nov 2026) ──
+// 18:24 "We need to change to month first, then day, and the year at the end instead of day month and year"
+// 18:25 "would it be possible have a photo as the another invitation? That would be cool" → the 4 pictures →
+// 18:44 "I love the pictures you chose".
+// 1 · Every date and time box of this page shows month / day / year and AM/PM, whatever the browser's language: the
+//     browser's own box stays underneath (it keeps the value the code reads, YYYY-MM-DD and HH:MM), hidden, and
+//     three lists (or one, for a time) sit on it. Boxes drawn later are dressed too (a watcher on the page).
+// 2 · The event's photo: made on the phone (two JPEGs: the photo, and 1200 × 630 for link previews), sent straight to
+//     Storage, checked by the server (api/_lib/evphoto.js).
+// 3 · "Share the link": a picture of the event (its photo, name, day, price) goes with the link; on a computer, a
+//     small window with the picture, Copy the link and Save the picture.
+
+// ── 1 · month / day / year, AM / PM ──
+const US_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];   // short: they fit a 320-px phone (the day in words under them)
+const usPad = n => String(n).padStart(2, '0');
+function usTimeWords(v){
+  const m = /^(\d{2}):(\d{2})/.exec(String(v || '')); if(!m) return '';
+  const h = Number(m[1]);
+  return (h % 12 || 12) + ':' + m[2] + ' ' + (h < 12 ? 'AM' : 'PM');
+}
+function usDateWords(v){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v || ''))) return '';
+  const d = new Date(v + 'T12:00:00');
+  return isNaN(d) ? '' : d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+const usDaysIn = (y, m) => new Date(y || 2024, m, 0).getDate();   // m: 1..12 (no year yet: 29 days in February)
+function usDateHtml(inp){
+  const v = /^(\d{4})-(\d{2})-(\d{2})$/.exec(inp.value || '');
+  const y = v ? Number(v[1]) : 0, m = v ? Number(v[2]) : 0, d = v ? Number(v[3]) : 0;
+  const now = new Date().getFullYear(), minY = /^\d{4}/.test(inp.min || '') ? Number(inp.min.slice(0, 4)) : now;
+  const years = []; for(let k = Math.min(y || now, minY, now); k <= Math.max(y || now, now + 2); k++) years.push(k);
+  const opt = (val, words, on) => '<option value="'+val+'"'+(on ? ' selected' : '')+'>'+words+'</option>';
+  const label = inp.getAttribute('aria-label') || 'Day';
+  return '<select class="m-select us-m" aria-label="'+esc(label)+': month">'+opt('', 'Month', !m)+US_MONTHS.map((w, i) => opt(i + 1, w, m === i + 1)).join('')+'</select>'
+    + '<select class="m-select us-dd" aria-label="'+esc(label)+': day">'+opt('', 'Day', !d)+Array.from({ length:usDaysIn(y, m || 1) }, (_, i) => opt(i + 1, i + 1, d === i + 1)).join('')+'</select>'
+    + '<select class="m-select us-y" aria-label="'+esc(label)+': year">'+opt('', 'Year', !y)+years.map(k => opt(k, k, y === k)).join('')+'</select>'
+    + '<small class="us-w">'+esc(usDateWords(inp.value))+'</small>';
+}
+function usTimeHtml(inp){
+  const v = /^\d{2}:\d{2}/.test(inp.value || '') ? inp.value.slice(0, 5) : '';
+  const list = []; for(let k = 0; k < 24 * 60; k += 15) list.push(usPad(Math.floor(k / 60)) + ':' + usPad(k % 60));
+  if(v && !list.includes(v)){ list.push(v); list.sort(); }
+  return '<select class="m-select us-tm" aria-label="'+esc(inp.getAttribute('aria-label') || 'Time')+'">'
+    + (v ? '' : '<option value="" selected>Time</option>')
+    + list.map(t => '<option value="'+t+'"'+(t === v ? ' selected' : '')+'>'+usTimeWords(t)+'</option>').join('') + '</select>';
+}
+function usSet(inp, value){
+  inp._usSelf = true;
+  inp.value = value;
+  inp.dispatchEvent(new Event('input', { bubbles:true }));
+  inp.dispatchEvent(new Event('change', { bubbles:true }));
+  inp._usSelf = false;
+}
+function usDress(inp){
+  if(inp.dataset.us || inp.closest('[data-no-us]')) return;
+  inp.dataset.us = '1';
+  inp.classList.add('us-native'); inp.tabIndex = -1; inp.setAttribute('aria-hidden', 'true');
+  const box = document.createElement('span');
+  box.className = 'us-box ' + (inp.type === 'date' ? 'us-date' : 'us-time');
+  inp.insertAdjacentElement('afterend', box);
+  const draw = () => { box.innerHTML = inp.type === 'date' ? usDateHtml(inp) : usTimeHtml(inp); };
+  draw();
+  box.addEventListener('change', ev => {
+    if(inp.type === 'time'){ usSet(inp, ev.target.value); return; }
+    const pick = c => box.querySelector(c).value;
+    const y = Number(pick('.us-y')), m = Number(pick('.us-m'));
+    let d = Number(pick('.us-dd'));
+    if(y && m && d) d = Math.min(d, usDaysIn(y, m));
+    const role = ['us-m','us-dd','us-y'].find(c => ev.target.classList.contains(c));
+    usSet(inp, y && m && d ? y + '-' + usPad(m) + '-' + usPad(d) : '');
+    if(!box.isConnected) return;                          // the change drew the form again (a new box is on the new box)
+    if(!(y && m && d)){                                     // not whole yet: keep what was chosen, and the day's list right for the month
+      const keep = { m:pick('.us-m'), dd:pick('.us-dd'), y:pick('.us-y') };
+      draw();
+      box.querySelector('.us-m').value = keep.m; box.querySelector('.us-y').value = keep.y;
+      const days = box.querySelector('.us-dd');
+      days.innerHTML = '<option value="">Day</option>' + Array.from({ length:usDaysIn(Number(keep.y), Number(keep.m) || 1) }, (_, i) => '<option value="'+(i + 1)+'">'+(i + 1)+'</option>').join('');
+      days.value = keep.dd && Number(keep.dd) <= days.options.length - 1 ? keep.dd : '';
+    } else draw();
+    const again = role && box.querySelector('.' + role); if(again) again.focus();
+  });
+  const outside = () => { if(!inp._usSelf && box.isConnected) draw(); };
+  inp.addEventListener('input', outside);
+  inp.addEventListener('change', outside);
+}
+function usDressAll(root){ (root || document).querySelectorAll('input[type="date"]:not([data-us]), input[type="time"]:not([data-us])').forEach(usDress); }
+(function usWatch(){
+  const go = () => {
+    usDressAll(document);
+    try{ new MutationObserver(() => usDressAll(document)).observe(document.body, { childList:true, subtree:true }); }catch(e){ /* an old browser: its own boxes */ }
+  };
+  if(document.body) go(); else document.addEventListener('DOMContentLoaded', go);
+})();
+
+// ── 2 · the event's photo ──
+function evLoadImage(file){
+  return new Promise((ok, bad) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); ok(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('That photo can not be opened here. Please choose a JPG or PNG photo.')); };
+    img.src = url;
+  });
+}
+function evCanvasBlob(c, q){ return new Promise(ok => c.toBlob(b => ok(b), 'image/jpeg', q)); }
+// the photo (at most 1600 px, under maxBytes) or, with h, a w × h cut from its middle (link previews: 1200 × 630)
+async function evJpeg(img, w, h, maxBytes){
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  if(!iw || !ih) throw new Error('That photo can not be opened here. Please choose a JPG or PNG photo.');
+  const c = document.createElement('canvas'), g = c.getContext('2d');
+  if(h){
+    c.width = w; c.height = h;
+    const k = Math.max(w / iw, h / ih), sw = w / k, sh = h / k;
+    g.fillStyle = '#170E0B'; g.fillRect(0, 0, w, h);
+    g.drawImage(img, (iw - sw) / 2, Math.max(0, (ih - sh) * 0.42), sw, sh, 0, 0, w, h);
+  } else {
+    const k = Math.min(1, w / Math.max(iw, ih));
+    c.width = Math.max(1, Math.round(iw * k)); c.height = Math.max(1, Math.round(ih * k));
+    g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, c.width, c.height);   // a see-through PNG: white underneath
+    g.drawImage(img, 0, 0, c.width, c.height);
+  }
+  for(const q of [0.86, 0.8, 0.72, 0.62, 0.5, 0.4]){
+    const b = await evCanvasBlob(c, q);
+    if(b && b.size <= maxBytes) return b;
+  }
+  throw new Error('That photo is too big. Please choose another one.');
+}
+async function evPhotoPrepare(file){
+  if(!file) throw new Error('Please choose a photo.');
+  if(file.type && !/^image\//.test(file.type)) throw new Error('That file is not a photo. Please choose a photo (JPG or PNG).');
+  if(file.size > 40 * 1024 * 1024) throw new Error('That photo is too big. Please choose another one.');
+  const img = await evLoadImage(file);
+  const main = await evJpeg(img, 1600, 0, 2.8 * 1024 * 1024);
+  const og = await evJpeg(img, 1200, 630, 560 * 1024);
+  return { main, og, url:URL.createObjectURL(main) };
+}
+async function evPhotoPicked(input){
+  const f = EV.form, file = input && input.files && input.files[0];
+  if(!f || !file) return;
+  evKeep(); EV.photoBusy = true; if(EV.fieldErr && EV.fieldErr.field === 'photo') EV.fieldErr = null; evPaint();
+  try{
+    const prep = await evPhotoPrepare(file);
+    if(EV.form !== f){ URL.revokeObjectURL(prep.url); return; }
+    if(f.photoNew) URL.revokeObjectURL(f.photoNew.url);
+    f.photoNew = prep; f.photoRemove = false;
+  }catch(e){ if(EV.form === f) EV.fieldErr = { field:'photo', error:e.message }; }
+  EV.photoBusy = false; evPaint();
+}
+function evPhotoDrop(){
+  const f = EV.form; if(!f) return;
+  evKeep();
+  if(f.photoNew){ URL.revokeObjectURL(f.photoNew.url); f.photoNew = null; }
+  f.photoRemove = !!f.photo;
+  if(EV.fieldErr && EV.fieldErr.field === 'photo') EV.fieldErr = null;
+  evPaint();
+}
+function evPhotoField(f, err){
+  const shown = f.photoNew ? f.photoNew.url : (f.photoRemove ? null : f.photo);
+  const pick = '<input type="file" accept="image/*" hidden data-photo-input onchange="evPhotoPicked(this)">';
+  return '<div class="ev-f ev-photo'+(err.field === 'photo' ? ' bad' : '')+'"><span>Photo</span>'
+    + (EV.photoBusy ? '<div class="ev-ph-add busy" aria-live="polite">Preparing the photo…</div>'
+      : shown ? '<div class="ev-ph" role="img" aria-label="The event’s photo" style="background-image:url(&quot;'+esc(shown)+'&quot;)"></div>'
+          + '<div class="ev-ph-acts"><label class="ev-ph-btn">Change photo'+pick+'</label><button type="button" class="ev-ph-rm" onclick="evPhotoDrop()">Remove</button></div>'
+        : '<label class="ev-ph-add">+ Add a photo'+pick+'</label>')
+    + '<small class="ev-hint">Optional. A wide photo looks best: guests see it on the event page, on the shared picture and in the WhatsApp preview.</small>'
+    + '</div>' + (err.field === 'photo' ? '<div class="ev-err" role="alert">'+esc(err.error)+'</div>' : '');
+}
+async function evPhotoUpload(id, prep){
+  const slot = await rvApi({ action:'ev_photo_slot', id:id });
+  for(const [url, blob] of [[slot.upload.photo, prep.main], [slot.upload.og, prep.og]]){
+    let r;
+    try{ r = await fetch(url, { method:'PUT', headers:{ 'content-type':'image/jpeg', 'x-upsert':'false' }, body:blob }); }
+    catch(e){ throw new Error('The photo could not be sent. Check the connection and try again.'); }
+    if(!r.ok) throw new Error('The photo could not be sent. Please try again.');
+  }
+  return rvApi({ action:'ev_photo_set', id:id, name:slot.name });
+}
+// after the event is saved: its photo (new, or taken away). Returns a problem in words, or null.
+async function evPhotoAfterSave(f, id){
+  try{
+    if(f.photoNew){ await evPhotoUpload(id, f.photoNew); URL.revokeObjectURL(f.photoNew.url); f.photoNew = null; }
+    else if(f.photoRemove && f.photo) await rvApi({ action:'ev_photo_remove', id:id });
+    return null;
+  }catch(e){ return e.message || 'The photo could not be saved.'; }
+}
+
+// ── 3 · the shared picture ──
+function evImg(src){
+  return new Promise(ok => { if(!src) return ok(null); const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+}
+function evRound(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function evWrap(g, text, width, most){
+  const words = String(text).split(/\s+/), lines = []; let cur = '';
+  words.forEach(w => { const t = cur ? cur + ' ' + w : w; if(g.measureText(t).width <= width || !cur) cur = t; else { lines.push(cur); cur = w; } });
+  if(cur) lines.push(cur);
+  if(lines.length > most){ const keep = lines.slice(0, most); let last = keep[most - 1]; while(last && g.measureText(last + '…').width > width) last = last.slice(0, -1); keep[most - 1] = last.trimEnd() + '…'; return keep; }
+  return lines;
+}
+// The picture: the photo, the day and hours, the name, the restaurant · room · 21+, the price; at the bottom the restaurant,
+// its address and "Tickets: <site>", and the link's QR code with the logo (3 Nov 20:25: "the qr code … and the location too").
+async function evShareCard(e, info){
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  try{ await Promise.all(['700 100px "Cormorant Garamond"', '600 40px "Cormorant Garamond"', '600 28px Inter', '400 30px Inter'].map(f => document.fonts.load(f))); }catch(err){ /* the fallback fonts */ }
+  const bg = g.createRadialGradient(W / 2, 0, 40, W / 2, 0, H * 0.9); bg.addColorStop(0, '#3A1E16'); bg.addColorStop(1, '#140D0A');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const px = 44, py = 44, pw = W - 88, phh = 560;
+  const [photo, qr] = await Promise.all([evImg(e.photo), evImg(info && info.qr)]);
+  g.save(); evRound(g, px, py, pw, phh, 34); g.clip();
+  if(photo){
+    const k = Math.max(pw / photo.naturalWidth, phh / photo.naturalHeight), sw = pw / k, sh = phh / k;
+    g.drawImage(photo, (photo.naturalWidth - sw) / 2, Math.max(0, (photo.naturalHeight - sh) * 0.42), sw, sh, px, py, pw, phh);
+  } else {
+    const p = g.createLinearGradient(px, py, px + pw, py + phh); p.addColorStop(0, '#4A1A12'); p.addColorStop(0.6, '#22120D'); p.addColorStop(1, '#170E0B');
+    g.fillStyle = p; g.fillRect(px, py, pw, phh);
+  }
+  g.restore();
+  g.strokeStyle = 'rgba(252,249,244,.14)'; g.lineWidth = 2; evRound(g, px, py, pw, phh, 34); g.stroke();
+  let y = py + phh + 76;
+  g.fillStyle = '#F08C7F'; g.font = '600 30px Inter, "Segoe UI", sans-serif'; g.textBaseline = 'alphabetic';
+  try{ g.letterSpacing = '5px'; }catch(err){ /* not everywhere */ }
+  g.fillText((e.short + ' · ' + e.hours).toUpperCase(), px, y);
+  try{ g.letterSpacing = '0px'; }catch(err){ /* not everywhere */ }
+  g.fillStyle = '#FCF9F4'; g.font = '700 112px "Cormorant Garamond", Georgia, serif';
+  let lines = evWrap(g, e.name, pw, 2), step = 112;
+  if(lines.length > 1){ g.font = '700 92px "Cormorant Garamond", Georgia, serif'; lines = evWrap(g, e.name, pw, 2); step = 94; }
+  lines.forEach(l => { y += step; g.fillText(l, px, y); });
+  y += 58; g.fillStyle = '#B9AC9F'; g.font = '400 32px Inter, "Segoe UI", sans-serif';
+  g.fillText(evWrap(g, [RESTAURANT && RESTAURANT.name, e.room, e.adultsOnly ? '21 and over' : null].filter(Boolean).join(' · '), pw, 1)[0] || '', px, y);
+  y += lines.length > 1 ? 80 : 92; g.fillStyle = '#FCF9F4'; g.font = '700 72px "Cormorant Garamond", Georgia, serif';
+  g.fillText(e.price, px, y);
+  const pwid = g.measureText(e.price).width;
+  g.fillStyle = '#B9AC9F'; g.font = '600 40px "Cormorant Garamond", Georgia, serif';
+  g.fillText(' per person' + (e.taxMode === 'added' ? ' + tax' : e.taxMode === 'included' ? ', tax included' : ''), px + pwid + 8, y);
+  // the bottom: the restaurant, its address, the site · the QR code
+  const top = H - 290, qs = 232, qx = W - px - qs, qy = H - px - qs;
+  g.strokeStyle = 'rgba(252,249,244,.14)'; g.beginPath(); g.moveTo(px, top); g.lineTo(W - px, top); g.stroke();
+  const left = qr ? qx - px - 36 : pw;
+  g.fillStyle = '#E9E0D3'; g.font = '600 46px "Cormorant Garamond", Georgia, serif';
+  g.fillText(evWrap(g, (info && info.restaurant) || (RESTAURANT && RESTAURANT.name) || '', left, 1)[0] || '', px, top + 82);
+  let ay = top + 82;
+  if(info && info.address){
+    g.fillStyle = '#B9AC9F'; g.font = '400 30px Inter, "Segoe UI", sans-serif';
+    evWrap(g, '📍 ' + evAddress(info.address), left, 2).forEach(l => { ay += 42; g.fillText(l, px, ay); });
+  }
+  let host = ''; try{ host = new URL(e.link).host; }catch(err){ host = ''; }
+  g.fillStyle = '#E9E0D3'; g.font = '600 30px Inter, "Segoe UI", sans-serif';
+  g.fillText('Tickets: ' + host, px, H - px - 6);
+  if(qr){
+    g.fillStyle = '#FFFFFF'; evRound(g, qx - 10, qy - 10, qs + 20, qs + 20, 18); g.fill();
+    g.drawImage(qr, qx, qy, qs, qs);
+  }
+  const blob = await evCanvasBlob(c, 0.9);
+  if(!blob) throw new Error('The picture could not be made.');
+  return blob;
+}
+// "17 Stone St, New York, NY, 10004" → "17 Stone St, New York, NY 10004" (as Share the table writes it)
+const evAddress = a => String(a || '').trim().replace(/,\s*(\d{5}(?:-\d{4})?)$/, ' $1');
+const evMapQuery = a => encodeURIComponent(a).replace(/%20/g, '+').replace(/%2C/g, ',');
+// The message that goes with the picture: the event, the day, the price, 📍 the address with both maps, the tickets link.
+function evShareText(e, info){
+  const lines = ['🎟 ' + e.name, (info && info.restaurant) || (RESTAURANT && RESTAURANT.name) || '',
+    (e.day || e.short) + ' · ' + e.hours + (e.room ? ' · ' + e.room : ''),
+    e.price + ' per person' + (e.taxMode === 'added' ? ' + tax' : e.taxMode === 'included' ? ', tax included' : '') + (e.adultsOnly ? ' · 21 and over' : '')];
+  if(info && info.address){
+    const a = evAddress(info.address), q = evMapQuery(a);
+    lines.push('', '📍 ' + a, 'Google Maps: https://www.google.com/maps/search/?api=1&query=' + q, 'Apple Maps: https://maps.apple.com/?q=' + q);
+  }
+  lines.push('', 'Tickets: ' + e.link);
+  return lines.filter((l, i) => l !== '' || i > 0).join('\n');
+}
+const evSlug = s => String(s || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'event';
+const evTouch = () => { try{ return matchMedia('(pointer: coarse)').matches; }catch(e){ return false; } };
+async function evShare(id){
+  const e = EV.list.find(x => x.id === id); if(!e) return;
+  const b = document.querySelector('[data-share="'+id+'"]');
+  if(b){ b.disabled = true; b.textContent = 'Preparing…'; }
+  let info = null, file = null;
+  try{ info = await rvApi({ action:'ev_share', id:id }); }catch(err){ info = null; }      // without it: the picture and words, no QR or address
+  try{ file = new File([await evShareCard(e, info)], evSlug(e.name) + '.jpg', { type:'image/jpeg' }); }catch(err){ file = null; }
+  if(b && b.isConnected){ b.disabled = false; b.textContent = 'Share the link'; }
+  const text = evShareText(e, info);
+  if(evTouch()){
+    try{
+      if(file && navigator.canShare && navigator.canShare({ files:[file] })){ await navigator.share({ files:[file], title:e.name, text:text }); return; }
+      if(navigator.share){ await navigator.share({ title:e.name, text:text }); return; }
+    }catch(err){ if(err && err.name === 'AbortError') return; }
+  }
+  evShareSheet(e, file, text);
+}
+// a computer (or a phone that can not share): the picture, Copy the link, Save the picture
+function evShareSheet(e, file, text){
+  evShareClose();
+  const url = file ? URL.createObjectURL(file) : null;
+  const box = document.createElement('div');
+  box.className = 'ev-share-wrap'; box.id = 'ev-share';
+  box.innerHTML = '<div class="ev-share" role="dialog" aria-modal="true" aria-label="Share the event">'
+    + '<div class="ev-share-h"><b>Share “'+esc(e.name)+'”</b><button type="button" class="ev-share-x" aria-label="Close" onclick="evShareClose()">×</button></div>'
+    + (url ? '<img class="ev-share-img" alt="The picture of the event: its photo, name, day, price, address and the QR code of its link" src="'+url+'">' : '')
+    + '<div class="ev-share-btns"><button type="button" class="m-btn" data-copy-msg>Copy the message</button>'
+    + (url ? '<a class="m-btn quiet" data-save download="'+esc(file.name)+'" href="'+url+'">Save the picture</a>' : '') + '</div>'
+    + '<div class="ev-share-link"><span>'+esc(e.link)+'</span> <button type="button" class="rv-link" data-copy>Copy only the link</button></div>'
+    + '<small class="ev-hint">Send the picture and the message together (WhatsApp, Instagram, email). The message has the address with Google Maps and Apple Maps.</small></div>';
+  box.addEventListener('click', ev => { if(ev.target === box) evShareClose(); });
+  const copier = (sel, what, idle) => box.querySelector(sel).addEventListener('click', async ev => {
+    const btn = ev.currentTarget;
+    try{ await navigator.clipboard.writeText(what); btn.textContent = 'Copied ✓'; }
+    catch(err){ btn.textContent = 'Could not copy'; }
+    setTimeout(() => { if(btn.isConnected) btn.textContent = idle; }, 2500);
+  });
+  copier('[data-copy-msg]', text || e.link, 'Copy the message');
+  copier('[data-copy]', e.link, 'Copy only the link');
+  box._url = url;
+  document.body.appendChild(box);
+  const first = box.querySelector('[data-copy-msg]'); if(first) first.focus();
+}
+function evShareClose(){
+  const box = document.getElementById('ev-share'); if(!box) return;
+  if(box._url) setTimeout(() => URL.revokeObjectURL(box._url), 1000);
+  box.remove();
+}
+document.addEventListener('keydown', ev => { if(ev.key === 'Escape') evShareClose(); });
 
 // ── GUEST MESSAGES (r21) ──
 //
