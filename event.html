@@ -37,6 +37,9 @@ window.hfEvAsk = (function () {
   main { max-width:520px; margin:0 auto; padding:18px 16px 40px; }
   .hero { border:1px solid var(--line); border-radius:18px; padding:22px 18px 18px; background:linear-gradient(140deg, #4A1A12 0%, #22120D 60%, #170E0B 100%); min-height:150px;
           display:flex; flex-direction:column; justify-content:flex-end; }
+  /* r51: the event's photo at the top, the words on it */
+  .hero.ph { min-height:320px; background-color:#170E0B; background-size:cover; background-position:center 40%; background-repeat:no-repeat; }
+  .hero.ph .rest { color:#D9CCBF; }
   .when { font-size:.7rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#F08C7F; }
   .hero h2 { font-family:var(--serif); font-weight:700; font-size:2.2rem; line-height:1.08; margin-top:4px; }
   .rest { font-size:.8rem; color:var(--muted); margin-top:6px; }
@@ -89,7 +92,7 @@ function paint() {
   var taxWord = e.taxMode === 'added' ? ' + tax' : '';
   var html = (e.draft ? '<div class="note">Draft: only your team sees this page.</div>' : '')
     + (d.sandbox ? '<div class="note">Square test mode: test cards only, no real money.</div>' : '')
-    + '<div class="hero"><div class="when">' + esc(e.short) + ' · ' + esc(e.hours) + (e.room ? ' · ' + esc(e.room) : '') + '</div>'
+    + '<div class="hero' + (e.photo ? ' ph' : '') + '"' + (e.photo ? ' style="background-image:linear-gradient(180deg,rgba(23,14,11,0) 22%,rgba(23,14,11,.72) 58%,rgba(23,14,11,.97) 100%),url(&quot;' + esc(e.photo) + '&quot;)"' : '') + '><div class="when">' + esc(e.short) + ' · ' + esc(e.hours) + (e.room ? ' · ' + esc(e.room) : '') + '</div>'
     + '<h2>' + esc(e.name) + '</h2><div class="rest">' + esc(r.name) + (r.address ? ' · ' + esc(r.address) : '') + '</div></div>'
     + '<div class="price"><div><b>' + esc(e.price) + '</b><small>per person' + (e.taxMode === 'added' ? ' + tax' : e.taxMode === 'included' ? ', tax included' : '') + '</small></div>'
     + (e.state === 'on_sale' ? '<span class="left' + (e.left <= 5 ? ' low' : '') + '" id="ev-left">' + e.left + ' left</span>' : '') + '</div>'
