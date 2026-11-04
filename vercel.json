@@ -38,6 +38,14 @@
     {
       "source": "/square-events",
       "destination": "/api/reservations?square=events"
+    },
+    {
+      "source": "/event-photo/:name",
+      "destination": "/api/reservations?evphoto=:name"
+    },
+    {
+      "source": "/e/:key",
+      "destination": "/api/reservations?evpage=:key"
     }
   ]
 }
