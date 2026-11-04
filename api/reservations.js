@@ -68,7 +68,8 @@ import { profile } from './_lib/profile.js';
 import { support } from './_lib/support.js';      // r34
 import { menuset, publicTop } from './_lib/menuset.js';   // r36
 import { arrivalTokens, qrDataUrl, qrAttachment, QR_CID } from './_lib/qr.js';
-import { eventsPublic, eventsStaff, squareBack, squareEvents, ticketsCron } from './_lib/events.js';   // r50: event tickets (Square)
+import { eventsPublic, eventsStaff, squareBack, squareEvents, ticketsCron, eventPreview } from './_lib/events.js';
+import { servePhoto } from './_lib/evphoto.js';   // r51: GET /event-photo/<name>.jpg   // r50: event tickets (Square)
 
 // The daily reminder can take a while on a busy day; 30 seconds is inside every
 // Vercel plan's limit, so the run is never cut off halfway through a batch.
@@ -110,6 +111,9 @@ export default async function handler(req, res) {
   const query = queryOf(req);
   if (query.get('square') === 'back' && req.method === 'GET') return squareBack(req, res, { searchParams: query });
   if (query.get('square') === 'events' && req.method === 'POST') return squareEvents(req, res);
+  // r51: an event's photo (/event-photo/<name>.jpg) and the shared link (/e/<key>: link previews, then the page) — vercel.json
+  if (query.get('evphoto') !== null && req.method === 'GET') return servePhoto(req, res, query.get('evphoto'));
+  if (query.get('evpage') !== null && req.method === 'GET') return eventPreview(req, res, query.get('evpage'));
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
