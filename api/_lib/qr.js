@@ -103,6 +103,17 @@ function template(n) {
   TEMPLATES.set(n, t);
   return t;
 }
+// r51: never smaller than version 8 (49 × 49 dots), the size of the table,
+// ticket and check-in codes tested with four readers in r22. The logo is a
+// fixed size, so a short link (an event's /e/<key>, a friend's /invite?c=…)
+// made a smaller code (version 5, 37 × 37) where the logo hid more dots than
+// error correction can bring back: no reader could read it. Now every code
+// has the same proportions as the tested ones.
+const MIN_VERSION = 8;
+function makeQr(text) {
+  const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
+  return qr.version >= MIN_VERSION ? qr : QRCode.create(text, { errorCorrectionLevel: 'H', version: MIN_VERSION });
+}
 const isEye = (n, r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
 const underLogo = (n, r, c) => Math.abs(c + 0.5 - n / 2) < LOGO_W / MOD / 2 + LOGO_PAD && Math.abs(r + 0.5 - n / 2) < LOGO_H / MOD / 2 + LOGO_PAD;
 
@@ -112,7 +123,7 @@ const DRAWN = new Map(), KEEP = 300;
 export function drawTableQr(text) {
   const kept = DRAWN.get(text);
   if (kept) { DRAWN.delete(text); DRAWN.set(text, kept); return kept; }
-  const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
+  const qr = makeQr(text);
   const n = qr.modules.size, bits = qr.modules.data;
   const { W, off, px: base } = template(n);
   const px = Buffer.from(base);
@@ -142,7 +153,7 @@ function logoDataUrl() {
   return logoPng;
 }
 export function tableQrSvg(text) {
-  const qr = QRCode.create(text, { errorCorrectionLevel: 'H' });
+  const qr = makeQr(text);
   const n = qr.modules.size, bits = qr.modules.data;
   const pad = QUIET + FRAME + EDGE, S = n + pad * 2;
   let dots = '';
