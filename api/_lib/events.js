@@ -35,6 +35,7 @@ import { emailReady, senderFor, sendEmail, ticketsEmail, hostOf, sendableAddress
 import { drawTableQr, tableQrSvg } from './qr.js';
 import { notifyStaff, line } from './push.js';
 import * as sq from './square.js';
+import { photoSlot, photoClaim, photoRemove, photoUrl, PHOTO_ERRORS } from './evphoto.js';   // r51: a photo for each event
 
 const HOLD_MINUTES = 20;               // the tickets wait this long while the guest pays on Square's page
 const HOUR = 3600 * 1000;
@@ -54,7 +55,10 @@ const siteOf = (settings) => String((settings && settings.site_url) || 'https://
 export const ticketQrText = (settings, token) => `${siteOf(settings)}/manager#ticket=${token}`;
 const ticketLink = (settings, token) => `${siteOf(settings)}/tickets?t=${token}`;
 const orderLink = (settings, token) => `${siteOf(settings)}/tickets?o=${token}`;
-const eventLink = (settings, key) => `${siteOf(settings)}/event?k=${key}`;
+// r51: the link people share is /e/<key>: link previews (WhatsApp, iMessage…) get the event's photo and name from it;
+// people are sent on to the page itself, /event?k=<key> (which keeps working too).
+const eventLink = (settings, key) => `${siteOf(settings)}/e/${key}`;
+const eventPage = (settings, key) => `${siteOf(settings)}/event?k=${key}`;
 const money = (c) => '$' + (Number(c) / 100).toFixed(2).replace(/\.00$/, '');
 const rpc = (name, args) => sb(`/rpc/${name}`, { method: 'POST', body: JSON.stringify(args) });
 const first = (r) => (r && r.ok && Array.isArray(r.data) ? r.data[0] : null);
@@ -132,6 +136,7 @@ function dressEvent(e, tz, areaName, c, square, settings, forStaff) {
     total: e.tickets_total, left: Math.max(0, e.tickets_total - c.sold - c.held), max: e.max_per_order,
     closeHours: e.close_hours, about: e.about || '', included: e.included || '', adultsOnly: !!e.adults_only,
     state: stateOf(e, c, square), link: eventLink(settings, e.public_key),
+    photo: photoUrl(e.photo), photoOg: photoUrl(e.photo, true),          // r51 (null before migration 35, or without a photo)
   };
   if (forStaff) Object.assign(out, { id: e.id, status: e.status, date: w.date, start: w.start, end: w.end,
     sold: c.sold, held: c.held, inside: c.inside, paidCents: c.paidCents, paid: money(c.paidCents), orders: c.orders, over: c.over });
@@ -412,7 +417,7 @@ async function ticketsGet(req, res, body) {
 export async function eventsStaff(req, res, body, action) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
-  const reads = ['ev_list', 'ev_day', 'ev_guests', 'ev_scan', 'sq_status'];
+  const reads = ['ev_list', 'ev_day', 'ev_guests', 'ev_scan', 'sq_status', 'ev_share'];
   if (!(await allow(reads.includes(action) ? staffRead : staffWrite, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many taps in a few minutes. Wait a moment and try again.' });
   }
@@ -433,6 +438,10 @@ export async function eventsStaff(req, res, body, action) {
     case 'ev_admit':      return evAdmit(ctx);
     case 'ev_unadmit':    return evUnadmit(ctx);
     case 'ev_void':       return evVoid(ctx);
+    case 'ev_photo_slot':   return evPhoto(ctx, 'slot');      // r51: the event's photo (managers and owners)
+    case 'ev_photo_set':    return evPhoto(ctx, 'set');
+    case 'ev_photo_remove': return evPhoto(ctx, 'remove');
+    case 'ev_share':        return evShareInfo(ctx);      // r51: the shared picture's QR code and address
     case 'sq_status':     return sqStatus(ctx);
     case 'sq_connect':    return sqConnect(ctx);
     case 'sq_location':   return sqLocation(ctx);
@@ -493,6 +502,82 @@ function cents(v) {
   return Math.round(Number(t) * 100);
 }
 const intIn = (v, lo, hi) => { const n = Number(v); return Number.isInteger(n) && n >= lo && n <= hi ? n : null; };
+
+// ── r51 · the event's photo ──────────────────────────────────────────────────
+// slot → the page sends the two JPEGs straight to Storage → set (checked there) · remove.
+async function evPhoto({ res, body, who }, what) {
+  const id = Number(body.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Which event?' });
+  const r = await sb(`/events?id=eq.${id}&restaurant_id=eq.${who.rid}&select=*`);
+  if (!r.ok) return res.status(notReady(r) ? 409 : 502).json({ error: notReady(r) ? NOT_READY : 'Could not read the event.', reason: notReady(r) ? 'migration' : undefined });
+  const e = first(r);
+  if (!e) return res.status(404).json({ error: 'This event is not here any more.' });
+  if (!('photo' in e)) return res.status(409).json({ error: PHOTO_ERRORS.migration, reason: 'migration' });
+  if (e.status === 'cancelled' && what !== 'remove') return res.status(409).json({ error: 'This event is cancelled.' });
+  const out = what === 'slot' ? await photoSlot(e) : what === 'set' ? await photoClaim(e, String(body.name || '')) : await photoRemove(e);
+  if (out.error) return res.status(out.error === 'migration' ? 409 : out.error === 'storage' ? 502 : 400).json({ error: PHOTO_ERRORS[out.error], reason: out.error });
+  if (what === 'slot') return res.status(200).json({ success: true, name: out.name, upload: out.upload });
+  return res.status(200).json({ success: true, photo: photoUrl(out.event.photo), photoOg: photoUrl(out.event.photo, true) });
+}
+
+// ── r51 · what "Share the link" puts in the picture and the message ────────────
+// Sebastian, 3 Nov 20:25: "is able the people to share the qr code as well? … and the location too, the same that we
+// share with the share a dish" → the link's QR code (the restaurant's logo in it, a PNG: a picture made on the phone can
+// carry it) and the restaurant's address.
+async function evShareInfo({ res, body, who, loaded, settings }) {
+  const id = Number(body.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Which event?' });
+  const r = await sb(`/events?id=eq.${id}&restaurant_id=eq.${who.rid}&select=id,public_key,status`);
+  if (!r.ok) return res.status(notReady(r) ? 409 : 502).json({ error: notReady(r) ? NOT_READY : 'Could not read the event.' });
+  const e = first(r);
+  if (!e) return res.status(404).json({ error: 'This event is not here any more.' });
+  const link = eventLink(settings, e.public_key);
+  return res.status(200).json({ success: true, link, qr: 'data:image/png;base64,' + drawTableQr(link).toString('base64'),
+    restaurant: (loaded.restaurant && loaded.restaurant.name) || null, address: (loaded.restaurant && loaded.restaurant.address) || null });
+}
+
+// ── r51 · GET /e/<key>: the shared link ─────────────────────────────────────
+// Link previews (WhatsApp, iMessage, Facebook, Telegram, Slack…) read the event's name, day, price and photo here;
+// people are sent straight on to the event page. Drafts, cancelled or unknown events: on to the page, which says so.
+const PREVIEWERS = /whatsapp|facebookexternalhit|facebot|twitterbot|slackbot|telegrambot|linkedinbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|pinterest|redditbot|embedly|iframely|vkshare|viber|kakaotalk|snapchat|mastodon|bluesky|cardyb|signal/i;
+const attr = (t) => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export async function eventPreview(req, res, key) {
+  const k = String(key || '');
+  const ua = String((req.headers && req.headers['user-agent']) || '');
+  const got = KEY.test(k) ? await eventByKey(k) : { gone: true };
+  const loaded = got.event ? await loadBooking(got.event.restaurant_id) : null;
+  const settings = loaded && !loaded.error ? loaded.settings : null;
+  const page = KEY.test(k) ? eventPage(settings, k) : siteOf(settings) + '/';
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Vary', 'User-Agent');
+  const e = got.event;
+  if (!PREVIEWERS.test(ua) || !e || e.status === 'draft' || !loaded || loaded.error) {
+    res.setHeader('Location', page);
+    return res.status(302).end();
+  }
+  const tz = (settings && settings.timezone) || 'America/New_York';
+  const w = whenWords(tz, e.starts_at, e.ends_at);
+  const areas = await areaNames(e.restaurant_id);
+  const room = e.area_id ? areas.names[e.area_id] || null : null;
+  const site = siteOf(settings);
+  const rest = loaded.restaurant && loaded.restaurant.name ? loaded.restaurant.name : 'The restaurant';
+  const title = `${e.name} · ${rest}`;
+  const what = e.status === 'cancelled' ? 'This event was cancelled.'
+    : `${w.short} · ${w.hours}${room ? ' · ' + room : ''} · ${money(e.price_cents)} per person${e.tax_mode === 'added' ? ' + tax' : ''}. Get your tickets here.`;
+  const img = e.photo ? site + photoUrl(e.photo, true) : null;
+  const html = '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    + `<title>${attr(title)}</title><meta name="description" content="${attr(what)}">`
+    + `<meta property="og:type" content="website"><meta property="og:site_name" content="${attr(rest)}">`
+    + `<meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(what)}">`
+    + `<meta property="og:url" content="${attr(eventLink(settings, k))}">`
+    + (img ? `<meta property="og:image" content="${attr(img)}"><meta property="og:image:secure_url" content="${attr(img)}"><meta property="og:image:type" content="image/jpeg">`
+      + `<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${attr(e.name)}">`
+      + '<meta name="twitter:card" content="summary_large_image">' : '<meta name="twitter:card" content="summary">')
+    + `<meta http-equiv="refresh" content="0; url=${attr(page)}"></head>`
+    + `<body><a href="${attr(page)}">${attr(e.name)}: open the event</a></body></html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  return res.status(200).end(html);
+}
 
 async function evSave({ res, body, who, tasterId, tz, settings }) {
   const f = body.event || {};
