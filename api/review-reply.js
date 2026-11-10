@@ -119,6 +119,12 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: 'This review is hidden, so its conversation is closed. If the restaurant shows it again, it opens again.' });
   }
 
+  // r53c: a review its author deleted has no conversation any more (migration 38; before it, no column).
+  const del = await sb(`/reviews?id=eq.${id}&select=deleted_at`);
+  if (del.ok && Array.isArray(del.data) && del.data[0] && del.data[0].deleted_at) {
+    return res.status(404).json({ error: 'That review no longer exists.' });
+  }
+
   const turn = nextTurn(review);
   if (!turn) {
     return res.status(409).json({
