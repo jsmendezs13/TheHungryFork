@@ -373,3 +373,10 @@ button.hf-l-terms { background:none; border:none; margin:0; cursor:pointer; text
 .hf-terms-text[hidden], .hf-l-prize-text .hf-terms-text[hidden] { display:none !important; }
 /* r35: a friend's invite that works from tomorrow says when, and what will open it */
 .hf-l-prize-text .hf-l-when { color:#8A5A0B; font-weight:500; }
+
+/* r53: on a review the restaurant hid, what its author reads (only they see the review) */
+.hf-hidden-note{margin:.45rem 0 .2rem;padding:.55rem .7rem;border-radius:10px;background:#F3EEE7;border:1px dashed #CDBFAE;font-family:var(--sans,system-ui);font-size:.76rem;line-height:1.5;color:#5A4A3C;}
+.hf-hidden-note b{color:#2B211A;}
+.hf-hidden-note a{color:#C8261B;font-weight:600;}
+.review-item.hf-hidden{opacity:.92;}
+.hf-rules{display:inline-block;margin-top:.4rem;font-family:var(--sans,system-ui);font-size:.72rem;color:#8A7B6E;text-decoration:underline;}
