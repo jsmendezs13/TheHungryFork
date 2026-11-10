@@ -483,6 +483,11 @@ async function inbox(req, res, body, helpers = {}) {
     try { bell.push(...(await helpers.requestBell(match))); }
     catch (err) { console.error('[messages] request bell', err && err.message); }
   }
+  // r53: the restaurant hid one of this account's reviews, or shows it again (api/_lib/moderation.js); none before migration 37.
+  if (typeof helpers.reviewBell === 'function') {
+    try { bell.push(...(await helpers.reviewBell(tasterId))); }
+    catch (err) { console.error('[messages] review bell', err && err.message); }
+  }
   bell.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   let staff = null;
