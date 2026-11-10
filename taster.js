@@ -799,6 +799,65 @@ function hfInboxPaint(data){
   if(data&&typeof window.hfOnInbox==='function'){try{window.hfOnInbox(data);}catch(e){}}
 }
 
+
+// ── r53: reviews the restaurant hid (migration 37) ──
+// The public never reads a hidden review (the database refuses it from migration 37 on, and the pages ask for shown
+// ones too, so a score never counts one). Its author still reads it, with the reason they were told. Before migration 37
+// there is no hidden_at: the database says so once, and the pages ask as before.
+var HF_HIDDEN_COL=true;
+function hfHiddenGone(r){return !!r&&!r.ok&&r.status===400&&!!r.data&&/hidden_at/.test(String(r.data.message||''))&&/does not exist|could not find/i.test(String(r.data.message||''));}
+async function hfShown(fetcher,path){
+  if(HF_HIDDEN_COL){
+    var r=await fetcher(path+(path.indexOf('?')>=0?'&':'?')+'hidden_at=is.null');
+    if(!hfHiddenGone(r))return r;
+    HF_HIDDEN_COL=false;
+  }
+  return fetcher(path);
+}
+// The shown reviews, and this account's own even when hidden (so it can be told why).
+async function hfShownOrMine(fetcher,path){
+  if(typeof currentTaster==='undefined'||!currentTaster||!currentTaster.id)return hfShown(fetcher,path);
+  if(HF_HIDDEN_COL){
+    var r=await fetcher(path+(path.indexOf('?')>=0?'&':'?')+'or=(hidden_at.is.null,taster_id.eq.'+Number(currentTaster.id)+')');
+    if(!hfHiddenGone(r))return r;
+    HF_HIDDEN_COL=false;
+  }
+  return fetcher(path);
+}
+// This account's hidden reviews: { id: {reason, team} } (the reason in the words the author was told).
+var HF_MY_HIDDEN=null;
+function hfMyHidden(force){
+  if(HF_MY_HIDDEN&&!force)return HF_MY_HIDDEN;
+  HF_MY_HIDDEN=(async function(){
+    var out={};
+    if(typeof currentSession==='undefined'||!currentSession)return out;
+    try{
+      var res=await fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify({action:'mod_mine'})});
+      var d=await res.json().catch(function(){return {};});
+      (d.reviews||[]).forEach(function(x){out[x.id]=x;});
+    }catch(e){}
+    return out;
+  })();
+  return HF_MY_HIDDEN;
+}
+// The bell's "hid your review" notices are read once the author has seen them (My Tastings).
+function hfHiddenSeen(){
+  if(typeof currentSession==='undefined'||!currentSession)return;
+  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify({action:'mod_seen'})})
+    .then(function(){try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof hfInbox==='function')hfInbox(true);}).catch(function(){});
+}
+// What the author reads on their hidden review (the lawyer doc, Part 3).
+function hfHiddenNote(why,rid){
+  why=why||{};
+  if(why.team)return '<div class="hf-hidden-note" data-hidden="team"><b>Only you can see this.</b> Ratings by a restaurant’s owners and managers are hidden automatically. <a href="/review-rules">Review rules</a></div>';
+  return '<div class="hf-hidden-note" data-hidden="1"><b>Only you can see this.</b> The restaurant hid your review (comment and stars). Reason: '+hfEsc(why.reason||'a reason in the review rules')+'. '
+    +'Our review rules are based on the U.S. Federal Trade Commission (FTC) rule on consumer reviews. Think it\u2019s a mistake? '
+    +(typeof hfContactOpen==='function'
+      ?'<a href="#" class="hf-contact-link" onclick="hfContactOpen(\'restaurant\','+Number(rid||0)+');return false;">Contact the restaurant</a>'
+      :'Tell the restaurant, or write to <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a>')
+    +' \u00b7 <a href="/review-rules">Review rules</a></div>';
+}
+
 // The bell's list: "Ana · The Hungry Fork answered you", the table, when.
 // Each one opens that conversation in My Reservations.
 function hfBellRender(){
@@ -817,6 +876,12 @@ function hfBellRender(){
     return;
   }
   panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
+    // r53: the restaurant hid one of this account's reviews, or shows it again (opens My Tastings)
+    if(b.reviewNotice)return '<a class="hf-bell-item" data-notice="'+Number(b.reviewNotice)+'" href="/?tastings=1">'
+      +'<b>'+hfEsc(b.restaurant)+(b.kind==='hidden'?' hid your review':' shows your review again')+'</b>'
+      +'<span>'+hfEsc(b.dish)+(b.kind==='hidden'&&b.reason?' · Reason: '+hfEsc(b.reason):'')+'</span>'
+      +'<small>'+hfEsc(b.label||'')+'</small>'
+      +'</a>';
     // r30: the restaurant wrote about a big-party request
     if(b.requestId)return '<a class="hf-bell-item" href="/reservations#req='+Number(b.requestId)+'">'
       +'<b>'+hfEsc(b.who)+(b.handle?' ('+hfEsc(b.handle)+')':'')+' · '+hfEsc(b.restaurant)+' wrote about your request</b>'
