@@ -16,6 +16,7 @@ import { makeLimiter, allow, keyFor } from './auth.js';
 import { sb, tasterIdFromRequest, LEVEL } from './roles.js';
 import { gate } from './staff.js';
 import { loadBooking } from './booking.js';
+import { REASONS, reasonLabel, isTeam, canModerateAt, switchOf, visitDots } from './moderation.js';   // r53
 
 export const MAX_REVIEWS = 3000;
 const readLimiter = makeLimiter({ requests: 60, window: '5 m', prefix: 'rv:list' });
@@ -24,6 +25,8 @@ const REVIEW_COLUMNS = 'id,dish_id,taster_id,flavor,worth_every_bite,signature_s
   + 'dish_comment,restaurant_comment,reviewer_name,reviewer_username,created_at';
 // The conversation under a review (migrations 9 and 10). Asked apart, so an older database still lists the reviews.
 const REPLY_COLUMNS = 'reply_text,reply_created_at,reply_by_name,taster_reply_text,taster_reply_created_at,reply2_text,reply2_created_at,reply2_by_name';
+// r53: a hidden review (migration 37). Asked apart again, so the list works before the migration.
+const HIDDEN_COLUMNS = 'hidden_at,hidden_reason';
 
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 1 && Number(v) <= 5 ? Number(v) : null);
 const text = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -41,11 +44,14 @@ export async function reviewsStaff(req, res, body, action) {
 async function list(req, res, body, tasterId) {
   const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
-  const [rv, dishes, booking] = await Promise.all([
+  const [rv, dishes, booking, sw, canMod] = await Promise.all([
     readReviews(who.rid),
     menuOf(who.rid),
     loadBooking(who.rid).catch(() => null),
+    switchOf(who.rid),                                       // r53: moderation at this restaurant
+    canModerateAt(tasterId, who.rid, who.level),
   ]);
+  const canModerate = sw.ready && canMod;                    // r53: nothing of moderation before migration 37
   if (!rv.ok || !Array.isArray(rv.data)) {
     console.error('[reviews:list] read failed', who.rid, rv.status);
     return res.status(502).json({ error: 'Could not read the reviews (the database answered ' + rv.status + '). Please try again.' });
@@ -59,6 +65,15 @@ async function list(req, res, body, tasterId) {
   const guestNo = new Map();
   const guestOf = (id) => { const k = String(id); if (!guestNo.has(k)) guestNo.set(k, guestNo.size + 1); return guestNo.get(k); };
   const dayOf = serviceDayIn(timezone);
+  // r53: why each hidden review is hidden, and by whom (the newest hide in the log); the visit dots, for moderators only.
+  const hiddenIds = rows.filter((r) => r.hidden_at).map((r) => Number(r.id));
+  const why = {};
+  if (hiddenIds.length) {
+    const got = await sb(`/review_moderation_log?restaurant_id=eq.${who.rid}&review_id=in.(${hiddenIds.slice(0, 2000).join(',')})` +
+                         '&action=in.(hide,team-hide)&select=review_id,details,alerted,by_name,at&order=id.desc&limit=4000');
+    (got.ok && Array.isArray(got.data) ? got.data : []).forEach((l) => { if (!why[l.review_id]) why[l.review_id] = l; });
+  }
+  const dots = canModerate ? await visitDots(who.rid, rows, timezone) : {};
   return res.status(200).json({
     success: true,
     restaurant: who.rid,
@@ -66,6 +81,8 @@ async function list(req, res, body, tasterId) {
     max: MAX_REVIEWS,
     more: rows.length >= MAX_REVIEWS,
     repliesReady: rv.withReplies,
+    moderation: { ready: sw.ready, on: sw.on, at: sw.at || null, by: sw.by || null, canModerate, platform: who.level >= LEVEL.platform,
+                  reasons: REASONS },
     dishes,
     reviews: rows.map((r) => {
       const n = names.get(Number(r.taster_id)) || {};
@@ -81,6 +98,12 @@ async function list(req, res, body, tasterId) {
         roomStars: [num(r.hospitality), num(r.atmosphere_vibe)],
         dishComment: text(r.dish_comment),
         roomComment: text(r.restaurant_comment),
+        hidden: r.hidden_at ? {
+          reason: r.hidden_reason, label: reasonLabel(r.hidden_reason), team: isTeam(r.hidden_reason), at: r.hidden_at,
+          by: why[r.id] ? why[r.id].by_name || null : null,
+          ...(canModerate && why[r.id] ? { details: why[r.id].details || null, alerted: !!why[r.id].alerted } : {}),
+        } : null,
+        ...(canModerate ? { visit: dots[r.id] || null } : {}),
         replies: [
           text(r.reply_text) ? { side: 'restaurant', text: r.reply_text, at: r.reply_created_at || null, by: text(r.reply_by_name) } : null,
           text(r.taster_reply_text) ? { side: 'guest', text: r.taster_reply_text, at: r.taster_reply_created_at || null } : null,
@@ -94,6 +117,9 @@ async function list(req, res, body, tasterId) {
 // The reviews with their conversation; without it when the reply columns are not there (an older database).
 async function readReviews(rid) {
   const base = `/reviews?restaurant_id=eq.${rid}&order=created_at.desc,id.desc&limit=${MAX_REVIEWS}&select=`;
+  const all = await sb(base + REVIEW_COLUMNS + ',' + REPLY_COLUMNS + ',' + HIDDEN_COLUMNS);    // r53
+  if (all.ok) return { ...all, withReplies: true };
+  if (all.status !== 400) return all;
   const full = await sb(base + REVIEW_COLUMNS + ',' + REPLY_COLUMNS);
   if (full.ok) return { ...full, withReplies: true };
   if (full.status !== 400) return full;
