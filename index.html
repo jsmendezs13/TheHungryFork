@@ -870,11 +870,16 @@ function togglePin(e,id){
 }
 function tastingThumbErr(img,emoji){if(hfImgBack(img))return;const d=document.createElement('div');d.className='tasting-thumb tasting-thumb-emoji';d.textContent=emoji;img.replaceWith(d);}
 
+// r53c: after the author deletes a review here, the list is drawn again; the bell's link may open one conversation.
+var HF_TALK_AT=null;
+function hfAfterDelete(){loadMyTastings();}
 async function loadMyTastings(){
   const list=document.getElementById('tastings-list');
   list.innerHTML='<div class="no-reviews">Loading…</div>';
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
+    // r53c: which reviews have a conversation with the restaurant (and whether deleting is there: migration 38)
+    await hfTalksLoad().catch(()=>null);
+    const{ok,data}=await hfKept(sbFetch,`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
     if(!ok||!data.length){
       list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
       return;
@@ -897,16 +902,25 @@ async function loadMyTastings(){
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
       const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
+      // r53c: a conversation about a review shown again (or the team's): it can still be read from here
+      const talkOnly=!r.hidden_at||(hid[r.id]&&hid[r.id].team)?(HF_TALKS[r.id]?`<div onclick="event.stopPropagation()">${hfTalkButton(r.id,'Messages with '+hfPlaceName())}<div class="hf-talk" id="hf-talk-${r.id}" hidden></div></div>`:''):'';
+      // r53c: only the author deletes their review (kept for the record; the window says so). After migration 38.
+      const del=HF_TALK_READY===true?hfDeleteButton(r.id,JSON.stringify({dish:dishName,img:dishInfo&&dishInfo.img?hfImgSrc(dishInfo.img,96):null,score:Number(score),date:new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})})):'';
       return`<div class="review-item tasting-item"${clickAttr}>
         ${pinBtn}
         <div class="tasting-main">
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
           <div class="review-text brand-red-text">The Hungry Fork</div>
           <div class="review-date">${date}</div>
-          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id):''}
+          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):''}
+          ${talkOnly}
+          ${del}
         </div>
       </div>`;
     }).join('');
+    // r53c: the bell's link opens that conversation
+    if(HF_TALK_AT&&document.getElementById('hf-talk-'+HF_TALK_AT)){hfTalkToggle(HF_TALK_AT,true);}
+    HF_TALK_AT=null;
   }catch(e){
     list.innerHTML='<div class="no-reviews">Could not load your tastings.</div>';
   }
@@ -1233,7 +1247,8 @@ loadDishes()
   const params=new URLSearchParams(window.location.search);
   if(params.get('dish'))window.location.replace('/menu'+window.location.search);
   // r53: the bell's "The restaurant hid your review" opens My Tastings
-  if(params.get('tastings')==='1'&&currentTaster){if(history.replaceState)history.replaceState(null,'','/');openMyTastings();}
+  // r53c: the bell's "… answered about your review" opens My Tastings on that conversation (&talk=<review>)
+  if(params.get('tastings')==='1'&&currentTaster){HF_TALK_AT=Number(params.get('talk'))||null;if(history.replaceState)history.replaceState(null,'','/');openMyTastings();}
 })();
 </script>
 </body>
