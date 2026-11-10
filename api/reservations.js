@@ -56,6 +56,8 @@ import {
   partyRequestEmail,
 } from './_lib/email.js';
 import { staff, requestMailList } from './_lib/staff.js';
+import { socialPublic } from './_lib/social.js';                     // r52
+import { reviewsStaff } from './_lib/reviewlist.js';                // r52: the Reviews tab
 import { floor } from './_lib/floor.js';      // r46: the table map (Reservations → Map)
 import { forgetOldFiles } from './_lib/files.js';
 import { notifyStaff, line } from './_lib/push.js';     // r43: notifications on the staff's phones
@@ -156,6 +158,8 @@ export default async function handler(req, res) {
   // r50: event tickets — the guest's pages (no account) and the restaurant's Events tab and Settings → Tickets · Square.
   if (action === 'event_get' || action === 'event_buy' || action === 'tickets_get') return eventsPublic(req, res, body, action);
   if (action.startsWith('ev_') || action.startsWith('sq_')) return eventsStaff(req, res, body, action);
+  // r52: the manager page's Reviews tab (every review of the restaurant in one list).
+  if (action.startsWith('rv_')) return reviewsStaff(req, res, body, action);
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
 }
@@ -289,11 +293,13 @@ async function hours(req, res, body) {
 // r34: and the restaurant's sanitary inspection grade, as the manager chose it
 // in Settings: 'A', 'B', 'C', or null (the menu shows none). Not in the answer
 // at all when it cannot be read (before migration 24): the page then shows none.
+// r52: and the restaurant's social media links (Settings → Social media), only
+// the ones filled in. Not in the answer before migration 36: no Social links.
 // r36: and how many dishes each Top Rated cave of the menu shows (0 = off), as
 // the manager chose in the manager page → Menu. Not in the answer when it
 // cannot be read (before migration 25): the menu then shows 5 in each.
 async function publicHours(restaurantId, timezone) {
-  const [wk, hol, tz, gr, top] = await Promise.all([
+  const [wk, hol, tz, gr, top, social] = await Promise.all([
     sb(`/restaurant_hours?restaurant_id=eq.${restaurantId}&select=weekday,opens_at,closes_at&order=weekday.asc,opens_at.asc&limit=28`),
     // one day looser than "today" in the query, exact below once the timezone is known
     sb(`/restaurant_closures?restaurant_id=eq.${restaurantId}&closure_date=gte.${new Date(Date.now() - 36 * 3600 * 1000).toISOString().slice(0, 10)}`
@@ -301,6 +307,7 @@ async function publicHours(restaurantId, timezone) {
     timezone ? Promise.resolve(null) : sb(`/restaurant_booking_settings?restaurant_id=eq.${restaurantId}&select=timezone&limit=1`),
     sb(`/restaurants?id=eq.${Number(restaurantId)}&select=sanitary_grade&limit=1`),
     publicTop(restaurantId).catch(() => null),
+    socialPublic(restaurantId).catch(() => null),          // r52: the Social button's links
   ]);
   if (!wk.ok || !Array.isArray(wk.data)) return null;
   const zone = timezone || (tz && tz.ok && Array.isArray(tz.data) && tz.data[0] && tz.data[0].timezone) || 'America/New_York';
@@ -320,6 +327,7 @@ async function publicHours(restaurantId, timezone) {
     holidays, today, timezone: zone,
     ...(graded ? { grade: ['A', 'B', 'C'].includes(graded.sanitary_grade) ? graded.sanitary_grade : null } : {}),
     ...(top ? { top } : {}),
+    ...(social ? { social } : {}),
   };
 }
 
