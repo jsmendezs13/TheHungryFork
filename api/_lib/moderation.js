@@ -156,10 +156,12 @@ function idsOf(body) {
 }
 
 async function readRows(rid, ids) {
-  const got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS}`);
+  let got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS},deleted_at`);       // r53c: deleted by its author
+  if (!got.ok && got.status === 400) got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS}`);   // before migration 38
   if (!got.ok) return { status: got.status === 400 ? 409 : 502, error: got.status === 400 ? NOT_READY : 'Could not read that review. Please try again.' };
   const rows = Array.isArray(got.data) ? got.data : [];
   if (rows.length !== ids.length || rows.some((r) => Number(r.restaurant_id) !== rid)) return { status: 404, error: 'That review is not there any more.' };
+  if (rows.some((r) => r.deleted_at)) return { status: 404, error: 'The author deleted that review.' };
   return { rows };
 }
 
@@ -271,6 +273,10 @@ async function show(res, tasterId, who, body) {
     }).catch(() => null);
     // The bell's "hid your review" for these is answered: it is shown again.
     await sb(`/review_notices?review_id=in.(${done.join(',')})&kind=eq.hidden&read_at=is.null`, { method: 'PATCH', body: JSON.stringify({ read_at: new Date().toISOString() }) }).catch(() => null);
+    // r53c: the author's conversation about it closes (it can still be read). Nothing before migration 38.
+    await sb(`/review_threads?review_id=in.(${done.join(',')})&closed_at=is.null`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ closed_at: new Date().toISOString(), closed_reason: 'shown', closed_by: null }),
+    }).catch(() => null);
     const names = await dishNames(kept.map((r) => r.dish_id));
     await tellChange(who.rid, tasterId, `showed ${kept.length > 1 ? kept.length + ' reviews' : 'a review'} of ${listWords([...new Set(kept.map((r) => names[r.dish_id] || 'a dish'))])} again`, { go: 'reviews' });
   }
@@ -325,7 +331,9 @@ async function seen(res, tasterId) {
 // explanation): My Tastings and the menu show it on the review, with Contact the restaurant.
 async function mine(res, tasterId) {
   if (!(await allow(guestLimiter, keyFor('g' + tasterId), { failOpen: true }))) return res.status(429).json({ error: 'Too many requests. Wait a moment.' });
-  const got = await sb(`/reviews?taster_id=eq.${tasterId}&hidden_at=not.is.null&select=id,restaurant_id,dish_id,hidden_at,hidden_reason&order=id.desc&limit=500`);
+  const ask = (extra) => sb(`/reviews?taster_id=eq.${tasterId}&hidden_at=not.is.null${extra}&select=id,restaurant_id,dish_id,hidden_at,hidden_reason&order=id.desc&limit=500`);
+  let got = await ask('&deleted_at=is.null');                          // r53c: a review its author deleted is gone
+  if (!got.ok && got.status === 400) got = await ask('');             // before migration 38
   if (!got.ok) return res.status(200).json({ success: true, ready: false, reviews: [] });      // before migration 37
   const rows = Array.isArray(got.data) ? got.data : [];
   const told = {};
