@@ -27,6 +27,8 @@ const REVIEW_COLUMNS = 'id,dish_id,taster_id,flavor,worth_every_bite,signature_s
 const REPLY_COLUMNS = 'reply_text,reply_created_at,reply_by_name,taster_reply_text,taster_reply_created_at,reply2_text,reply2_created_at,reply2_by_name';
 // r53: a hidden review (migration 37). Asked apart again, so the list works before the migration.
 const HIDDEN_COLUMNS = 'hidden_at,hidden_reason';
+// r53c: deleted by its author (migration 38): out of the list, except for Seb's Analytics' record.
+const DELETED_COLUMNS = 'deleted_at';
 
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 1 && Number(v) <= 5 ? Number(v) : null);
 const text = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -56,7 +58,11 @@ async function list(req, res, body, tasterId) {
     console.error('[reviews:list] read failed', who.rid, rv.status);
     return res.status(502).json({ error: 'Could not read the reviews (the database answered ' + rv.status + '). Please try again.' });
   }
-  const rows = rv.data;
+  // r53c: a review its author deleted is gone for the restaurant; Seb's Analytics keeps seeing it, marked, for the record.
+  const platform = who.level >= LEVEL.platform;
+  const rows = platform ? rv.data : rv.data.filter((r) => !r.deleted_at);
+  // r53c: the authors' conversations about hidden reviews (moderators only): open or closed, and how many wait.
+  const talks = canModerate ? await talksOf(who.rid) : {};
   // The names of reviewers whose review has none stored (reviews from before names were saved with them).
   const names = await namesFor(rows.filter((r) => !text(r.reviewer_name)).map((r) => r.taster_id));
   const timezone = (booking && booking.settings && booking.settings.timezone) || 'America/New_York';
@@ -82,7 +88,7 @@ async function list(req, res, body, tasterId) {
     more: rows.length >= MAX_REVIEWS,
     repliesReady: rv.withReplies,
     moderation: { ready: sw.ready, on: sw.on, at: sw.at || null, by: sw.by || null, canModerate, platform: who.level >= LEVEL.platform,
-                  reasons: REASONS },
+                  reasons: REASONS, deletedReady: rv.withDeleted === true },
     dishes,
     reviews: rows.map((r) => {
       const n = names.get(Number(r.taster_id)) || {};
@@ -104,6 +110,8 @@ async function list(req, res, body, tasterId) {
           ...(canModerate && why[r.id] ? { details: why[r.id].details || null, alerted: !!why[r.id].alerted } : {}),
         } : null,
         ...(canModerate ? { visit: dots[r.id] || null } : {}),
+        ...(canModerate && talks[r.id] ? { talk: talks[r.id] } : {}),
+        ...(platform && r.deleted_at ? { deleted: { at: r.deleted_at } } : {}),
         replies: [
           text(r.reply_text) ? { side: 'restaurant', text: r.reply_text, at: r.reply_created_at || null, by: text(r.reply_by_name) } : null,
           text(r.taster_reply_text) ? { side: 'guest', text: r.taster_reply_text, at: r.taster_reply_created_at || null } : null,
@@ -117,6 +125,9 @@ async function list(req, res, body, tasterId) {
 // The reviews with their conversation; without it when the reply columns are not there (an older database).
 async function readReviews(rid) {
   const base = `/reviews?restaurant_id=eq.${rid}&order=created_at.desc,id.desc&limit=${MAX_REVIEWS}&select=`;
+  const kept = await sb(base + REVIEW_COLUMNS + ',' + REPLY_COLUMNS + ',' + HIDDEN_COLUMNS + ',' + DELETED_COLUMNS);    // r53c
+  if (kept.ok) return { ...kept, withReplies: true, withDeleted: true };
+  if (kept.status !== 400) return kept;
   const all = await sb(base + REVIEW_COLUMNS + ',' + REPLY_COLUMNS + ',' + HIDDEN_COLUMNS);    // r53
   if (all.ok) return { ...all, withReplies: true };
   if (all.status !== 400) return all;
@@ -125,6 +136,23 @@ async function readReviews(rid) {
   if (full.status !== 400) return full;
   const plain = await sb(base + REVIEW_COLUMNS);
   return { ...plain, withReplies: false };
+}
+
+// r53c: { reviewId: { open, unread, count } } — the authors' conversations about hidden reviews. {} before migration 38.
+async function talksOf(rid) {
+  const out = {};
+  const [th, m] = await Promise.all([
+    sb(`/review_threads?restaurant_id=eq.${Number(rid)}&select=review_id,closed_at&limit=3000`),
+    sb(`/review_messages?restaurant_id=eq.${Number(rid)}&select=review_id,from_guest,read_at&limit=10000`),
+  ]);
+  if (!th.ok || !Array.isArray(th.data)) return out;
+  th.data.forEach((t) => { out[t.review_id] = { open: !t.closed_at, unread: 0, count: 0 }; });
+  (m.ok && Array.isArray(m.data) ? m.data : []).forEach((x) => {
+    const o = out[x.review_id]; if (!o) return;
+    o.count += 1;
+    if (x.from_guest && !x.read_at) o.unread += 1;
+  });
+  return out;
 }
 
 // The menu's dishes and drinks: what the Filters page groups by (category, kind of drink) and the photo.
