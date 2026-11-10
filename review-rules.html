@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review rules · The Hungry Fork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --red:#B01015; --red-dark:#7E0A0E; --red-light:#F7E3E1;
+    --white:#FCF9F4; --off-white:#F5EEE3; --text:#2B211A;
+    --muted:#8A7B6E; --border:#E9E0D3; --ink:#2B211A;
+    --serif:'Cormorant Garamond', Georgia, serif;
+    --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.75; -webkit-font-smoothing:antialiased; }
+
+  .p-topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .p-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .p-topbar-title { font-family:var(--serif); font-size:1.1rem; font-weight:600; color:var(--white); }
+  .p-spacer { width:56px; }
+
+  .p-wrap { max-width:720px; margin:0 auto; padding:2.2rem 1.15rem 4rem; }
+  h1 { font-family:var(--serif); font-size:clamp(2rem,7vw,2.9rem); font-weight:600; line-height:1.1; margin-bottom:.4rem; }
+  .p-updated { font-size:.78rem; color:var(--muted); letter-spacing:.04em; margin-bottom:2rem; }
+  h2 { font-family:var(--serif); font-size:1.4rem; font-weight:600; margin:2.4rem 0 .7rem; }
+  p { margin-bottom:.95rem; font-weight:300; }
+  strong { font-weight:600; }
+  a { color:var(--red); }
+  ul { margin:0 0 1.1rem 1.1rem; font-weight:300; }
+  li { margin-bottom:.5rem; padding-left:.2rem; }
+
+  .p-lead { background:var(--white); border:1px solid var(--border); border-left:3px solid var(--red); border-radius:12px; padding:1.1rem 1.2rem; margin-bottom:2rem; }
+  .p-lead p:last-child { margin-bottom:0; }
+
+  .p-warn { background:var(--red-light); border:1px solid rgba(176,16,21,.25); border-radius:12px; padding:1.1rem 1.2rem; margin:1.4rem 0; }
+  .p-warn p:last-child { margin-bottom:0; }
+  .p-warn strong { color:var(--red-dark); }
+
+  .p-foot { border-top:1px solid var(--border); margin-top:3rem; padding-top:1.4rem; font-size:.8rem; color:var(--muted); }
+  .p-foot a { margin-right:1rem; }
+</style>
+</head>
+<body>
+
+<div class="p-topbar">
+  <a href="/" class="p-home" data-hf-back>&#8249; Site</a>
+  <div class="p-topbar-title">Review rules</div>
+  <span class="p-spacer"></span>
+</div>
+<script>
+// r36 (Sebastian, 16 Oct): the way back. "‹ Site" goes back to the page you came from, as you left it (the
+// browser's own Back, so that page comes back where it was), and says which page: "‹ Manager", "‹ Menu"…
+// Opened from outside the site (a QR code, an email, a typed address) it stays "‹ Site" and goes home. A page
+// that opened in a new tab (its address has nt=1) closes that tab, which shows the page that opened it. Places
+// this page adds to the browser's history (a #hash, a dish) are skipped. The same lines on every page (the tests
+// check they match).
+(function(){
+  var NAMES={'':'Site',index:'Site',menu:'Menu',manager:'Manager',reservations:'Reservations',checkin:'Check In',rewards:'Reward terms',terms:'Terms',privacy:'Privacy','review-rules':'Review rules',invite:'Invite'};
+  function page(p){return String(p||'').replace(/^\/+|\/+$/g,'').replace(/\.html$/,'');}
+  var from=null,depth=0,H=window.history,newTab=/[?&]nt=1(&|$)/.test(location.search);
+  try{
+    var r=document.referrer?new URL(document.referrer):null,rp=r?page(r.pathname):'';
+    // (the home page with ?dish= in its address only passes the visitor on to the menu: it is not a page to go back to)
+    if(r&&r.origin===location.origin&&rp!==page(location.pathname)&&Object.prototype.hasOwnProperty.call(NAMES,rp)
+       &&!((rp===''||rp==='index')&&/[?&]dish=/.test(r.search)))from=r;
+  }catch(e){}
+  try{
+    var push=H.pushState,rep=H.replaceState;
+    var mark=function(s){if(s===null||s===undefined)s={};if(typeof s==='object'&&!Array.isArray(s)){s=Object.assign({},s);s.hfDepth=depth;}return s;};
+    if(H.state&&typeof H.state.hfDepth==='number')depth=H.state.hfDepth;
+    rep.call(H,mark(H.state),'');
+    H.pushState=function(s,t,u){depth++;return push.call(H,mark(s),t,u);};
+    H.replaceState=function(s,t,u){return rep.call(H,mark(s),t,u);};
+    window.addEventListener('popstate',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;});
+    window.addEventListener('hashchange',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;else{depth++;rep.call(H,mark(s),'');}});
+  }catch(e){}
+  function go(){location.href=from?from.href:'/';}
+  window.hfBackFrom=from?NAMES[page(from.pathname)]:null;
+  window.hfBackCan=function(){return !!from&&H.length>depth+1;};
+  window.hfBack=function(){
+    if(!from){location.href='/';return;}
+    if(H.length<=depth+1){if(newTab){try{window.close();}catch(e){}}setTimeout(go,newTab?300:0);return;}
+    var t=setTimeout(go,900);
+    window.addEventListener('pagehide',function(){clearTimeout(t);});
+    H.go(-(depth+1));
+  };
+  function paint(){
+    var els=document.querySelectorAll('[data-hf-back]');
+    for(var i=0;i<els.length;i++){
+      var a=els[i],name=window.hfBackFrom;
+      if(from)a.setAttribute('href',from.href);
+      if(a.getAttribute('data-hf-back')==='icon')a.setAttribute('aria-label',name?'Back to '+name:'Home');
+      else a.textContent='‹ '+(name||'Site');
+      if(!a.hfBack){a.hfBack=1;a.addEventListener('click',function(ev){if(!from||ev.metaKey||ev.ctrlKey||ev.shiftKey||ev.altKey)return;ev.preventDefault();window.hfBack();});}
+    }
+  }
+  paint();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);
+})();
+</script>
+
+<div class="p-wrap">
+
+<h1>Review rules</h1>
+<div class="p-updated">The Hungry Fork &middot; Last updated 10 November 2026</div>
+
+<div class="p-lead">
+  <p>Reviews on Fork&rsquo;s Rating come from guests with a verified US phone number. Each restaurant manages the reviews on its own website, following these rules.</p>
+  <p><strong>Every review is published right away.</strong> No restaurant can hold a review back, delete it or change it.</p>
+</div>
+
+<p>These rules are based on the U.S. Federal Trade Commission (FTC) rule on consumer reviews, 16 CFR 465.7 (<a href="https://www.ftc.gov/system/files/ftc_gov/pdf/r311003consumerreviewstestimonialsfinalrulefrn.pdf" target="_blank" rel="noopener">read it on the FTC&rsquo;s website</a>). <strong>Under them, a restaurant can hide a review only for one of these reasons.</strong></p>
+
+<h2 id="ftc">Named in the FTC rule</h2>
+<ol>
+  <li>Confidential business information</li>
+  <li>Defamatory, harassing, abusive, obscene, vulgar or sexual content</li>
+  <li>Someone&rsquo;s personal information</li>
+  <li>Discrimination (race, gender, sexuality, ethnicity or a similar trait)</li>
+  <li>Clearly false or misleading information</li>
+  <li>A fake review</li>
+  <li>Something not about the restaurant or its food</li>
+</ol>
+
+<h2 id="other">Other neutral reasons</h2>
+<p>Used the same way for a 5-star and a 1-star review:</p>
+<ol start="8">
+  <li>Demands or threats from the writer (for example, &ldquo;a free dinner or 1 star&rdquo;)</li>
+  <li>Ads, sales links or contact details, and scam links</li>
+  <li>Pretending to be someone else</li>
+  <li>A conflict of interest (a competitor, a supplier, or a relative or close friend of the owner or staff), when the restaurant knows it for sure</li>
+  <li>Meaningless text</li>
+  <li>Illegal or dangerous content</li>
+  <li>Not the writer&rsquo;s own experience, when the review says so</li>
+  <li>The same review posted twice</li>
+  <li>Another reason, which the restaurant explains</li>
+</ol>
+
+<p><strong>A restaurant can never hide a review</strong> because it is negative or has a low score, or because it complains about the food, the service, the staff, the waiting time, a booking, the prices or the cleanliness.</p>
+
+<p><strong>A hidden review is hidden whole (comment and stars) and doesn&rsquo;t count in the rating.</strong> The same rules apply to every review, whatever its stars. The author can still see it, and the restaurant tells them why.</p>
+
+<p><strong>Reviews by the restaurant&rsquo;s team:</strong> ratings by its owners and managers are hidden automatically, and its crew can&rsquo;t rate it while they work there.</p>
+
+<p>The restaurants on Fork&rsquo;s Rating are clients of Seb&rsquo;s Analytics LLC, which builds their websites. No restaurant pays to change its score.</p>
+
+<p>Something wrong? Tell the restaurant, or write to Fork&rsquo;s Rating at <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a>.</p>
+
+<div class="p-foot">
+  <a href="/">Home</a>
+  <a href="/terms">Terms of Service</a>
+  <a href="/privacy">Privacy Policy</a>
+  <br><br>
+  &copy;2026 Seb&rsquo;s Analytics LLC
+</div>
+
+</div>
+</body>
+</html>
