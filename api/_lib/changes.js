@@ -47,7 +47,7 @@ export async function tellChange(restaurantId, actorId, what, place = {}) {
     const tz = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
     const name = (loaded && loaded.restaurant && loaded.restaurant.name) || 'The restaurant';
     const url = place.dish ? `/manager#dish=${Number(place.dish)}&at=${rid}`
-      : `/manager#go=${['team', 'menu', 'settings', 'map'].includes(place.go) ? place.go : 'settings'}&at=${rid}`;
+      : `/manager#go=${['team', 'menu', 'settings', 'map', 'reviews'].includes(place.go) ? place.go : 'settings'}&at=${rid}`;
     console.log('[changes]', rid, 'by', actorId + ':', what, '→', url);
     return await notifyStaff(rid, 'changes', {
       title: `${name} · Change`,
