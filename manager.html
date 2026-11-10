@@ -1075,6 +1075,134 @@
   .ev-share-btns { display:flex; gap:.5rem; margin-top:.6rem; } .ev-share-btns .m-btn { flex:1 1 0; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; line-height:1.35; padding:.85rem 1rem; }   /* a button and a link: the same two lines */
   .rv-moved { font-size:.8rem; color:var(--muted); text-align:center; margin:.4rem 0 1.2rem; }
   .rv-link { border:none; background:none; padding:0; font:inherit; color:var(--red); font-weight:700; text-decoration:underline; cursor:pointer; }
+
+  /* ── r52 · the tabs: a drawing over each word, the chosen one red; the settings button beside the role (Sebastian, 9 Nov 14:55) ── */
+  .m-head-tools { display:flex; align-items:center; gap:.5rem; flex:none; }
+  .m-head-tools .m-gear { width:40px; height:40px; }
+  .m-tabs { display:block; margin:0 0 .9rem; }
+  .m-tabbar { display:flex; border-radius:16px; padding:4px; gap:2px; }
+  .m-tabbar .m-tab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; flex:1 1 auto; min-width:0;
+                     padding:.5rem .3rem .45rem; border-radius:12px; font-size:.58rem; letter-spacing:.04em; line-height:1.2; white-space:nowrap; }
+  .m-tabbar .m-tab svg { width:20px; height:20px; flex:none; }
+  .m-tabbar .m-tab.on { background:var(--red); color:#fff; }
+  @media (max-width:420px){ .m-tabbar .m-tab { letter-spacing:.02em; padding:.5rem .2rem .45rem; font-size:.53rem; } }
+  @media (max-width:340px){ .m-tabbar .m-tab { letter-spacing:0; padding:.45rem .1rem .4rem; font-size:.48rem; } .m-tabbar .m-tab svg { width:18px; height:18px; } }
+
+  /* ── r52 · the Reviews tab ── */
+  .rw-bar { display:flex; gap:.5rem; align-items:center; margin-bottom:.6rem; }
+  .rw-search { flex:1; min-width:0; border:1px solid var(--border); background:#fff; border-radius:10px; padding:.62rem .75rem; font-family:var(--sans); font-size:.84rem; color:var(--text); }
+  .rw-fbtn { flex:none; display:flex; align-items:center; gap:.35rem; background:var(--red); color:#fff; border:none; border-radius:10px; padding:.62rem .8rem;
+             font-family:var(--sans); font-size:.8rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .rw-chips { display:flex; flex-wrap:wrap; gap:.35rem; margin:0 0 .7rem; }
+  .rw-chip { border:1px solid #EFC9C5; background:var(--red-light); color:var(--red-dark); border-radius:999px; padding:.3rem .65rem; font-size:.72rem; font-weight:600;
+             font-family:var(--sans); cursor:pointer; }
+  .rw-count { font-size:.74rem; color:var(--muted); margin:0 0 .5rem; }
+  .rw-card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:.75rem .8rem; margin-bottom:.55rem; }
+  .rw-top { display:flex; gap:.6rem; align-items:center; }
+  .rw-top img { width:52px; height:38px; object-fit:contain; flex:none; background:var(--off-white); border-radius:8px; padding:2px; }
+  .rw-dish { font-size:.86rem; font-weight:600; line-height:1.25; }
+  .rw-when { font-size:.7rem; color:var(--muted); }
+  .rw-kind { display:inline-block; font-size:.56rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--red); margin-right:.35rem; }
+  .rw-who { font-size:.82rem; font-weight:600; margin:.45rem 0 .1rem; }
+  .rw-who .reviewer-handle { font-weight:400; }
+  .rw-stars { display:flex; flex-wrap:wrap; gap:.25rem .9rem; font-size:.72rem; color:var(--muted); margin-bottom:.2rem; }
+  .rw-stars b { color:var(--red); font-weight:600; letter-spacing:1px; }
+  .rw-stars b i { color:var(--star-off); font-style:normal; }
+  .rw-text { font-size:.84rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  .rw-none { font-size:.78rem; color:var(--muted); font-style:italic; }
+  .rw-small { font-size:.7rem; color:var(--muted); margin-top:.2rem; }
+  .rw-thread { margin-top:.45rem; border-left:2px solid var(--border); padding-left:.6rem; }
+  .rw-turn { font-size:.78rem; line-height:1.45; margin-bottom:.3rem; white-space:pre-wrap; word-break:break-word; }
+  .rw-turn b { font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; color:var(--red); margin-right:.3rem; }
+  .rw-turn.guest b { color:var(--text); }
+  .rw-acts { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.55rem; }
+  .rw-act { border:1px solid var(--border); background:#fff; border-radius:999px; padding:.35rem .8rem; font-family:var(--sans); font-size:.74rem; font-weight:500;
+            color:var(--text); cursor:pointer; text-decoration:none; display:inline-block; }
+  .rw-act.done { color:var(--green); border-color:#CFE3D6; background:#F1F8F3; cursor:default; }
+  .rw-dishes { margin-top:.5rem; background:var(--off-white); border-radius:10px; padding:.4rem .6rem; }
+  .rw-dishes div { display:flex; justify-content:space-between; gap:.6rem; font-size:.76rem; padding:.2rem 0; }
+  .rw-dishes b { color:var(--red); font-weight:600; letter-spacing:1px; white-space:nowrap; }
+  .rw-reply { margin-top:.55rem; }
+  .rw-reply textarea { width:100%; min-height:72px; border:1px solid var(--border); border-radius:10px; padding:.55rem .65rem; font-family:var(--sans); font-size:.84rem; resize:vertical; }
+  .rw-reply .rw-hint { font-size:.7rem; color:var(--muted); margin:.25rem 0 .4rem; }
+  .rw-more { display:block; width:100%; margin:.4rem 0 1rem; }
+  .rw-empty { text-align:center; color:var(--muted); font-size:.86rem; padding:1.4rem .5rem; }
+
+  /* ── r52 · the Filters page and the calendar (a page of their own, over the tab) ── */
+  body.rw-locked { overflow:hidden; }
+  .rw-page { position:fixed; inset:0; z-index:700; background:var(--white); display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
+  .rw-ptop { display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:calc(env(safe-area-inset-top,0px) + .8rem) 1rem .7rem; border-bottom:1px solid var(--border); }
+  .rw-ptitle { display:flex; align-items:center; gap:.2rem; font-family:var(--serif); font-weight:600; font-size:1.45rem; background:none; border:none; color:var(--text); cursor:pointer; padding:0; }
+  .rw-pclear { background:none; border:none; color:var(--red); font-family:var(--sans); font-weight:600; font-size:.82rem; cursor:pointer; }
+  .rw-pbody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:.3rem 1rem 1rem; }
+  .rw-pfoot { padding:.7rem 1rem calc(env(safe-area-inset-bottom,0px) + .9rem); border-top:1px solid var(--border); background:#fff; display:flex; gap:.6rem; }
+  .rw-pfoot > button { flex:1 1 0; min-height:48px; padding:.7rem .6rem; }
+  .rw-pg { font-size:.62rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin:1rem 0 .3rem; }
+  .rw-two { display:grid; grid-template-columns:1fr 1fr; column-gap:.9rem; }
+  .rw-three { display:flex; flex-wrap:wrap; column-gap:.9rem; }
+  .rw-three .rw-ck { flex:1 1 auto; width:auto; }
+  .rw-three .rw-ck .lbl { overflow:visible; }
+  .rw-ck { display:flex; align-items:center; gap:.55rem; width:100%; padding:.5rem 0; border:none; border-bottom:1px solid #EBE2D5; background:none; font-family:var(--sans);
+           font-size:.84rem; color:var(--text); cursor:pointer; text-align:left; min-width:0; }
+  .rw-ck .n { margin-left:auto; color:var(--muted); font-size:.76rem; padding-left:.3rem; }
+  .rw-ck img { width:36px; height:26px; object-fit:contain; flex:none; }
+  .rw-ck .lbl { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rw-box { width:19px; height:19px; flex:none; border-radius:5px; border:1.6px solid #B9AC9C; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .rw-box.on { background:var(--red); border-color:var(--red); }
+  .rw-box.on::after { content:''; width:9px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg) translate(1px,-1px); }
+  .rw-box.part { border-color:var(--red); }
+  .rw-box.part::after { content:''; width:9px; height:2px; background:var(--red); border-radius:1px; }
+  .rw-st { color:var(--red); letter-spacing:1.5px; font-size:.86rem; }
+  .rw-st i { color:var(--star-off); font-style:normal; }
+  .rw-grp { font-size:.66rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--red); }
+  .rw-cat { font-weight:600; }
+  .rw-arrow { flex:none; width:30px; height:30px; margin:-6px -6px -6px 0; display:flex; align-items:center; justify-content:center; color:var(--muted);
+              background:none; border:none; cursor:pointer; }
+  .rw-arrow.red { color:var(--red); }
+  .rw-row { display:flex; align-items:center; border-bottom:1px solid #EBE2D5; }
+  .rw-row .rw-ck { border-bottom:none; flex:1; }
+  .rw-l1 { padding-left:1.5rem; }
+  .rw-l2 { padding-left:1.5rem; }
+  .rw-sum { font-size:.74rem; color:var(--muted); padding:.25rem 0 .3rem 1.6rem; }
+  .rw-note { background:var(--off-white); border-radius:10px; padding:.7rem .8rem; font-size:.8rem; color:var(--muted); line-height:1.45; margin-top:.4rem; }
+  .rw-dates { display:flex; gap:.6rem; }
+  .rw-date { flex:1; display:flex; justify-content:space-between; align-items:center; gap:.4rem; background:#fff; border:1px solid var(--border); border-radius:10px;
+             padding:.5rem .65rem; font-family:var(--sans); font-size:.84rem; color:var(--text); cursor:pointer; text-align:left; }
+  .rw-date small { display:block; color:var(--muted); font-size:.64rem; }
+  .rw-date svg { color:var(--red); flex:none; }
+  /* the calendar */
+  .rw-ft { display:flex; gap:.6rem; margin-top:.2rem; }
+  .rw-ft > div { flex:1; }
+  .rw-ft label { display:block; font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.25rem; }
+  .rw-ft button { width:100%; border:1.5px solid var(--border); border-radius:10px; background:#fff; padding:.55rem .4rem; font-family:var(--sans); font-size:.84rem; color:var(--muted); cursor:pointer; }
+  .rw-ft .act label { color:var(--red); }
+  .rw-ft .act button { border:2px solid var(--red); color:var(--red); font-weight:600; }
+  .rw-quick { display:flex; flex-wrap:wrap; gap:.35rem; margin:.6rem 0 .1rem; }
+  .rw-quick button { border:1px solid var(--border); background:#fff; border-radius:999px; padding:.3rem .7rem; font-family:var(--sans); font-size:.74rem; color:var(--muted); cursor:pointer; }
+  .rw-quick button.on { background:var(--red); border-color:var(--red); color:#fff; }
+  .rw-month { font-size:1.08rem; font-weight:500; margin:1rem .1rem .45rem; }
+  .rw-month small { font-size:.74rem; color:var(--muted); font-weight:400; }
+  .rw-grid { display:grid; grid-template-columns:repeat(7, 1fr); row-gap:3px; }
+  .rw-grid .h { font-size:.58rem; font-weight:700; letter-spacing:.06em; color:var(--muted); text-align:center; padding:.25rem 0 .35rem; }
+  .rw-grid .d { height:38px; display:flex; align-items:center; justify-content:center; font-size:.84rem; border:none; background:none; font-family:var(--sans); color:var(--text); cursor:pointer; padding:0; }
+  .rw-grid .d.we { font-weight:700; }
+  .rw-grid .d.in { background:var(--red-light); color:var(--red-dark); }
+  .rw-grid .d.s { background:linear-gradient(90deg, transparent 50%, var(--red-light) 50%); }
+  .rw-grid .d.e { background:linear-gradient(90deg, var(--red-light) 50%, transparent 50%); }
+  .rw-grid .d.s.e { background:none; }
+  .rw-grid .d.s span, .rw-grid .d.e span { width:34px; height:34px; border-radius:50%; background:var(--red); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .rw-grid .d.today:not(.s):not(.e) span { box-shadow:inset 0 0 0 1.5px var(--red); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; }
+  .rw-grid .d:disabled { color:#CFC5B8; cursor:default; }
+  .rw-grid .blank { height:38px; }
+
+  /* ── r52 · Settings → Social media ── */
+  .so-f { margin-top:.7rem; }
+  .so-f label { display:block; font-size:.72rem; font-weight:600; margin-bottom:.25rem; }
+  .so-f input { width:100%; border:1px solid var(--border); border-radius:10px; padding:.6rem .7rem; font-family:var(--sans); font-size:.86rem; background:#fff; color:var(--text); }
+  .so-f input:disabled { background:var(--off-white); color:var(--muted); }
+  .so-f.bad input { border-color:var(--red); }
+  .so-err { color:var(--red); font-size:.76rem; margin-top:.3rem; }
+  .so-note { font-size:.74rem; color:var(--muted); margin-top:.5rem; line-height:1.45; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -1176,7 +1304,7 @@ let DISHES_ERROR = null;
 
 // Which tab is showing. The address remembers it (#reservations, #menu, #team),
 // so the corner menu's "Manage Reservations" and a refresh land in the right place.
-const TABS = { reservations:'Reservations', menu:'Menu', team:'Team', events:'Events' };   // r50: Events (tickets)
+const TABS = { reservations:'Reservations', menu:'Menu', team:'Team', events:'Events', reviews:'Reviews' };   // r50: Events (tickets); r52: Reviews
 let TAB = tabFromHash() || 'reservations';
 function tabFromHash(){ const t = (location.hash||'').replace('#',''); return TABS[t] ? t : null; }
 
@@ -1369,17 +1497,19 @@ function mountPage(){
   if(TAB==='menu' && TR.rid!==RESTAURANT.id) trLoad();          // r36: the Top Rated caves
   else if(TAB==='team') loadPeople();
   if(TAB==='events') evStart();                                // r50: the events
+  if(TAB==='reviews') rwStart();                               // r52: every review in one list
 }
 
 function levelHere(){ return RESTAURANT ? Number(RESTAURANT.level)||0 : 0; }
 // Crew (1) see Reservations only; everyone above sees all three.
-function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team','events'] : ['reservations']; }
+function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team','events','reviews'] : ['reservations']; }
 
 function switchTab(t){
   if(!allowedTabs().includes(t) || t===TAB) return;
   TAB = t;
   if(history.replaceState) history.replaceState(null, '', '#'+t);
   if(t!=='reservations'){ RV.view = 'day'; document.body.classList.remove('rv-mode'); rvPaintSheet(); mpStop(); mpPaintSheet(); mpHideToast(); }
+  rwClosePage();                                               // r52: a Filters page left open goes away with its tab
   window.scrollTo(0, 0);
   mountPage();
 }
@@ -1437,23 +1567,36 @@ function header(){
     + '<div class="m-head-row"><div>'
     +   '<div class="m-eyebrow">Signed in as '+whoHtml(ACCESS.firstName||'', ACCESS.handle)+'</div>'
     +   '<div class="m-h">'+esc(RESTAURANT.name||'Restaurant')+'</div>'
-    + '</div><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span></div>'
+    + '</div><span class="m-head-tools"><span class="m-role '+roleClass+'">'+esc(roleLabel)+'</span>'+gearHtml()+'</span></div>'
     + picker
     + '</div>';
 }
 
-function tabsBar(){
-  const tabs = allowedTabs();
-  // r33 (Sebastian, 14 Oct): the settings button is there on every tab.
-  // From Menu or Team it opens the settings (they live with Reservations).
-  const gear = '<button type="button" class="m-gear'+(TAB==='reservations' && RV.view==='settings'?' on':'')+'" aria-label="Numbers and settings" title="Numbers and settings" onclick="rvGearTap()">'
+// r52 (Sebastian, 9 Nov 14:55): the settings button sits beside the role, at the top; it is still on every tab.
+// From Menu, Team, Events or Reviews it opens the settings (they live with Reservations).
+function gearHtml(){
+  return '<button type="button" class="m-gear'+(TAB==='reservations' && RV.view==='settings'?' on':'')+'" aria-label="Numbers and settings" title="Numbers and settings" onclick="rvGearTap()">'
       + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
       + '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>'
       + supDotHtml() + '</button>';
-  if(tabs.length < 2) return gear ? '<div class="m-tabs"><div class="m-tabbar"><span class="m-tab on">Reservations</span></div>'+gear+'</div>' : '';
+}
+// r52: each tab is a drawing with its word under it; the chosen one is red. "Reservations" keeps its whole word.
+const TAB_ICONS = {
+  reservations: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  menu: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/>',
+  team: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 20c.6-3.4 3-5.3 6-5.3s5.4 1.9 6 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.5 14.8c2.4.2 4 1.8 4.5 4.6"/>',
+  events: '<path d="M3.5 8.5V6.5a1.5 1.5 0 0 1 1.5-1.5h14a1.5 1.5 0 0 1 1.5 1.5v2a2.5 2.5 0 0 0 0 5v2a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5v-2a2.5 2.5 0 0 0 0-5Z"/><path d="M14 5.5v13" stroke-dasharray="2 2.2"/>',
+  reviews: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
+};
+function tabIcon(t){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(TAB_ICONS[t]||'')+'</svg>';
+}
+function tabsBar(){
+  const tabs = allowedTabs();
+  if(tabs.length < 2) return '<div class="m-tabs"><div class="m-tabbar"><span class="m-tab on">'+tabIcon('reservations')+'<span>Reservations</span></span></div></div>';
   return '<div class="m-tabs"><div class="m-tabbar" role="tablist">'
-    + tabs.map(t => '<button type="button" role="tab" class="m-tab'+(t===TAB?' on':'')+'" aria-selected="'+(t===TAB)+'" onclick="switchTab(\''+t+'\')">'+TABS[t]+'</button>').join('')
-    + '</div>'+gear+'</div>';
+    + tabs.map(t => '<button type="button" role="tab" class="m-tab'+(t===TAB?' on':'')+'" aria-selected="'+(t===TAB)+'" onclick="switchTab(\''+t+'\')">'+tabIcon(t)+'<span>'+TABS[t]+'</span></button>').join('')
+    + '</div></div>';
 }
 
 function render(){
@@ -1473,6 +1616,7 @@ function render(){
     return;
   }
   if(TAB==='events'){ wrap().innerHTML = top + '<div id="ev-root"></div>'; evPaint(); return; }     // r50
+  if(TAB==='reviews'){ wrap().innerHTML = top + '<div id="rw-root"></div>'; rwPaint(); return; }   // r52
   wrap().innerHTML = top + '<div id="rv-root"></div>';
   rvRender();
 }
@@ -3640,6 +3784,7 @@ function rvPutBack(kept){
   if(allDay && hours) hours.hidden = allDay.checked;
 }
 function rvGearTap(){
+  rwClosePage();                                     // r52: a Filters page open over the Reviews tab
   if(TAB!=='reservations'){
     TAB = 'reservations';
     if(history.replaceState) history.replaceState(null, '', '#reservations');
@@ -3689,7 +3834,7 @@ function rvSettingsHtml(){
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
     + dvCardHtml()                                     // r43: you and your devices (everyone, crew too)
     + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + sqCardHtml() + rvLoyaltyHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S)
-    + rvGradeHtml(S) + rvSupportHtml()
+    + rvGradeHtml(S) + rvSocialHtml(S) + rvSupportHtml()
     // r48 (Sebastian, 30 Oct 16:42): the Rules and the Rooms are on the Map now
     + '<div class="rv-moved">The rules and the rooms are on the <button type="button" class="rv-link" onclick="rvOpenMap()">Map</button> now.</div>';
 }
@@ -4036,6 +4181,58 @@ async function rvGradeSave(btn){
     const data = await rvApi({action:'staff_grade_save', grade: g || null});
     S.grade = data.grade; RV.gradeDraft = undefined;
   }catch(e){ if(e.status !== 401) showToast(e.message); }
+  rvRender();
+}
+
+// ── r52: SOCIAL MEDIA (Sebastian, 9 Nov) ──
+// The links the home page's Social button opens: Instagram, TikTok, Facebook and Google. A button shows only
+// when its link is filled in; everyone sees the same ones, with no reward for anything. The server tidies
+// what is pasted ("@thehungryfork", a link without https…) and says in words when one doesn't look right
+// (api/_lib/social.js). Managers and owners change them; crew see them.
+const SO_KINDS = [['instagram','Instagram','instagram.com/thehungryfork or @thehungryfork'], ['tiktok','TikTok','tiktok.com/@thehungryfork or @thehungryfork'],
+                  ['facebook','Facebook','facebook.com/thehungryfork'], ['google','Google (your Google Maps link)','On Google Maps: your restaurant → Share → copy the link']];
+function rvSocialHtml(S){
+  const G = S.social, edit = S.canEdit;
+  if(!G) return '';
+  const head = '<div class="m-eyebrow">Social media</div>';
+  if(!G.ready) return '<div class="m-card" id="rv-social">'+head+'<div class="m-sub">Not set up yet: migration 36 has not been run.</div></div>';
+  const draft = RV.socialDraft || {};
+  const val = (k) => draft[k] !== undefined ? draft[k] : (G.links[k] || '');
+  const bad = RV.socialBad || null;
+  const changed = SO_KINDS.some(k => draft[k[0]] !== undefined && draft[k[0]].trim() !== (G.links[k[0]] || ''));
+  return '<div class="m-card" id="rv-social">'+head
+    + '<div class="m-sub">These open from the <strong>Social</strong> button on your home page. Everyone sees the same buttons, and a button shows only when its link is filled in.</div>'
+    + SO_KINDS.map(k => '<div class="so-f'+(bad && bad.kind === k[0] ? ' bad' : '')+'"><label for="so-'+k[0]+'">'+k[1]+'</label>'
+        + '<input id="so-'+k[0]+'" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="'+esc(k[2])+'" value="'+esc(val(k[0]))+'"'+(edit ? '' : ' disabled')
+        + ' oninput="rvSocialType(\''+k[0]+'\', this.value)">'
+        + (bad && bad.kind === k[0] ? '<div class="so-err">'+esc(bad.error)+'</div>' : '')
+        + '</div>').join('')
+    + '<div class="so-note">A Google review needs a Google account, so guests write it on Google. Show the link to everyone the same way: asking only happy guests, or giving something for a review, is against Google’s rules and the FTC’s.</div>'
+    + (G.changedOn ? '<div class="rv-g-note">Last changed '+esc(G.changedOn)+(G.changedBy ? ' by '+esc(G.changedBy) : '')+'.</div>' : '')
+    + (edit ? '<div style="margin-top:.8rem;"><button type="button" class="m-save" id="so-save"'+(changed ? '' : ' disabled')+' onclick="rvSocialSave(this)">Save the links</button></div>' : '')
+    + '</div>';
+}
+function rvSocialType(k, v){
+  RV.socialDraft = Object.assign({}, RV.socialDraft || {}, { [k]: v });
+  if(RV.socialBad && RV.socialBad.kind === k) RV.socialBad = null;
+  const S = RV.settings, b = document.getElementById('so-save');
+  if(b && S && S.social && S.social.links) b.disabled = !SO_KINDS.some(x => RV.socialDraft[x[0]] !== undefined && RV.socialDraft[x[0]].trim() !== (S.social.links[x[0]] || ''));
+}
+async function rvSocialSave(btn){
+  const S = RV.settings;
+  if(!S || !S.social || !S.social.ready) return;
+  const links = {};
+  SO_KINDS.forEach(k => { const el = document.getElementById('so-'+k[0]); links[k[0]] = el ? el.value : (S.social.links[k[0]] || ''); });
+  if(btn) btn.disabled = true;
+  try{
+    const data = await rvApi({ action:'staff_social_save', links: links });
+    S.social = data.social; RV.socialDraft = null; RV.socialBad = null;
+    showToast('The links are saved.');
+  }catch(e){
+    if(e.status === 400 && e.data && e.data.kind) RV.socialBad = { kind: e.data.kind, error: e.message };
+    else if(e.status !== 401) showToast(e.message);
+    RV.socialDraft = links;
+  }
   rvRender();
 }
 
@@ -5811,10 +6008,21 @@ async function camRead(v){
   return code ? code.data : null;
 }
 // A QR read: a table → this page with the table and Arrived; a visit, a prize or an invite → the check-in page.
+// r52: the event's poster (its QR opens the event page, /e/<key> or /event?k=…) is not a ticket — say what to ask for.
+function camPoster(text){
+  let u;
+  try{ u = new URL(String(text || '').trim()); }catch(e){ return false; }
+  if(!/^https?:$/.test(u.protocol)) return false;
+  return /^\/e\/[A-Za-z0-9_-]{4,64}\/?$/.test(u.pathname) || (/^\/event(\.html)?$/.test(u.pathname) && !!u.searchParams.get('k'));
+}
 function camFound(text){
   const w = camWhat(text);
   if(!w){
-    if(Date.now() - CAM.said > 2500){ CAM.said = Date.now(); camSay('That QR code is not a table, a visit or a reward here.', true); }
+    if(Date.now() - CAM.said > 2500){
+      CAM.said = Date.now();
+      if(camPoster(text)) camSay('This is the event’s poster. Ask for the guest’s ticket QR (in their email).', true);
+      else camSay('That QR code is not a table, a visit or a reward here.', true);
+    }
     return false;
   }
   if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){}
@@ -7526,10 +7734,456 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && MSG.o
   if(typeof plain !== 'function') return;
   window.logout = function(){
     const out = plain.apply(this, arguments);
-    try{ rvReset(); rvPaintSheet(); msgHide(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; supReset(); boot(); }catch(e){}
+    try{ rvReset(); rvPaintSheet(); msgHide(); PEOPLE = null; DISHES_ROWS = []; DISHES_LOADED = false; supReset(); rwClosePage(); RW = rwFresh(null); boot(); }catch(e){}
     return out;
   };
 })();
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// r52 · THE REVIEWS TAB (Sebastian, 9 Nov 2026)
+// "a new section … where manager can see a list of all the comments, so he doesn't need to open dish by
+// dish to identify some problem" — with the three kinds kept apart (dishes, drinks, the restaurant).
+//   · every review of the restaurant in one list, newest first (api/_lib/reviewlist.js, action rv_list),
+//     with the dish's or drink's photo; the words about the restaurant once per guest and visit day
+//     ("rated 3 dishes"), with Hospitality and Atmosphere & Vibe;
+//   · a search box, and the red Filters button: a page of its own (Version 3, 15:07) — Dishes · Drinks ·
+//     Restaurant; the stars; the dishes and drinks by their menu category, each level a little to the
+//     right and folding away (15:24, 15:32); No reply yet / Replied; the dates, picked on a calendar;
+//     every choice with how many reviews it has, and the button says how many will show;
+//   · Reply (the same four-turn conversation as on the menu: api/review-reply.js) and Open dish.
+// Managers and owners (crew do not see this tab). Moderation comes in r53.
+// ════════════════════════════════════════════════════════════════════════════
+const RW_FOOD = [['starters','Appetizers'], ['entree','Entrées'], ['salads','Salads'], ['sides','Sides'], ['desserts','Desserts']];
+const RW_DRINK = [['wine','Wines',['wine']], ['cocktail','Cocktails',['cocktail']], ['beer','Beers',['beer']],
+                  ['spirit','Spirits',['gin','whiskey','tequila','vodka','rum','spirit']], ['shot','Shots',['shot']]];
+const RW_STEP = 40;
+const RW_KIND_WORDS = { dish:'Dishes', drink:'Drinks', room:'Restaurant' };
+let RW = rwFresh(null);
+function rwFresh(rid){
+  return { rid:rid, loading:false, loaded:false, error:null, data:null, items:[], dishes:[], q:'', f:rwDefault(), page:null, draft:null,
+           open:{ dish:true, drink:true }, cats:{}, shown:RW_STEP, reply:null, sending:false, see:{}, cal:null, gen:0 };
+}
+function rwDefault(){ return { kinds:{ dish:true, drink:true, room:true }, stars:[], dishes:null, reply:{ none:false, replied:false }, from:null, to:null }; }
+function rwCopy(f){ return { kinds:Object.assign({}, f.kinds), stars:f.stars.slice(), dishes:f.dishes ? f.dishes.slice() : null,
+                            reply:Object.assign({}, f.reply), from:f.from, to:f.to }; }
+
+async function rwStart(){
+  if(!RESTAURANT) return;
+  if(RW.rid !== RESTAURANT.id) RW = rwFresh(RESTAURANT.id);
+  rwLoad();
+}
+async function rwLoad(){
+  const gen = ++RW.gen, rid = RW.rid;
+  RW.loading = true; RW.error = null;
+  rwPaint();
+  try{
+    const d = await rvApi({ action:'rv_list' });
+    if(gen !== RW.gen || RW.rid !== rid) return;
+    RW.data = d; rwBuild(d); RW.loaded = true;
+  }catch(e){
+    if(gen !== RW.gen || RW.rid !== rid) return;
+    if(e.status !== 401) RW.error = e.message || 'Could not read the reviews. Please try again.';
+  }
+  RW.loading = false;
+  rwPaint();
+}
+
+// ── the list's rows: one for each dish or drink review, one for each guest's visit (their words about the restaurant) ──
+function rwAvg(a){ const v = (a||[]).filter(x => Number.isFinite(x) && x >= 1); return v.length ? v.reduce((s,x)=>s+x,0)/v.length : null; }
+function rwRound(a){ const v = rwAvg(a); return v === null ? null : Math.min(5, Math.max(1, Math.round(v))); }
+function rwDrinkGroup(kind){ const g = RW_DRINK.find(x => x[2].includes(kind)); return g ? g[0] : 'other'; }
+function rwFoodGroup(cat){ return RW_FOOD.some(x => x[0] === cat) ? cat : 'other'; }
+function rwBuild(d){
+  const dishes = new Map((d.dishes||[]).map(x => [Number(x.id), x]));
+  const items = [], groups = new Map(), reviewed = new Set();
+  (d.reviews||[]).forEach(function(r){
+    const dish = dishes.get(Number(r.dish)) || null;
+    reviewed.add(Number(r.dish));
+    items.push({ t: dish && dish.category === 'drinks' ? 'drink' : 'dish', key:'r'+r.id, r:r, dish:dish, stars:rwRound(r.dishStars), day:r.day, at:r.at });
+    const gk = r.guest + '|' + r.day;
+    let g = groups.get(gk);
+    if(!g){ g = { t:'room', key:'g'+r.id, reviews:[], day:r.day, at:r.at }; groups.set(gk, g); items.push(g); }
+    g.reviews.push(r);
+  });
+  groups.forEach(function(g){
+    g.r = g.reviews.find(x => x.roomComment) || g.reviews[0];        // the review the words about the restaurant came with
+    g.comments = [...new Set(g.reviews.map(x => x.roomComment).filter(Boolean))];
+    g.stars = rwRound(g.r.roomStars);
+    g.dishList = g.reviews.map(x => ({ dish: dishes.get(Number(x.dish)) || null, stars: rwRound(x.dishStars) }));
+  });
+  RW.items = items;
+  // The menu, as the Filters page lists it: what is on it, and anything with a review even if it is hidden now.
+  RW.dishes = (d.dishes||[]).filter(x => !x.hidden || reviewed.has(Number(x.id))).map(function(x){
+    const drink = x.category === 'drinks';
+    return { id:Number(x.id), name:x.name, img:x.img, slug:x.slug, drink:drink, group: drink ? rwDrinkGroup(x.kind) : rwFoodGroup(x.category) };
+  });
+}
+
+// ── what matches ──
+function rwNorm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+function rwHay(it){
+  if(it._hay) return it._hay;
+  const rs = it.t === 'room' ? it.reviews : [it.r];
+  const parts = [];
+  rs.forEach(r => { parts.push(r.name, r.handle); r.replies.forEach(x => parts.push(x.text)); });
+  if(it.t === 'room') parts.push(it.comments.join(' '), it.dishList.map(x => x.dish ? x.dish.name : '').join(' '));
+  else parts.push(it.r.dishComment, it.dish ? it.dish.name : '');
+  return (it._hay = rwNorm(parts.filter(Boolean).join(' ')));
+}
+function rwReplied(it){ return (it.t === 'room' ? it.r : it.r).replies.some(x => x.side === 'restaurant'); }
+function rwMatch(it, f, skip){
+  if(skip !== 'kinds' && !f.kinds[it.t]) return false;
+  if(skip !== 'stars' && f.stars.length && !f.stars.includes(it.stars)) return false;
+  if(skip !== 'dishes' && f.dishes && it.t !== 'room' && !f.dishes.includes(Number(it.r.dish))) return false;
+  if(skip !== 'reply' && f.reply.none !== f.reply.replied){
+    const has = rwReplied(it);
+    if(f.reply.none && has) return false;
+    if(f.reply.replied && !has) return false;
+  }
+  if(skip !== 'dates'){ if(f.from && it.day < f.from) return false; if(f.to && it.day > f.to) return false; }
+  if(RW.q){ const h = rwHay(it); if(!rwNorm(RW.q).split(/\s+/).filter(Boolean).every(w => h.includes(w))) return false; }
+  return true;
+}
+function rwShown(f){ return RW.items.filter(it => rwMatch(it, f)); }
+
+// ── words ──
+function rwDayAt(ms){ const tz = (RW.data && RW.data.timezone) || 'America/New_York';
+  return new Intl.DateTimeFormat('en-CA', { timeZone:tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(ms - 5*3600*1000)); }
+function rwToday(){ return rwDayAt(Date.now()); }
+function rwAddDays(day, n){ const t = new Date(day + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0,10); }
+function rwDayWords(day, withYear){
+  const t = new Date(day + 'T12:00:00Z');
+  return t.toLocaleDateString('en-US', { timeZone:'UTC', month:'short', day:'numeric', year: withYear ? 'numeric' : undefined });
+}
+function rwWhen(at){
+  const tz = (RW.data && RW.data.timezone) || 'America/New_York', t = new Date(at);
+  if(!Number.isFinite(t.getTime())) return '';
+  const time = t.toLocaleTimeString('en-US', { timeZone:tz, hour:'numeric', minute:'2-digit' });
+  const day = rwDayAt(t.getTime()), today = rwToday();
+  if(day === today) return 'Today, ' + time;
+  if(day === rwAddDays(today, -1)) return 'Yesterday, ' + time;
+  const sameYear = day.slice(0,4) === today.slice(0,4);
+  return t.toLocaleDateString('en-US', { timeZone:tz, month:'short', day:'numeric', year: sameYear ? undefined : 'numeric' }) + ', ' + time;
+}
+function rwStarRow(n){ const k = Number(n) || 0; return '★'.repeat(k) + '<i>' + '★'.repeat(5 - k) + '</i>'; }
+function rwThumb(dish, w){
+  const file = dish && dish.img;
+  if(file){
+    const src = typeof hfImgSrc === 'function' ? hfImgSrc(file, w||52) : file;
+    return '<img src="'+esc(src)+'" data-orig="'+esc(file)+'" alt="" loading="lazy" onerror="rwImgErr(this)">';
+  }
+  return '<img src="/hungry-fork-logo.png" alt="" loading="lazy">';
+}
+function rwImgErr(img){
+  if(typeof hfImgBack === 'function' && hfImgBack(img)) return;
+  img.onerror = null; img.src = '/hungry-fork-logo.png';
+}
+function rwPlural(n, one, many){ return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+
+// ── the tab ──
+function rwPaint(){
+  const root = document.getElementById('rw-root');
+  if(!root) return;
+  if(RW.error && !RW.loaded){ root.innerHTML = '<div class="m-err">'+esc(RW.error)+'</div><button type="button" class="m-btn quiet" onclick="rwLoad()">Try again</button>'; return; }
+  if(!RW.loaded){ root.innerHTML = '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
+  const n = rwActive().length;
+  root.innerHTML = '<div class="rw-bar">'
+      + '<input class="rw-search" id="rw-q" type="search" placeholder="Search a name, a dish or a word…" value="'+esc(RW.q)+'" oninput="rwSearch(this.value)" aria-label="Search the reviews">'
+      + '<button type="button" class="rw-fbtn" id="rw-fbtn" onclick="rwOpenFilters()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"/></svg>Filters'+(n ? ' ('+n+')' : '')+'</button>'
+    + '</div>'
+    + '<div id="rw-list">'+rwListHtml()+'</div>';
+}
+function rwSearch(v){ RW.q = v; RW.shown = RW_STEP; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); }
+function rwMore(){ RW.shown += RW_STEP; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); }
+// The filters chosen, as chips under the search; ✕ takes one away.
+function rwActive(){
+  const f = RW.f, out = [];
+  const kinds = ['dish','drink','room'].filter(k => f.kinds[k]);
+  if(kinds.length < 3) out.push(['kinds', kinds.length ? kinds.map(k => RW_KIND_WORDS[k]).join(' + ') : 'No comments']);
+  if(f.stars.length){
+    const s = f.stars.slice().sort((a,b)=>a-b);
+    const run = s.length > 1 && s[s.length-1] - s[0] === s.length - 1;
+    out.push(['stars', run ? s[0]+'–'+s[s.length-1]+'★' : s.map(x => x+'★').join(', ')]);
+  }
+  if(f.dishes){
+    const names = RW.dishes.filter(d => f.dishes.includes(d.id));
+    out.push(['dishes', names.length === 1 ? names[0].name : rwPlural(names.length, 'dish or drink', 'dishes and drinks')]);
+  }
+  if(f.reply.none !== f.reply.replied) out.push(['reply', f.reply.none ? 'No reply yet' : 'Replied']);
+  if(f.from || f.to){
+    const y = (f.from||f.to).slice(0,4) !== rwToday().slice(0,4);
+    out.push(['dates', f.from && f.to ? (f.from === f.to ? rwDayWords(f.from, y) : rwDayWords(f.from, y)+' – '+rwDayWords(f.to, y))
+                                      : f.from ? 'Since '+rwDayWords(f.from, y) : 'Until '+rwDayWords(f.to, y)]);
+  }
+  return out;
+}
+function rwDrop(k){
+  const d = rwDefault();
+  if(k === 'kinds') RW.f.kinds = d.kinds;
+  if(k === 'stars') RW.f.stars = [];
+  if(k === 'dishes') RW.f.dishes = null;
+  if(k === 'reply') RW.f.reply = d.reply;
+  if(k === 'dates'){ RW.f.from = null; RW.f.to = null; }
+  RW.shown = RW_STEP;
+  rwPaint();
+}
+function rwListHtml(){
+  const chips = rwActive();
+  const all = rwShown(RW.f), list = all.slice(0, RW.shown);
+  let h = chips.length ? '<div class="rw-chips">'+chips.map(c => '<button type="button" class="rw-chip" data-k="'+c[0]+'" onclick="rwDrop(\''+c[0]+'\')">'+esc(c[1])+' ✕</button>').join('')+'</div>' : '';
+  if(!RW.items.length) return h + '<div class="rw-empty">No reviews yet. When guests rate a dish, a drink or the restaurant, it shows up here.</div>';
+  h += '<div class="rw-count" id="rw-count">'+rwPlural(all.length, 'review')+(all.length > list.length ? ' · showing '+list.length : '')+'</div>';
+  if(!all.length) return h + '<div class="rw-empty">Nothing matches. Change the filters or the search.</div>';
+  h += list.map(rwCardHtml).join('');
+  if(all.length > list.length) h += '<button type="button" class="m-btn quiet rw-more" onclick="rwMore()">Show more ('+(all.length - list.length)+')</button>';
+  if(RW.data && RW.data.more) h += '<div class="rw-small" style="text-align:center;margin-bottom:1rem;">The newest '+RW.data.max+' reviews are here.</div>';
+  return h;
+}
+function rwTurn(r){ const n = r.replies.length; return n === 0 ? 'restaurant' : n === 1 ? 'guest' : n === 2 ? 'restaurant' : null; }
+function rwThreadHtml(r){
+  if(!r.replies.length) return '';
+  return '<div class="rw-thread">'+r.replies.map(function(x){
+    return '<div class="rw-turn'+(x.side === 'guest' ? ' guest' : '')+'"><b>'+(x.side === 'guest' ? 'The guest' : esc(x.by || 'The restaurant'))+'</b>'+esc(x.text)+'</div>';
+  }).join('')+'</div>';
+}
+function rwActsHtml(it){
+  const r = it.r, turn = rwTurn(r), acts = [];
+  if(turn === 'restaurant') acts.push('<button type="button" class="rw-act" onclick="rwReplyOpen(\''+it.key+'\')">'+(r.replies.length ? 'Reply (last word)' : 'Reply')+'</button>');
+  else if(turn === 'guest') acts.push('<span class="rw-act done">Replied ✓ · the guest can answer</span>');
+  else acts.push('<span class="rw-act done">Replied ✓</span>');
+  if(it.t === 'room') acts.push('<button type="button" class="rw-act" onclick="rwSee(\''+it.key+'\')">'+(RW.see[it.key] ? 'Hide the dishes' : 'See the dishes')+'</button>');
+  else if(it.dish && it.dish.slug) acts.push('<a class="rw-act" href="/menu?dish='+encodeURIComponent(it.dish.slug)+'" target="_blank" rel="noopener">Open '+(it.t === 'drink' ? 'drink' : 'dish')+'</a>');
+  return '<div class="rw-acts">'+acts.join('')+'</div>';
+}
+function rwReplyHtml(it){
+  if(RW.reply !== it.key) return '';
+  return '<div class="rw-reply"><textarea id="rw-reply-text" maxlength="1500" placeholder="Write your answer…"></textarea>'
+    + '<div class="rw-hint">Everyone can read it under the review. It can\'t be changed or taken back once it\'s posted.</div>'
+    + '<div class="rw-acts" style="margin-top:0"><button type="button" class="m-save" id="rw-reply-send"'+(RW.sending ? ' disabled' : '')+' onclick="rwReplySend(\''+it.key+'\')">Post the answer</button>'
+    + '<button type="button" class="rw-act" onclick="rwReplyOpen(null)">Cancel</button></div></div>';
+}
+function rwCardHtml(it){
+  const r = it.r;
+  if(it.t === 'room'){
+    const see = RW.see[it.key] ? '<div class="rw-dishes">'+it.dishList.map(x => '<div><span>'+esc(x.dish ? x.dish.name : 'A dish')+'</span><b>'+rwStarRow(x.stars)+'</b></div>').join('')+'</div>' : '';
+    return '<div class="rw-card" data-kind="room" data-key="'+it.key+'">'
+      + '<div class="rw-kind">Restaurant</div>'
+      + '<div class="rw-who" style="margin-top:.2rem">'+whoHtml(r.name, r.handle)+'</div>'
+      + '<div class="rw-stars"><span>Hospitality <b>'+rwStarRow(r.roomStars[0])+'</b></span><span>Atmosphere &amp; Vibe <b>'+rwStarRow(r.roomStars[1])+'</b></span></div>'
+      + (it.comments.length ? it.comments.map(c => '<div class="rw-text">'+esc(c)+'</div>').join('') : '<div class="rw-none">No comment, only stars.</div>')
+      + '<div class="rw-small">'+esc(rwWhen(it.at))+' · '+(it.reviews.length === 1 ? 'rated 1 '+(it.dishList[0].dish && it.dishList[0].dish.category === 'drinks' ? 'drink' : 'dish') : 'rated '+it.reviews.length+' dishes and drinks')+'</div>'
+      + rwThreadHtml(r) + rwActsHtml(it) + see + rwReplyHtml(it)
+      + '</div>';
+  }
+  const d = it.dish;
+  return '<div class="rw-card" data-kind="'+it.t+'" data-key="'+it.key+'">'
+    + '<div class="rw-top">'+rwThumb(d)+'<div><div class="rw-dish"><span class="rw-kind">'+(it.t === 'drink' ? 'Drink' : 'Dish')+'</span>'+esc(d ? d.name : 'A dish no longer on the menu')+'</div><div class="rw-when">'+esc(rwWhen(it.at))+'</div></div></div>'
+    + '<div class="rw-who">'+whoHtml(r.name, r.handle)+'</div>'
+    + '<div class="rw-stars"><span>'+(it.t === 'drink' ? 'Drink' : 'Dish')+' <b>'+rwStarRow(it.stars)+'</b></span>'
+    +   '<span>Flavor '+(r.dishStars[0]||'–')+' · Worth Every Bite '+(r.dishStars[1]||'–')+' · Signature Style '+(r.dishStars[2]||'–')+'</span></div>'
+    + (r.dishComment ? '<div class="rw-text">'+esc(r.dishComment)+'</div>' : '<div class="rw-none">No comment, only stars.</div>')
+    + rwThreadHtml(r) + rwActsHtml(it) + rwReplyHtml(it)
+    + '</div>';
+}
+function rwFind(key){ return RW.items.find(x => x.key === key); }
+function rwSee(key){ RW.see[key] = !RW.see[key]; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); }
+function rwReplyOpen(key){
+  RW.reply = key; RW.sending = false;
+  const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml();
+  const t = document.getElementById('rw-reply-text'); if(t) t.focus();
+}
+async function rwReplySend(key){
+  const it = rwFind(key), box = document.getElementById('rw-reply-text');
+  if(!it || !box || RW.sending) return;
+  const text = box.value.trim();
+  if(!text){ showToast('Write your answer first.'); box.focus(); return; }
+  RW.sending = true;
+  const btn = document.getElementById('rw-reply-send'); if(btn) btn.disabled = true;
+  try{
+    const { res, data } = await callApi('/api/review-reply', { method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+currentSession },
+      body:JSON.stringify({ reviewId: it.r.id, text: text }) });
+    if(!res.ok) throw new Error((data && data.error) || 'Could not post the answer. Please try again.');
+    it.r.replies.push({ side:'restaurant', text:text, at:new Date().toISOString(), by:(ACCESS && ACCESS.firstName) || null });
+    RW.items.forEach(x => { if(x.r === it.r) x._hay = null; });
+    RW.reply = null;
+    showToast('Your answer is posted.');
+  }catch(e){ showToast(e.message); }
+  RW.sending = false;
+  const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml();
+}
+
+// ── the Filters page (a page of its own; Show … reviews, or the arrow, uses what is chosen) ──
+function rwOpenFilters(){ RW.draft = rwCopy(RW.f); RW.page = 'filters'; rwPaintPage(true); }
+function rwClosePage(){ RW.page = null; RW.cal = null; const p = document.getElementById('rw-page'); if(p) p.remove(); document.body.classList.remove('rw-locked'); }
+function rwApply(){ RW.f = rwCopy(RW.draft); RW.shown = RW_STEP; rwClosePage(); rwPaint(); window.scrollTo(0, 0); }
+function rwClear(){ RW.draft = rwDefault(); rwPaintPage(); }
+function rwBack(){ if(RW.page === 'calendar'){ RW.page = 'filters'; RW.cal = null; rwPaintPage(true); } else rwApply(); }
+function rwPaintPage(top){
+  let el = document.getElementById('rw-page');
+  if(!RW.page){ if(el) el.remove(); return; }
+  const keep = el && !top ? (el.querySelector('.rw-pbody') || {}).scrollTop || 0 : 0;
+  if(!el){ el = document.createElement('div'); el.id = 'rw-page'; el.className = 'rw-page'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); document.body.appendChild(el); }
+  document.body.classList.add('rw-locked');
+  el.innerHTML = RW.page === 'calendar' ? rwCalHtml() : rwFiltersHtml();
+  const body = el.querySelector('.rw-pbody');
+  if(body){
+    if(RW.page === 'calendar' && top){ const now = body.querySelector('[data-month="'+(RW.cal.from || rwToday()).slice(0,7)+'"]'); if(now) body.scrollTop = Math.max(0, now.offsetTop - 120); else body.scrollTop = body.scrollHeight; }
+    else body.scrollTop = keep;
+  }
+}
+function rwCount(f, skip, test){ return RW.items.filter(it => rwMatch(it, f, skip) && test(it)).length; }
+function rwBox(state){ return '<span class="rw-box'+(state === 'on' ? ' on' : state === 'part' ? ' part' : '')+'"></span>'; }
+function rwArrow(open, red){ return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(open ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6')+'"/></svg>'; }
+function rwPicked(f, ids){ if(!f.dishes) return ids.length; return ids.filter(id => f.dishes.includes(id)).length; }
+function rwState(f, ids){ const n = rwPicked(f, ids); return !ids.length || n === 0 ? 'off' : n === ids.length ? 'on' : 'part'; }
+function rwFiltersHtml(){
+  const f = RW.draft, total = rwShown(f).length;
+  const ck = (on, label, n, attrs) => '<button type="button" class="rw-ck" '+attrs+'>'+rwBox(on ? 'on' : 'off')+'<span class="lbl">'+label+'</span><span class="n">'+n+'</span></button>';
+  let h = '<div class="rw-ptop"><button type="button" class="rw-ptitle" onclick="rwBack()" aria-label="Back to the reviews">'+rwArrow(false).replace('M9 6l6 6-6 6','M15 6l-6 6 6 6')+'Filters</button>'
+        + '<button type="button" class="rw-pclear" id="rw-clear" onclick="rwClear()">Clear all</button></div><div class="rw-pbody">';
+  // what kind of comments
+  h += '<div class="rw-pg">Comments</div><div class="rw-three">'
+    + ['dish','drink','room'].map(k => ck(f.kinds[k], RW_KIND_WORDS[k], rwCount(f, 'kinds', it => it.t === k), 'data-kind="'+k+'" onclick="rwKind(\''+k+'\')"')).join('')
+    + '</div>';
+  // the stars: 1, 2, 3 on the left; 4, 5 on the right
+  h += '<div class="rw-pg">Stars</div><div class="rw-two">'
+    + [1,4,2,5,3].map(n => ck(f.stars.includes(n), '<span class="rw-st">'+rwStarRow(n)+'</span>', rwCount(f, 'stars', it => it.stars === n), 'data-stars="'+n+'" aria-label="'+n+' star'+(n===1?'':'s')+'" onclick="rwStar('+n+')"')).join('')
+    + '</div>';
+  // the dishes and the drinks, by their menu category
+  if(f.kinds.dish || f.kinds.drink){
+    if(f.kinds.dish) h += rwGroupHtml(f, 'dish', 'Dishes', RW_FOOD.concat([['other','More dishes']]), false);
+    if(f.kinds.drink) h += rwGroupHtml(f, 'drink', 'Drinks', RW_DRINK.map(x => [x[0], x[1]]).concat([['other','More drinks']]), true);
+  }else{
+    h += '<div class="rw-pg" style="opacity:.45">Dishes · Drinks</div><div class="rw-note" id="rw-room-note">Restaurant comments are about the service and the place, not one dish. Choose <b>Dishes</b> or <b>Drinks</b> above to pick dishes or drinks.</div>';
+  }
+  // replies
+  h += '<div class="rw-pg">Reply</div><div class="rw-two">'
+    + ck(f.reply.none, 'No reply yet', rwCount(f, 'reply', it => !rwReplied(it)), 'data-reply="none" onclick="rwReplyPick(\'none\')"')
+    + ck(f.reply.replied, 'Replied', rwCount(f, 'reply', it => rwReplied(it)), 'data-reply="replied" onclick="rwReplyPick(\'replied\')"')
+    + '</div>';
+  // the dates
+  const cal = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+TAB_ICONS.reservations+'</svg>';
+  h += '<div class="rw-pg">Dates</div><div class="rw-dates">'
+    + '<button type="button" class="rw-date" id="rw-from" onclick="rwOpenCal(\'from\')"><span><small>From</small>'+(f.from ? rwDayWords(f.from, true) : 'The first review')+'</span>'+cal+'</button>'
+    + '<button type="button" class="rw-date" id="rw-to" onclick="rwOpenCal(\'to\')"><span><small>To</small>'+(f.to ? rwDayWords(f.to, true) : 'Today')+'</span>'+cal+'</button></div>';
+  h += '</div><div class="rw-pfoot"><button type="button" class="m-save" style="flex:1" id="rw-show" onclick="rwApply()">Show '+rwPlural(total, 'review')+'</button></div>';
+  return h;
+}
+function rwGroupHtml(f, kind, title, cats, drink){
+  const list = RW.dishes.filter(d => d.drink === drink);
+  const ids = list.map(d => d.id);
+  const open = RW.open[kind];
+  const count = rwCount(f, 'dishes', it => it.t === kind);
+  let h = '<div class="rw-row" style="margin-top:.6rem">'
+    + '<button type="button" class="rw-ck" data-group="'+kind+'" onclick="rwPickIds(\''+kind+'\',null)">'+rwBox(rwState(f, ids))+'<span class="lbl rw-grp">'+title+'</span><span class="n">'+count+'</span></button>'
+    + '<button type="button" class="rw-arrow red" data-fold="'+kind+'" aria-label="'+(open ? 'Fold' : 'Open')+' the '+title.toLowerCase()+'" onclick="rwFold(\''+kind+'\')">'+rwArrow(open)+'</button></div>';
+  if(!open){
+    const n = rwPicked(f, ids);
+    return h + '<div class="rw-sum" data-sum="'+kind+'">'+(!f.dishes || n === ids.length ? 'All '+title.toLowerCase() : n === 0 ? 'None chosen' : n+' of '+ids.length+' '+title.toLowerCase()+' chosen')+'</div>';
+  }
+  h += '<div class="rw-l1">';
+  cats.forEach(function(c){
+    const inCat = list.filter(d => d.group === c[0]);
+    if(!inCat.length) return;
+    const cid = kind + ':' + c[0], cids = inCat.map(d => d.id), copen = RW.cats[cid] !== false;
+    const n = rwCount(f, 'dishes', it => it.t === kind && cids.includes(Number(it.r.dish)));
+    h += '<div class="rw-row"><button type="button" class="rw-ck" data-cat="'+cid+'" onclick="rwPickIds(\''+kind+'\',\''+c[0]+'\')">'+rwBox(rwState(f, cids))+'<span class="lbl rw-cat">'+esc(c[1])+'</span><span class="n">'+n+'</span></button>'
+      + '<button type="button" class="rw-arrow" data-cfold="'+cid+'" aria-label="'+(copen ? 'Fold ' : 'Open ')+esc(c[1])+'" onclick="rwFoldCat(\''+cid+'\')">'+rwArrow(copen)+'</button></div>';
+    if(copen){
+      h += '<div class="rw-l2">' + inCat.map(function(d){
+        const m = rwCount(f, 'dishes', it => it.t === kind && Number(it.r.dish) === d.id);
+        const on = !f.dishes || f.dishes.includes(d.id);
+        return '<button type="button" class="rw-ck" data-dish="'+d.id+'" onclick="rwPickDish('+d.id+')">'+rwBox(on ? 'on' : 'off')+rwThumb(d, 36)+'<span class="lbl">'+esc(d.name)+'</span><span class="n">'+m+'</span></button>';
+      }).join('') + '</div>';
+    }
+  });
+  return h + '</div>';
+}
+function rwKind(k){ RW.draft.kinds[k] = !RW.draft.kinds[k]; rwPaintPage(); }
+function rwStar(n){ const s = RW.draft.stars, i = s.indexOf(n); if(i >= 0) s.splice(i, 1); else s.push(n); if(s.length === 5) RW.draft.stars = []; rwPaintPage(); }
+function rwReplyPick(w){ RW.draft.reply[w] = !RW.draft.reply[w]; rwPaintPage(); }
+function rwFold(kind){ RW.open[kind] = !RW.open[kind]; rwPaintPage(); }
+function rwFoldCat(cid){ RW.cats[cid] = RW.cats[cid] === false; rwPaintPage(); }
+function rwAllIds(){ return RW.dishes.map(d => d.id); }
+function rwSetPicked(ids){ const all = rwAllIds(); RW.draft.dishes = ids.length === all.length && all.every(id => ids.includes(id)) ? null : ids; }
+// A whole group (Dishes, Drinks) or one category: all on when some are off, all off when all are on.
+function rwPickIds(kind, cat){
+  const ids = RW.dishes.filter(d => d.drink === (kind === 'drink') && (cat === null || d.group === cat)).map(d => d.id);
+  const now = RW.draft.dishes ? RW.draft.dishes.slice() : rwAllIds();
+  const allOn = ids.every(id => now.includes(id));
+  rwSetPicked(allOn ? now.filter(id => !ids.includes(id)) : now.concat(ids.filter(id => !now.includes(id))));
+  rwPaintPage();
+}
+function rwPickDish(id){
+  const now = RW.draft.dishes ? RW.draft.dishes.slice() : rwAllIds();
+  rwSetPicked(now.includes(id) ? now.filter(x => x !== id) : now.concat([id]));
+  rwPaintPage();
+}
+
+// ── the calendar: tap the first day, then the last; the days between turn red ──
+function rwOpenCal(which){ RW.cal = { from:RW.draft.from, to:RW.draft.to, picking:which }; RW.page = 'calendar'; rwPaintPage(true); }
+function rwCalPick(day){
+  const c = RW.cal;
+  if(c.picking === 'from' || !c.from){ c.from = day; if(c.to && c.to < day) c.to = null; c.picking = 'to'; }
+  else if(day < c.from){ c.from = day; }
+  else { c.to = day; c.picking = 'from'; }
+  rwPaintPage();
+}
+function rwCalQuick(k){
+  const t = rwToday(), c = RW.cal;
+  if(k === 'today'){ c.from = t; c.to = t; }
+  if(k === '7'){ c.from = rwAddDays(t, -6); c.to = t; }
+  if(k === '30'){ c.from = rwAddDays(t, -29); c.to = t; }
+  if(k === 'month'){ c.from = t.slice(0,8)+'01'; c.to = t; }
+  if(k === 'all'){ c.from = null; c.to = null; }
+  c.picking = 'from';
+  rwPaintPage(true);
+}
+function rwCalUse(){ RW.draft.from = RW.cal.from; RW.draft.to = RW.cal.to; RW.page = 'filters'; RW.cal = null; rwPaintPage(true); }
+function rwCalHtml(){
+  const c = RW.cal, t = rwToday();
+  const quick = [['today','Today', c.from === t && c.to === t], ['7','Last 7 days', c.from === rwAddDays(t,-6) && c.to === t], ['30','Last 30 days', c.from === rwAddDays(t,-29) && c.to === t],
+                 ['month','This month', c.from === t.slice(0,8)+'01' && c.to === t], ['all','All time', !c.from && !c.to]];
+  let h = '<div class="rw-ptop" style="flex-direction:column;align-items:stretch;gap:.5rem">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center"><button type="button" class="rw-ptitle" onclick="rwBack()" aria-label="Back to the filters">'+rwArrow(false).replace('M9 6l6 6-6 6','M15 6l-6 6 6 6')+'Dates</button>'
+    + '<button type="button" class="rw-pclear" onclick="rwCalQuick(\'all\')">Clear</button></div>'
+    + '<div class="rw-ft"><div'+(c.picking === 'from' ? ' class="act"' : '')+'><label>From</label><button type="button" id="rw-cal-from" onclick="RW.cal.picking=\'from\';rwPaintPage()">'+(c.from ? rwDayWords(c.from, true) : 'The first review')+'</button></div>'
+    + '<div'+(c.picking === 'to' ? ' class="act"' : '')+'><label>To</label><button type="button" id="rw-cal-to" onclick="RW.cal.picking=\'to\';rwPaintPage()">'+(c.to ? rwDayWords(c.to, true) : 'Today')+'</button></div></div>'
+    + '<div class="rw-quick">'+quick.map(q => '<button type="button" data-quick="'+q[0]+'" class="'+(q[2] ? 'on' : '')+'" onclick="rwCalQuick(\''+q[0]+'\')">'+q[1]+'</button>').join('')+'</div>'
+    + '</div><div class="rw-pbody">';
+  // from the first review's month (at most three years back, at least three months) to this month
+  const first = RW.items.reduce((m, it) => it.day && it.day < m ? it.day : m, t);
+  let y = Number(first.slice(0,4)), mo = Number(first.slice(5,7));
+  const ty = Number(t.slice(0,4)), tm = Number(t.slice(5,7));
+  const back = (ty - y) * 12 + (tm - mo);
+  if(back > 36){ y = ty - 3; mo = tm; }
+  if(back < 2){ mo = tm - 2; y = ty; while(mo < 1){ mo += 12; y -= 1; } }
+  const to = c.to || (c.from ? c.from : null);
+  while(y < ty || (y === ty && mo <= tm)){
+    const key = y + '-' + String(mo).padStart(2,'0');
+    const name = new Date(Date.UTC(y, mo-1, 1, 12)).toLocaleDateString('en-US', { timeZone:'UTC', month:'long' });
+    h += '<div class="rw-month" data-month="'+key+'">'+name+' <small>'+y+'</small></div><div class="rw-grid">'
+      + ['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => '<span class="h">'+d+'</span>').join('');
+    const lead = new Date(Date.UTC(y, mo-1, 1, 12)).getUTCDay(), days = new Date(Date.UTC(y, mo, 0, 12)).getUTCDate();
+    for(let i = 0; i < lead; i++) h += '<span class="blank"></span>';
+    for(let d = 1; d <= days; d++){
+      const day = key + '-' + String(d).padStart(2,'0'), wd = (lead + d - 1) % 7;
+      const cls = ['d'];
+      if(wd === 0 || wd === 6) cls.push('we');
+      if(c.from && day === c.from) cls.push('s');
+      if(to && day === to && c.to) cls.push('e');
+      if(c.from && c.to && day > c.from && day < c.to) cls.push('in');
+      if(day === t) cls.push('today');
+      h += '<button type="button" class="'+cls.join(' ')+'" data-day="'+day+'"'+(day > t ? ' disabled' : ' onclick="rwCalPick(\''+day+'\')"')+'><span>'+d+'</span></button>';
+    }
+    h += '</div>';
+    mo += 1; if(mo > 12){ mo = 1; y += 1; }
+  }
+  h += '</div><div class="rw-pfoot"><button type="button" class="m-btn quiet" onclick="rwBack()">Cancel</button><button type="button" class="m-save" id="rw-cal-use" onclick="rwCalUse()">Use these dates</button></div>';
+  return h;
+}
 
 loadSession();
 boot();
