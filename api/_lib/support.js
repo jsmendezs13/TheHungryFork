@@ -224,6 +224,30 @@ async function send(res, access, body) {
   return threadAnswer(res, access, who, place, 201, { sent: msg.id, emailed });
 }
 
+// r53 (moderation): a message from the restaurant's side to Seb's Analytics written by the server, with the same email
+// as a message typed in Settings → Support. The Moderate review window sends one when a review hidden as "Illegal or
+// dangerous content" puts a child at risk (the lawyer doc, question 13). Never throws; true when it was saved.
+export async function alertPlatform(restaurantId, tasterId, firstName, text) {
+  try {
+    const rid = Number(restaurantId);
+    const place = await placeOf(rid);
+    if (!place) return false;
+    const saved = await sb('/support_messages', {
+      method: 'POST', headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ restaurant_id: rid, taster_id: Number(tasterId), from_platform: false, author_name: staffName(firstName), body: String(text).slice(0, 1000) }),
+    });
+    if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) { console.error('[support:alert] not saved', rid, saved.status); return false; }
+    const msg = saved.data[0];
+    console.log('[support:alert] restaurant', rid, 'message', msg.id);
+    const access = { tasterId: Number(tasterId), firstName };
+    await emailOtherSide(access, { rid, platform: false }, place, msg).catch((e) => console.error('[support:alert:email]', e && e.message));
+    return true;
+  } catch (err) {
+    console.error('[support:alert]', err && err.message);
+    return false;
+  }
+}
+
 // ── THE EMAIL TO THE OTHER SIDE ───────────────────────────────────────────────
 async function recipients(access, who) {
   let ids;
