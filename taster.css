@@ -380,3 +380,67 @@ button.hf-l-terms { background:none; border:none; margin:0; cursor:pointer; text
 .hf-hidden-note a{color:#C8261B;font-weight:600;}
 .review-item.hf-hidden{opacity:.92;}
 .hf-rules{display:inline-block;margin-top:.4rem;font-family:var(--sans,system-ui);font-size:.72rem;color:#8A7B6E;text-decoration:underline;}
+
+/* r53c (10 Nov): the hidden review's "Message the restaurant" and its conversation (light, like the menu's cards) */
+.hf-talk-btn{display:flex;width:100%;align-items:center;justify-content:center;gap:.5em;margin-top:.6rem;min-height:42px;border-radius:999px;background:#B01015;color:#fff;border:1px solid #B01015;font-family:var(--sans,system-ui);font-weight:600;font-size:.86rem;cursor:pointer;}
+.hf-talk-btn svg{width:1.3em;height:1.3em;flex:none;}
+.hf-talk-btn.open{background:#fff;color:#B01015;border-color:#EFC9C5;}
+.hf-talk-btn .n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#E23B2E;color:#fff;font-size:.66rem;display:inline-flex;align-items:center;justify-content:center;}
+.hf-talk-btn .n[hidden]{display:none;}
+.hf-talk{margin-top:.6rem;border:1px solid #E9E0D3;border-radius:14px;background:#fff;padding:.7rem .65rem .6rem;text-align:left;cursor:default;}
+.hf-talk[hidden]{display:none;}
+.hf-talk-list{display:flex;flex-direction:column;gap:.5rem;max-height:min(50vh,380px);overflow-y:auto;}
+.hf-talk-empty{font-family:var(--sans,system-ui);font-size:.8rem;line-height:1.55;color:#6F6255;margin:0;}
+.hf-bub{max-width:86%;padding:.5rem .7rem .55rem;border-radius:14px;font-family:var(--sans,system-ui);font-size:.86rem;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;}
+.hf-bub.them{align-self:flex-start;background:#F5EEE3;color:#2B211A;border-bottom-left-radius:4px;}
+.hf-bub.me{align-self:flex-end;background:#B01015;color:#fff;border-bottom-right-radius:4px;}
+.hf-bub-who{display:block;font-size:.62rem;font-weight:600;letter-spacing:.04em;margin-bottom:.12rem;white-space:normal;}
+.hf-bub.them .hf-bub-who{color:#9A3324;}
+.hf-bub.me .hf-bub-who{color:rgba(255,255,255,.85);text-align:right;}
+.hf-bub-who i{font-style:normal;font-weight:400;opacity:.75;}
+.hf-bub-text{display:block;}
+.hf-talk-photo{display:block;margin:.25rem 0 .2rem;border-radius:10px;overflow:hidden;width:170px;max-width:100%;min-height:60px;background:rgba(0,0,0,.08);}
+.hf-talk-photo img{display:block;width:100%;height:auto;max-height:260px;object-fit:cover;}
+.hf-talk-photo span{display:block;padding:1.4rem .6rem;text-align:center;font-size:.72rem;opacity:.75;}
+.hf-talk-pdf{display:block;margin:.2rem 0 .15rem;padding:.45rem .6rem;border-radius:10px;border:1px solid rgba(0,0,0,.12);color:inherit;text-decoration:none;}
+.hf-bub.me .hf-talk-pdf{border-color:rgba(255,255,255,.35);}
+.hf-talk-pdf b{display:block;font-size:.8rem;overflow-wrap:anywhere;}
+.hf-talk-pdf small{display:block;font-size:.66rem;opacity:.75;}
+.hf-talk-note{font-family:var(--sans,system-ui);font-size:.78rem;line-height:1.5;color:#5A4A3C;background:#F3EEE7;border-radius:10px;padding:.45rem .6rem;margin:.55rem 0 0;}
+.hf-talk-note[hidden],.hf-talk-form[hidden],.hf-talk-pend[hidden],.hf-talk-err[hidden]{display:none;}
+.hf-talk-form{display:flex;gap:.45rem;align-items:flex-end;margin-top:.6rem;}
+.hf-talk-input{flex:1;min-width:0;min-height:44px;max-height:140px;resize:none;border:1px solid #E9E0D3;border-radius:12px;padding:.6rem .7rem;font-family:var(--sans,system-ui);font-size:16px;color:#2B211A;background:#FCF9F4;}
+.hf-talk-input:focus{outline:none;border-color:#B01015;box-shadow:0 0 0 3px rgba(176,16,21,.12);}
+.hf-talk-clip,.hf-talk-send{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.hf-talk-clip{border:1px solid #E9E0D3;background:#fff;color:#6F6255;}
+.hf-talk-send{border:none;background:#B01015;color:#fff;}
+.hf-talk-clip svg,.hf-talk-send svg{width:20px;height:20px;}
+.hf-talk-send:disabled{opacity:.5;cursor:wait;}
+.hf-talk-pend{display:flex;align-items:center;gap:.6rem;padding:.45rem .55rem;margin-top:.55rem;border:1px solid #E9E0D3;border-radius:12px;font-family:var(--sans,system-ui);font-size:.78rem;}
+.hf-talk-pend .t{flex:1;min-width:0;}
+.hf-talk-pend .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hf-talk-pend .t small{color:#8A7B6E;}
+.hf-talk-pend .x{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid #E9E0D3;background:#fff;font-size:1.1rem;line-height:1;cursor:pointer;}
+.hf-talk-err{font-family:var(--sans,system-ui);font-size:.76rem;color:#B01015;margin:.45rem 0 0;}
+.hf-talk-foot{font-family:var(--sans,system-ui);font-size:.68rem;line-height:1.5;color:#8A7B6E;margin:.5rem 0 0;}
+
+/* r53c: Delete your own review, and its window */
+.hf-del-row{display:flex;justify-content:flex-end;margin-top:.35rem;}
+.hf-del-btn{font-family:var(--sans,system-ui);font-size:.72rem;font-weight:600;color:#B01015;background:none;border:1px solid #F7E3E1;border-radius:999px;padding:.28rem .75rem;display:inline-flex;gap:.35rem;align-items:center;cursor:pointer;}
+.hf-del-btn svg{width:13px;height:13px;}
+.hf-del-ov{position:fixed;inset:0;background:rgba(28,20,15,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;}
+.hf-del-box{background:#FCF9F4;border-radius:18px;padding:1.4rem 1.3rem 1.2rem;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(43,33,26,.3);font-family:var(--sans,system-ui);color:#2B211A;}
+.hf-del-box h3{font-family:var(--serif,Georgia,serif);font-size:1.55rem;font-weight:600;margin:0 0 .7rem;}
+.hf-del-sum{display:flex;gap:.6rem;align-items:center;background:#F5EEE3;border:1px solid #E9E0D3;border-radius:12px;padding:.55rem .7rem;margin-bottom:.8rem;font-size:.82rem;}
+.hf-del-sum img{width:40px;height:40px;object-fit:contain;}
+.hf-del-sum b{display:block;font-size:.9rem;}
+.hf-del-sum .st{color:#D9A441;letter-spacing:1px;}
+.hf-del-box p{font-size:.86rem;line-height:1.45;margin:.45rem 0;}
+.hf-del-box .q{color:#6F6255;font-size:.8rem;}
+.hf-del-err{color:#B01015;font-size:.8rem;}
+.hf-del-err[hidden]{display:none;}
+.hf-del-btns{display:flex;gap:.6rem;margin-top:1rem;}
+.hf-del-btns button{flex:1;border-radius:999px;padding:.8rem .5rem;font-family:var(--sans,system-ui);font-weight:700;letter-spacing:.12em;font-size:.78rem;text-transform:uppercase;cursor:pointer;}
+.hf-del-btns .d{background:#B01015;color:#fff;border:none;}
+.hf-del-btns .d:disabled{opacity:.6;cursor:wait;}
+.hf-del-btns .k{background:#fff;color:#2B211A;border:1px solid #E9E0D3;}
