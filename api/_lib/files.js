@@ -22,6 +22,8 @@
 //   · the bucket is private: nobody opens a file without a link from here;
 //   · a file is deleted with its conversation: 90 days after the table, or
 //     after the day the request asked for (the daily job, forgetOldFiles);
+//     r53c: 3 years for a conversation started from migration 38 on, and 5
+//     years for one about a hidden review (with the review's record);
 //   · a file chosen but never sent is deleted the next day;
 //   · photos are made smaller on the phone before they go up (the pages);
 //     every file is at most 10 MB; at most 40 files per conversation.
@@ -99,7 +101,9 @@ export function fileLine(f) {
   return f.mime === 'application/pdf' ? `📎 ${f.name}` : '📎 Photo';
 }
 
+// r53c: a third kind of conversation, about a hidden review (reviewId; migration 38's chat_files.review_id).
 function where(place) {
+  if (place.reviewId) return `review_id=eq.${Number(place.reviewId)}`;
   return place.reservationId ? `reservation_id=eq.${Number(place.reservationId)}` : `request_id=eq.${Number(place.requestId)}`;
 }
 
@@ -114,7 +118,7 @@ export async function makeSlot(place, { fromGuest, uploaderId = null, name, mime
   if (!many.ok) return { error: many.status === 404 ? 'off' : 'storage' };
   if (Array.isArray(many.data) && many.data.length >= MAX_PER_CONVERSATION) return { error: 'many' };
 
-  const folder = place.reservationId ? 't' + Number(place.reservationId) : 'r' + Number(place.requestId);
+  const folder = place.reviewId ? 'v' + Number(place.reviewId) : place.reservationId ? 't' + Number(place.reservationId) : 'r' + Number(place.requestId);
   const path = `${Number(place.restaurantId)}/${folder}/${crypto.randomBytes(16).toString('hex')}.${TYPES[mime]}`;
   const made = await sb('/chat_files', {
     method: 'POST', headers: { Prefer: 'return=representation' },
@@ -122,6 +126,7 @@ export async function makeSlot(place, { fromGuest, uploaderId = null, name, mime
       restaurant_id: Number(place.restaurantId),
       reservation_id: place.reservationId ? Number(place.reservationId) : null,
       request_id: place.requestId ? Number(place.requestId) : null,
+      ...(place.reviewId ? { review_id: Number(place.reviewId) } : {}),
       path, name: cleanFileName(name, mime), mime, size_bytes: n, from_guest: !!fromGuest,
       uploader_id: uploaderId ? Number(uploaderId) : null,
       delete_after: new Date(Date.now() + UNSENT_MS).toISOString(),
