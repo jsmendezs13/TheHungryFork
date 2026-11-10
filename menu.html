@@ -158,6 +158,15 @@
   .r-submit { width:100%; background:var(--ink); color:var(--white); border:none; border-radius:999px; padding:.95rem; font-size:.8rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-family:var(--sans); transition:background .2s; margin-top:.5rem; }
   .r-submit:hover { background:#463629; }
   .r-submit:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+  /* r52 (Sebastian, 9 Nov): the dish's or drink's own photo at the top of the rating window and the dish window,
+     not an icon; the restaurant's logo while a dish has no photo. And the stars start empty: every row must be chosen. */
+  .r-pic { display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+  .r-pic img.r-photo { height:92px; max-width:70%; object-fit:contain; filter:drop-shadow(0 8px 10px rgba(43,33,26,.28)); }
+  .modal-hero .r-pic img.r-photo { height:118px; }
+  .r-pic img.r-logo { height:52px; width:auto; max-width:60%; object-fit:contain; opacity:.92; }
+  .r-submit.wait { background:#8F8378; }
+  .r-slider-row.r-missing .r-slider-label span:first-child { color:var(--red); font-weight:600; }
+  .r-slider-row.r-missing .r-stars-input { outline:1.5px dashed rgba(176,16,21,.55); outline-offset:3px; border-radius:6px; }
   .r-divider { border:none; border-top:1px solid var(--border); margin:1.25rem 0; }
   .r-reviews-label { font-size:.68rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--red); margin-bottom:.75rem; font-family:var(--sans); }
   .r-reviews-list { max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:.75rem; }
@@ -1031,7 +1040,7 @@
   <div class="modal">
     <div class="modal-hero">
       <button class="modal-close" onclick="closeModal()">✕</button>
-      <span id="modal-dish-emoji">🍽️</span>
+      <span class="r-pic" id="modal-dish-pic"></span>
     </div>
     <div class="modal-body">
       <div class="modal-dish-name" id="modal-name"></div>
@@ -1050,35 +1059,35 @@
   <div class="r-box">
     <div class="r-hero">
       <button class="r-close" onclick="closeRatingModal()">✕</button>
-      <span id="r-dish-emoji">🍽️</span>
+      <span class="r-pic" id="r-dish-pic"></span>
     </div>
     <div class="r-body">
       <div class="r-dish-name" id="r-dish-name"></div>
       <div class="r-dish-desc" id="r-dish-desc"></div>
 
-      <div class="r-section">🍽️ Dish Rating</div>
+      <div class="r-section">Dish Rating</div>
       <div class="r-slider-row">
-        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">3</span></div>
-        <input type="hidden" id="sl-flavor" value="3"><div class="r-stars-input" data-target="sl-flavor" data-label="lbl-flavor"></div>
+        <div class="r-slider-label"><span>Flavor</span><span id="lbl-flavor">–</span></div>
+        <input type="hidden" id="sl-flavor" value="0"><div class="r-stars-input" data-target="sl-flavor" data-label="lbl-flavor"></div>
       </div>
       <div class="r-slider-row">
-        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">3</span></div>
-        <input type="hidden" id="sl-worth" value="3"><div class="r-stars-input" data-target="sl-worth" data-label="lbl-worth"></div>
+        <div class="r-slider-label"><span>Worth Every Bite</span><span id="lbl-worth">–</span></div>
+        <input type="hidden" id="sl-worth" value="0"><div class="r-stars-input" data-target="sl-worth" data-label="lbl-worth"></div>
       </div>
       <div class="r-slider-row">
-        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">3</span></div>
-        <input type="hidden" id="sl-sig" value="3"><div class="r-stars-input" data-target="sl-sig" data-label="lbl-sig"></div>
+        <div class="r-slider-label"><span>Signature Style</span><span id="lbl-sig">–</span></div>
+        <input type="hidden" id="sl-sig" value="0"><div class="r-stars-input" data-target="sl-sig" data-label="lbl-sig"></div>
       </div>
       <textarea class="r-textarea" id="r-dish-comment" aria-label="Comment about this dish"></textarea>
 
-      <div class="r-section" style="margin-top:1rem;">🏠 Restaurant Rating</div>
+      <div class="r-section" style="margin-top:1rem;">Restaurant Rating</div>
       <div class="r-slider-row">
-        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">3</span></div>
-        <input type="hidden" id="sl-hosp" value="3"><div class="r-stars-input" data-target="sl-hosp" data-label="lbl-hosp"></div>
+        <div class="r-slider-label"><span>Hospitality</span><span id="lbl-hosp">–</span></div>
+        <input type="hidden" id="sl-hosp" value="0"><div class="r-stars-input" data-target="sl-hosp" data-label="lbl-hosp"></div>
       </div>
       <div class="r-slider-row">
-        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">3</span></div>
-        <input type="hidden" id="sl-atm" value="3"><div class="r-stars-input" data-target="sl-atm" data-label="lbl-atm"></div>
+        <div class="r-slider-label"><span>Atmosphere & Vibe</span><span id="lbl-atm">–</span></div>
+        <input type="hidden" id="sl-atm" value="0"><div class="r-stars-input" data-target="sl-atm" data-label="lbl-atm"></div>
       </div>
       <textarea class="r-textarea" id="r-rest-comment" aria-label="Comment about the restaurant"></textarea>
 
@@ -2149,7 +2158,7 @@ function renderDishModal(id){
   const d=DISHES.find(x=>x.id===id);
   if(!d)return;
   currentDishId=id;
-  document.getElementById('modal-dish-emoji').textContent=d.emoji;
+  document.getElementById('modal-dish-pic').innerHTML=dishPicHtml(d,300);      // r52: the photo, not an icon
   document.getElementById('modal-name').textContent=d.name;
   document.getElementById('modal-desc').textContent=(dishPriceText(d)?dishPriceText(d)+' · ':'')+d.desc;
   loadReviews(id,RESTAURANT_ID);
@@ -2205,12 +2214,15 @@ function startRating(){
 function openRatingModal(){
   if(!currentDishId)return;
   const d=DISHES.find(x=>x.id===currentDishId);
-  document.getElementById('r-dish-emoji').textContent=d.emoji;
+  document.getElementById('r-dish-pic').innerHTML=dishPicHtml(d,240);          // r52: the photo, not an icon
   document.getElementById('r-dish-name').textContent=d.name;
   document.getElementById('r-dish-desc').textContent=(dishPriceText(d)?dishPriceText(d)+' · ':'')+d.desc;
-  ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=3;});
-  ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='3';});
+  // r52 (Sebastian, 3 Nov): nothing chosen for the guest — every row starts empty, and all five must be chosen.
+  ['sl-flavor','sl-worth','sl-sig','sl-hosp','sl-atm'].forEach(id=>{document.getElementById(id).value=0;});
+  ['lbl-flavor','lbl-worth','lbl-sig','lbl-hosp','lbl-atm'].forEach(id=>{document.getElementById(id).textContent='–';});
+  document.querySelectorAll('.r-slider-row').forEach(r=>r.classList.remove('r-missing'));
   document.querySelectorAll('.r-stars-input').forEach(paintStarRow);
+  rateReady();
   document.getElementById('r-dish-comment').value='';
   document.getElementById('r-rest-comment').value='';
   document.getElementById('r-err').style.display='none';
@@ -2218,6 +2230,23 @@ function openRatingModal(){
   document.getElementById('rating-modal').classList.add('open');
 }
 function closeRatingModal(){document.getElementById('rating-modal').classList.remove('open');}
+
+// ── r52: THE DISH'S PHOTO AT THE TOP OF A WINDOW ──
+// The dish's or drink's own photo (the light copy first, then the original), not an icon; the restaurant's logo
+// while it has none, or if the photo cannot be loaded.
+function dishPicHtml(d,cssW){
+  const logo='<img class="r-logo" src="/_vercel/image?url=%2Fhungry-fork-logo.png&w=256&q=75" data-orig="/hungry-fork-logo.png" alt="" onerror="this.onerror=null;this.src=this.dataset.orig">';
+  if(!d||!d.img)return logo;
+  return '<img class="r-photo" src="'+hfEsc(hfImgSrc(d.img,cssW||240))+'" data-orig="'+hfEsc(d.img)+'" alt="'+hfEsc(d.name||'')+'" onerror="dishPicErr(this)">';
+}
+function dishPicErr(img){
+  if(hfImgBack(img))return;
+  img.onerror=null;img.className='r-logo';img.alt='';img.src='/hungry-fork-logo.png';
+}
+// r52: the five rows that must all be chosen before a rating can be posted, with the words a guest sees.
+const RATE_ROWS=[['sl-flavor','Flavor'],['sl-worth','Worth Every Bite'],['sl-sig','Signature Style'],['sl-hosp','Hospitality'],['sl-atm','Atmosphere & Vibe']];
+function rateMissing(){return RATE_ROWS.filter(([id])=>!(parseInt(document.getElementById(id).value)>=1));}
+function rateReady(){const b=document.getElementById('r-submit-btn');if(b)b.classList.toggle('wait',rateMissing().length>0);}
 
 // ── STAR INPUTS ──
 function paintStarRow(row){
@@ -2255,6 +2284,9 @@ function initStarRows(){
         document.getElementById(row.dataset.target).value=i;
         document.getElementById(row.dataset.label).textContent=i;
         paintStarRow(row);
+        const line=row.closest('.r-slider-row');if(line)line.classList.remove('r-missing');   // r52
+        if(!rateMissing().length){const e=document.getElementById('r-err');if(e&&e.dataset.why==='stars')e.style.display='none';}
+        rateReady();
       });
       row.appendChild(s);
     }
@@ -2268,7 +2300,17 @@ async function submitRating(){
   if(!currentTaster||!currentDishId)return;
   const btn=document.getElementById('r-submit-btn');
   const err=document.getElementById('r-err');
-  err.style.display='none';
+  err.style.display='none';err.dataset.why='';
+  // r52: every row must be chosen — the rows still empty turn red, and the message says which.
+  const missing=rateMissing();
+  if(missing.length){
+    missing.forEach(([id])=>{const line=document.getElementById(id).closest('.r-slider-row');if(line)line.classList.add('r-missing');});
+    err.textContent='Choose the stars for every row: '+missing.map(m=>m[1]).join(', ')+'.';
+    err.dataset.why='stars';err.style.display='block';
+    const first=document.getElementById(missing[0][0]).closest('.r-slider-row');
+    if(first&&first.scrollIntoView)first.scrollIntoView({block:'center',behavior:'smooth'});
+    return;
+  }
   btn.disabled=true;btn.textContent='Posting…';
   const dbDish=DISH_ID_MAP[currentDishId]||1;
   let updateReviewId=null;
