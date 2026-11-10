@@ -60,10 +60,14 @@ export default async function handler(req, res) {
 
   // ── LIST ────────────────────────────────────────────────────────────────
   if (action === 'list') {
+    // r53: can_moderate (migration 37) first; before it, the list as r52 read it.
     let rows = await sb(
       `/restaurant_roles?restaurant_id=eq.${restId}` +
-      '&select=id,taster_id,role,can_issue_codes,can_message,job,created_at&order=role.asc'
+      '&select=id,taster_id,role,can_issue_codes,can_message,job,can_moderate,created_at&order=role.asc'
     );
+    if (!rows.ok && rows.status === 400) {
+      rows = await sb(`/restaurant_roles?restaurant_id=eq.${restId}&select=id,taster_id,role,can_issue_codes,can_message,job,created_at&order=role.asc`);
+    }
     // Before migration 19 there is no can_message or job: the list as before.
     if (!rows.ok && rows.status === 400) {
       rows = await sb(`/restaurant_roles?restaurant_id=eq.${restId}&select=id,taster_id,role,can_issue_codes,created_at&order=role.asc`);
@@ -109,8 +113,11 @@ export default async function handler(req, res) {
           // guest messages. undefined before the migration: the page hides both.
           canMessage: 'can_message' in r ? !!r.can_message : undefined,
           job: 'job' in r ? r.job || null : undefined,
+          // r53: managers only — "Can moderate reviews" (the owner chooses). undefined before migration 37.
+          canModerate: r.role === 'manager' && 'can_moderate' in r ? !!r.can_moderate : undefined,
           // What this particular caller may do to this particular row.
           canRemove: myLevel > (ROLE_RANK[r.role] || 0),
+          canSetModerate: r.role === 'manager' && myLevel >= LEVEL.owner,
         };
       }),
     });
@@ -234,6 +241,30 @@ export default async function handler(req, res) {
       await tellChange(restId, tasterId, canIssueCodes ? `let ${who} give rewards` : `stopped ${who} from giving rewards`, { go: 'team' });
     }
     return res.status(200).json({ success: true });
+  }
+
+  // ── MANAGERS: CAN MODERATE REVIEWS (r53) ───────────────────────────────
+  // Sebastian, 5 Nov: the owner, and the managers the owner chooses, moderate reviews. Never crew.
+  if (action === 'moderate') {
+    const rowId = Number(req.body.roleId);
+    const on = req.body.canModerate;
+    if (!Number.isInteger(rowId) || rowId <= 0) return res.status(400).json({ error: 'Which person?' });
+    if (typeof on !== 'boolean') return res.status(400).json({ error: 'On or off?' });
+    if (myLevel < LEVEL.owner) return res.status(403).json({ error: 'Only the owner chooses who moderates reviews.' });
+    const row = await sb(`/restaurant_roles?id=eq.${rowId}&select=id,restaurant_id,role,taster_id,can_moderate`);
+    if (!row.ok && row.status === 400) return res.status(409).json({ error: 'This needs migration 37 first (the moderation database).' });
+    if (!row.ok || !Array.isArray(row.data) || row.data.length === 0) return res.status(404).json({ error: 'That role no longer exists.' });
+    const target = row.data[0];
+    if (Number(target.restaurant_id) !== restId) return res.status(403).json({ error: 'That role belongs to another restaurant.' });
+    if (target.role !== 'manager') return res.status(400).json({ error: 'Owners always moderate, and crew never do. This switch is for managers.' });
+    const saved = await sb(`/restaurant_roles?id=eq.${rowId}&restaurant_id=eq.${restId}`, { method: 'PATCH', body: JSON.stringify({ can_moderate: on }) });
+    if (!saved.ok) return res.status(500).json({ error: 'Could not save that.' });
+    if (!!target.can_moderate !== on) {
+      const who = await personName(target.taster_id, { full: true });
+      await tellChange(restId, tasterId, on ? `let ${who} moderate reviews` : `stopped ${who} from moderating reviews`, { go: 'team' });
+    }
+    console.log('[roles] taster', tasterId, 'set can_moderate', on, 'for role', rowId, 'at', restId);
+    return res.status(200).json({ success: true, canModerate: on });
   }
 
   // ── CREW: ANSWERS GUEST MESSAGES · JOB ────────────────────────────────────
