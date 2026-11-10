@@ -556,6 +556,7 @@
       </div>
       <div id="fi-say-list"></div>
     </div>
+    <a class="hf-rules" id="fi-rules" href="/review-rules" style="margin:-.6rem 0 1rem">Review rules</a>
     <button class="cs-close" onclick="closeForkInfo();openTasterModal();">Log In &amp; Start Rating</button>
     <div style="margin-top:.7rem;"><a onclick="closeForkInfo()" style="font-family:var(--sans);font-size:.78rem;color:var(--muted);text-decoration:underline;cursor:pointer;">Maybe later</a></div>
   </div>
@@ -704,7 +705,7 @@ function caveImgErr(img,emoji){
 async function caveDishRating(dbId){
   if(caveRatings[dbId])return caveRatings[dbId];
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);
+    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?dish_id=eq.${dbId}&select=flavor,worth_every_bite,signature_style`);   // r53
     if(ok&&data.length){
       const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
       caveRatings[dbId]={avg,count:data.length};
@@ -879,6 +880,9 @@ async function loadMyTastings(){
       return;
     }
     const pins=getPins();
+    // r53: a review the restaurant hid shows here with why; the bell's notices about it are read now
+    const hid=data.some(r=>r.hidden_at)?await hfMyHidden(true):{};
+    hfHiddenSeen();
     const rows=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);
@@ -899,6 +903,7 @@ async function loadMyTastings(){
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
           <div class="review-text brand-red-text">The Hungry Fork</div>
           <div class="review-date">${date}</div>
+          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id):''}
         </div>
       </div>`;
     }).join('');
@@ -950,7 +955,7 @@ function restaurantScore(rows){
 async function loadRestaurantRatings(){
   if(fiRows) return fiRows;
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe,created_at`);
+    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe,created_at`);   // r53
     // Only a real answer is kept. A failed request leaves fiRows empty so the
     // next attempt asks again, instead of showing "no ratings" for good.
     if(ok&&Array.isArray(data)) fiRows=data;
@@ -1008,7 +1013,7 @@ async function fiSayLoad(){
   if(FI_SAY.rows || FI_SAY.loading) { fiSayRender(); return; }
   FI_SAY.loading = true;
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&restaurant_comment=not.is.null`
+    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&restaurant_comment=not.is.null`   // r53: shown ones only
       +'&select=id,taster_id,hospitality,atmosphere_vibe,restaurant_comment,reviewer_name,reviewer_username,created_at&order=created_at.desc&limit=600');
     if(ok && Array.isArray(data)){
       // one entry per guest, visit day and words
@@ -1227,6 +1232,8 @@ loadDishes()
 (function(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('dish'))window.location.replace('/menu'+window.location.search);
+  // r53: the bell's "The restaurant hid your review" opens My Tastings
+  if(params.get('tastings')==='1'&&currentTaster){if(history.replaceState)history.replaceState(null,'','/');openMyTastings();}
 })();
 </script>
 </body>
