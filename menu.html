@@ -1091,8 +1091,10 @@
       </div>
       <textarea class="r-textarea" id="r-rest-comment" aria-label="Comment about the restaurant"></textarea>
 
+      <div class="hf-hidden-note" id="r-team-note" style="display:none;"></div>
       <div class="t-err" id="r-err" style="display:none;"></div>
       <button class="r-submit" id="r-submit-btn" onclick="submitRating()">Post Review</button>
+      <div style="text-align:center"><a class="hf-rules" id="r-rules" href="/review-rules" target="_blank" rel="noopener">Review rules</a></div>
 
       <hr class="r-divider">
       <div class="r-reviews-label" id="r-reviews-label">Reviews</div>
@@ -1110,7 +1112,7 @@
     </div>
     <div class="r-body">
       <div class="rv-summary">
-        <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-avg-stars" id="rv-avg-stars"></div><div class="rv-count" id="rv-count"></div></div>
+        <div class="rv-left"><div class="rv-avg" id="rv-avg">&ndash;</div><div class="rv-avg-stars" id="rv-avg-stars"></div><div class="rv-count" id="rv-count"></div><a class="hf-rules" id="rv-rules" href="/review-rules">Review rules</a></div>
         <div class="rv-bars" id="rv-bars"></div>
       </div>
       <!-- Which period the score above covers. It sits right under the number
@@ -1283,7 +1285,7 @@ let TOP_RANKS={};
 async function loadTopRanks(){
   try{
     const since=encodeURIComponent(windowStartISO(ratingDefaultDays()));
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&created_at=gte.${since}&select=dish_id,flavor,worth_every_bite,signature_style&order=created_at.desc&limit=5000`);
+    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&created_at=gte.${since}&select=dish_id,flavor,worth_every_bite,signature_style&order=created_at.desc&limit=5000`);   // r53
     if(!ok||!Array.isArray(data))return;
     const by={};
     data.forEach(r=>{const b=by[r.dish_id]||(by[r.dish_id]={sum:0,count:0});b.sum+=(r.flavor+r.worth_every_bite+r.signature_style)/3;b.count++;});
@@ -1552,7 +1554,7 @@ async function caveDishRating(dbId){
   if(caveRatings[dbId])return caveRatings[dbId];
   try{
     const since=encodeURIComponent(windowStartISO(ratingDefaultDays()));
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&created_at=gte.${since}&select=flavor,worth_every_bite,signature_style`);
+    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?dish_id=eq.${dbId}&created_at=gte.${since}&select=flavor,worth_every_bite,signature_style`);   // r53
     if(ok&&data.length){
       const avg=data.reduce((s,r)=>s+(r.flavor+r.worth_every_bite+r.signature_style)/3,0)/data.length;
       caveRatings[dbId]={avg,count:data.length};
@@ -2211,6 +2213,13 @@ function startRating(){
 }
 
 // ── RATING MODAL ──
+function rTeamNote(){
+  const tn=document.getElementById('r-team-note');
+  if(!tn)return;
+  tn.style.display=MY_LEVEL>=1&&MY_LEVEL<=3?'block':'none';
+  tn.innerHTML=MY_LEVEL===1?'<b>You work here.</b> Crew can\u2019t rate the restaurant where they work. <a href="/review-rules" target="_blank" rel="noopener">Review rules</a>'
+    :'<b>You are on this restaurant\u2019s team.</b> Ratings by its owners and managers are hidden automatically. <a href="/review-rules" target="_blank" rel="noopener">Review rules</a>';
+}
 function openRatingModal(){
   if(!currentDishId)return;
   const d=DISHES.find(x=>x.id===currentDishId);
@@ -2226,6 +2235,9 @@ function openRatingModal(){
   document.getElementById('r-dish-comment').value='';
   document.getElementById('r-rest-comment').value='';
   document.getElementById('r-err').style.display='none';
+  // r53 (team rule): the team sees why, before writing anything (again once the account's role is known)
+  rTeamNote();
+  if(MY_LEVEL_READY) MY_LEVEL_READY.then(rTeamNote).catch(()=>{});
   loadReviews(currentDishId,RESTAURANT_ID,'r-reviews-list','r-reviews-label');
   document.getElementById('rating-modal').classList.add('open');
 }
@@ -2311,11 +2323,27 @@ async function submitRating(){
     if(first&&first.scrollIntoView)first.scrollIntoView({block:'center',behavior:'smooth'});
     return;
   }
+  // r53 (team rule): crew can't rate the restaurant where they work (the database refuses it too)
+  if(MY_LEVEL===1){
+    err.textContent='You can\u2019t rate the restaurant where you work.';
+    err.style.display='block';
+    return;
+  }
   btn.disabled=true;btn.textContent='Posting…';
   const dbDish=DISH_ID_MAP[currentDishId]||1;
   let updateReviewId=null;
   try{
-    const{ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at`);
+    let{ok:dupOk,data:dupData,status:dupStatus}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at,hidden_at,hidden_reason`);
+    if(!dupOk&&dupStatus===400)({ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at`));   // before migration 37
+    if(dupOk&&dupData.length&&dupData[0].hidden_at){
+      // r53: a review the restaurant hid (or the team rule) can't be rated again until it is shown again
+      const team=dupData[0].hidden_reason==='team'||dupData[0].hidden_reason==='team-role';
+      err.innerHTML=team?'Your rating of this dish is hidden: ratings by a restaurant\u2019s owners and managers are hidden automatically.'
+        :'The restaurant hid your review of this dish, so it can\u2019t be rated again for now. You can see why in My Tastings.';
+      err.style.display='block';
+      btn.disabled=false;btn.textContent='Post Review';
+      return;
+    }
     if(dupOk&&dupData.length){
       const prev=dupData[0];
       const ageDays=(Date.now()-new Date(prev.created_at).getTime())/86400000;
@@ -2369,7 +2397,8 @@ async function submitRating(){
       if(document.getElementById('cave').classList.contains('open'))renderCave();
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
-      if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
+      if(String(msg).includes('hf_team_crew')){err.textContent='You can\u2019t rate the restaurant where you work.';}   // r53: the team rule
+      else if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
       else{err.textContent='Error ('+status+'): '+msg;}
       err.style.display='block';
     }
@@ -2472,8 +2501,10 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
   if(MY_LEVEL_READY){ try{ await MY_LEVEL_READY; }catch(e){} }
   const dbDishId=DISH_ID_MAP[dishId]||1;
   try{
-    let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
-    if(!ok||!Array.isArray(data)){({ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*&order=created_at.desc`));}
+    // r53: the shown reviews, and your own even when the restaurant hid it (with why)
+    let{ok,data}=await hfShownOrMine(sbFetch,`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*,tasters(first_name)&order=created_at.desc`);
+    if(!ok||!Array.isArray(data)){({ok,data}=await hfShownOrMine(sbFetch,`/rest/v1/reviews?dish_id=eq.${dbDishId}&select=*&order=created_at.desc`));}
+    const hidMine=(ok&&Array.isArray(data)&&data.some(r=>r.hidden_at))?await hfMyHidden():{};
     const list=document.getElementById(listId);
     const label=document.getElementById(labelId);
     if(!ok||!data.length){
@@ -2481,7 +2512,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';
       return;
     }
-    label.textContent=`Reviews (${data.length})`;
+    label.textContent=`Reviews (${data.filter(r=>!r.hidden_at).length})`;
     // 2 = manager. Owners and the platform admin are above it.
     const canReply = MY_LEVEL >= 2 && String(restaurantId) === String(RESTAURANT_ID);
     list.innerHTML=data.map(r=>{
@@ -2489,10 +2520,10 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       const name=reviewerLabel(r);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
-      const replyHtml = replyBlocks(r)
+      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId) : replyBlocks(r)
         + replyTail(r, canReply, isGuest, 'reply-input',
             `postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')`);
-      return`<div class="review-item">
+      return`<div class="review-item${r.hidden_at?' hf-hidden':''}">
         <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
         <div class="review-date">${date}</div>
@@ -2548,7 +2579,8 @@ function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
 // stars.js. This line runs as the page loads, and a missing function here
 // would stop the whole menu. Anywhere else it would only affect a panel.
 let rvWindow = (typeof ratingDefaultDays === 'function') ? ratingDefaultDays() : 365;   // days; 0 = all time
-function rvWindowed(){ return rvData.filter(r => ratingInWindow(r, rvWindow)); }
+function rvWindowed(){ return rvData.filter(r => !r.hidden_at && ratingInWindow(r, rvWindow)); }   // r53: a hidden review never counts
+let rvHidMine={};
 
 // The five scores a rating is made of, split the way the rating FORM splits
 // them: three about the plate, two about the room. Each half sits with its own
@@ -2644,14 +2676,15 @@ async function openReviewsPanel(){
   const dbId=DISH_ID_MAP[d.id]||1;
   // The restaurant's own ratings, asked at the same time (r33: Full Rating's
   // restaurant half), fresh each time the panel opens.
-  const rest = sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe,created_at`)
+  const rest = hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe,created_at`)   // r53
     .then(r=>(r.ok&&Array.isArray(r.data))?r.data:null).catch(()=>null);
   try{
-    let{ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);
+    let{ok,data}=await hfShownOrMine(sbFetch,`/rest/v1/reviews?dish_id=eq.${dbId}&select=*,tasters(first_name)&order=created_at.desc`);   // r53
     if(!ok||!Array.isArray(data)){
-      ({ok,data}=await sbFetch(`/rest/v1/reviews?dish_id=eq.${dbId}&select=*&order=created_at.desc`));
+      ({ok,data}=await hfShownOrMine(sbFetch,`/rest/v1/reviews?dish_id=eq.${dbId}&select=*&order=created_at.desc`));
     }
     rvData=(ok&&Array.isArray(data))?data:[];
+    rvHidMine=rvData.some(r=>r.hidden_at)?await hfMyHidden():{};
   }catch(e){rvData=[];}
   rvRestData = await rest;
   rvRender();
@@ -2682,7 +2715,7 @@ function rvRenderSummary(){
   const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
   const rows=rvWindowed();
   let avg=0;
-  if(!rvData.length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
+  if(!rvData.filter(r=>!r.hidden_at).length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
   else if(!rows.length){avgEl.textContent='–';cntEl.textContent='(0 ratings)';bars.innerHTML='';}
   else{
     avg=rows.reduce((s,r)=>s+rvScore(r),0)/rows.length;
@@ -2706,7 +2739,7 @@ function rvRender(){
   const mine=currentTaster?rvData.find(r=>r.taster_id===currentTaster.id):null;
   if(mine){
     const md=new Date(mine.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-    yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
+    yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating${mine.hidden_at?' (hidden)':''}</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
   }else{
     yr.innerHTML=`<div class="rv-your-box" onclick="closeReviewsPanel();caveRate();" style="cursor:pointer;"><div class="rv-your-label">${currentTaster?'Tap to rate this dish':'Log in and rate this dish'}</div><div class="rv-your-stars">${rvStarsInline(0)}</div></div>`;
   }
@@ -2731,13 +2764,12 @@ function rvRenderList(){
     const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
     const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
 
-    return`<div class="review-item">
+    return`<div class="review-item${r.hidden_at?' hf-hidden':''}">
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
       ${(!rvFull&&r.dish_comment)?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
       <div class="review-date">${date}</div>
       ${rvFull?rvFullBlock(r):''}
-      ${replyBlocks(r)}
-      ${replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
+      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID):replyBlocks(r)+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
     </div>`;
   }).join('');
 }
@@ -2822,6 +2854,9 @@ async function loadMyTastings(){
       return;
     }
     const pins=getPins();
+    // r53: a review the restaurant hid shows here with why; the bell's notices about it are read now
+    const hid=data.some(r=>r.hidden_at)?await hfMyHidden(true):{};
+    hfHiddenSeen();
     const rows=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);
@@ -2842,6 +2877,7 @@ async function loadMyTastings(){
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
           <div class="review-text brand-red-text">The Hungry Fork</div>
           <div class="review-date">${date}</div>
+          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id):''}
         </div>
       </div>`;
     }).join('');
@@ -2875,7 +2911,7 @@ async function loadOverallRating(){
   const num=document.getElementById('vh-rating-num');
   if(!fill)return;
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe`);
+    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&select=hospitality,atmosphere_vibe`);   // r53
     if(!ok||!data.length){
       setForkStars('vh-stars-fill', 0);
       if(num)num.textContent='';
