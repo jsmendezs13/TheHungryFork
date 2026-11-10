@@ -58,11 +58,12 @@ import {
 import { staff, requestMailList } from './_lib/staff.js';
 import { socialPublic } from './_lib/social.js';                     // r52
 import { reviewsStaff } from './_lib/reviewlist.js';
+import { reviewTalk, talkBell } from './_lib/reviewtalk.js';        // r53c: delete by the author; the conversation about a hidden review
 import { moderation, reviewBell } from './_lib/moderation.js';                // r53: moderation                // r52: the Reviews tab
 import { floor } from './_lib/floor.js';      // r46: the table map (Reservations → Map)
 import { forgetOldFiles } from './_lib/files.js';
 import { notifyStaff, line } from './_lib/push.js';     // r43: notifications on the staff's phones
-import { guest, staffMessages, chatSummaries, KEEP_MS } from './_lib/messages.js';
+import { guest, staffMessages, chatSummaries, KEEP_MS, longSince } from './_lib/messages.js';
 import {
   guestRequestChat, staffRequestChat, guestRequests, requestBell, requestSummaries, moveToTable,
   forgetOldRequestMessages, dayLabel, timeLabel, hasAccount,
@@ -138,7 +139,8 @@ export default async function handler(req, res) {
       findByLink: (t) => { const clean = cleanToken(t); return clean ? findByLink(clean) : null; },
       linkGone: LINK_GONE,
       requestBell,
-      reviewBell,                                                          // r53: "The restaurant hid your review…"
+      // r53: "The restaurant hid your review…"; r53c: "… answered about your review"
+      reviewBell: async (id) => [...(await reviewBell(id)), ...(await talkBell(id))],
     });
   }
   // r30: a big-party request's own conversation, and My information.
@@ -164,6 +166,8 @@ export default async function handler(req, res) {
   if (action.startsWith('rv_')) return reviewsStaff(req, res, body, action);
   // r53: moderation (hide, show again, the log, the switch; the author's bell is read).
   if (action.startsWith('mod_')) return moderation(req, res, body, action);
+  // r53c: the author deletes a review (kept for the record); the author ⇄ the restaurant about a hidden review.
+  if (action === 'my_review_delete' || action.startsWith('rvc_')) return reviewTalk(req, res, body, action);
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
 }
@@ -1548,17 +1552,29 @@ async function remind(req, res) {
 
 // Sebastian's rule (8 Oct): a conversation is kept 90 days after its table,
 // then deleted — the conversation and every message in it (the database
-// deletes the messages with it). Returns how many went, or null when it could
-// not ask (before migration 19, or the database is down). Never throws.
+// deletes the messages with it). r53c (10 Nov): one started from migration 38
+// on is kept 3 years after its table ("in the case of sue"); the older ones
+// keep their 90 days. And the conversations about hidden reviews: 5 years.
+// Returns how many went, or null when it could not ask (before migration 19,
+// or the database is down). Never throws.
 async function forgetOldMessages() {
   try {
     const before = new Date(Date.now() - KEEP_MS).toISOString();
-    const gone = await sb(`/reservation_threads?table_at=lt.${before}&select=reservation_id`, {
-      method: 'DELETE', headers: { Prefer: 'return=representation' },
-    });
+    const del = (q) => sb(q, { method: 'DELETE', headers: { Prefer: 'return=representation' } });
+    let gone = await del(`/reservation_threads?table_at=lt.${before}&keep_long=is.false&select=reservation_id`);
+    if (!gone.ok && gone.status === 400) gone = await del(`/reservation_threads?table_at=lt.${before}&select=reservation_id`);   // before migration 38
     if (!gone.ok) { console.error('[reservations:forget] failed', gone.status); return null; }
-    const n = Array.isArray(gone.data) ? gone.data.length : 0;
-    if (n) console.log('[reservations:forget] deleted', n, 'conversations older than 90 days after their table');
+    let n = Array.isArray(gone.data) ? gone.data.length : 0;
+    const long = await del(`/reservation_threads?table_at=lt.${longSince().toISOString()}&select=reservation_id`);
+    if (long.ok && Array.isArray(long.data)) n += long.data.length;
+    if (n) console.log('[reservations:forget] deleted', n, 'conversations past their keeping (90 days, or 3 years, after their table)');
+    // r53c: the conversations about hidden reviews, kept with the review's record (5 years). Nothing before migration 38.
+    const talks = await del(`/review_threads?keep_until=lt.${new Date().toISOString()}&select=review_id`);
+    if (talks.ok && Array.isArray(talks.data) && talks.data.length) { n += talks.data.length; console.log('[reservations:forget] deleted', talks.data.length, 'review conversations (5 years)'); }
+    // r53c: a review its author deleted is kept for the record 5 years after it was deleted, then deleted for good.
+    const fiveYears = new Date(); fiveYears.setUTCFullYear(fiveYears.getUTCFullYear() - 5);
+    const records = await del(`/reviews?deleted_at=lt.${fiveYears.toISOString()}&select=id`);
+    if (records.ok && Array.isArray(records.data) && records.data.length) console.log('[reservations:forget] deleted', records.data.length, 'reviews their authors deleted 5 years ago');
     // r30: and the messages about big-party requests whose day is 90 days gone (0 before migration 20).
     let r = 0;
     try { r = await forgetOldRequestMessages(); } catch (err) { console.error('[reservations:forget] requests threw', err && err.message); }
