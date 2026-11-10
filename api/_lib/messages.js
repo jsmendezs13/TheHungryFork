@@ -50,6 +50,31 @@ import { notifyStaff, line } from './push.js';      // r43: the team's phones
 export const KEEP_DAYS = 90;
 export const KEEP_MS = KEEP_DAYS * 24 * 3600 * 1000;
 export const GUEST_FREE_MS = 24 * 3600 * 1000;      // from the first close: reopen freely for 24 hours, then once
+
+// r53c (Sebastian, 10 Nov 00:59 "3 years but all the information … in the case of sue"; 01:0x "Visible 3 years"):
+// a conversation started from now on is KEPT 3 years after its table, with every photo and PDF. Writing still ends
+// 90 days after the table (KEEP_MS above: isKept, the email's link); after that the guest and the restaurant can
+// still READ it until it is deleted. Conversations started before keep their old promise, 90 days:
+// reservation_threads.keep_long is false for them (migration 38). Before migration 38 every one is short.
+export const LONG_YEARS = 3;
+export function keptEnd(fromMs, long) {
+  if (!long) return fromMs + KEEP_MS;
+  const d = new Date(fromMs); d.setUTCFullYear(d.getUTCFullYear() + LONG_YEARS); return d.getTime();
+}
+export const isLong = (thread) => !!thread && thread.keep_long === true;
+export const longSince = (now = Date.now()) => { const d = new Date(now); d.setUTCFullYear(d.getUTCFullYear() - LONG_YEARS); return d; };
+// May this conversation still be read (it is kept)? Only a conversation that exists.
+export function readable(row, thread, now = Date.now()) {
+  return !!thread && keptEnd(new Date(row.reserved_at).getTime(), isLong(thread)) > now;
+}
+// Is migration 38 in (a conversation started now is kept 3 years)? Asked once per server start.
+let longKnown = null;
+export async function longReady() {
+  if (longKnown !== null) return longKnown;
+  const got = await sb('/reservation_threads?select=keep_long&limit=1');
+  if (got.ok) longKnown = true; else if (got.status === 400) longKnown = false;
+  return longKnown === true;
+}
 export const MAX_BODY = 1000;
 
 // A guest writes a handful of messages about a table; a script writes hundreds.
@@ -64,7 +89,8 @@ const guestUpload    = makeLimiter({ requests: 20,  window: '10 m', prefix: 'res
 const staffRead      = makeLimiter({ requests: 1800, window: '10 m', prefix: 'resv:msg:staff:read' });  // r22: one login on a few devices, each asking every 3 s
 const staffWrite     = makeLimiter({ requests: 150, window: '10 m', prefix: 'resv:msg:staff:write' });
 
-const GONE = 'This conversation is not kept any more: messages are deleted 90 days after the table.';
+const GONE = 'This conversation is not kept any more.';
+const READ_ONLY = 'This table was more than 90 days ago: the conversation can still be read, but nobody can write in it any more.';
 const NOT_THERE = 'That table is not there any more.';
 
 // The columns a message read needs about the table. guest_email is not one of them.
@@ -156,9 +182,13 @@ async function withFiles(list) {
   return (m) => (m.file_id && files[m.file_id]) || null;
 }
 
-// When a conversation of this table is deleted, and its files with it.
-function keepUntilOf(row) {
-  return new Date(new Date(row.reserved_at).getTime() + KEEP_MS);
+// When a conversation of this table is deleted, and its files with it (r53c: 3 years for one started from now on).
+function keepUntilOf(row, thread) {
+  return new Date(keptEnd(new Date(row.reserved_at).getTime(), isLong(thread)));
+}
+function keptLabel(timezone, row, thread) {
+  return new Intl.DateTimeFormat('en-US', { timeZone: timezone, month: 'long', day: 'numeric', year: 'numeric' })
+    .format(new Date(keptEnd(new Date(row.reserved_at).getTime(), isLong(thread))));
 }
 
 // The other side's messages, now read: only the ones just shown (a message
@@ -247,11 +277,12 @@ async function guestTable(req, body, helpers) {
   return { row, tasterId };
 }
 
-function guestView(row, thread, list, place, timezone, now = Date.now(), handles = {}, fileOf = () => null) {
+function guestView(row, thread, list, place, timezone, now = Date.now(), handles = {}, fileOf = () => null, newLong = false) {
   const restaurant = (place && place.name) || 'The restaurant';
   const right = guestRight(row, thread, now);
   let note = null;
-  if (thread && thread.closed_at) {
+  if (right.why === 'gone') note = 'This table was more than 90 days ago, so nobody can write here any more.';
+  else if (thread && thread.closed_at) {
     const how = thread.closed_reason === 'staff' ? 'Closed by the restaurant.' : 'Closed when you arrived.';
     note = right.canWrite
       ? how + (right.why === 'reopen_once' ? ' You can open it again once: write below.' : ' Write below to open it again.')
@@ -265,8 +296,10 @@ function guestView(row, thread, list, place, timezone, now = Date.now(), handles
     state: !thread ? 'new' : thread.closed_at ? 'closed' : 'open',
     note,
     canWrite: right.canWrite,
-    keptUntil: new Intl.DateTimeFormat('en-US', { timeZone: timezone, month: 'long', day: 'numeric' })
-      .format(new Date(new Date(row.reserved_at).getTime() + KEEP_MS)),
+    keptUntil: keptLabel(timezone, row, thread || { keep_long: newLong }),
+    // r53c: the line under the conversation (3 years for one started from now on; 90 days for an older one)
+    foot: 'Messages are kept until ' + keptLabel(timezone, row, thread || { keep_long: newLong }) + ' ('
+      + (isLong(thread || { keep_long: newLong }) ? LONG_YEARS + ' years' : '90 days') + ' after your table), then deleted.',
     messages: list.map((m) => ({
       id: m.id,
       mine: !!m.from_guest,
@@ -296,7 +329,7 @@ async function guestReply(res, row, timezone, place) {
   const [handles, fileOf] = await Promise.all([
     handlesById(list.filter((m) => !m.from_guest).map((m) => m.author_id)), withFiles(list),
   ]);
-  return res.status(200).json(guestView(row, t.thread, list, place, timezone, Date.now(), handles, fileOf));
+  return res.status(200).json(guestView(row, t.thread, list, place, timezone, Date.now(), handles, fileOf, await longReady()));
 }
 
 function whoKey(req, body) {
@@ -315,7 +348,12 @@ export async function guest(req, res, body, action, helpers = {}) {
   const found = await guestTable(req, body, helpers);
   if (!found.row) return res.status(found.status).json({ error: found.error });
   const { row, tasterId } = found;
-  if (!isKept(row)) return res.status(410).json({ error: GONE });
+  if (!isKept(row)) {
+    // r53c: after 90 days a kept conversation can still be read (not written in).
+    const t0 = await threadOf(row.id);
+    const canRead = (action === 'msg_list' || action === 'msg_files') && !t0.error && readable(row, t0.thread);
+    if (!canRead) return res.status(410).json({ error: t0.thread && readable(row, t0.thread) ? READ_ONLY : GONE });
+  }
   const loaded = await loadBooking(row.restaurant_id);
   const place = loaded && !loaded.error ? loaded.restaurant : null;
   const timezone = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
@@ -378,7 +416,7 @@ export async function guest(req, res, body, action, helpers = {}) {
     }
     let fileId = null, sentKind = null;
     if (hasFile) {
-      const claimed = await claimFile(body.fileId, { restaurantId: row.restaurant_id, reservationId: row.id }, { fromGuest: true, keepUntil: keepUntilOf(row) });
+      const claimed = await claimFile(body.fileId, { restaurantId: row.restaurant_id, reservationId: row.id }, { fromGuest: true, keepUntil: keepUntilOf(row, thread) });
       if (claimed.error) return fileError(res, claimed.error);
       fileId = claimed.file.id;
       sentKind = claimed.file.kind;
@@ -404,10 +442,12 @@ export async function chatSummaries(rows, now = Date.now()) {
   const out = {};
   const ids = rows.map((r) => Number(r.id)).filter((n) => Number.isInteger(n) && n > 0);
   if (!ids.length) return out;
-  const [threads, unread] = await Promise.all([
-    sb(`/reservation_threads?reservation_id=in.(${ids.join(',')})&select=reservation_id,closed_at,closed_reason,first_closed_at,guest_late_reopen_at`),
+  const askThreads = (extra) => sb(`/reservation_threads?reservation_id=in.(${ids.join(',')})&select=reservation_id,closed_at,closed_reason,first_closed_at,guest_late_reopen_at${extra}`);
+  let [threads, unread] = await Promise.all([
+    askThreads(',keep_long'),
     sb(`/reservation_messages?reservation_id=in.(${ids.join(',')})&from_guest=is.false&read_at=is.null&select=reservation_id&limit=1000`),
   ]);
+  if (!threads.ok && threads.status === 400) threads = await askThreads('');      // before migration 38
   const byId = {};
   (threads.ok && Array.isArray(threads.data) ? threads.data : []).forEach((t) => { byId[t.reservation_id] = t; });
   const count = {};
@@ -415,7 +455,8 @@ export async function chatSummaries(rows, now = Date.now()) {
   const on = threads.ok;                        // migration 19 is there
   rows.forEach((r) => {
     const t = byId[r.id] || null;
-    out[r.id] = on && isKept(r, now) ? {
+    // r53c: a kept conversation shows (to read) after the 90 days too.
+    out[r.id] = on && (isKept(r, now) || readable(r, t, now)) ? {
       exists: !!t, open: !!t && !t.closed_at, unread: count[r.id] || 0, canWrite: guestRight(r, t, now).canWrite,
     } : null;
   });
@@ -566,7 +607,11 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
   const t = await threadOf(row.id);
   if (t.error) return res.status(502).json({ error: 'Could not read the conversation (the database answered ' + t.error + ').'
     + (t.error === 404 ? ' That usually means migration 19 has not been run yet.' : '') });
-  if (!isKept(row)) return res.status(410).json({ error: GONE });
+  if (!isKept(row)) {
+    // r53c: after 90 days a kept conversation can still be read (not written in, closed or opened).
+    const canRead = (action === 'staff_msg_thread' || action === 'staff_msg_files') && readable(row, t.thread);
+    if (!canRead) return res.status(410).json({ error: readable(row, t.thread) ? READ_ONLY : GONE });
+  }
   const place = { restaurantId: row.restaurant_id, reservationId: row.id };
 
   // r42: a table nobody has written about yet opens empty, ready for the
@@ -633,7 +678,7 @@ export async function staffMessages(req, res, body, action, helpers = {}) {
     if (thread.closed_at) await reopen(id, 'staff');
     let fileId = null;
     if (hasFile) {
-      const claimed = await claimFile(body.fileId, place, { fromGuest: false, keepUntil: keepUntilOf(row) });
+      const claimed = await claimFile(body.fileId, place, { fromGuest: false, keepUntil: keepUntilOf(row, thread) });
       if (claimed.error) return fileError(res, claimed.error);
       fileId = claimed.file.id;
     }
@@ -705,8 +750,11 @@ async function staffReply(res, row, thread, who, timezone, opts = {}) {
     // 24 hours, yes; after that, only if their one late reopen is unused.
     guestCanReopen: isKept(row, now) && (now <= freeUntil(row, base.closed_at ? base : { ...base, closed_at: new Date(now).toISOString() })
                                          || !base.guest_late_reopen_at),
-    keptUntil: new Intl.DateTimeFormat('en-US', { timeZone: timezone, month: 'long', day: 'numeric' })
-      .format(new Date(new Date(row.reserved_at).getTime() + KEEP_MS)),
+    keptUntil: keptLabel(timezone, row, th || { keep_long: await longReady() }),
+    // r53c: after 90 days, read only; the line under the conversation says how long it is kept
+    readOnly: !isKept(row, now),
+    foot: 'Kept until ' + keptLabel(timezone, row, th || { keep_long: await longReady() }) + ' ('
+      + (isLong(th || { keep_long: await longReady() }) ? LONG_YEARS + ' years' : '90 days') + ' after the table), then deleted.',
     messages: list.map((m) => ({
       id: m.id,
       fromGuest: !!m.from_guest,
@@ -779,13 +827,21 @@ async function staffDay(req, res, body, tasterId) {
   const loaded = await loadBooking(who.rid);
   const timezone = (loaded && loaded.settings && loaded.settings.timezone) || 'America/New_York';
   const today = serviceToday(timezone);
-  const since = new Date(Date.now() - KEEP_MS).toISOString();
+  // r53c: a conversation kept 3 years can still be read; one kept 90 days (started before
+  // migration 38, or every one before it) is off the list after its 90 days, as before.
+  const long = await longReady();
+  const shortSince = new Date(Date.now() - KEEP_MS).toISOString();
+  const since = long ? longSince().toISOString() : shortSince;
 
-  const [threads, unread] = await Promise.all([
+  const [all, unread] = await Promise.all([
     sb(`/reservation_threads?restaurant_id=eq.${who.rid}&table_at=gte.${since}` +
-       '&select=reservation_id,service_date,closed_at,closed_reason,closed_by,last_at,last_from_guest,guest_late_reopen_at&order=last_at.desc&limit=2000'),
+       '&select=reservation_id,service_date,table_at,closed_at,closed_reason,closed_by,last_at,last_from_guest,guest_late_reopen_at'
+       + (long ? ',keep_long' : '') + '&order=last_at.desc&limit=2000'),
     sb(`/reservation_messages?restaurant_id=eq.${who.rid}&from_guest=is.true&read_at=is.null&select=id,reservation_id&limit=2000`),
   ]);
+  const threads = all.ok && Array.isArray(all.data)
+    ? { ...all, data: all.data.filter((t) => isLong(t) || new Date(t.table_at).toISOString() >= shortSince) }
+    : all;
   if (!threads.ok || !Array.isArray(threads.data)) {
     return res.status(502).json({ error: 'Could not read the messages (the database answered ' + threads.status + ').'
       + (threads.status === 404 ? ' That usually means migration 19 has not been run yet.' : '') });
