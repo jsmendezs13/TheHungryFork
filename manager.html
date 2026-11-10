@@ -1143,6 +1143,13 @@
   .rw-card.hidden > *:not(.rw-hid):not(.rw-acts) { opacity:.55; }
   .rw-hid { background:#EDE6DC; border-radius:10px; padding:.5rem .65rem; margin-top:.5rem; font-size:.76rem; line-height:1.45; }
   .rw-hid b { font-weight:700; }
+  /* r53c: Seb's Analytics' record of deleted reviews; the authors' messages about hidden reviews */
+  .rw-card.deleted .rw-hid[data-deleted] { background:#fff; border:1px solid #D9D2C8; border-left:3px solid #6F6255; color:#4A3F35; }
+  .rw-act.talk { position:relative; }
+  .rw-badge { display:inline-flex; min-width:18px; height:18px; padding:0 5px; margin-left:.35rem; border-radius:999px; background:#E23B2E; color:#fff; font-size:.64rem; font-weight:700; align-items:center; justify-content:center; }
+  .rw-talknote { display:flex; align-items:center; justify-content:space-between; gap:.7rem; background:#FFF4F2; border:1px solid #F3C9C3; border-radius:12px; padding:.6rem .75rem; margin:0 0 .7rem; font-size:.84rem; }
+  .rw-talknote .m-save { flex:none; padding:.5rem 1rem; }
+  #rvt-host .rv-scrim { z-index:320; } #rvt-host .rv-sheet { z-index:321; }
   .rw-hid q { display:block; margin-top:.15rem; font-style:italic; }
   .rw-act.mod { border-color:#E3CFC9; }
   .rw-switch { display:flex; align-items:center; gap:.8rem; background:#fff; border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:12px;
@@ -4137,12 +4144,12 @@ async function dvResync(){
 // at= is the restaurant, for someone at more than one.
 let NF_DAY = null, NF_DISH = null, NF_SETTINGS = false, NF_MAP = false;
 function nfParse(){
-  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map|reviews)((?:&(?:b|at)=\d+)*)$/.exec(window.location.hash || '');
+  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map|reviews)((?:&(?:b|at|talk)=\d+)*)$/.exec(window.location.hash || '');
   if(!m) return null;
   const out = { kind:m[1], value:m[2], at:null, b:null };
   m[3].split('&').filter(Boolean).forEach(function(p){ const kv = p.split('='); out[kv[0]] = Number(kv[1]); });
   const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings|map|reviews)$/.test(m[2]) : /^\d+$/.test(m[2]);
-  if(!ok || (out.b && m[1] !== 'day')) return null;
+  if(!ok || (out.b && m[1] !== 'day') || (out.talk && m[2] !== 'reviews')) return null;
   return out;
 }
 // Where a change notification goes: the tab (Team, Menu), Settings, or one dish open on the Menu.
@@ -4150,6 +4157,7 @@ function nfPlace(n){
   if(n.kind === 'dish'){ NF_DISH = Number(n.value); n = { kind:'go', value:'menu' }; }
   if(n.value === 'settings'){ TAB = 'reservations'; NF_SETTINGS = true; return; }      // rvStart opens Settings
   if(n.value === 'map'){ TAB = 'reservations'; NF_MAP = true; return; }                // r48: rvStart opens the Map
+  if(n.value === 'reviews' && n.talk) RVT_AT = Number(n.talk);                          // r53c: the author wrote about a hidden review
   TAB = allowedTabs().includes(n.value) ? n.value : 'reservations';
 }
 function nfShowDish(){
@@ -7368,7 +7376,7 @@ function msgListHtml(){
     +   '<button type="button" class="rv-arrow" aria-label="Next day" onclick="msgStep(1)">&#8250;</button></div>'
     + '<div class="rv-dateline mg-dateline">'+esc(rvLong(d.date))+(d.date===d.today ? ' · today' : '')+'</div>'
     + '<div class="mg-scroll">'+msgRowsHtml(d)+'</div>'
-    + '<p class="mg-foot">Closed conversations stay here for 90 days after the table, then they are deleted.</p>';
+    + '<p class="mg-foot">Conversations are kept 3 years after the table (older ones: 90 days). After 90 days they can be read, not written in.</p>';
 }
 function msgRowsHtml(d){
   const list = (d.threads || []).filter(t => MSG.tab === 'open' ? t.open : !t.open);
@@ -7403,7 +7411,7 @@ function msgTabsPatch(box, d){
 // ── THE MESSAGES' DAY STRIP (r22) ──
 // Like the evening's: the day in the middle is the day — a swipe, the arrows
 // or a tap. It holds every day a conversation can be on, from 91 days ago
-// (they are kept 90 days after the table) to two months ahead (further if a
+// (r53c: or the oldest day with a conversation, kept up to 3 years) to two months ahead (further if a
 // table is), and is built once when the list opens. After that only its
 // numbers and dots change, so a new message never moves it under a finger.
 const MG_SLOT = 56;            // one day: 50px wide + 6px gap
@@ -7413,7 +7421,7 @@ function msgStripDates(d){
   if(d.date < from) from = d.date;
   if(d.date > to) to = d.date;
   const out = [];
-  for(let date = from; date <= to && out.length < 800; date = rvAddDays(date, 1)) out.push(date);
+  for(let date = from; date <= to && out.length < 1300; date = rvAddDays(date, 1)) out.push(date);   // r53c: kept 3 years
   return out;
 }
 function msgStripHtml(d){
@@ -7570,6 +7578,8 @@ function msgTopHtml(t){
   const sub = esc(b.day)+' · '+esc(b.label)+' · '+rvPeople(b.party)+' · '+esc(b.code)+(rvTel(b.phone) ? ' · '+rvTel(b.phone) : '')+(b.email ? ' · '+rvMail(b.email) : '');
   // r42: nobody has written yet — the restaurant starts it, and is told where the guest will read it.
   if(t.fresh) return '<div class="mg-sub">'+sub+'</div><div class="mg-fresh">'+msgFreshText(t, first, b)+'</div>';
+  // r53c: kept 3 years, read only after 90 days
+  if(t.readOnly) return '<div class="mg-sub">'+sub+'</div><div class="mg-shut">&#10003; This table was more than 90 days ago: the conversation can be read, not written in.</div>';
   const state = t.open
     ? '<div class="mg-bar"><span class="mg-state">Open</span><button type="button" class="rv-mini" onclick="msgCloseThread(this)">Close</button></div>'
       + (t.guestCanReopen ? '' : '<div class="mg-warn">'+whoHtml(first, b.handle)+' has used the one reopen after 24 hours. If you close it now, only the restaurant can open it again.</div>')
@@ -7689,10 +7699,10 @@ function msgThreadHtml(){
   return msgHead(whoHtml(who.name, who.handle), back)
     + '<div class="mg-top">'+msgTopHtml(t)+'</div>'
     + '<div class="mg-scroll"><div class="mg-msgs">'+msgBubblesHtml(t)+'</div>'
-    + '<p class="mg-foot">Kept until '+esc(t.keptUntil)+' (90 days after the '+(isReq ? 'day asked for' : 'table')+'), then deleted.</p></div>'
+    + '<p class="mg-foot">'+(t.foot ? esc(t.foot) : 'Kept until '+esc(t.keptUntil)+' (90 days after the '+(isReq ? 'day asked for' : 'table')+'), then deleted.')+'</p></div>'
     + '<p class="mg-live" aria-live="polite"></p>'
     + '<div class="mg-pend" hidden></div>'
-    + '<div class="mg-form"'+(isReq && !t.open ? ' hidden' : '')+'>'
+    + '<div class="mg-form"'+((isReq && !t.open) || t.readOnly ? ' hidden' : '')+'>'
     + '<button type="button" class="mg-clip" aria-label="Attach a photo or a PDF" onclick="msgClip()">'+MSG_CLIP+'</button>'
     + '<input type="file" class="mg-file-in" accept="image/*,application/pdf" hidden onchange="msgPicked(this)">'
     + '<textarea class="mg-input" rows="1" maxlength="1000" aria-label="'+(t.fresh ? 'Your message' : 'Your answer')+'" placeholder="'+(t.fresh ? 'Write your message…' : 'Write your answer…')+'"'
@@ -7826,9 +7836,9 @@ function rwFresh(rid){
            open:{ dish:true, drink:true }, cats:{}, shown:RW_STEP, reply:null, sending:false, see:{}, cal:null, gen:0 };
 }
 function rwDefault(){ return { kinds:{ dish:true, drink:true, room:true }, stars:[], dishes:null, reply:{ none:false, replied:false }, from:null, to:null,
-                              visit:{ day:false, other:false, none:false }, hidden:false }; }     // r53: the visit dots; hidden reviews (off: not listed)
+                              visit:{ day:false, other:false, none:false }, hidden:false, deleted:false }; }     // r53: the visit dots; hidden reviews (off: not listed); r53c: deleted (Seb's Analytics' record)
 function rwCopy(f){ return { kinds:Object.assign({}, f.kinds), stars:f.stars.slice(), dishes:f.dishes ? f.dishes.slice() : null,
-                            reply:Object.assign({}, f.reply), from:f.from, to:f.to, visit:Object.assign({}, f.visit), hidden:f.hidden }; }
+                            reply:Object.assign({}, f.reply), from:f.from, to:f.to, visit:Object.assign({}, f.visit), hidden:f.hidden, deleted:!!f.deleted }; }
 
 async function rwStart(){
   if(!RESTAURANT) return;
@@ -7849,6 +7859,7 @@ async function rwLoad(){
   }
   RW.loading = false;
   rwPaint();
+  if(RW.loaded && RVT_AT){ const id = RVT_AT; RVT_AT = null; rvtOpen(id); }                    // r53c: from a notification
 }
 
 // ── the list's rows: one for each dish or drink review, one for each guest's visit (their words about the restaurant) ──
@@ -7863,8 +7874,8 @@ function rwBuild(d){
     const dish = dishes.get(Number(r.dish)) || null;
     reviewed.add(Number(r.dish));
     items.push({ t: dish && dish.category === 'drinks' ? 'drink' : 'dish', key:'r'+r.id, r:r, dish:dish, stars:rwRound(r.dishStars), day:r.day, at:r.at,
-                 hidden:r.hidden || null, visit:r.visit });                                       // r53
-    const gk = r.guest + '|' + r.day;
+                 hidden:r.hidden || null, visit:r.visit, deleted:r.deleted || null, talk:r.talk || null });   // r53; r53c
+    const gk = r.guest + '|' + r.day + (r.deleted ? '|deleted' : '');                             // r53c: a deleted visit stays apart
     let g = groups.get(gk);
     if(!g){ g = { t:'room', key:'g'+r.id, reviews:[], day:r.day, at:r.at }; groups.set(gk, g); items.push(g); }
     g.reviews.push(r);
@@ -7877,6 +7888,7 @@ function rwBuild(d){
     // r53: the visit is hidden when every review of it is (the words about the restaurant are part of each one)
     g.hidden = g.reviews.every(x => x.hidden) ? (g.reviews.find(x => x.roomComment && x.hidden) || g.reviews[0]).hidden : null;
     g.visit = g.r.visit;
+    g.deleted = g.reviews.every(x => x.deleted) ? g.r.deleted : null;                              // r53c
   });
   RW.items = items;
   // The menu, as the Filters page lists it: what is on it, and anything with a review even if it is hidden now.
@@ -7908,7 +7920,8 @@ function rwMatch(it, f, skip){
     if(f.reply.replied && !has) return false;
   }
   if(skip !== 'dates'){ if(f.from && it.day < f.from) return false; if(f.to && it.day > f.to) return false; }
-  if(skip !== 'hidden' && !f.hidden && it.hidden) return false;                                  // r53
+  if(skip !== 'hidden' && !f.hidden && it.hidden && !f.deleted) return false;                     // r53
+  if(skip !== 'deleted' && !!f.deleted !== !!it.deleted) return false;                            // r53c: only Seb's Analytics' record
   if(skip !== 'visit' && (f.visit.day || f.visit.other || f.visit.none) && !f.visit[rwVisitKind(it)]) return false;
   if(RW.q){ const h = rwHay(it); if(!rwNorm(RW.q).split(/\s+/).filter(Boolean).every(w => h.includes(w))) return false; }
   return true;
@@ -7983,6 +7996,7 @@ function rwActive(){
   const vk = ['day','other','none'].filter(k => f.visit[k]);                                        // r53
   if(vk.length && vk.length < 3) out.push(['visit', vk.map(k => RW_VISIT_WORDS[k]).join(' + ')]);
   if(f.hidden) out.push(['hidden', 'Hidden shown too']);
+  if(f.deleted) out.push(['deleted', 'Deleted by the author (only you)']);                       // r53c
   if(f.from || f.to){
     const y = (f.from||f.to).slice(0,4) !== rwToday().slice(0,4);
     out.push(['dates', f.from && f.to ? (f.from === f.to ? rwDayWords(f.from, y) : rwDayWords(f.from, y)+' – '+rwDayWords(f.to, y))
@@ -7999,6 +8013,7 @@ function rwDrop(k){
   if(k === 'dates'){ RW.f.from = null; RW.f.to = null; }
   if(k === 'visit') RW.f.visit = d.visit;
   if(k === 'hidden') RW.f.hidden = false;
+  if(k === 'deleted') RW.f.deleted = false;                                                       // r53c
   RW.shown = RW_STEP;
   rwPaint();
 }
@@ -8023,7 +8038,7 @@ function rwThreadHtml(r){
 }
 function rwActsHtml(it){
   const r = it.r, turn = rwTurn(r), acts = [];
-  if(it.hidden) return rwHiddenActs(it);                                                          // r53: the conversation is closed
+  if(it.hidden || it.deleted) return rwHiddenActs(it);                                            // r53: the conversation is closed; r53c
   if(turn === 'restaurant') acts.push('<button type="button" class="rw-act" onclick="rwReplyOpen(\''+it.key+'\')">'+(r.replies.length ? 'Reply (last word)' : 'Reply')+'</button>');
   else if(turn === 'guest') acts.push('<span class="rw-act done">Replied ✓ · the guest can answer</span>');
   else acts.push('<span class="rw-act done">Replied ✓</span>');
@@ -8031,6 +8046,7 @@ function rwActsHtml(it){
   else if(it.dish && it.dish.slug) acts.push('<a class="rw-act" href="/menu?dish='+encodeURIComponent(it.dish.slug)+'" target="_blank" rel="noopener">Open '+(it.t === 'drink' ? 'drink' : 'dish')+'</a>');
   const M = rwMod();                                                                               // r53
   if(M.canModerate && M.on) acts.push('<button type="button" class="rw-act mod" data-mod="'+it.key+'" onclick="rwModOpen(\''+it.key+'\')">Moderate review</button>');
+  if(rwTalkBtn(it)) acts.push(rwTalkBtn(it));                                                     // r53c: shown again, the conversation can be read
   return '<div class="rw-acts">'+acts.join('')+'</div>';
 }
 function rwReplyHtml(it){
@@ -8044,24 +8060,24 @@ function rwCardHtml(it){
   const r = it.r;
   if(it.t === 'room'){
     const see = RW.see[it.key] ? '<div class="rw-dishes">'+it.dishList.map(x => '<div><span>'+esc(x.dish ? x.dish.name : 'A dish')+'</span><b>'+rwStarRow(x.stars)+'</b></div>').join('')+'</div>' : '';
-    return '<div class="rw-card'+(it.hidden ? ' hidden' : '')+'" data-kind="room" data-key="'+it.key+'">'
+    return '<div class="rw-card'+(it.hidden || it.deleted ? ' hidden' : '')+(it.deleted ? ' deleted' : '')+'" data-kind="room" data-key="'+it.key+'">'
       + '<div class="rw-kind">Restaurant</div>'
       + '<div class="rw-who" style="margin-top:.2rem">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
       + '<div class="rw-stars"><span>Hospitality <b>'+rwStarRow(r.roomStars[0])+'</b></span><span>Atmosphere &amp; Vibe <b>'+rwStarRow(r.roomStars[1])+'</b></span></div>'
       + (it.comments.length ? it.comments.map(c => '<div class="rw-text">'+esc(c)+'</div>').join('') : '<div class="rw-none">No comment, only stars.</div>')
       + '<div class="rw-small">'+esc(rwWhen(it.at))+' · '+(it.reviews.length === 1 ? 'rated 1 '+(it.dishList[0].dish && it.dishList[0].dish.category === 'drinks' ? 'drink' : 'dish') : 'rated '+it.reviews.length+' dishes and drinks')+'</div>'
-      + rwVisitLine(it.visit) + rwHiddenBox(it)
+      + rwVisitLine(it.visit) + rwDeletedBox(it) + (it.deleted ? '' : rwHiddenBox(it))
       + rwThreadHtml(r) + rwActsHtml(it) + see + rwReplyHtml(it)
       + '</div>';
   }
   const d = it.dish;
-  return '<div class="rw-card'+(it.hidden ? ' hidden' : '')+'" data-kind="'+it.t+'" data-key="'+it.key+'">'
+  return '<div class="rw-card'+(it.hidden || it.deleted ? ' hidden' : '')+(it.deleted ? ' deleted' : '')+'" data-kind="'+it.t+'" data-key="'+it.key+'">'
     + '<div class="rw-top">'+rwThumb(d)+'<div><div class="rw-dish"><span class="rw-kind">'+(it.t === 'drink' ? 'Drink' : 'Dish')+'</span>'+esc(d ? d.name : 'A dish no longer on the menu')+'</div><div class="rw-when">'+esc(rwWhen(it.at))+'</div></div></div>'
     + '<div class="rw-who">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
     + '<div class="rw-stars"><span>'+(it.t === 'drink' ? 'Drink' : 'Dish')+' <b>'+rwStarRow(it.stars)+'</b></span>'
     +   '<span>Flavor '+(r.dishStars[0]||'–')+' · Worth Every Bite '+(r.dishStars[1]||'–')+' · Signature Style '+(r.dishStars[2]||'–')+'</span></div>'
     + (r.dishComment ? '<div class="rw-text">'+esc(r.dishComment)+'</div>' : '<div class="rw-none">No comment, only stars.</div>')
-    + rwVisitLine(it.visit) + rwHiddenBox(it)
+    + rwVisitLine(it.visit) + rwDeletedBox(it) + (it.deleted ? '' : rwHiddenBox(it))
     + rwThreadHtml(r) + rwActsHtml(it) + rwReplyHtml(it)
     + '</div>';
 }
@@ -8154,6 +8170,12 @@ function rwFiltersHtml(){
   if(nHidden || f.hidden){
     h += '<div class="rw-pg">Hidden reviews</div>'
       + ck(f.hidden, 'Show hidden reviews too', nHidden, 'data-hidden="1" onclick="rwHiddenPick()"');
+  }
+  // r53c: reviews their authors deleted — kept for the record, only Seb's Analytics sees them
+  const nDeleted = rwCount(f, 'deleted', it => !!it.deleted);
+  if(rwMod().platform && (nDeleted || f.deleted)){
+    h += '<div class="rw-pg">Deleted by the author</div>'
+      + ck(f.deleted, 'Deleted by the author (only you)', nDeleted, 'data-deleted="1" onclick="rwDeletedPick()"');
   }
   // the dates
   const cal = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+TAB_ICONS.reservations+'</svg>';
@@ -8257,6 +8279,163 @@ function rwVisitLine(v){
   return '<div class="rw-visit other">Visit on another day'+(v.at ? ' · '+esc(rwVisitDay(v.at)) : '')+'</div>';
 }
 // "Hidden · Fake · by Sebastian, Nov 6" and the details (moderators only)
+// r53c: Seb's Analytics' record of a review its author deleted
+function rwDeletedBox(it){
+  if(!it.deleted) return '';
+  const when = new Date(it.deleted.at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+  // Sebastian, 10 Nov: the 5 years, "doesn't count" and "only Seb's Analytics" are in the Terms and the Privacy Policy, not here.
+  return '<div class="rw-hid" data-deleted="1"><b>Deleted by the author</b> · '+esc(when)+'</div>';
+}
+// r53c: the author's conversation about a hidden review (moderators): "Messages" with what waits
+function rwTalkBtn(it){
+  if(!it.talk || !rwMod().canModerate || it.t === 'room') return '';
+  const n = Number(it.talk.unread) || 0;
+  return '<button type="button" class="rw-act talk" data-talk="'+Number(it.r.id)+'" onclick="rvtOpen('+Number(it.r.id)+')">Messages'+(n ? '<span class="rw-badge">'+n+'</span>' : '')+'</button>';
+}
+// ── r53c: the author's conversation about a hidden review — the same sheet as a table's conversation ──
+// Opened from "Messages" on the review, the line at the top of Reviews, or a notification (#go=reviews&talk=<review>).
+// The owner and the managers who moderate answer; "Show it again" is here too. Read every few seconds while open.
+let RVT = { open:false, id:null, data:null, error:null, asking:false, pend:null, sending:false, timer:null }, RVT_AT = null;
+function rvtOpen(id){
+  Object.assign(RVT, { open:true, id:Number(id), data:null, error:null, pend:null, sending:false });
+  rvtPaint(true);
+  rvtLoad(true);
+  if(!RVT.timer) RVT.timer = setInterval(function(){ if(RVT.open && document.visibilityState === 'visible' && !RVT.asking) rvtLoad(false); }, 4000);
+}
+function rvtHide(){
+  RVT.open = false; RVT.id = null; RVT.data = null;
+  if(RVT.timer){ clearInterval(RVT.timer); RVT.timer = null; }
+  const h = document.getElementById('rvt-host'); if(h) h.innerHTML = '';
+}
+async function rvtLoad(first){
+  const id = RVT.id; RVT.asking = true;
+  try{
+    const d = await rvApi({ action:'rvc_staff_thread', reviewId:id });
+    if(RVT.id !== id) return;
+    const had = RVT.data; RVT.data = d; RVT.error = null;
+    rvtPaint(!had);
+    // What waited is read now (Seb's Analytics' opening reads nothing): the list's count goes.
+    if(first && !rwMod().platform){
+      const it = RW.items.find(x => x.key === 'r'+id);
+      if(it && it.talk && it.talk.unread){ it.talk.unread = 0; rwPaint(); }
+    }
+  }catch(e){
+    if(RVT.id !== id) return;
+    if(e.status !== 401){ RVT.error = e.message || 'Could not read the conversation.'; if(!RVT.data) rvtPaint(true); }
+  }
+  RVT.asking = false;
+}
+function rvtTopHtml(d){
+  const v = d.review, first = String(v.name || '').trim().split(/\s+/)[0] || 'The guest';
+  const state = v.deleted ? 'Deleted by the author' : v.hidden ? (v.hidden.team ? 'Hidden automatically' : 'Hidden by '+esc(v.hidden.by || 'the restaurant')+': '+esc(v.hidden.label)) : 'Shown again';
+  let h = '<div class="mg-sub">About '+esc(first)+'\u2019s '+(v.hidden ? 'hidden ' : '')+'review · <b>'+esc(v.dish)+'</b> · '+esc(v.day)+' · '+rwStarRow(rwRound(v.dishStars))+' · '+state+'</div>'
+    + '<div class="mg-who">'+whoHtml(first, v.handle)+' reads your answers in My Tastings on the website, and the bell tells them.</div>';
+  if(!v.deleted){
+    h += '<div class="mg-bar"><span class="mg-state">'+(d.open ? 'Open' : 'Closed')+'</span>'
+      + (d.open ? '<button type="button" class="rv-mini" onclick="rvtSet(\'close\')">Close</button>' : '<button type="button" class="rv-mini" onclick="rvtSet(\'reopen\')">Reopen</button>')
+      + (v.hidden && !v.hidden.team ? '<button type="button" class="rv-mini" id="rvt-show" onclick="rvtShowAgain()">Show it again</button>' : '')
+      + '</div>';
+  }
+  if(d.closedNote) h += '<div class="mg-shut">&#10003; '+esc(d.closedNote)+'</div>';
+  return h;
+}
+function rvtPaint(full){
+  let host = document.getElementById('rvt-host');
+  if(!host){ host = document.createElement('div'); host.id = 'rvt-host'; document.body.appendChild(host); }
+  if(!RVT.open){ host.innerHTML = ''; return; }
+  const d = RVT.data;
+  const sc0 = host.querySelector('.mg-scroll');
+  const atEnd = !sc0 || sc0.scrollHeight - sc0.scrollTop - sc0.clientHeight < 40;
+  if(!full && d && host.querySelector('.mg-form')){
+    host.querySelector('.mg-top').innerHTML = rvtTopHtml(d);
+    host.querySelector('.mg-msgs').innerHTML = msgBubblesHtml(d);
+    host.querySelector('.mg-foot').textContent = d.foot || '';
+    host.querySelector('.mg-form').hidden = !!d.review.deleted;
+    if(atEnd) sc0.scrollTop = sc0.scrollHeight;
+    rvtFiles();
+    return;
+  }
+  host.innerHTML = '<div class="rv-scrim" onclick="rvtHide()"></div>'
+    + '<div class="rv-sheet mg-sheet rvt-sheet" role="dialog" aria-modal="true" aria-label="Messages about a hidden review"><div class="rv-grab"></div>'
+    + '<div class="rv-sheet-head"><div style="min-width:0;"><div class="m-h">'+(d ? whoHtml(d.review.name, d.review.handle) : 'Messages')+'</div></div>'
+    + '<button type="button" class="rv-x" aria-label="Close" onclick="rvtHide()">&times;</button></div>'
+    + (!d ? (RVT.error ? '<div class="m-err">'+esc(RVT.error)+'</div>' : '<div class="m-skel"></div>')
+      : '<div class="mg-top">'+rvtTopHtml(d)+'</div>'
+        + '<div class="mg-scroll"><div class="mg-msgs">'+msgBubblesHtml(d)+'</div><p class="mg-foot">'+esc(d.foot || '')+'</p></div>'
+        + '<p class="mg-live" aria-live="polite"></p><div class="mg-pend" hidden></div>'
+        + '<div class="mg-form"'+(d.review.deleted ? ' hidden' : '')+'>'
+        + '<button type="button" class="mg-clip" aria-label="Attach a photo or a PDF" onclick="this.nextElementSibling.click()">'+MSG_CLIP+'</button>'
+        + '<input type="file" class="mg-file-in" accept="image/*,application/pdf" hidden onchange="rvtPicked(this)">'
+        + '<textarea class="mg-input" rows="1" maxlength="1000" aria-label="Your answer" placeholder="Write your answer…" oninput="msgGrow(this)"'
+        + ' onkeydown="if(event.key===\'Enter\'&&(event.ctrlKey||event.metaKey)){event.preventDefault();rvtSend();}"></textarea>'
+        + '<button type="button" class="mg-send" aria-label="Send" onclick="rvtSend()">'+MSG_SEND+'</button></div>')
+    + '</div>';
+  const sc = host.querySelector('.mg-scroll'); if(sc) sc.scrollTop = sc.scrollHeight;
+  rvtFiles();
+}
+async function rvtFiles(){
+  const d = RVT.data;
+  if(!d || RVT.linking) return;
+  const need = d.messages.filter(m => m.file && !msgLinkOf(m.file.id)).map(m => Number(m.file.id)).slice(0, 40);
+  if(!need.length) return;
+  RVT.linking = true;
+  const id = RVT.id;
+  try{
+    const data = await rvApi({ action:'rvc_staff_files', reviewId:id, fileIds:need });
+    const until = Date.now() + Math.max(60, (Number(data.expiresIn) || 3600) - 300) * 1000;
+    need.forEach(k => { const url = data.links && data.links[k]; MSG.links[k] = url ? { url:url, until:until } : { url:null, gone:true, until:Date.now() + 120000 }; });
+  }catch(e){ RVT.linking = false; return; }
+  RVT.linking = false;
+  if(id !== RVT.id || !RVT.open) return;
+  const box = document.querySelector('#rvt-host .mg-msgs'); if(box) box.innerHTML = msgBubblesHtml(RVT.data);
+}
+function rvtPicked(input){
+  const file = input.files && input.files[0]; input.value = '';
+  if(!file) return;
+  hfFilePrepare(file).then(function(prep){
+    RVT.pend = prep;
+    const p = document.querySelector('#rvt-host .mg-pend');
+    if(p){ p.hidden = false; p.innerHTML = '<span class="mg-pend-pdf">'+MSG_PDF+'</span><div class="mg-pend-t"><b>'+esc(prep.name)+'</b><small>'+esc(hfFileSize(prep.size))+' · goes with your next message</small></div>'
+      + '<button type="button" class="mg-pend-x" aria-label="Remove the file" onclick="rvtUnpick()">&times;</button>'; }
+  }, function(e){ showToast(e.message); });
+}
+function rvtUnpick(){ RVT.pend = null; const p = document.querySelector('#rvt-host .mg-pend'); if(p){ p.hidden = true; p.innerHTML = ''; } }
+async function rvtSend(){
+  const host = document.getElementById('rvt-host'), input = host && host.querySelector('.mg-input');
+  if(!input || RVT.sending) return;
+  const text = input.value.trim(), prep = RVT.pend, id = RVT.id;
+  if(!text && !prep){ showToast('Write the answer first.'); return; }
+  RVT.sending = true;
+  const btn = host.querySelector('.mg-send'); if(btn) btn.disabled = true;
+  try{
+    let fileId = null;
+    if(prep){
+      const slot = await rvApi({ action:'rvc_staff_upload', reviewId:id, name:prep.name, mime:prep.mime, size:prep.size });
+      await hfFileUpload(slot.uploadUrl, prep);
+      fileId = slot.file.id;
+    }
+    const d = await rvApi({ action:'rvc_staff_send', reviewId:id, body:text, fileId:fileId });
+    if(RVT.id !== id) return;
+    input.value = ''; input.style.height = ''; rvtUnpick();
+    RVT.data = d; rvtPaint(false);
+    const sc = host.querySelector('.mg-scroll'); if(sc) sc.scrollTop = sc.scrollHeight;
+  }catch(e){ if(e.status !== 401) showToast(e.message || 'The answer was not sent. Please try again.'); }
+  RVT.sending = false; if(btn) btn.disabled = false;
+}
+async function rvtSet(what){
+  const id = RVT.id, d = RVT.data;
+  const seen = d ? Math.max(0, ...d.messages.filter(m => m.fromGuest).map(m => Number(m.id))) : 0;
+  try{ RVT.data = await rvApi({ action:'rvc_staff_'+(what === 'close' ? 'close' : 'reopen'), reviewId:id, seen:seen }); if(RVT.id === id) rvtPaint(false); }
+  catch(e){ if(e.status !== 401) showToast(e.message); }
+  const it = RW.items.find(x => x.key === 'r'+id); if(it && it.talk){ it.talk.open = what !== 'close'; }
+}
+async function rvtShowAgain(){
+  const id = RVT.id, b = document.getElementById('rvt-show'); if(b) b.disabled = true;
+  try{ await rvApi({ action:'mod_show', reviewId:id }); showToast('Shown again. The author is told.'); }
+  catch(e){ if(e.status !== 401) showToast(e.message); if(b) b.disabled = false; return; }
+  await rvtLoad(false);
+  rwLoad();
+}
 function rwHiddenBox(it){
   const h = it.hidden;
   if(!h) return '';
@@ -8273,12 +8452,15 @@ function rwHiddenIds(it){
 }
 function rwHiddenActs(it){
   const M = rwMod(), acts = [];
+  if(rwTalkBtn(it)) acts.push(rwTalkBtn(it));                                                     // r53c
+  if(it.deleted) return acts.length ? '<div class="rw-acts">'+acts.join('')+'</div>' : '';       // r53c: the record: nothing to do
   if(M.canModerate && !it.hidden.team && rwHiddenIds(it).length) acts.push('<button type="button" class="rw-act" data-show="'+it.key+'" onclick="rwShowAgain(\''+it.key+'\')">Show it again</button>');
   if(it.t !== 'room' && it.dish && it.dish.slug) acts.push('<a class="rw-act" href="/menu?dish='+encodeURIComponent(it.dish.slug)+'" target="_blank" rel="noopener">Open '+(it.t === 'drink' ? 'drink' : 'dish')+'</a>');
   return acts.length ? '<div class="rw-acts">'+acts.join('')+'</div>' : '';
 }
 function rwVisitPick(k){ RW.draft.visit[k] = !RW.draft.visit[k]; rwPaintPage(); }
 function rwHiddenPick(){ RW.draft.hidden = !RW.draft.hidden; rwPaintPage(); }
+function rwDeletedPick(){ RW.draft.deleted = !RW.draft.deleted; rwPaintPage(); }                // r53c
 
 // The top of the tab: Seb's Analytics' switch; "off" for the moderators; the dots' legend and the log.
 function rwTopHtml(){
@@ -8295,6 +8477,13 @@ function rwTopHtml(){
       + '</div>';
   }else if(M.canModerate && !M.on){
     h += '<div class="rw-note" id="rw-mod-off" style="margin:0 0 .7rem">Moderation is off here. Seb\'s Analytics switches it on once the restaurant signs the Review and Data Addendum.</div>';
+  }
+  // r53c: the authors' messages about hidden reviews that wait for an answer
+  const waiting = M.canModerate ? RW.items.filter(it => it.talk && it.talk.unread > 0 && it.t !== 'room') : [];
+  if(waiting.length){
+    const n = waiting.reduce((x, it) => x + Number(it.talk.unread), 0), first = waiting[0];
+    h += '<div class="rw-talknote" id="rw-talknote"><span>'+n+' new message'+(n === 1 ? '' : 's')+' about '+(waiting.length === 1 ? 'a hidden review' : waiting.length+' hidden reviews')+'</span>'
+      + '<button type="button" class="m-save" onclick="rvtOpen('+Number(first.r.id)+')">Open</button></div>';
   }
   if(M.canModerate){
     h += '<div class="rw-legend" id="rw-legend"><span><i class="rw-dot day"></i>Visit that day</span><span><i class="rw-dot other"></i>Visit on another day</span>'
