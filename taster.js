@@ -1996,7 +1996,8 @@ function hfHoursApply(d){
   HF_HOURS.grade=HF_GRADES[d.grade]?d.grade:null;           // r34
   HF_HOURS.top=hfTopClean(d.top);                            // r36
   HF_HOURS.caveOrder=hfOrderClean(d.top&&d.top.order);       // r40
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,at:Date.now()}));}catch(e){}
+  HF_HOURS.social=hfSocialClean(d.social);                   // r52
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,at:Date.now()}));}catch(e){}
   hfHoursFill();
   HF_HOURS.fresh=true;
   try{document.dispatchEvent(new Event('hf-hours'));}catch(e){}
@@ -2021,6 +2022,15 @@ function hfOrderClean(o){
   ['main','drinks','hidden'].forEach(function(s){out[s]=Array.isArray(o[s])?o[s].filter(function(k){return typeof k==='string'&&/^[a-z-]{2,30}$/.test(k);}).slice(0,20):[];});
   return out;
 }
+// r52 (Sebastian, 9 Nov): the restaurant's pages on social media (Settings → Social media), for the home page's
+// Social button: { links:[{kind, url, label}] }, only the ones filled in. Missing (an older server, migration 36
+// not run): null, and the button says "coming soon".
+function hfSocialClean(s){
+  if(!s||typeof s!=='object'||!Array.isArray(s.links))return null;
+  var kinds={instagram:1,tiktok:1,facebook:1,google:1};
+  return {links:s.links.filter(function(l){return l&&kinds[l.kind]&&typeof l.url==='string'&&/^https:\/\/[^\s<>"]+$/.test(l.url)&&l.url.length<=500;})
+                       .map(function(l){return {kind:l.kind,url:l.url,label:typeof l.label==='string'?l.label.slice(0,80):''};})};
+}
 function hfHoursFetch(){
   fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
     .then(function(r){return r.ok?r.json():null;})
@@ -2039,6 +2049,7 @@ function hfHoursLoad(){
       HF_HOURS.grade=HF_GRADES[kept.grade]?kept.grade:null;  // r34
       HF_HOURS.top=hfTopClean(kept.top);                     // r36
       HF_HOURS.caveOrder=hfOrderClean(kept.caveOrder);       // r40
+      HF_HOURS.social=hfSocialClean(kept.social);            // r52
       hfHoursFill();
     }
   }catch(e){}
