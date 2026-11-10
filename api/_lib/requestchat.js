@@ -27,7 +27,7 @@
 import { makeLimiter, allow, keyFor, clientIp } from './auth.js';
 import { sb, tasterIdFromRequest, LEVEL } from './roles.js';
 import { loadBooking, todayIn } from './booking.js';
-import { cleanBody, staffName, whenLabel, msgAccess, MAX_BODY, KEEP_MS } from './messages.js';
+import { cleanBody, staffName, whenLabel, msgAccess, MAX_BODY, KEEP_MS, LONG_YEARS, longSince } from './messages.js';
 import { handlesById, addHandles } from './guests.js';
 import { makeSlot, claimFile, filesById, fileLinks, fileError, moveFiles } from './files.js';
 import { notifyStaff, line } from './push.js';      // r43: the team's phones
@@ -39,7 +39,7 @@ const staffWrite = makeLimiter({ requests: 150, window: '10 m', prefix: 'resv:re
 const guestUpload = makeLimiter({ requests: 20, window: '10 m', prefix: 'resv:reqmsg:file' });   // r42
 
 // guest_email is not one of them.
-const REQUEST_COLUMNS = 'id,restaurant_id,taster_id,guest_name,guest_phone,party_size,wanted_date,wanted_time,occasion,status,chat_emailed_at';
+const REQUEST_COLUMNS = 'id,restaurant_id,taster_id,guest_name,guest_phone,party_size,wanted_date,wanted_time,occasion,status,chat_emailed_at,chat_long';
 const NOT_THERE = 'That request is not there any more.';
 const NOT_ON = 'Messages about requests are not switched on yet. Please call the restaurant.';
 
@@ -57,11 +57,20 @@ export function timeLabel(time) {
   const h = Number(m[1]);
   return `${h % 12 || 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`;
 }
-function keptUntil(date) {
-  const p = String(date || '').split('-').map(Number);
-  const end = new Date(Date.UTC(p[0], (p[1] || 1) - 1, p[2] || 1) + KEEP_MS);
-  return new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric' }).format(end);
+// r53c (Sebastian, 10 Nov): messages about a request whose conversation starts from now on are kept 3 years after the
+// day asked for, with their photos and PDFs; older ones keep their promise, 90 days (reservation_requests.chat_long
+// is false for them, migration 38; before migration 38 every one is short).
+const isLongQ = (q) => !!q && q.chat_long === true;
+function keptEndOf(q) {
+  const p = String(q.wanted_date || '').split('-').map(Number);
+  const day = Date.UTC(p[0], (p[1] || 1) - 1, p[2] || 1);
+  if (!isLongQ(q)) return day + KEEP_MS;
+  const d = new Date(day); d.setUTCFullYear(d.getUTCFullYear() + LONG_YEARS); return d.getTime();
 }
+function keptUntil(q) {
+  return new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(keptEndOf(q)));
+}
+const keptRule = (q) => (isLongQ(q) ? LONG_YEARS + ' years' : '90 days') + ' after the day asked for';
 
 // While the request waits for its answer, and its day has not passed.
 export function writable(q, timezone) {
@@ -69,10 +78,12 @@ export function writable(q, timezone) {
 }
 
 async function requestRow(id) {
-  const got = await sb(`/reservation_requests?id=eq.${Number(id)}&select=${REQUEST_COLUMNS}&limit=1`);
+  let got = await sb(`/reservation_requests?id=eq.${Number(id)}&select=${REQUEST_COLUMNS}&limit=1`);
+  // r53c: before migration 38 chat_long is not there.
+  if (!got.ok && got.status === 400) got = await sb(`/reservation_requests?id=eq.${Number(id)}&select=${REQUEST_COLUMNS.replace(',chat_long', '')}&limit=1`);
   if (!got.ok && got.status === 400) {
     // Before migration 20 chat_emailed_at is not there: the request, without it.
-    const again = await sb(`/reservation_requests?id=eq.${Number(id)}&select=${REQUEST_COLUMNS.replace(',chat_emailed_at', '')}&limit=1`);
+    const again = await sb(`/reservation_requests?id=eq.${Number(id)}&select=${REQUEST_COLUMNS.replace(',chat_emailed_at', '').replace(',chat_long', '')}&limit=1`);
     if (!again.ok) return { error: again.status };
     return { row: Array.isArray(again.data) && again.data.length ? again.data[0] : null };
   }
@@ -88,10 +99,9 @@ async function messagesOf(requestId) {
   return { list: Array.isArray(got.data) ? got.data : [] };
 }
 
-// r42: when the messages (and files) of a request are deleted: 90 days after its day.
+// r42: when the messages (and files) of a request are deleted: 90 days after its day (r53c: 3 years for a new one).
 function keepUntilOf(q) {
-  const p = String(q.wanted_date || '').split('-').map(Number);
-  return new Date(Date.UTC(p[0], (p[1] || 1) - 1, p[2] || 1) + KEEP_MS + 24 * 3600 * 1000);
+  return new Date(keptEndOf(q) + 24 * 3600 * 1000);
 }
 async function fileOfList(list) {
   const files = await filesById(list.map((m) => m.file_id).filter(Boolean));
@@ -149,8 +159,8 @@ function guestView(q, list, place, timezone, handles, now = Date.now(), fileOf =
     request: { id: q.id, day: dayLabel(q.wanted_date), time: timeLabel(q.wanted_time), party: q.party_size },
     state: list.length ? 'open' : 'new',
     note, canWrite,
-    keptUntil: keptUntil(q.wanted_date),
-    foot: `Messages about this request are kept until ${keptUntil(q.wanted_date)}, then deleted.`,
+    keptUntil: keptUntil(q),
+    foot: `Messages about this request are kept until ${keptUntil(q)} (${keptRule(q)}), then deleted.`,
     empty: `Write to ${restaurant} about your request: the menu, the room, a cake. They answer you here.`,
     messages: list.map((m) => ({
       id: m.id,
@@ -250,8 +260,10 @@ export async function guestRequestChat(req, res, body, action) {
 // each with a line about its conversation. Never fails the list it is part of.
 export async function guestRequests(match, timezone) {
   const today = todayIn(timezone || 'America/New_York');
-  const got = await sb(`/reservation_requests?${match}&status=eq.new&wanted_date=gte.${today}` +
-                       `&select=${REQUEST_COLUMNS.replace(',chat_emailed_at', '')}&order=wanted_date.asc,id.asc&limit=20`);
+  const ask = (cols) => sb(`/reservation_requests?${match}&status=eq.new&wanted_date=gte.${today}` +
+                           `&select=${cols}&order=wanted_date.asc,id.asc&limit=20`);
+  let got = await ask(REQUEST_COLUMNS.replace(',chat_emailed_at', ''));
+  if (!got.ok && got.status === 400) got = await ask(REQUEST_COLUMNS.replace(',chat_emailed_at', '').replace(',chat_long', ''));   // before migration 38
   const rows = got.ok && Array.isArray(got.data) ? got.data : [];
   if (!rows.length) return [];
   const ids = rows.map((q) => Number(q.id));
@@ -420,7 +432,8 @@ async function staffReply(res, q, who, timezone, opts = {}) {
     // Where the guest reads this: in My Reservations when they have an account;
     // otherwise one email tells them to log in with the number they gave.
     guestReads: account ? 'account' : 'email',
-    keptUntil: keptUntil(q.wanted_date),
+    keptUntil: keptUntil(q),
+    foot: `Kept until ${keptUntil(q)} (${keptRule(q)}), then deleted.`,
     messages: got.list.map((m) => ({
       id: m.id,
       fromGuest: !!m.from_guest,
@@ -448,6 +461,10 @@ export async function moveToTable(requestId, reservation) {
   const got = await messagesOf(requestId);
   if (got.error || !got.list.length) return false;
   const last = got.list[got.list.length - 1];
+  // r53c: a conversation started before the 3-year rule keeps its promise at the table too (90 days).
+  const q = await requestRow(requestId);
+  const short = !!(q && q.row && q.row.chat_long === false);
+  const long = !!(q && q.row && q.row.chat_long === true);
   const made = await sb('/reservation_threads?on_conflict=reservation_id', {
     method: 'POST',
     headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
@@ -455,6 +472,7 @@ export async function moveToTable(requestId, reservation) {
       reservation_id: Number(reservation.id), restaurant_id: Number(reservation.restaurant_id),
       service_date: reservation.serviceDate, table_at: reservation.at,
       last_at: new Date(last.created_at).toISOString(), last_from_guest: !!last.from_guest,
+      ...(short ? { keep_long: false } : {}),
     }),
   });
   if (!made.ok) return false;
@@ -471,19 +489,28 @@ export async function moveToTable(requestId, reservation) {
   });
   if (!copied.ok) return false;
   if (withFiles) {
-    try { await moveFiles(requestId, reservation.id, new Date(Date.parse(reservation.at) + KEEP_MS)); }
+    const until = long ? (() => { const d = new Date(Date.parse(reservation.at)); d.setUTCFullYear(d.getUTCFullYear() + LONG_YEARS); return d; })()
+      : new Date(Date.parse(reservation.at) + KEEP_MS);
+    try { await moveFiles(requestId, reservation.id, until); }
     catch (err) { console.error('[requestchat] files did not move', requestId, err && err.message); }
   }
   await sb(`/request_messages?request_id=eq.${Number(requestId)}&id=lte.${Number(last.id)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
   return true;
 }
 
-// The daily job: requests whose day is more than 90 days gone lose their messages.
+// The daily job: requests whose day is more than 90 days gone lose their messages; r53c: those kept 3 years, 3 years
+// after their day (before migration 38 every one goes at 90 days).
 export async function forgetOldRequestMessages() {
   const before = new Date(Date.now() - KEEP_MS).toISOString().slice(0, 10);
-  const old = await sb(`/reservation_requests?wanted_date=lt.${before}&select=id&limit=500`);
+  const longBefore = longSince().toISOString().slice(0, 10);
+  let old = await sb(`/reservation_requests?wanted_date=lt.${before}&chat_long=is.false&select=id&limit=500`);
+  if (!old.ok && old.status === 400) old = await sb(`/reservation_requests?wanted_date=lt.${before}&select=id&limit=500`);
+  else if (old.ok) {
+    const older = await sb(`/reservation_requests?wanted_date=lt.${longBefore}&select=id&limit=500`);
+    if (older.ok && Array.isArray(older.data)) old.data = (old.data || []).concat(older.data);
+  }
   if (!old.ok || !Array.isArray(old.data) || !old.data.length) return 0;
-  const ids = old.data.map((q) => Number(q.id));
+  const ids = [...new Set(old.data.map((q) => Number(q.id)))];
   const gone = await sb(`/request_messages?request_id=in.(${ids.join(',')})`, { method: 'DELETE', headers: { Prefer: 'return=representation' } });
   return gone.ok && Array.isArray(gone.data) ? gone.data.length : 0;
 }
