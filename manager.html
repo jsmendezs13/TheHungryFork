@@ -1128,6 +1128,48 @@
   .rw-more { display:block; width:100%; margin:.4rem 0 1rem; }
   .rw-empty { text-align:center; color:var(--muted); font-size:.86rem; padding:1.4rem .5rem; }
 
+  /* ── r53 · moderation: the dots, hidden reviews, the Moderate review page, the log, the switch ── */
+  .rw-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 .25rem 1px .3rem; vertical-align:middle; flex:none; }
+  .rw-dot.day { background:#2E8B57; }
+  .rw-dot.other { background:var(--blue); }
+  .rw-visit { font-size:.72rem; font-weight:600; margin-top:.3rem; }
+  .rw-visit.day { color:#2E7D50; }
+  .rw-visit.other { color:var(--blue); }
+  .rw-legend { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem 1rem; font-size:.72rem; color:var(--muted); margin:-.2rem 0 .7rem; }
+  .rw-legend span { display:inline-flex; align-items:center; }
+  .rw-legend .rw-dot { margin-left:0; }
+  .rw-loglink { margin-left:auto; background:none; border:none; padding:0; font-family:var(--sans); font-size:.74rem; font-weight:600; color:var(--red); cursor:pointer; }
+  .rw-card.hidden { background:#F7F3EE; border-style:dashed; }
+  .rw-card.hidden > *:not(.rw-hid):not(.rw-acts) { opacity:.55; }
+  .rw-hid { background:#EDE6DC; border-radius:10px; padding:.5rem .65rem; margin-top:.5rem; font-size:.76rem; line-height:1.45; }
+  .rw-hid b { font-weight:700; }
+  .rw-hid q { display:block; margin-top:.15rem; font-style:italic; }
+  .rw-act.mod { border-color:#E3CFC9; }
+  .rw-switch { display:flex; align-items:center; gap:.8rem; background:#fff; border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:12px;
+               padding:.7rem .8rem; margin-bottom:.7rem; }
+  .rw-switch > div { flex:1; min-width:0; font-size:.84rem; }
+  .rw-switch small { display:block; color:var(--muted); font-size:.72rem; line-height:1.4; margin-top:.15rem; }
+  .rw-switch button { flex:none; min-height:40px; padding:.5rem .9rem; }
+  .rw-msum { background:var(--off-white); border-radius:12px; padding:.65rem .75rem; margin:.6rem 0 .7rem; font-size:.84rem; }
+  .rw-msum .rw-st { font-size:.8rem; }
+  .rw-mintro { font-size:.76rem; color:var(--muted); line-height:1.5; margin:.3rem 0 0; }
+  .rw-mintro a { color:var(--red); }
+  .rw-radio { display:flex; align-items:flex-start; gap:.6rem; width:100%; padding:.55rem 0; border:none; border-bottom:1px solid #EBE2D5; background:none;
+              font-family:var(--sans); font-size:.84rem; color:var(--text); text-align:left; cursor:pointer; line-height:1.35; }
+  .rw-rb { width:18px; height:18px; flex:none; border-radius:50%; border:1.6px solid #B9AC9C; background:#fff; margin-top:1px; position:relative; }
+  .rw-rb.on { border-color:var(--text); }
+  .rw-rb.on::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--text); }
+  .rw-mdet { padding:.15rem 0 .7rem 1.6rem; border-bottom:1px solid #EBE2D5; }
+  .rw-mdet label { display:block; font-size:.74rem; font-weight:600; margin:.2rem 0 .3rem; }
+  .rw-mdet textarea { width:100%; min-height:70px; border:1.5px solid var(--text); border-radius:10px; padding:.5rem .6rem; font-family:var(--sans); font-size:.84rem; resize:vertical; }
+  .rw-mblue { background:var(--blue-light); color:#1F3F73; border:1px solid #C9D8EF; border-radius:10px; padding:.55rem .7rem; font-size:.76rem; line-height:1.45; margin-top:.5rem; }
+  .rw-msame { font-size:.78rem; font-weight:600; margin:.9rem 0 .2rem; }
+  .rw-log { border-bottom:1px solid #EBE2D5; padding:.65rem 0; font-size:.8rem; line-height:1.45; }
+  .rw-log .h { font-weight:700; }
+  .rw-log .h span { font-weight:400; color:var(--muted); }
+  .rw-log q { display:block; font-style:italic; margin-top:.15rem; }
+  .m-codes input:disabled + span { opacity:.6; }
+
   /* ── r52 · the Filters page and the calendar (a page of their own, over the tab) ── */
   body.rw-locked { overflow:hidden; }
   .rw-page { position:fixed; inset:0; z-index:700; background:var(--white); display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
@@ -2491,6 +2533,11 @@ function peopleSection(){
               +   ' onchange="setAnswers('+Number(p.id)+',this.checked,this)"> Answers guest messages</label>'
               + '</div>'
             : '')
+      +   (p.role==='manager' && p.canModerate !== undefined                                         // r53
+            ? '<label class="m-codes"><input type="checkbox" data-moderate="'+Number(p.id)+'"'+(p.canModerate?' checked':'')+(p.canSetModerate?'':' disabled')
+              + ' onchange="setModerate('+Number(p.id)+',this.checked,this)"> <span>Can moderate reviews'
+              + (p.canSetModerate ? '' : ' <span style="opacity:.7;">(the owner chooses)</span>')+'</span></label>'
+            : '')
       +   (p.role==='crew'
             ? '<label class="m-codes"><input type="checkbox"'+(p.canIssueCodes?' checked':'')
               + ' onchange="setCodes('+p.id+',this.checked)"> <span>Can give rewards '
@@ -2574,6 +2621,20 @@ async function setAnswers(roleId, on, box){
     if(!res.ok){ showToast(data.error||'Could not save that.'); if(box) box.checked = !on; return; }
     const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
     if(who) who.canMessage = on;
+  }catch(e){ showToast(e.message||'Network error.'); if(box) box.checked = !on; }
+}
+// r53 (Sebastian, 5 Nov): the owner chooses which managers moderate reviews.
+async function setModerate(roleId, on, box){
+  try{
+    const {res, data} = await callApi('/api/roles', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({action:'moderate', restaurantId:RESTAURANT.id, roleId, canModerate:on})
+    });
+    if(!res.ok){ showToast(data.error||'Could not save that.'); if(box) box.checked = !on; return; }
+    const who = PEOPLE && PEOPLE.people ? PEOPLE.people.find(x => Number(x.id)===Number(roleId)) : null;
+    if(who) who.canModerate = on;
+    showToast(on ? 'They can moderate reviews now.' : 'They no longer moderate reviews.');
   }catch(e){ showToast(e.message||'Network error.'); if(box) box.checked = !on; }
 }
 async function setJob(roleId, job){
@@ -4076,11 +4137,11 @@ async function dvResync(){
 // at= is the restaurant, for someone at more than one.
 let NF_DAY = null, NF_DISH = null, NF_SETTINGS = false, NF_MAP = false;
 function nfParse(){
-  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map)((?:&(?:b|at)=\d+)*)$/.exec(window.location.hash || '');
+  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map|reviews)((?:&(?:b|at)=\d+)*)$/.exec(window.location.hash || '');
   if(!m) return null;
   const out = { kind:m[1], value:m[2], at:null, b:null };
   m[3].split('&').filter(Boolean).forEach(function(p){ const kv = p.split('='); out[kv[0]] = Number(kv[1]); });
-  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings|map)$/.test(m[2]) : /^\d+$/.test(m[2]);
+  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings|map|reviews)$/.test(m[2]) : /^\d+$/.test(m[2]);
   if(!ok || (out.b && m[1] !== 'day')) return null;
   return out;
 }
@@ -7764,9 +7825,10 @@ function rwFresh(rid){
   return { rid:rid, loading:false, loaded:false, error:null, data:null, items:[], dishes:[], q:'', f:rwDefault(), page:null, draft:null,
            open:{ dish:true, drink:true }, cats:{}, shown:RW_STEP, reply:null, sending:false, see:{}, cal:null, gen:0 };
 }
-function rwDefault(){ return { kinds:{ dish:true, drink:true, room:true }, stars:[], dishes:null, reply:{ none:false, replied:false }, from:null, to:null }; }
+function rwDefault(){ return { kinds:{ dish:true, drink:true, room:true }, stars:[], dishes:null, reply:{ none:false, replied:false }, from:null, to:null,
+                              visit:{ day:false, other:false, none:false }, hidden:false }; }     // r53: the visit dots; hidden reviews (off: not listed)
 function rwCopy(f){ return { kinds:Object.assign({}, f.kinds), stars:f.stars.slice(), dishes:f.dishes ? f.dishes.slice() : null,
-                            reply:Object.assign({}, f.reply), from:f.from, to:f.to }; }
+                            reply:Object.assign({}, f.reply), from:f.from, to:f.to, visit:Object.assign({}, f.visit), hidden:f.hidden }; }
 
 async function rwStart(){
   if(!RESTAURANT) return;
@@ -7800,7 +7862,8 @@ function rwBuild(d){
   (d.reviews||[]).forEach(function(r){
     const dish = dishes.get(Number(r.dish)) || null;
     reviewed.add(Number(r.dish));
-    items.push({ t: dish && dish.category === 'drinks' ? 'drink' : 'dish', key:'r'+r.id, r:r, dish:dish, stars:rwRound(r.dishStars), day:r.day, at:r.at });
+    items.push({ t: dish && dish.category === 'drinks' ? 'drink' : 'dish', key:'r'+r.id, r:r, dish:dish, stars:rwRound(r.dishStars), day:r.day, at:r.at,
+                 hidden:r.hidden || null, visit:r.visit });                                       // r53
     const gk = r.guest + '|' + r.day;
     let g = groups.get(gk);
     if(!g){ g = { t:'room', key:'g'+r.id, reviews:[], day:r.day, at:r.at }; groups.set(gk, g); items.push(g); }
@@ -7811,6 +7874,9 @@ function rwBuild(d){
     g.comments = [...new Set(g.reviews.map(x => x.roomComment).filter(Boolean))];
     g.stars = rwRound(g.r.roomStars);
     g.dishList = g.reviews.map(x => ({ dish: dishes.get(Number(x.dish)) || null, stars: rwRound(x.dishStars) }));
+    // r53: the visit is hidden when every review of it is (the words about the restaurant are part of each one)
+    g.hidden = g.reviews.every(x => x.hidden) ? (g.reviews.find(x => x.roomComment && x.hidden) || g.reviews[0]).hidden : null;
+    g.visit = g.r.visit;
   });
   RW.items = items;
   // The menu, as the Filters page lists it: what is on it, and anything with a review even if it is hidden now.
@@ -7842,6 +7908,8 @@ function rwMatch(it, f, skip){
     if(f.reply.replied && !has) return false;
   }
   if(skip !== 'dates'){ if(f.from && it.day < f.from) return false; if(f.to && it.day > f.to) return false; }
+  if(skip !== 'hidden' && !f.hidden && it.hidden) return false;                                  // r53
+  if(skip !== 'visit' && (f.visit.day || f.visit.other || f.visit.none) && !f.visit[rwVisitKind(it)]) return false;
   if(RW.q){ const h = rwHay(it); if(!rwNorm(RW.q).split(/\s+/).filter(Boolean).every(w => h.includes(w))) return false; }
   return true;
 }
@@ -7892,6 +7960,7 @@ function rwPaint(){
       + '<input class="rw-search" id="rw-q" type="search" placeholder="Search a name, a dish or a word…" value="'+esc(RW.q)+'" oninput="rwSearch(this.value)" aria-label="Search the reviews">'
       + '<button type="button" class="rw-fbtn" id="rw-fbtn" onclick="rwOpenFilters()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"/></svg>Filters'+(n ? ' ('+n+')' : '')+'</button>'
     + '</div>'
+    + rwTopHtml()
     + '<div id="rw-list">'+rwListHtml()+'</div>';
 }
 function rwSearch(v){ RW.q = v; RW.shown = RW_STEP; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); }
@@ -7911,6 +7980,9 @@ function rwActive(){
     out.push(['dishes', names.length === 1 ? names[0].name : rwPlural(names.length, 'dish or drink', 'dishes and drinks')]);
   }
   if(f.reply.none !== f.reply.replied) out.push(['reply', f.reply.none ? 'No reply yet' : 'Replied']);
+  const vk = ['day','other','none'].filter(k => f.visit[k]);                                        // r53
+  if(vk.length && vk.length < 3) out.push(['visit', vk.map(k => RW_VISIT_WORDS[k]).join(' + ')]);
+  if(f.hidden) out.push(['hidden', 'Hidden shown too']);
   if(f.from || f.to){
     const y = (f.from||f.to).slice(0,4) !== rwToday().slice(0,4);
     out.push(['dates', f.from && f.to ? (f.from === f.to ? rwDayWords(f.from, y) : rwDayWords(f.from, y)+' – '+rwDayWords(f.to, y))
@@ -7925,6 +7997,8 @@ function rwDrop(k){
   if(k === 'dishes') RW.f.dishes = null;
   if(k === 'reply') RW.f.reply = d.reply;
   if(k === 'dates'){ RW.f.from = null; RW.f.to = null; }
+  if(k === 'visit') RW.f.visit = d.visit;
+  if(k === 'hidden') RW.f.hidden = false;
   RW.shown = RW_STEP;
   rwPaint();
 }
@@ -7949,11 +8023,14 @@ function rwThreadHtml(r){
 }
 function rwActsHtml(it){
   const r = it.r, turn = rwTurn(r), acts = [];
+  if(it.hidden) return rwHiddenActs(it);                                                          // r53: the conversation is closed
   if(turn === 'restaurant') acts.push('<button type="button" class="rw-act" onclick="rwReplyOpen(\''+it.key+'\')">'+(r.replies.length ? 'Reply (last word)' : 'Reply')+'</button>');
   else if(turn === 'guest') acts.push('<span class="rw-act done">Replied ✓ · the guest can answer</span>');
   else acts.push('<span class="rw-act done">Replied ✓</span>');
   if(it.t === 'room') acts.push('<button type="button" class="rw-act" onclick="rwSee(\''+it.key+'\')">'+(RW.see[it.key] ? 'Hide the dishes' : 'See the dishes')+'</button>');
   else if(it.dish && it.dish.slug) acts.push('<a class="rw-act" href="/menu?dish='+encodeURIComponent(it.dish.slug)+'" target="_blank" rel="noopener">Open '+(it.t === 'drink' ? 'drink' : 'dish')+'</a>');
+  const M = rwMod();                                                                               // r53
+  if(M.canModerate && M.on) acts.push('<button type="button" class="rw-act mod" data-mod="'+it.key+'" onclick="rwModOpen(\''+it.key+'\')">Moderate review</button>');
   return '<div class="rw-acts">'+acts.join('')+'</div>';
 }
 function rwReplyHtml(it){
@@ -7967,22 +8044,24 @@ function rwCardHtml(it){
   const r = it.r;
   if(it.t === 'room'){
     const see = RW.see[it.key] ? '<div class="rw-dishes">'+it.dishList.map(x => '<div><span>'+esc(x.dish ? x.dish.name : 'A dish')+'</span><b>'+rwStarRow(x.stars)+'</b></div>').join('')+'</div>' : '';
-    return '<div class="rw-card" data-kind="room" data-key="'+it.key+'">'
+    return '<div class="rw-card'+(it.hidden ? ' hidden' : '')+'" data-kind="room" data-key="'+it.key+'">'
       + '<div class="rw-kind">Restaurant</div>'
-      + '<div class="rw-who" style="margin-top:.2rem">'+whoHtml(r.name, r.handle)+'</div>'
+      + '<div class="rw-who" style="margin-top:.2rem">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
       + '<div class="rw-stars"><span>Hospitality <b>'+rwStarRow(r.roomStars[0])+'</b></span><span>Atmosphere &amp; Vibe <b>'+rwStarRow(r.roomStars[1])+'</b></span></div>'
       + (it.comments.length ? it.comments.map(c => '<div class="rw-text">'+esc(c)+'</div>').join('') : '<div class="rw-none">No comment, only stars.</div>')
       + '<div class="rw-small">'+esc(rwWhen(it.at))+' · '+(it.reviews.length === 1 ? 'rated 1 '+(it.dishList[0].dish && it.dishList[0].dish.category === 'drinks' ? 'drink' : 'dish') : 'rated '+it.reviews.length+' dishes and drinks')+'</div>'
+      + rwVisitLine(it.visit) + rwHiddenBox(it)
       + rwThreadHtml(r) + rwActsHtml(it) + see + rwReplyHtml(it)
       + '</div>';
   }
   const d = it.dish;
-  return '<div class="rw-card" data-kind="'+it.t+'" data-key="'+it.key+'">'
+  return '<div class="rw-card'+(it.hidden ? ' hidden' : '')+'" data-kind="'+it.t+'" data-key="'+it.key+'">'
     + '<div class="rw-top">'+rwThumb(d)+'<div><div class="rw-dish"><span class="rw-kind">'+(it.t === 'drink' ? 'Drink' : 'Dish')+'</span>'+esc(d ? d.name : 'A dish no longer on the menu')+'</div><div class="rw-when">'+esc(rwWhen(it.at))+'</div></div></div>'
-    + '<div class="rw-who">'+whoHtml(r.name, r.handle)+'</div>'
+    + '<div class="rw-who">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
     + '<div class="rw-stars"><span>'+(it.t === 'drink' ? 'Drink' : 'Dish')+' <b>'+rwStarRow(it.stars)+'</b></span>'
     +   '<span>Flavor '+(r.dishStars[0]||'–')+' · Worth Every Bite '+(r.dishStars[1]||'–')+' · Signature Style '+(r.dishStars[2]||'–')+'</span></div>'
     + (r.dishComment ? '<div class="rw-text">'+esc(r.dishComment)+'</div>' : '<div class="rw-none">No comment, only stars.</div>')
+    + rwVisitLine(it.visit) + rwHiddenBox(it)
     + rwThreadHtml(r) + rwActsHtml(it) + rwReplyHtml(it)
     + '</div>';
 }
@@ -8016,7 +8095,7 @@ async function rwReplySend(key){
 
 // ── the Filters page (a page of its own; Show … reviews, or the arrow, uses what is chosen) ──
 function rwOpenFilters(){ RW.draft = rwCopy(RW.f); RW.page = 'filters'; rwPaintPage(true); }
-function rwClosePage(){ RW.page = null; RW.cal = null; const p = document.getElementById('rw-page'); if(p) p.remove(); document.body.classList.remove('rw-locked'); }
+function rwClosePage(){ RW.page = null; RW.cal = null; RW.mod = null; const p = document.getElementById('rw-page'); if(p) p.remove(); document.body.classList.remove('rw-locked'); }
 function rwApply(){ RW.f = rwCopy(RW.draft); RW.shown = RW_STEP; rwClosePage(); rwPaint(); window.scrollTo(0, 0); }
 function rwClear(){ RW.draft = rwDefault(); rwPaintPage(); }
 function rwBack(){ if(RW.page === 'calendar'){ RW.page = 'filters'; RW.cal = null; rwPaintPage(true); } else rwApply(); }
@@ -8026,7 +8105,7 @@ function rwPaintPage(top){
   const keep = el && !top ? (el.querySelector('.rw-pbody') || {}).scrollTop || 0 : 0;
   if(!el){ el = document.createElement('div'); el.id = 'rw-page'; el.className = 'rw-page'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); document.body.appendChild(el); }
   document.body.classList.add('rw-locked');
-  el.innerHTML = RW.page === 'calendar' ? rwCalHtml() : rwFiltersHtml();
+  el.innerHTML = RW.page === 'calendar' ? rwCalHtml() : RW.page === 'moderate' ? rwModHtml() : RW.page === 'log' ? rwLogHtml() : rwFiltersHtml();
   const body = el.querySelector('.rw-pbody');
   if(body){
     if(RW.page === 'calendar' && top){ const now = body.querySelector('[data-month="'+(RW.cal.from || rwToday()).slice(0,7)+'"]'); if(now) body.scrollTop = Math.max(0, now.offsetTop - 120); else body.scrollTop = body.scrollHeight; }
@@ -8063,6 +8142,19 @@ function rwFiltersHtml(){
     + ck(f.reply.none, 'No reply yet', rwCount(f, 'reply', it => !rwReplied(it)), 'data-reply="none" onclick="rwReplyPick(\'none\')"')
     + ck(f.reply.replied, 'Replied', rwCount(f, 'reply', it => rwReplied(it)), 'data-reply="replied" onclick="rwReplyPick(\'replied\')"')
     + '</div>';
+  // r53: the visit dots (moderators only), and hidden reviews
+  const M = rwMod();
+  if(M.canModerate){
+    h += '<div class="rw-pg">Visit</div><div class="rw-three">'
+      + ['day','other','none'].map(k => ck(f.visit[k], (k === 'none' ? '' : '<i class="rw-dot '+k+'"></i>')+RW_VISIT_WORDS[k], rwCount(f, 'visit', it => rwVisitKind(it) === k),
+                                         'data-visit="'+k+'" onclick="rwVisitPick(\''+k+'\')"')).join('')
+      + '</div>';
+  }
+  const nHidden = rwCount(f, 'hidden', it => !!it.hidden);
+  if(nHidden || f.hidden){
+    h += '<div class="rw-pg">Hidden reviews</div>'
+      + ck(f.hidden, 'Show hidden reviews too', nHidden, 'data-hidden="1" onclick="rwHiddenPick()"');
+  }
   // the dates
   const cal = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+TAB_ICONS.reservations+'</svg>';
   h += '<div class="rw-pg">Dates</div><div class="rw-dates">'
@@ -8142,6 +8234,220 @@ function rwCalQuick(k){
   rwPaintPage(true);
 }
 function rwCalUse(){ RW.draft.from = RW.cal.from; RW.draft.to = RW.cal.to; RW.page = 'filters'; RW.cal = null; rwPaintPage(true); }
+// ── r53 · moderation (Sebastian, 5–9 Nov; the window as approved in picture r52-3 v3) ──
+// The owner, Seb's Analytics, and the managers the owner chose (Team → "Can moderate reviews") see the visit dots, the
+// Moderate review button (once Seb's Analytics switched moderation on at this restaurant), "Show it again" and the log.
+// Other managers see hidden reviews greyed with their reason, and nothing more.
+const RW_VISIT_WORDS = { day:'Visit that day', other:'Visit on another day', none:'No visit' };
+const RW_FTC_RULE = 'https://www.ftc.gov/system/files/ftc_gov/pdf/r311003consumerreviewstestimonialsfinalrulefrn.pdf';
+function rwMod(){ return (RW.data && RW.data.moderation) || { ready:false, on:false, canModerate:false, platform:false, reasons:[] }; }
+function rwVisitKind(it){ return it.visit && (it.visit.dot === 'day' || it.visit.dot === 'other') ? it.visit.dot : 'none'; }
+function rwDotHtml(v){
+  if(!v || !v.dot) return '';
+  return '<span class="rw-dot '+(v.dot === 'day' ? 'day' : 'other')+'" title="'+(v.dot === 'day' ? 'Visit that day' : 'Visit on another day')+'" aria-label="'+(v.dot === 'day' ? 'Visit that day' : 'Visit on another day')+'"></span>';
+}
+function rwVisitDay(at){
+  const tz = (RW.data && RW.data.timezone) || 'America/New_York';
+  return new Date(at).toLocaleDateString('en-US', { timeZone:tz, weekday:'short', month:'short', day:'numeric' });
+}
+// "Visit confirmed by Carlos · Today, 12:05 PM" (green) · "Visit on another day · Sat, Oct 24" (blue)
+function rwVisitLine(v){
+  if(!v || !v.dot) return '';
+  if(v.dot === 'day') return '<div class="rw-visit day">Visit confirmed'+(v.by ? ' by '+esc(v.by) : '')+(v.at ? ' · '+esc(rwWhen(v.at)) : '')+'</div>';
+  return '<div class="rw-visit other">Visit on another day'+(v.at ? ' · '+esc(rwVisitDay(v.at)) : '')+'</div>';
+}
+// "Hidden · Fake · by Sebastian, Nov 6" and the details (moderators only)
+function rwHiddenBox(it){
+  const h = it.hidden;
+  if(!h) return '';
+  if(h.team) return '<div class="rw-hid" data-hidden="team"><b>Hidden automatically</b> · '+esc(h.label)+'</div>';
+  const when = h.at ? new Date(h.at).toLocaleDateString('en-US', { timeZone:(RW.data && RW.data.timezone) || 'America/New_York', month:'short', day:'numeric' }) : '';
+  return '<div class="rw-hid" data-hidden="'+esc(h.reason)+'"><b>Hidden · '+esc(h.label)+'</b>'+(h.by || when ? ' · by '+esc(h.by || 'the restaurant')+(when ? ', '+esc(when) : '') : '')
+    + (h.details ? '<q>'+esc(h.details)+'</q>' : '')
+    + (h.alerted ? '<div style="margin-top:.2rem;color:#1F3F73">Fork\'s Rating was told.</div>' : '')
+    + '</div>';
+}
+function rwHiddenIds(it){
+  const rs = it.t === 'room' ? it.reviews : [it.r];
+  return rs.filter(x => x.hidden && !x.hidden.team).map(x => x.id);
+}
+function rwHiddenActs(it){
+  const M = rwMod(), acts = [];
+  if(M.canModerate && !it.hidden.team && rwHiddenIds(it).length) acts.push('<button type="button" class="rw-act" data-show="'+it.key+'" onclick="rwShowAgain(\''+it.key+'\')">Show it again</button>');
+  if(it.t !== 'room' && it.dish && it.dish.slug) acts.push('<a class="rw-act" href="/menu?dish='+encodeURIComponent(it.dish.slug)+'" target="_blank" rel="noopener">Open '+(it.t === 'drink' ? 'drink' : 'dish')+'</a>');
+  return acts.length ? '<div class="rw-acts">'+acts.join('')+'</div>' : '';
+}
+function rwVisitPick(k){ RW.draft.visit[k] = !RW.draft.visit[k]; rwPaintPage(); }
+function rwHiddenPick(){ RW.draft.hidden = !RW.draft.hidden; rwPaintPage(); }
+
+// The top of the tab: Seb's Analytics' switch; "off" for the moderators; the dots' legend and the log.
+function rwTopHtml(){
+  const M = rwMod();
+  if(!M.ready) return '';
+  let h = '';
+  if(M.platform){
+    const when = M.at ? new Date(M.at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+    h += '<div class="rw-switch" id="rw-switch"><div><b>Moderation here: '+(M.on ? 'On' : 'Off')+'</b>'
+      + '<small>'+(M.on ? 'Switched on'+(when ? ' '+esc(when) : '')+(M.by ? ' by '+esc(M.by) : '')+'. ' : '')
+      + 'Switch it on only after this restaurant signs the Review and Data Addendum. Only Seb\'s Analytics sees this.</small></div>'
+      + (M.on ? '<button type="button" class="m-btn quiet" id="rw-switch-btn" onclick="rwSwitch(false)">Switch off</button>'
+              : '<button type="button" class="m-save" id="rw-switch-btn" onclick="rwSwitch(true)">Switch on</button>')
+      + '</div>';
+  }else if(M.canModerate && !M.on){
+    h += '<div class="rw-note" id="rw-mod-off" style="margin:0 0 .7rem">Moderation is off here. Seb\'s Analytics switches it on once the restaurant signs the Review and Data Addendum.</div>';
+  }
+  if(M.canModerate){
+    h += '<div class="rw-legend" id="rw-legend"><span><i class="rw-dot day"></i>Visit that day</span><span><i class="rw-dot other"></i>Visit on another day</span>'
+      + '<button type="button" class="rw-loglink" id="rw-loglink" onclick="rwLogOpen()">Moderation log</button></div>';
+  }
+  return h;
+}
+async function rwSwitch(on){
+  const btn = document.getElementById('rw-switch-btn');
+  if(btn) btn.disabled = true;
+  try{
+    const d = await rvApi({ action:'mod_switch', on:on });
+    if(RW.data) RW.data.moderation = Object.assign({}, RW.data.moderation, d.moderation);
+    showToast(on ? 'Moderation is on at this restaurant.' : 'Moderation is off at this restaurant.');
+    rwPaint();
+  }catch(e){ if(e.status !== 401) showToast(e.message || 'Could not save that.'); if(btn) btn.disabled = false; }
+}
+
+// ── the Moderate review page ──
+function rwModOpen(key){
+  const it = rwFind(key);
+  if(!it) return;
+  RW.mod = { key:key, reason:null, details:{}, sending:false };
+  RW.page = 'moderate';
+  rwPaintPage(true);
+}
+function rwModClose(){ rwClosePage(); }
+function rwModPick(code){
+  if(!RW.mod) return;
+  const box = document.getElementById('rw-mod-details');
+  if(box && RW.mod.reason) RW.mod.details[RW.mod.reason] = box.value;
+  RW.mod.reason = code;
+  rwPaintPage();
+  const t = document.getElementById('rw-mod-details');
+  if(t){ t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+}
+function rwModType(v){
+  if(!RW.mod) return;
+  RW.mod.details[RW.mod.reason] = v;
+  const b = document.getElementById('rw-mod-hide');
+  if(b) b.disabled = !v.trim() || RW.mod.sending;
+}
+function rwModIds(it){
+  const rs = it.t === 'room' ? it.reviews : [it.r];
+  return rs.filter(x => !x.hidden).map(x => x.id);
+}
+function rwModHtml(){
+  const m = RW.mod, it = m ? rwFind(m.key) : null;
+  if(!it) return '';
+  const M = rwMod(), r = it.r;
+  const back = rwArrow(false).replace('M9 6l6 6-6 6','M15 6l-6 6 6 6');
+  let h = '<div class="rw-ptop"><button type="button" class="rw-ptitle" onclick="rwModClose()" aria-label="Back to the reviews">'+back+'Moderate review</button></div><div class="rw-pbody">';
+  // the review
+  const stars = it.t === 'room' ? rwRound(r.roomStars) : it.stars;
+  const words = it.t === 'room' ? (it.comments.join('\n') || '') : (r.dishComment || '');
+  h += '<div class="rw-msum" id="rw-msum"><div><b>'+whoHtml(r.name, r.handle)+'</b>'+rwDotHtml(it.visit)+' <span class="rw-st">'+rwStarRow(stars)+'</span></div>'
+    + '<div class="rw-small" style="margin-top:.1rem">'+(it.t === 'room' ? 'About the restaurant' : esc(it.dish ? it.dish.name : 'A dish'))+' · '+esc(rwWhen(it.at))+'</div>'
+    + (words ? '<div class="rw-text" style="margin-top:.3rem">“'+esc(words)+'”</div>' : '<div class="rw-none" style="margin-top:.3rem">No comment, only stars.</div>')
+    + rwVisitLine(it.visit)
+    + (it.visit && it.visit.dot === 'day' ? '<div class="rw-small">A visit doesn\'t prove every word is true.</div>' : '')
+    + '</div>';
+  const ids = rwModIds(it);
+  if(it.t === 'room' && ids.length > 1) h += '<div class="rw-note" id="rw-mod-group" style="margin:0 0 .4rem">This hides '+esc(String(r.name || 'this guest').split(' ')[0])+'\'s '+ids.length+' reviews from that visit (the dishes and drinks too): the comment about the restaurant is part of each one.</div>';
+  h += '<p class="rw-mintro">These reasons follow the <a href="'+RW_FTC_RULE+'" target="_blank" rel="noopener">U.S. Federal Trade Commission (FTC) rule on consumer reviews, 16 CFR 465.7</a>. Hide a review only for a reason you would use the same way for a 5-star review.</p>';
+  const row = function(x){
+    const on = m.reason === x.code;
+    let out = '<button type="button" class="rw-radio" data-reason="'+x.code+'" aria-pressed="'+on+'" onclick="rwModPick(\''+x.code+'\')"><span class="rw-rb'+(on ? ' on' : '')+'"></span><span>'+esc(x.label)+'</span></button>';
+    if(on){
+      out += '<div class="rw-mdet"><label for="rw-mod-details">'+(x.code === 'other' ? 'Details (the author reads these)' : 'Details')+'</label>'
+        + '<textarea id="rw-mod-details" maxlength="1000" placeholder="Write the details…" oninput="rwModType(this.value)">'+esc(m.details[x.code] || '')+'</textarea>'
+        + (x.code === 'illegal' ? '<div class="rw-mblue" id="rw-mod-alert">Fork\'s Rating is told at once. If a child could be at risk, US law requires Fork\'s Rating to report it.</div>' : '')
+        + '</div>';
+    }
+    return out;
+  };
+  const list = M.reasons || [];
+  h += '<div class="rw-pg">Named in the FTC rule</div>' + list.filter(x => x.group === 'ftc').map(row).join('');
+  h += '<div class="rw-pg">Other neutral reasons</div>' + list.filter(x => x.group !== 'ftc').map(row).join('');
+  h += '<p class="rw-msame">Use the same rules for a 5-star review as for a 1-star review.</p>';
+  const ready = m.reason && (m.details[m.reason] || '').trim() && !m.sending;
+  h += '</div><div class="rw-pfoot"><button type="button" class="m-save" id="rw-mod-hide"'+(ready ? '' : ' disabled')+' onclick="rwModSend()">Hide review</button>'
+    + '<button type="button" class="m-btn quiet" onclick="rwModClose()">Cancel</button></div>';
+  return h;
+}
+async function rwModSend(){
+  const m = RW.mod, it = m ? rwFind(m.key) : null;
+  if(!it || !m.reason || m.sending) return;
+  const box = document.getElementById('rw-mod-details');
+  const details = (box ? box.value : (m.details[m.reason] || '')).trim();
+  if(!details){ showToast('Write the details first.'); return; }
+  m.sending = true;
+  const b = document.getElementById('rw-mod-hide'); if(b) b.disabled = true;
+  try{
+    await rvApi({ action:'mod_hide', reviewIds: rwModIds(it), reason: m.reason, details: details });
+    rwClosePage();
+    showToast('Hidden: the comment and the stars. The author will be told the reason. You can un-hide it at any time.');
+    rwLoad();
+  }catch(e){
+    m.sending = false;
+    if(e.status !== 401) showToast(e.message || 'Could not hide that review.');
+    const bb = document.getElementById('rw-mod-hide'); if(bb) bb.disabled = !details;
+  }
+}
+async function rwShowAgain(key){
+  const it = rwFind(key);
+  if(!it) return;
+  const ids = rwHiddenIds(it);
+  if(!ids.length) return;
+  const b = document.querySelector('[data-show="'+key+'"]'); if(b) b.disabled = true;
+  try{
+    await rvApi({ action:'mod_show', reviewIds: ids });
+    showToast('Shown again. It counts in the rating, and the author is told.');
+    rwLoad();
+  }catch(e){ if(e.status !== 401) showToast(e.message || 'Could not show it again.'); if(b) b.disabled = false; }
+}
+
+// ── the moderation log (moderators) ──
+const RW_LOG_WORDS = { hide:'Hidden', show:'Shown again', 'team-hide':'Hidden by the team rule', 'team-show':'Shown again (team rule)' };
+async function rwLogOpen(){
+  RW.log = { loading:true, entries:null, error:null };
+  RW.page = 'log'; rwPaintPage(true);
+  try{
+    const d = await rvApi({ action:'mod_log' });
+    RW.log = { loading:false, entries:d.entries || [], error:null };
+  }catch(e){
+    if(e.status === 401) return;
+    RW.log = { loading:false, entries:null, error:e.message || 'Could not read the log.' };
+  }
+  if(RW.page === 'log') rwPaintPage(true);
+}
+function rwLogHtml(){
+  const back = rwArrow(false).replace('M9 6l6 6-6 6','M15 6l-6 6 6 6');
+  let h = '<div class="rw-ptop"><button type="button" class="rw-ptitle" onclick="rwClosePage()" aria-label="Back to the reviews">'+back+'Moderation log</button></div><div class="rw-pbody" id="rw-log">';
+  const L = RW.log || {};
+  if(L.loading) h += '<div class="m-skel"></div><div class="m-skel"></div>';
+  else if(L.error) h += '<div class="m-err">'+esc(L.error)+'</div>';
+  else if(!L.entries.length) h += '<div class="rw-empty">Nothing hidden or shown again yet.</div>';
+  else{
+    h += '<div class="rw-note" style="margin:.6rem 0 .3rem">Every hide and every “Show it again”, kept for 5 years. Nobody can change or erase it.</div>';
+    h += L.entries.map(function(e){
+      const st = Array.isArray(e.stars) ? e.stars : [];
+      return '<div class="rw-log" data-log="'+e.id+'"><div class="h">'+esc(RW_LOG_WORDS[e.action] || e.action)+' · '+esc(e.dish || 'a dish')+' <span>· '+esc(rwWhen(e.at))+'</span></div>'
+        + (e.label ? '<div>Reason: '+esc(e.label)+'</div>' : '')
+        + '<div>By '+esc(e.by || 'the restaurant')+(e.alerted ? ' · Fork\'s Rating was told' : '')+'</div>'
+        + (e.details ? '<q>'+esc(e.details)+'</q>' : '')
+        + (st.length ? '<div class="rw-small">Stars: dish '+st.slice(0,3).map(x => x || '–').join(' ')+' · restaurant '+st.slice(3).map(x => x || '–').join(' ')
+                       +(e.visit ? ' · '+(e.visit === 'day' ? 'visit that day' : 'visit on another day') : '')+'</div>' : '')
+        + '</div>';
+    }).join('');
+  }
+  return h + '</div>';
+}
+
 function rwCalHtml(){
   const c = RW.cal, t = rwToday();
   const quick = [['today','Today', c.from === t && c.to === t], ['7','Last 7 days', c.from === rwAddDays(t,-6) && c.to === t], ['30','Last 30 days', c.from === rwAddDays(t,-29) && c.to === t],
