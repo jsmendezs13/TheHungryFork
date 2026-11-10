@@ -494,6 +494,15 @@
   .rv-your-box { background:var(--off-white); border:1px solid var(--border); border-radius:12px; padding:.8rem 1rem; margin-bottom:1rem; text-align:center; }
   .rv-your-label { font-family:var(--sans); font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:.4rem; }
   .rv-your-stars { display:flex; gap:5px; justify-content:center; }
+  /* r53c: every rating of this dish by this account, each with Delete */
+  .rv-your-many { text-align:left; }
+  .rv-your-many .rv-your-label { text-align:center; }
+  .rv-your-row { display:flex; align-items:center; gap:.6rem; padding:.42rem 0; border-top:1px solid var(--border); }
+  .rv-your-row:first-of-type { border-top:none; }
+  .rv-your-row .rv-your-stars { justify-content:flex-start; gap:2px; }
+  .rv-your-row .rv-your-stars svg { width:15px; height:15px; }
+  .rv-your-row .review-date { flex:1; margin:0; white-space:nowrap; }
+  .rv-your-hint { font-family:var(--sans); font-size:.72rem; color:var(--muted,#8A7B6E); text-align:center; margin-top:.35rem; }
   /* These two colours only reach the old glyph (an older stars.js still live);
      the card's stars bring their own (rateStarGlyph). */
   .rv-star { color:#E7DCCB; }
@@ -2331,10 +2340,14 @@ async function submitRating(){
   }
   btn.disabled=true;btn.textContent='Posting…';
   const dbDish=DISH_ID_MAP[currentDishId]||1;
-  let updateReviewId=null;
+  // r53c (Sebastian, 10 Nov): nobody edits a review. Rating a dish again 30 days after the last rating of it adds a NEW
+  // review (the old one stays, and every rating counts); a review the author deleted doesn't count for the 30 days.
+  // The database checks the same (migration 38): the server's date, the account's name, the 30 days.
   try{
-    let{ok:dupOk,data:dupData,status:dupStatus}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at,hidden_at,hidden_reason`);
-    if(!dupOk&&dupStatus===400)({ok:dupOk,data:dupData}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at`));   // before migration 37
+    let{ok:dupOk,data:dupData,status:dupStatus}=await hfKept(sbFetch,`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at,hidden_at,hidden_reason&order=created_at.desc`);
+    if(!dupOk&&dupStatus===400)({ok:dupOk,data:dupData}=await hfKept(sbFetch,`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&dish_id=eq.${dbDish}&select=id,created_at&order=created_at.desc`));   // before migration 37
+    // A hidden one blocks while it is hidden, whichever it is (the newest first)
+    if(dupOk&&dupData.length){const h=dupData.find(x=>x.hidden_at);if(h)dupData=[h].concat(dupData.filter(x=>x!==h));}
     if(dupOk&&dupData.length&&dupData[0].hidden_at){
       // r53: a review the restaurant hid (or the team rule) can't be rated again until it is shown again
       const team=dupData[0].hidden_reason==='team'||dupData[0].hidden_reason==='team-role';
@@ -2349,12 +2362,11 @@ async function submitRating(){
       const ageDays=(Date.now()-new Date(prev.created_at).getTime())/86400000;
       if(ageDays<30){
         const wait=Math.ceil(30-ageDays);
-        err.textContent='You already rated this dish. You can update your rating in '+wait+' day'+(wait===1?'':'s')+' — one score per dish, refreshed monthly.';
+        err.textContent='You already rated this dish. You can rate it again in '+wait+' day'+(wait===1?'':'s')+' — your earlier rating stays, and every rating counts.';
         err.style.display='block';
         btn.disabled=false;btn.textContent='Post Review';
         return;
       }
-      updateReviewId=prev.id;
     }
   }catch(e){}
   const payload={
@@ -2376,20 +2388,12 @@ async function submitRating(){
   };
   try{
     let ok,data,status;
-    if(updateReviewId){
-      payload.created_at=new Date().toISOString();
-      ({ok,data,status}=await sbFetch(`/rest/v1/reviews?id=eq.${updateReviewId}`,'PATCH',payload));
-      if(ok){
-        closeRatingModal();
-      }
-    }else{
-      // r31: the old Lucky Bite (every 1000th review on the whole site, counted
-      // here in the browser) is gone. r32: each restaurant's Lucky Bite counts
-      // confirmed visits (migration 22), not ratings: nothing to ask here.
-      ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
-      if(ok){
-        closeRatingModal();
-      }
+    // r31: the old Lucky Bite (every 1000th review on the whole site, counted
+    // here in the browser) is gone. r32: each restaurant's Lucky Bite counts
+    // confirmed visits (migration 22), not ratings: nothing to ask here.
+    ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
+    if(ok){
+      closeRatingModal();
     }
     if(ok){
       loadOverallRating();
@@ -2398,6 +2402,8 @@ async function submitRating(){
     }else{
       const msg=data?.message||data?.hint||data?.details||JSON.stringify(data)||'Unknown error';
       if(String(msg).includes('hf_team_crew')){err.textContent='You can\u2019t rate the restaurant where you work.';}   // r53: the team rule
+      else if(String(msg).includes('hf_wait_30')){err.textContent='You already rated this dish in the last 30 days. You can rate it again 30 days after your last rating.';}   // r53c
+      else if(String(msg).includes('hf_hidden')){err.innerHTML='The restaurant hid your review of this dish, so it can\u2019t be rated again for now. You can see why in <a href="/?tastings=1">My Tastings</a>.';}   // r53c
       else if(status===409||String(msg).toLowerCase().includes('unique')){err.textContent='You already rated this dish — you can update it 30 days after your last score.';}
       else{err.textContent='Error ('+status+'): '+msg;}
       err.style.display='block';
@@ -2520,7 +2526,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       const name=reviewerLabel(r);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
-      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId) : replyBlocks(r)
+      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId, r.id) : replyBlocks(r)
         + replyTail(r, canReply, isGuest, 'reply-input',
             `postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')`);
       return`<div class="review-item${r.hidden_at?' hf-hidden':''}">
@@ -2685,6 +2691,8 @@ async function openReviewsPanel(){
     }
     rvData=(ok&&Array.isArray(data))?data:[];
     rvHidMine=rvData.some(r=>r.hidden_at)?await hfMyHidden():{};
+    // r53c: whether deleting is there (migration 38) and which reviews have a conversation, once per page
+    if(currentTaster&&HF_TALK_READY===null)await hfTalksLoad().catch(()=>null);
   }catch(e){rvData=[];}
   rvRestData = await rest;
   rvRender();
@@ -2733,11 +2741,29 @@ function rvRenderSummary(){
   if(sum) sum.innerHTML = rvFull ? rvFullSummary(rows) : '';
 }
 
+// r53c: after the author deletes a rating here, the dish's ratings are read again.
+function hfAfterDelete(){
+  if(document.getElementById('reviews-modal')&&document.getElementById('reviews-modal').classList.contains('open'))openReviewsPanel();
+  if(document.getElementById('tastings-modal')&&document.getElementById('tastings-modal').classList.contains('open'))loadMyTastings();
+  caveRatings={};if(document.getElementById('cave').classList.contains('open'))renderCave();
+}
 function rvRender(){
   rvRenderSummary();
   const yr=document.getElementById('rv-your');
-  const mine=currentTaster?rvData.find(r=>r.taster_id===currentTaster.id):null;
-  if(mine){
+  // r53c: every rating of this dish by this account (rating again adds one), newest first, each with Delete
+  const mineAll=currentTaster?rvData.filter(r=>r.taster_id===currentTaster.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)):[];
+  const mine=mineAll[0]||null;
+  if(mineAll.length>1||(mine&&HF_TALK_READY===true)){
+    const dishName=(DISHES.find(d=>d.id===currentDishId)||{}).name||'This dish';
+    const img=(DISHES.find(d=>d.id===currentDishId)||{}).img||null;
+    yr.innerHTML=`<div class="rv-your-box rv-your-many"><div class="rv-your-label">Your rating${mineAll.length>1?'s ('+mineAll.length+')':''}</div>`
+      +mineAll.map(m=>{
+        const day=new Date(m.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return `<div class="rv-your-row"><span class="rv-your-stars">${rvStarsInline(Math.round(rvScore(m)))}</span><span class="review-date">${day}${m.hidden_at?' · hidden':''}</span>`
+          +(HF_TALK_READY===true?`<button type="button" class="hf-del-btn" onclick="event.stopPropagation();hfReviewDelete(${Number(m.id)},${hfEsc(JSON.stringify({dish:dishName,img:img?hfImgSrc(img,96):null,score:Number(rvScore(m).toFixed(1)),date:day}))},hfAfterDelete)">${HF_TRASH}Delete</button>`:'')+'</div>';
+      }).join('')
+      +(mineAll.length>1?'<div class="rv-your-hint">Rating again adds a new rating. Every rating counts.</div>':'')+'</div>';
+  }else if(mine){
     const md=new Date(mine.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
     yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating${mine.hidden_at?' (hidden)':''}</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
   }else{
@@ -2769,7 +2795,7 @@ function rvRenderList(){
       ${(!rvFull&&r.dish_comment)?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
       <div class="review-date">${date}</div>
       ${rvFull?rvFullBlock(r):''}
-      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID):replyBlocks(r)+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
+      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID, r.id):replyBlocks(r)+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
     </div>`;
   }).join('');
 }
@@ -2848,7 +2874,9 @@ async function loadMyTastings(){
   const list=document.getElementById('tastings-list');
   list.innerHTML='<div class="no-reviews">Loading…</div>';
   try{
-    const{ok,data}=await sbFetch(`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
+    // r53c: which reviews have a conversation with the restaurant (and whether deleting is there: migration 38)
+    await hfTalksLoad().catch(()=>null);
+    const{ok,data}=await hfKept(sbFetch,`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
     if(!ok||!data.length){
       list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
       return;
@@ -2871,13 +2899,18 @@ async function loadMyTastings(){
       const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
       const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
       const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
+      // r53c: a conversation about a review shown again (or the team's) can still be read from here; Delete (the author)
+      const talkOnly=!r.hidden_at||(hid[r.id]&&hid[r.id].team)?(HF_TALKS[r.id]?`<div onclick="event.stopPropagation()">${hfTalkButton(r.id,'Messages with '+hfPlaceName())}<div class="hf-talk" id="hf-talk-${r.id}" hidden></div></div>`:''):'';
+      const del=HF_TALK_READY===true?hfDeleteButton(r.id,JSON.stringify({dish:dishName,img:dishInfo&&dishInfo.img?hfImgSrc(dishInfo.img,96):null,score:Number(score),date:new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})})):'';
       return`<div class="review-item tasting-item"${clickAttr}>
         ${pinBtn}
         <div class="tasting-main">
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
           <div class="review-text brand-red-text">The Hungry Fork</div>
           <div class="review-date">${date}</div>
-          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id):''}
+          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):''}
+          ${talkOnly}
+          ${del}
         </div>
       </div>`;
     }).join('');
