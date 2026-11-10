@@ -135,11 +135,13 @@ async function recipients(restaurantId, kind) {
 // Tell the team. message: { title, body, url, tag }. except: the account that
 // caused it (a change is not told to the person who made it). Never throws,
 // never slow for long (3 s at most per phone, all at once). Returns how many went.
-export async function notifyStaff(restaurantId, kind, message, { urgency, except } = {}) {
+export async function notifyStaff(restaurantId, kind, message, { urgency, except, only } = {}) {
   try {
     if (!vapidReady() || !KINDS.includes(kind)) return 0;
+    // r53c: only — some of the team (a conversation about a hidden review: the owner and the managers who moderate).
+    const some = Array.isArray(only) ? new Set(only.map(Number)) : null;
     const who = Object.keys(await recipients(restaurantId, kind)).map(Number)
-      .filter((n) => Number.isInteger(n) && n > 0 && n !== Number(except));
+      .filter((n) => Number.isInteger(n) && n > 0 && n !== Number(except) && (!some || some.has(n)));
     if (!who.length) return 0;
     const subs = await sb(`/push_subscriptions?taster_id=in.(${who.join(',')})&kinds=cs.{${kind}}&select=id,device_id,endpoint,p256dh,auth,failures&limit=200`);
     if (!subs.ok || !Array.isArray(subs.data) || !subs.data.length) return 0;
