@@ -806,23 +806,36 @@ function hfInboxPaint(data){
 // there is no hidden_at: the database says so once, and the pages ask as before.
 var HF_HIDDEN_COL=true;
 function hfHiddenGone(r){return !!r&&!r.ok&&r.status===400&&!!r.data&&/hidden_at/.test(String(r.data.message||''))&&/does not exist|could not find/i.test(String(r.data.message||''));}
+// r53c: a review its author deleted (migration 38) is never read either (the database refuses it to the browser from
+// migration 38 on; the pages ask without it too). Before migration 38 there is no deleted_at: asked once, then not.
+var HF_DELETED_COL=true;
+function hfDeletedGone(r){return !!r&&!r.ok&&r.status===400&&!!r.data&&/deleted_at/.test(String(r.data.message||''))&&/does not exist|could not find/i.test(String(r.data.message||''));}
+async function hfKept(fetcher,path,extra){
+  var sep=path.indexOf('?')>=0?'&':'?';
+  if(HF_DELETED_COL){
+    var r=await fetcher(path+sep+(extra?extra+'&':'')+'deleted_at=is.null');
+    if(!hfDeletedGone(r))return r;
+    HF_DELETED_COL=false;
+  }
+  return fetcher(extra?path+sep+extra:path);
+}
 async function hfShown(fetcher,path){
   if(HF_HIDDEN_COL){
-    var r=await fetcher(path+(path.indexOf('?')>=0?'&':'?')+'hidden_at=is.null');
+    var r=await hfKept(fetcher,path,'hidden_at=is.null');
     if(!hfHiddenGone(r))return r;
     HF_HIDDEN_COL=false;
   }
-  return fetcher(path);
+  return hfKept(fetcher,path);
 }
 // The shown reviews, and this account's own even when hidden (so it can be told why).
 async function hfShownOrMine(fetcher,path){
   if(typeof currentTaster==='undefined'||!currentTaster||!currentTaster.id)return hfShown(fetcher,path);
   if(HF_HIDDEN_COL){
-    var r=await fetcher(path+(path.indexOf('?')>=0?'&':'?')+'or=(hidden_at.is.null,taster_id.eq.'+Number(currentTaster.id)+')');
+    var r=await hfKept(fetcher,path,'or=(hidden_at.is.null,taster_id.eq.'+Number(currentTaster.id)+')');
     if(!hfHiddenGone(r))return r;
     HF_HIDDEN_COL=false;
   }
-  return fetcher(path);
+  return hfKept(fetcher,path);
 }
 // This account's hidden reviews: { id: {reason, team} } (the reason in the words the author was told).
 var HF_MY_HIDDEN=null;
@@ -846,16 +859,193 @@ function hfHiddenSeen(){
   fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify({action:'mod_seen'})})
     .then(function(){try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof hfInbox==='function')hfInbox(true);}).catch(function(){});
 }
-// What the author reads on their hidden review (the lawyer doc, Part 3).
-function hfHiddenNote(why,rid){
+// What the author reads on their hidden review (the lawyer doc, Part 3). r53c (Sebastian, 10 Nov 00:37): no email
+// here any more ("I want they go directly to the restaurant"): a button opens a conversation with the restaurant, like
+// the other conversations (Seb's Analytics' email stays on the Review rules page). reviewId: the hidden review.
+function hfPlaceName(){return typeof RESTAURANT_NAME!=='undefined'&&RESTAURANT_NAME?RESTAURANT_NAME:'the restaurant';}
+function hfHiddenNote(why,restaurantId,reviewId){
   why=why||{};
-  if(why.team)return '<div class="hf-hidden-note" data-hidden="team"><b>Only you can see this.</b> Ratings by a restaurant’s owners and managers are hidden automatically. <a href="/review-rules">Review rules</a></div>';
-  return '<div class="hf-hidden-note" data-hidden="1"><b>Only you can see this.</b> The restaurant hid your review (comment and stars). Reason: '+hfEsc(why.reason||'a reason in the review rules')+'. '
+  if(why.team)return '<div class="hf-hidden-note" data-hidden="team" onclick="event.stopPropagation()"><b>Only you can see this.</b> Ratings by a restaurant’s owners and managers are hidden automatically. <a href="/review-rules">Review rules</a></div>';
+  var talk=HF_TALK_READY!==false&&Number(reviewId)>0;     // before migration 38 there is no conversation to open
+  return '<div class="hf-hidden-note" data-hidden="1" onclick="event.stopPropagation()"><b>Only you can see this.</b> The restaurant hid your review (comment and stars). Reason: '+hfEsc(why.reason||'a reason in the review rules')+'. '
     +'Our review rules are based on the U.S. Federal Trade Commission (FTC) rule on consumer reviews. Think it\u2019s a mistake? '
-    +(typeof hfContactOpen==='function'
-      ?'<a href="#" class="hf-contact-link" onclick="hfContactOpen(\'restaurant\','+Number(rid||0)+');return false;">Contact the restaurant</a>'
-      :'Tell the restaurant, or write to <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a>')
-    +' \u00b7 <a href="/review-rules">Review rules</a></div>';
+    +(talk?'Message the restaurant.':'Tell the restaurant.')
+    +' \u00b7 <a href="/review-rules">Review rules</a>'
+    +(talk?hfTalkButton(reviewId,'Message '+hfPlaceName()):'')+'</div>'
+    +(talk?'<div class="hf-talk" id="hf-talk-'+Number(reviewId)+'" hidden onclick="event.stopPropagation()"></div>':'');
+}
+
+// ── r53c: the author ⇄ the restaurant about a hidden review (api/_lib/reviewtalk.js, migration 38) ──
+// The same kind of conversation as a table's: words, a photo or a PDF (a receipt), the restaurant's owner and the
+// managers who moderate answer; the bell says when they did. Read every few seconds while it is open on the screen.
+var HF_TALK_READY=null, HF_TALKS={}, HF_TALK={}, HF_TALK_LINKS={}, HF_TALK_PEND={}, HF_TALK_TIMER=null;
+var HF_TALK_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
+var HF_TALK_CLIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.5 3.5 0 0 1 5 5l-8.6 8.6a2 2 0 0 1-2.8-2.8l7.9-7.9"/></svg>';
+var HF_TALK_SEND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
+var HF_TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
+function hfRv(body){
+  if(typeof currentSession==='undefined'||!currentSession)return Promise.resolve({__status:401,error:'Please log in again.'});
+  return fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},body:JSON.stringify(body)})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){d.__status=r.status;return d;});},
+          function(){return {__status:0,error:'Could not connect. Check the connection and try again.'};});
+}
+// Which of this account's reviews have a conversation (and how many answers wait). Also says whether migration 38 is in.
+function hfTalksLoad(){
+  return hfRv({action:'rvc_mine'}).then(function(d){
+    if(d.__status===200){HF_TALK_READY=d.ready===true;HF_TALKS=d.threads||{};}
+    hfTalkMarks();
+    return HF_TALKS;
+  });
+}
+function hfTalkButton(reviewId,label){
+  var t=HF_TALKS[reviewId],n=t&&t.unread?Number(t.unread):0;
+  return '<button type="button" class="hf-talk-btn" data-talk="'+Number(reviewId)+'" data-label="'+hfEsc(label)+'" aria-expanded="false" onclick="event.stopPropagation();hfTalkToggle('+Number(reviewId)+')">'
+    +HF_TALK_ICON+'<span>'+hfEsc(label)+'</span><b class="n"'+(n?'':' hidden')+'>'+n+'</b></button>';
+}
+function hfTalkMarks(){
+  document.querySelectorAll('.hf-talk-btn[data-talk]').forEach(function(b){
+    var t=HF_TALKS[b.dataset.talk],n=t&&t.unread?Number(t.unread):0,el=b.querySelector('.n');
+    if(el){el.textContent=n;el.hidden=!n;}
+  });
+}
+function hfTalkToggle(id,open){
+  var box=document.getElementById('hf-talk-'+id),btn=document.querySelector('.hf-talk-btn[data-talk="'+id+'"]');
+  if(!box)return;
+  if(open===undefined)open=box.hidden;
+  box.hidden=!open;
+  if(btn){btn.setAttribute('aria-expanded',open?'true':'false');btn.classList.toggle('open',open);btn.querySelector('span').textContent=open?'Hide messages':btn.dataset.label;}
+  if(!open)return;
+  box.innerHTML='<div class="hf-talk-list"><p class="hf-talk-empty">Loading the messages…</p></div>'
+    +'<p class="hf-talk-note" hidden></p><div class="hf-talk-pend" hidden></div>'
+    +'<div class="hf-talk-form" hidden><button type="button" class="hf-talk-clip" aria-label="Attach a photo or a PDF" onclick="this.nextElementSibling.click()">'+HF_TALK_CLIP+'</button>'
+    +'<input type="file" accept="image/*,application/pdf" hidden onchange="hfTalkPicked('+id+',this)">'
+    +'<textarea class="hf-talk-input" rows="1" maxlength="1000" aria-label="Your message" placeholder="Write here…" oninput="this.style.height=\'auto\';this.style.height=Math.min(140,this.scrollHeight+2)+\'px\'"></textarea>'
+    +'<button type="button" class="hf-talk-send" aria-label="Send" onclick="hfTalkSend('+id+')">'+HF_TALK_SEND+'</button></div>'
+    +'<p class="hf-talk-err" role="alert" hidden></p><p class="hf-talk-foot"></p>';
+  hfTalkLoad(id);
+  if(!HF_TALK_TIMER)HF_TALK_TIMER=setInterval(function(){
+    if(document.visibilityState!=='visible')return;
+    document.querySelectorAll('.hf-talk:not([hidden])').forEach(function(b){
+      var k=b.id.slice(8);if(b.offsetParent!==null&&!(HF_TALK[k]&&HF_TALK[k].asking))hfTalkLoad(Number(k));
+    });
+  },5000);
+  setTimeout(function(){try{box.scrollIntoView({block:'nearest',behavior:'smooth'});}catch(e){}},60);
+}
+function hfTalkLoad(id){
+  var c=HF_TALK[id]||(HF_TALK[id]={});
+  c.asking=true;
+  return hfRv({action:'rvc_list',reviewId:id}).then(function(d){
+    c.asking=false;
+    if(d.__status!==200){hfTalkErr(id,d.error||'Could not read the messages. Please try again.');return;}
+    var before=HF_TALKS[id]&&HF_TALKS[id].unread;
+    c.data=d;
+    HF_TALKS[id]=Object.assign(HF_TALKS[id]||{},{unread:0,count:d.messages.length,open:d.state!=='closed'});
+    hfTalkMarks();
+    if(before){try{sessionStorage.removeItem('hf_inbox');}catch(e){}if(typeof hfInbox==='function')hfInbox(true);}
+    hfTalkPaint(id);
+  });
+}
+function hfTalkErr(id,msg){var b=document.getElementById('hf-talk-'+id),e=b&&b.querySelector('.hf-talk-err');if(e){e.textContent=msg||'';e.hidden=!msg;}}
+function hfTalkPaint(id){
+  var box=document.getElementById('hf-talk-'+id),c=HF_TALK[id];
+  if(!box||!c||!c.data||!box.querySelector('.hf-talk-list'))return;
+  var d=c.data,list=box.querySelector('.hf-talk-list');
+  var atEnd=list.scrollHeight-list.scrollTop-list.clientHeight<40;
+  list.innerHTML=d.messages.length?d.messages.map(function(m){
+    var who=m.mine?'You':hfEsc(m.name)+(m.handle?' ('+hfEsc(m.handle)+')':'')+' \u00b7 '+hfEsc(m.place||'');
+    return '<div class="hf-bub '+(m.mine?'me':'them')+'"><span class="hf-bub-who">'+who+' <i>\u00b7 '+hfEsc(m.label)+'</i></span>'
+      +(m.file?hfTalkFile(m.file,m.mine?'you':m.name):'')+(m.body?'<span class="hf-bub-text">'+hfEsc(m.body)+'</span>':'')+'</div>';
+  }).join(''):'<p class="hf-talk-empty">'+hfEsc(d.empty||'')+'</p>';
+  var note=box.querySelector('.hf-talk-note');note.textContent=d.note||'';note.hidden=!d.note;
+  box.querySelector('.hf-talk-form').hidden=!d.canWrite;
+  box.querySelector('.hf-talk-foot').textContent=d.foot||'';
+  if(atEnd)list.scrollTop=list.scrollHeight;
+  hfTalkFiles(id);
+}
+function hfTalkFile(f,who){
+  var l=HF_TALK_LINKS[f.id],url=l&&l.until>Date.now()?l.url:null;
+  if(f.kind==='pdf')return '<a class="hf-talk-pdf" data-file="'+Number(f.id)+'"'+(url?' href="'+hfEsc(url)+'" target="_blank" rel="noopener"':'')+'><b>'+hfEsc(f.name)+'</b><small>PDF \u00b7 '+hfEsc(hfFileSize(f.size))+'</small></a>';
+  return '<a class="hf-talk-photo" data-file="'+Number(f.id)+'"'+(url?' href="'+hfEsc(url)+'" target="_blank" rel="noopener"':'')+' aria-label="Photo from '+hfEsc(who)+' (opens full size)">'
+    +(url?'<img src="'+hfEsc(url)+'" alt="Photo from '+hfEsc(who)+'">':'<span>Photo…</span>')+'</a>';
+}
+function hfTalkFiles(id){
+  var c=HF_TALK[id];if(!c||!c.data)return;
+  var need=c.data.messages.filter(function(m){var l=m.file&&HF_TALK_LINKS[m.file.id];return m.file&&!(l&&l.until>Date.now()+60000);}).map(function(m){return m.file.id;});
+  if(!need.length||c.linking)return;
+  c.linking=true;
+  hfRv({action:'rvc_files',reviewId:id,fileIds:need}).then(function(d){
+    c.linking=false;
+    var until=Date.now()+((d.expiresIn||3600)-300)*1000;
+    need.forEach(function(k){var u=d.links&&d.links[k];HF_TALK_LINKS[k]={url:u||null,until:u?until:Date.now()+120000};});
+    hfTalkPaint(id);
+  });
+}
+function hfTalkPicked(id,input){
+  var file=input.files&&input.files[0];input.value='';
+  if(!file)return;
+  hfTalkErr(id,'');
+  hfFilePrepare(file).then(function(prep){
+    HF_TALK_PEND[id]=prep;
+    var box=document.getElementById('hf-talk-'+id),p=box&&box.querySelector('.hf-talk-pend');
+    if(p){p.hidden=false;p.innerHTML='<span class="t"><b>'+hfEsc(prep.name)+'</b><small>'+(prep.kind==='pdf'?'PDF':'Photo')+' \u00b7 '+hfEsc(hfFileSize(prep.size))+'</small></span>'
+      +'<button type="button" class="x" aria-label="Remove" onclick="hfTalkUnpick('+id+')">\u00d7</button>';}
+  },function(e){hfTalkErr(id,e.message);});
+}
+function hfTalkUnpick(id){delete HF_TALK_PEND[id];var b=document.getElementById('hf-talk-'+id),p=b&&b.querySelector('.hf-talk-pend');if(p){p.hidden=true;p.innerHTML='';}}
+function hfTalkSend(id){
+  var box=document.getElementById('hf-talk-'+id);if(!box)return;
+  var input=box.querySelector('.hf-talk-input'),btn=box.querySelector('.hf-talk-send'),text=input.value.trim(),prep=HF_TALK_PEND[id];
+  if(!text&&!prep){hfTalkErr(id,'Write your message first.');return;}
+  btn.disabled=true;hfTalkErr(id,'');
+  var withFile=prep?hfRv({action:'rvc_upload',reviewId:id,name:prep.name,mime:prep.mime,size:prep.size}).then(function(s){
+    if(s.__status!==200)throw new Error(s.error||'The file could not be sent.');
+    return hfFileUpload(s.uploadUrl,prep).then(function(){return s.file.id;});
+  }):Promise.resolve(null);
+  withFile.then(function(fileId){
+    return hfRv({action:'rvc_send',reviewId:id,body:text,fileId:fileId}).then(function(d){
+      if(d.__status!==200)throw new Error(d.error||'Your message was not sent. Please try again.');
+      input.value='';input.style.height='';hfTalkUnpick(id);
+      (HF_TALK[id]||(HF_TALK[id]={})).data=d;
+      HF_TALKS[id]=Object.assign(HF_TALKS[id]||{},{count:d.messages.length,open:true});
+      hfTalkPaint(id);
+      var list=box.querySelector('.hf-talk-list');if(list)list.scrollTop=list.scrollHeight;
+    });
+  }).catch(function(e){hfTalkErr(id,e.message);}).then(function(){btn.disabled=false;});
+}
+
+// ── r53c: the author deletes their own review (a copy is kept for the record: the Terms and the Privacy Policy say so;
+//    Sebastian, 10 Nov: the window doesn't repeat it) ──
+// sum: { dish, img, score, date }. done(): what the page does after (draw the list again).
+function hfReviewDelete(id,sum,done){
+  sum=sum||{};
+  var o=document.createElement('div');o.className='hf-del-ov';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-label','Delete this review?');
+  var stars='';for(var i=1;i<=5;i++)stars+=i<=Math.round(Number(sum.score)||0)?'\u2605':'\u2606';
+  o.innerHTML='<div class="hf-del-box"><h3>Delete this review?</h3>'
+    +'<div class="hf-del-sum">'+(sum.img?'<img src="'+hfEsc(sum.img)+'" alt="" onerror="this.remove()">':'')
+    +'<div><b>'+hfEsc(sum.dish||'Your review')+'</b><span class="st">'+stars+'</span> '+(sum.score?Number(sum.score).toFixed(1)+' \u00b7 ':'')+hfEsc(sum.date||'')+'</div></div>'
+    +'<p>It disappears from Fork\u2019s Rating and <b>stops counting</b> in the score. The restaurant\u2019s reply goes with it.</p>'
+    +'<p class="q">You can rate this dish again whenever you like.</p>'
+    +'<p class="hf-del-err" role="alert" hidden></p>'
+    +'<div class="hf-del-btns"><button type="button" class="d">Delete</button><button type="button" class="k">Cancel</button></div></div>';
+  var close=function(){o.remove();document.removeEventListener('keydown',esc);};
+  var esc=function(e){if(e.key==='Escape')close();};
+  document.addEventListener('keydown',esc);
+  o.addEventListener('click',function(e){if(e.target===o)close();});
+  o.querySelector('.k').onclick=close;
+  o.querySelector('.d').onclick=function(){
+    var b=this;b.disabled=true;b.textContent='Deleting…';
+    hfRv({action:'my_review_delete',reviewId:id}).then(function(d){
+      if(d.__status!==200){var e=o.querySelector('.hf-del-err');e.textContent=d.error||'Could not delete it. Please try again.';e.hidden=false;b.disabled=false;b.textContent='Delete';return;}
+      close();
+      if(typeof showToast==='function')showToast('Your review was deleted.');
+      if(typeof done==='function')done(id);
+    });
+  };
+  document.body.appendChild(o);
+  setTimeout(function(){o.querySelector('.k').focus();},30);
+}
+function hfDeleteButton(id,sumJson){
+  return '<div class="hf-del-row"><button type="button" class="hf-del-btn" data-del="'+Number(id)+'" onclick="event.stopPropagation();hfReviewDelete('+Number(id)+','+hfEsc(sumJson)+',typeof hfAfterDelete===\'function\'?hfAfterDelete:null)">'+HF_TRASH+'Delete</button></div>';
 }
 
 // The bell's list: "Ana · The Hungry Fork answered you", the table, when.
@@ -876,6 +1066,12 @@ function hfBellRender(){
     return;
   }
   panel.innerHTML='<div class="hf-bell-head">Notifications</div>'+list.map(function(b){
+    // r53c: the restaurant answered about a hidden review (opens My Tastings on that conversation)
+    if(b.reviewTalk)return '<a class="hf-bell-item" data-talk="'+Number(b.reviewTalk)+'" href="/?tastings=1&talk='+Number(b.reviewTalk)+'">'
+      +'<b>'+hfEsc(b.who)+' \u00b7 '+hfEsc(b.restaurant)+' answered about your review</b>'
+      +'<span>'+hfEsc(b.dish)+'</span>'
+      +'<small>'+hfEsc(b.label||'')+(b.count>1?' \u00b7 '+Number(b.count)+' messages':'')+'</small>'
+      +'</a>';
     // r53: the restaurant hid one of this account's reviews, or shows it again (opens My Tastings)
     if(b.reviewNotice)return '<a class="hf-bell-item" data-notice="'+Number(b.reviewNotice)+'" href="/?tastings=1">'
       +'<b>'+hfEsc(b.restaurant)+(b.kind==='hidden'?' hid your review':' shows your review again')+'</b>'
