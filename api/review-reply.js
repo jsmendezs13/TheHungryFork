@@ -113,6 +113,12 @@ export default async function handler(req, res) {
   }
   const review = found.data[0];
 
+  // r53: a hidden review's conversation stops until the restaurant shows it again (migration 37; before it, no column).
+  const hid = await sb(`/reviews?id=eq.${id}&select=hidden_at`);
+  if (hid.ok && Array.isArray(hid.data) && hid.data[0] && hid.data[0].hidden_at) {
+    return res.status(409).json({ error: 'This review is hidden, so its conversation is closed. If the restaurant shows it again, it opens again.' });
+  }
+
   const turn = nextTurn(review);
   if (!turn) {
     return res.status(409).json({
