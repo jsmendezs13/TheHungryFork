@@ -57,7 +57,8 @@ import {
 } from './_lib/email.js';
 import { staff, requestMailList } from './_lib/staff.js';
 import { socialPublic } from './_lib/social.js';                     // r52
-import { reviewsStaff } from './_lib/reviewlist.js';                // r52: the Reviews tab
+import { reviewsStaff } from './_lib/reviewlist.js';
+import { moderation, reviewBell } from './_lib/moderation.js';                // r53: moderation                // r52: the Reviews tab
 import { floor } from './_lib/floor.js';      // r46: the table map (Reservations → Map)
 import { forgetOldFiles } from './_lib/files.js';
 import { notifyStaff, line } from './_lib/push.js';     // r43: notifications on the staff's phones
@@ -137,6 +138,7 @@ export default async function handler(req, res) {
       findByLink: (t) => { const clean = cleanToken(t); return clean ? findByLink(clean) : null; },
       linkGone: LINK_GONE,
       requestBell,
+      reviewBell,                                                          // r53: "The restaurant hid your review…"
     });
   }
   // r30: a big-party request's own conversation, and My information.
@@ -160,6 +162,8 @@ export default async function handler(req, res) {
   if (action.startsWith('ev_') || action.startsWith('sq_')) return eventsStaff(req, res, body, action);
   // r52: the manager page's Reviews tab (every review of the restaurant in one list).
   if (action.startsWith('rv_')) return reviewsStaff(req, res, body, action);
+  // r53: moderation (hide, show again, the log, the switch; the author's bell is read).
+  if (action.startsWith('mod_')) return moderation(req, res, body, action);
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
 }
