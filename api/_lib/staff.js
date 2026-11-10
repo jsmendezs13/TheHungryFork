@@ -33,6 +33,7 @@ import { waitingOnly, addHandles } from './guests.js';
 import { staffLoyalty, cleanLoyalty, visitFromTable, undoVisitFromTable } from './loyalty.js';
 // r43 (Sebastian, 26 Oct 22:56): every change to the settings is a notification to the owners and managers.
 import { tellChange, describeRules, describeLoyalty, describeHours, dayWords, clock12 } from './changes.js';
+import { saveSocial, socialOf } from './social.js';                                   // r52: Settings → Social media
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -128,6 +129,7 @@ export async function staff(req, res, body, action, helpers = {}) {
     case 'staff_loyalty_save': return saveLoyalty(req, res, body, tasterId);
     case 'staff_grade_save': return saveGrade(req, res, body, tasterId);       // r34
     case 'staff_request_mail_save': return saveRequestMail(req, res, body, tasterId);   // r42
+    case 'staff_social_save': return saveSocial(req, res, body, tasterId, { gate, tellChange, timezoneOf: socialZone });   // r52
     default:                 return res.status(400).json({ error: 'Unknown action.' });
   }
 }
@@ -726,6 +728,12 @@ export async function gradeOf(rid, timezone = 'America/New_York') {
   return { ready: true, grade: GRADES.includes(r.sanitary_grade) ? r.sanitary_grade : null, changedOn: on, changedBy: by };
 }
 
+// r52: the restaurant's time zone, for "Last changed Nov 9" under the social links.
+async function socialZone(rid) {
+  const s = await loadBooking(rid).catch(() => null);
+  return (s && s.settings && s.settings.timezone) || 'America/New_York';
+}
+
 async function saveGrade(req, res, body, tasterId) {
   const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
   if (!who) return;
@@ -803,14 +811,15 @@ async function settingsRead(req, res, body, tasterId) {
   }), { tables: 0, people: 0, arrived: 0, noShows: 0, cancelled: 0 });
 
   const st = s.settings;
-  const [loyalty, grade, requestMail] = await Promise.all([
+  const [loyalty, grade, requestMail, social] = await Promise.all([
     staffLoyalty(who.rid).catch(() => ({ ready: false })),
     gradeOf(who.rid, s.timezone).catch(() => ({ ready: false })),
     who.canEdit ? requestMailOut(who.rid, st).catch(() => null) : null,
+    socialOf(who.rid, s.timezone).catch(() => ({ ready: false })),           // r52
   ]);
   return res.status(200).json({
     success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone, loyalty, grade,
-    requestMail,
+    requestMail, social,
     restaurant: { id: s.loaded.restaurant.id, name: s.loaded.restaurant.name },
     rules: rulesOut(st),
     email: { ready: !!st.email_from_address, from: st.email_from_address || null },
