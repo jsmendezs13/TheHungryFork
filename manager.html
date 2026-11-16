@@ -1152,6 +1152,18 @@
   #rvt-host .rv-scrim { z-index:320; } #rvt-host .rv-sheet { z-index:321; }
   .rw-hid q { display:block; margin-top:.15rem; font-style:italic; }
   .rw-act.mod { border-color:#E3CFC9; }
+  /* r54: reviews waiting their 48 hours (migration 39) — first, in their own box; Approve; the author's phone (moderators) */
+  .rw-wbox { background:#FFFDF8; border:1px solid #F0D58A; border-radius:14px; padding:.7rem .8rem .75rem; margin:0 0 .6rem; }
+  .rw-wh { font-family:var(--serif); font-weight:700; font-size:1.12rem; color:var(--dark); display:flex; align-items:center; gap:.45rem; }
+  .rw-wn { display:inline-flex; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:#E0A100; color:#fff; font-family:var(--sans); font-size:.72rem; font-weight:800; align-items:center; justify-content:center; }
+  .rw-wt { font-size:.76rem; line-height:1.45; color:var(--muted); margin-top:.2rem; }
+  .rw-wline { background:#FFF6D9; border:1px solid #F0D58A; color:#5C4300; border-radius:10px; padding:.42rem .6rem; font-size:.76rem; line-height:1.45; margin:0 0 .5rem; }
+  .rw-wline b { color:#3D2C00; }
+  .rw-wshown { font-family:var(--serif); font-weight:700; font-size:1.02rem; color:var(--dark); margin:.9rem 0 .45rem; }
+  .rw-phone { display:flex; align-items:center; gap:.35rem; margin:.15rem 0 .35rem; font-size:.8rem; }
+  .rw-phone svg { width:14px; height:14px; color:var(--red); flex:none; }
+  .rw-act.rw-approve { background:#1F7A4A; border-color:#1F7A4A; color:#fff; font-weight:600; }
+  .rw-act.rw-approve:disabled { opacity:.6; }
   .rw-switch { display:flex; align-items:center; gap:.8rem; background:#fff; border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:12px;
                padding:.7rem .8rem; margin-bottom:.7rem; }
   .rw-switch > div { flex:1; min-width:0; font-size:.84rem; }
@@ -7852,7 +7864,7 @@ async function rwLoad(){
   try{
     const d = await rvApi({ action:'rv_list' });
     if(gen !== RW.gen || RW.rid !== rid) return;
-    RW.data = d; rwBuild(d); RW.loaded = true;
+    RW.data = d; RW.fetchedAt = Date.now(); rwBuild(d); RW.loaded = true;
   }catch(e){
     if(gen !== RW.gen || RW.rid !== rid) return;
     if(e.status !== 401) RW.error = e.message || 'Could not read the reviews. Please try again.';
@@ -7870,7 +7882,14 @@ function rwFoodGroup(cat){ return RW_FOOD.some(x => x[0] === cat) ? cat : 'other
 function rwBuild(d){
   const dishes = new Map((d.dishes||[]).map(x => [Number(x.id), x]));
   const items = [], groups = new Map(), reviewed = new Set();
-  (d.reviews||[]).forEach(function(r){
+  // r54: a review still waiting its 48 hours is not public yet: it goes in the waiting box (one card for the whole
+  // review — the dish and the restaurant part), not in the list. Newest first, as the server sends them.
+  RW.waits = (d.reviews||[]).filter(r => r.waiting).map(function(r){
+    const dish = dishes.get(Number(r.dish)) || null;
+    reviewed.add(Number(r.dish));
+    return { t:'wait', kind: dish && dish.category === 'drinks' ? 'drink' : 'dish', key:'w'+r.id, r:r, dish:dish, stars:rwRound(r.dishStars), day:r.day, at:r.at, visit:r.visit, hidden:null };
+  });
+  (d.reviews||[]).filter(r => !r.waiting).forEach(function(r){
     const dish = dishes.get(Number(r.dish)) || null;
     reviewed.add(Number(r.dish));
     items.push({ t: dish && dish.category === 'drinks' ? 'drink' : 'dish', key:'r'+r.id, r:r, dish:dish, stars:rwRound(r.dishStars), day:r.day, at:r.at,
@@ -7974,6 +7993,7 @@ function rwPaint(){
       + '<button type="button" class="rw-fbtn" id="rw-fbtn" onclick="rwOpenFilters()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"/></svg>Filters'+(n ? ' ('+n+')' : '')+'</button>'
     + '</div>'
     + rwTopHtml()
+    + '<div id="rw-wait">'+rwWaitHtml()+'</div>'                                                  // r54
     + '<div id="rw-list">'+rwListHtml()+'</div>';
 }
 function rwSearch(v){ RW.q = v; RW.shown = RW_STEP; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); }
@@ -8063,6 +8083,7 @@ function rwCardHtml(it){
     return '<div class="rw-card'+(it.hidden || it.deleted ? ' hidden' : '')+(it.deleted ? ' deleted' : '')+'" data-kind="room" data-key="'+it.key+'">'
       + '<div class="rw-kind">Restaurant</div>'
       + '<div class="rw-who" style="margin-top:.2rem">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
+      + (r.phone ? rwPhoneHtml(r.phone) : '')                                                          // r54
       + '<div class="rw-stars"><span>Hospitality <b>'+rwStarRow(r.roomStars[0])+'</b></span><span>Atmosphere &amp; Vibe <b>'+rwStarRow(r.roomStars[1])+'</b></span></div>'
       + (it.comments.length ? it.comments.map(c => '<div class="rw-text">'+esc(c)+'</div>').join('') : '<div class="rw-none">No comment, only stars.</div>')
       + '<div class="rw-small">'+esc(rwWhen(it.at))+' · '+(it.reviews.length === 1 ? 'rated 1 '+(it.dishList[0].dish && it.dishList[0].dish.category === 'drinks' ? 'drink' : 'dish') : 'rated '+it.reviews.length+' dishes and drinks')+'</div>'
@@ -8074,6 +8095,7 @@ function rwCardHtml(it){
   return '<div class="rw-card'+(it.hidden || it.deleted ? ' hidden' : '')+(it.deleted ? ' deleted' : '')+'" data-kind="'+it.t+'" data-key="'+it.key+'">'
     + '<div class="rw-top">'+rwThumb(d)+'<div><div class="rw-dish"><span class="rw-kind">'+(it.t === 'drink' ? 'Drink' : 'Dish')+'</span>'+esc(d ? d.name : 'A dish no longer on the menu')+'</div><div class="rw-when">'+esc(rwWhen(it.at))+'</div></div></div>'
     + '<div class="rw-who">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
+    + (r.phone ? rwPhoneHtml(r.phone) : '')                                                            // r54
     + '<div class="rw-stars"><span>'+(it.t === 'drink' ? 'Drink' : 'Dish')+' <b>'+rwStarRow(it.stars)+'</b></span>'
     +   '<span>Flavor '+(r.dishStars[0]||'–')+' · Worth Every Bite '+(r.dishStars[1]||'–')+' · Signature Style '+(r.dishStars[2]||'–')+'</span></div>'
     + (r.dishComment ? '<div class="rw-text">'+esc(r.dishComment)+'</div>' : '<div class="rw-none">No comment, only stars.</div>')
@@ -8081,7 +8103,68 @@ function rwCardHtml(it){
     + rwThreadHtml(r) + rwActsHtml(it) + rwReplyHtml(it)
     + '</div>';
 }
-function rwFind(key){ return RW.items.find(x => x.key === key); }
+function rwFind(key){ return RW.items.find(x => x.key === key) || (RW.waits || []).find(x => x.key === key); }   // r54: waiting ones too
+
+// ── r54: the reviews waiting their 48 hours (Sebastian, 15 Nov: "only in the reviews section they see the number of
+//    comments waiting for approve or hide … If nobody decides within 48 hours, the review appears by itself") ──
+const RW_PHONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>';
+// The author's phone (the owner and the managers who moderate; reviews written after the change): a tap calls.
+function rwPhoneHtml(phone){ const t = rvTel(phone); return t ? '<div class="rw-phone">'+RW_PHONE_ICON+t+'</div>' : ''; }
+// Now, by the server's clock (the phone's may be wrong).
+function rwNowMs(){ return RW.data && RW.data.now ? Date.parse(RW.data.now) + (Date.now() - (RW.fetchedAt || Date.now())) : Date.now(); }
+// "Tue, Nov 17, 12:00 PM (in 46 hours)"
+function rwWaitWhen(until){
+  const tz = (RW.data && RW.data.timezone) || 'America/New_York', t = new Date(until);
+  if(!Number.isFinite(t.getTime())) return '';
+  const day = t.toLocaleString('en-US', { timeZone:tz, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  const ms = Math.max(0, t.getTime() - rwNowMs()), h = ms >= 3600000 ? Math.round(ms / 3600000) : 0, m = Math.max(1, Math.ceil(ms / 60000));
+  return day + ' (in ' + (h >= 1 ? rwPlural(h, 'hour') : rwPlural(m, 'minute')) + ')';
+}
+function rwWaitHtml(){
+  const W = RW.waits || [];
+  if(!W.length) return '';
+  const M = rwMod();
+  return '<div class="rw-wbox" id="rw-wbox"><div class="rw-wh">Waiting to be checked <span class="rw-wn" id="rw-wn">'+W.length+'</span></div>'
+    + '<div class="rw-wt">Every new review waits here first. '
+    + (M.canModerate ? '<b>Approve</b> shows it now; <b>Moderate review</b> hides it with a reason. ' : 'The owner and the managers who moderate approve or hide them. ')
+    + 'If nobody decides, it appears by itself 48 hours after it was posted.</div></div>'
+    + W.map(rwWaitCardHtml).join('')
+    + '<div class="rw-wshown">Shown</div>';
+}
+function rwWaitCardHtml(it){
+  const r = it.r, d = it.dish, M = rwMod(), drink = it.kind === 'drink', acts = [];
+  if(M.canModerate) acts.push('<button type="button" class="rw-act rw-approve" data-approve="'+Number(r.id)+'" onclick="rwApprove('+Number(r.id)+')">Approve</button>');
+  if(M.canModerate && M.on) acts.push('<button type="button" class="rw-act mod" data-mod="'+it.key+'" onclick="rwModOpen(\''+it.key+'\')">Moderate review</button>');
+  if(d && d.slug) acts.push('<a class="rw-act" href="/menu?dish='+encodeURIComponent(d.slug)+'" target="_blank" rel="noopener">Open '+(drink ? 'drink' : 'dish')+'</a>');
+  const room = (r.roomStars || []).some(Boolean) || r.roomComment;
+  return '<div class="rw-card rw-wcard" data-kind="wait" data-key="'+it.key+'">'
+    + '<div class="rw-wline"><b>Waiting</b> · appears by itself '+esc(rwWaitWhen(r.waiting.until))+'</div>'
+    + '<div class="rw-top">'+rwThumb(d)+'<div><div class="rw-dish"><span class="rw-kind">'+(drink ? 'Drink' : 'Dish')+'</span>'+esc(d ? d.name : 'A dish no longer on the menu')+'</div><div class="rw-when">'+esc(rwWhen(it.at))+'</div></div></div>'
+    + '<div class="rw-who">'+whoHtml(r.name, r.handle)+rwDotHtml(it.visit)+'</div>'
+    + (r.phone ? rwPhoneHtml(r.phone) : '')
+    + '<div class="rw-stars"><span>'+(drink ? 'Drink' : 'Dish')+' <b>'+rwStarRow(it.stars)+'</b></span>'
+    +   '<span>Flavor '+(r.dishStars[0]||'–')+' · Worth Every Bite '+(r.dishStars[1]||'–')+' · Signature Style '+(r.dishStars[2]||'–')+'</span></div>'
+    + (r.dishComment ? '<div class="rw-text">'+esc(r.dishComment)+'</div>' : '<div class="rw-none">No comment, only stars.</div>')
+    + (room ? '<div class="rw-kind" style="margin-top:.55rem">Restaurant</div>'
+        + '<div class="rw-stars"><span>Hospitality <b>'+rwStarRow(r.roomStars[0])+'</b></span><span>Atmosphere &amp; Vibe <b>'+rwStarRow(r.roomStars[1])+'</b></span></div>'
+        + (r.roomComment ? '<div class="rw-text">'+esc(r.roomComment)+'</div>' : '') : '')
+    + rwVisitLine(it.visit)
+    + (acts.length ? '<div class="rw-acts">'+acts.join('')+'</div>' : '')
+    + '</div>';
+}
+// Approve: it appears now (in the log, like Hide). No notification to anyone (Sebastian, 15 Nov).
+async function rwApprove(id){
+  const b = document.querySelector('[data-approve="'+Number(id)+'"]');
+  if(b){ b.disabled = true; b.textContent = 'Approving…'; }
+  try{
+    await rvApi({ action:'mod_approve', reviewId:id });
+    showToast('Approved. It appears now.');
+    rwLoad();
+  }catch(e){
+    if(e.status !== 401) showToast(e.message || 'Could not approve that review.');
+    if(b){ b.disabled = false; b.textContent = 'Approve'; }
+  }
+}
 function rwSee(key){ RW.see[key] = !RW.see[key]; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); }
 function rwReplyOpen(key){
   RW.reply = key; RW.sending = false;
@@ -8538,7 +8621,7 @@ function rwModHtml(){
   let h = '<div class="rw-ptop"><button type="button" class="rw-ptitle" onclick="rwModClose()" aria-label="Back to the reviews">'+back+'Moderate review</button></div><div class="rw-pbody">';
   // the review
   const stars = it.t === 'room' ? rwRound(r.roomStars) : it.stars;
-  const words = it.t === 'room' ? (it.comments.join('\n') || '') : (r.dishComment || '');
+  const words = it.t === 'room' ? (it.comments.join('\n') || '') : it.t === 'wait' ? [r.dishComment, r.roomComment].filter(Boolean).join('\n') : (r.dishComment || '');   // r54
   h += '<div class="rw-msum" id="rw-msum"><div><b>'+whoHtml(r.name, r.handle)+'</b>'+rwDotHtml(it.visit)+' <span class="rw-st">'+rwStarRow(stars)+'</span></div>'
     + '<div class="rw-small" style="margin-top:.1rem">'+(it.t === 'room' ? 'About the restaurant' : esc(it.dish ? it.dish.name : 'A dish'))+' · '+esc(rwWhen(it.at))+'</div>'
     + (words ? '<div class="rw-text" style="margin-top:.3rem">“'+esc(words)+'”</div>' : '<div class="rw-none" style="margin-top:.3rem">No comment, only stars.</div>')
@@ -8601,7 +8684,7 @@ async function rwShowAgain(key){
 }
 
 // ── the moderation log (moderators) ──
-const RW_LOG_WORDS = { hide:'Hidden', show:'Shown again', 'team-hide':'Hidden by the team rule', 'team-show':'Shown again (team rule)' };
+const RW_LOG_WORDS = { hide:'Hidden', show:'Shown again', 'team-hide':'Hidden by the team rule', 'team-show':'Shown again (team rule)', approve:'Approved' };   // r54
 async function rwLogOpen(){
   RW.log = { loading:true, entries:null, error:null };
   RW.page = 'log'; rwPaintPage(true);
