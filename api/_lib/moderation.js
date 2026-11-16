@@ -9,7 +9,9 @@
 //
 //   mod_hide     moderators, switch on        reviewIds (1–20, one author), reason, details ("Illegal or dangerous
 //                                             content" tells Seb's Analytics at once: a child may be at risk, 18 U.S.C. 2258A)
-//   mod_show     moderators                   "Show it again" (never what the team rule hid)
+//   mod_show     moderators                   "Show it again" (never what the team rule hid); it counts as approved (r54)
+//   mod_approve  moderators                   r54 (Sebastian, 15 Nov 15:16: "The review appears at once"): a review
+//                                             waiting its 48 hours (migration 39) appears now; in the log, like the others
 //   mod_log      moderators                   the restaurant's log, newest first
 //   mod_switch   Seb's Analytics only         on / off
 //   mod_seen     the author (logged in)       the bell's notices are read
@@ -17,6 +19,12 @@
 //
 // The team rule (owners' and managers' own ratings hidden automatically, crew can't rate where they work) lives in
 // the database (migration 37's triggers): it holds whoever writes the review.
+//
+// r54 (Sebastian, 15 Nov 14:45 and 15:16; 16 Nov 02:11 "build it now"): where moderation is on, every new review waits up
+// to 48 hours before it appears (migration 39: the database sets waiting_until when the guest posts it, by its own clock).
+// Approve shows it at once; Moderate review hides it with a reason; nobody deciding = it appears by itself after the 48
+// hours (the database's read rule counts them, so nothing here has to run for it to appear). No notifications about
+// waiting reviews: the Reviews tab shows how many wait.
 import { makeLimiter, allow, keyFor } from './auth.js';
 import { sb, tasterIdFromRequest, LEVEL } from './roles.js';
 import { gate } from './staff.js';
@@ -64,11 +72,13 @@ export function reasonForAuthor(code, details) {
 }
 
 const hideLimiter = makeLimiter({ requests: 40, window: '10 m', prefix: 'mod:hide' });
+const approveLimiter = makeLimiter({ requests: 300, window: '10 m', prefix: 'mod:approve' });     // r54: a busy evening's reviews, one by one
 const readLimiter = makeLimiter({ requests: 120, window: '10 m', prefix: 'mod:read' });
 const guestLimiter = makeLimiter({ requests: 60, window: '10 m', prefix: 'mod:seen' });
 const NOT_READY = 'Moderation needs migration 37 first (the moderation database).';
 const OFF = "Moderation is off at this restaurant. Seb's Analytics switches it on once the restaurant signs the Review and Data Addendum.";
 const NOT_YOURS = 'Only the owner, and the managers the owner chooses (Team → "Can moderate reviews"), can moderate reviews.';
+const NOT_READY_39 = 'Approving needs migration 39 first (reviews that wait 48 hours).';
 
 // Owners and Seb's Analytics always; a manager when the owner switched "Can moderate reviews" on; crew never.
 export async function canModerateAt(tasterId, restaurantId, level) {
@@ -134,8 +144,8 @@ export async function moderation(req, res, body, action) {
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
   if (action === 'mod_seen') return seen(res, tasterId);
   if (action === 'mod_mine') return mine(res, tasterId);
-  const writes = action === 'mod_hide' || action === 'mod_show' || action === 'mod_switch';
-  if (!(await allow(writes ? hideLimiter : readLimiter, keyFor(tasterId), { failOpen: !writes }))) {
+  const writes = action === 'mod_hide' || action === 'mod_show' || action === 'mod_switch' || action === 'mod_approve';
+  if (!(await allow(action === 'mod_approve' ? approveLimiter : writes ? hideLimiter : readLimiter, keyFor(tasterId), { failOpen: !writes }))) {
     return res.status(429).json({ error: 'Too many taps in a few minutes. Wait a moment and try again.' });
   }
   const who = await gate(res, tasterId, body.restaurantId, LEVEL.manager, req);
@@ -144,6 +154,7 @@ export async function moderation(req, res, body, action) {
   if (!(await canModerateAt(tasterId, who.rid, who.level))) return res.status(403).json({ error: NOT_YOURS });
   if (action === 'mod_hide') return hide(res, tasterId, who, body);
   if (action === 'mod_show') return show(res, tasterId, who, body);
+  if (action === 'mod_approve') return approve(res, tasterId, who, body);       // r54
   if (action === 'mod_log') return log(res, who, body);
   return res.status(400).json({ error: 'Unknown action.' });
 }
@@ -156,7 +167,8 @@ function idsOf(body) {
 }
 
 async function readRows(rid, ids) {
-  let got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS},deleted_at`);       // r53c: deleted by its author
+  let got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS},deleted_at,waiting_until,approved_at`);   // r54: migration 39
+  if (!got.ok && got.status === 400) got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS},deleted_at`);       // r53c: deleted by its author
   if (!got.ok && got.status === 400) got = await sb(`/reviews?id=in.(${ids.join(',')})&select=${REVIEW_COLUMNS}`);   // before migration 38
   if (!got.ok) return { status: got.status === 400 ? 409 : 502, error: got.status === 400 ? NOT_READY : 'Could not read that review. Please try again.' };
   const rows = Array.isArray(got.data) ? got.data : [];
@@ -250,9 +262,13 @@ async function show(res, tasterId, who, body) {
   const rows = found.rows;
   if (rows.some((r) => isTeam(r.hidden_reason))) return res.status(409).json({ error: "The team rule hides this one (a rating by the restaurant's owner or manager). It can't be shown." });
   if (rows.some((r) => !r.hidden_at)) return res.status(409).json({ error: 'That review is already shown.' });
-  const saved = await sb(`/reviews?id=in.(${ids.join(',')})&restaurant_id=eq.${who.rid}&hidden_at=not.is.null`, {
-    method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ hidden_at: null, hidden_reason: null }),
+  // r54: shown again by a moderator = approved too (a review hidden while it waited appears now, not after its 48 hours)
+  const patch = (extra) => sb(`/reviews?id=in.(${ids.join(',')})&restaurant_id=eq.${who.rid}&hidden_at=not.is.null`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ hidden_at: null, hidden_reason: null, ...extra }),
   });
+  const waits = rows.some((r) => 'waiting_until' in r);
+  let saved = await patch(waits ? { approved_at: new Date().toISOString(), approved_by: tasterId } : {});
+  if (!saved.ok && saved.status === 400 && waits) saved = await patch({});
   if (!saved.ok) return res.status(502).json({ error: 'Could not show that review again (the database answered ' + saved.status + '). Please try again.' });
   const done = (Array.isArray(saved.data) ? saved.data : []).map((r) => Number(r.id));
   const byName = who.firstName || 'The restaurant';
@@ -282,6 +298,48 @@ async function show(res, tasterId, who, body) {
   }
   console.log('[moderation] taster', tasterId, 'showed', done.join(','), 'at', who.rid);
   return res.status(200).json({ success: true, shown: done });
+}
+
+// r54: Approve — a review waiting its 48 hours appears now. One guest's reviews at once (their dish and the restaurant
+// part are one review; a visit with several dishes can be approved together, like Hide). In the log, like the others.
+async function approve(res, tasterId, who, body) {
+  const ids = idsOf(body);
+  if (!ids) return res.status(400).json({ error: 'Which review?' });
+  const found = await readRows(who.rid, ids);
+  if (found.error) return res.status(found.status).json({ error: found.error });
+  const rows = found.rows;
+  if (!rows.every((r) => 'waiting_until' in r)) return res.status(409).json({ error: NOT_READY_39 });
+  if (new Set(rows.map((r) => String(r.taster_id))).size > 1) return res.status(400).json({ error: 'Those reviews are by different people. Approve them one at a time.' });
+  if (rows.some((r) => r.hidden_at)) return res.status(409).json({ error: rows.length > 1 ? 'One of those reviews is hidden. Use Show it again.' : 'That review is hidden. Use Show it again.' });
+  const now = Date.now();
+  const waiting = rows.filter((r) => r.waiting_until && !r.approved_at && Date.parse(r.waiting_until) > now);
+  if (!waiting.length) return res.status(409).json({ error: rows.length > 1 ? 'Those reviews are already shown.' : 'That review is already shown.' });
+  const at = new Date().toISOString();
+  const want = waiting.map((r) => Number(r.id));
+  const saved = await sb(`/reviews?id=in.(${want.join(',')})&restaurant_id=eq.${who.rid}&approved_at=is.null&hidden_at=is.null`, {
+    method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ approved_at: at, approved_by: tasterId }),
+  });
+  if (!saved.ok) return res.status(saved.status === 400 ? 409 : 502).json({ error: saved.status === 400 ? NOT_READY_39 : 'Could not approve that review (the database answered ' + saved.status + '). Please try again.' });
+  const done = (Array.isArray(saved.data) ? saved.data : []).map((r) => Number(r.id));
+  if (!done.length) return res.status(409).json({ error: 'That review is already shown.' });
+  const byName = who.firstName || 'The restaurant';
+  const logged = await sb('/review_moderation_log', {
+    method: 'POST', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(rows.filter((r) => done.includes(Number(r.id))).map((r) => ({
+      review_id: r.id, restaurant_id: who.rid, action: 'approve',
+      stars: [r.flavor, r.worth_every_bite, r.signature_style, r.hospitality, r.atmosphere_vibe],
+      author_id: r.taster_id, review_at: r.created_at, by_id: tasterId, by_name: byName,
+    }))),
+  });
+  if (!logged.ok) {
+    // An approval without its record must not stay (the log shows good and bad reviews treated the same): undone.
+    await sb(`/reviews?id=in.(${done.join(',')})&approved_at=eq.${encodeURIComponent(at)}`, { method: 'PATCH', body: JSON.stringify({ approved_at: null, approved_by: null }) });
+    console.error('[moderation] approve not logged, undone', who.rid, logged.status);
+    return res.status(502).json({ error: 'Could not keep the record of this, so nothing was approved (the database answered ' + logged.status + '). Please try again.' });
+  }
+  // No push notification: Sebastian, 15 Nov ("that could be a thousand of notifications").
+  console.log('[moderation] taster', tasterId, 'approved', done.join(','), 'at', who.rid);
+  return res.status(200).json({ success: true, approved: done, at });
 }
 
 async function log(res, who, body) {
