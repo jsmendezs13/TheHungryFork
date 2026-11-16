@@ -8,10 +8,15 @@
 //             of the menu (their category, kind of drink and photo), for managers and owners.
 //
 // Reviews are public already (anyone can read them on the menu); this answer adds nothing a
-// guest could not see, except that it is all in one place. It never carries a phone number, an
-// email or a guest's account details: the name and handle the review was posted with, and the
-// conversation under it. The page groups and filters it (dish / drink / restaurant, category,
-// stars, replies, dates) — the server does not, so the Filters page can count as you choose.
+// guest could not see, except that it is all in one place. It never carries an email or a guest's
+// account details: the name and handle the review was posted with, and the conversation under it.
+// The page groups and filters it (dish / drink / restaurant, category, stars, replies, dates) — the
+// server does not, so the Filters page can count as you choose.
+//
+// r54 (Sebastian, 15 Nov 2026; migration 39): a review waiting its 48 hours comes with waiting: { until } (the page
+// shows those first, with Approve and Moderate review), and — for the owner, the managers who moderate and Seb's
+// Analytics only — the phone number of the author of a review written after the change (phone_ok; the Privacy Policy
+// says so). "only the manager and authorized people of the restaurant… not shared with people outside the restaurant".
 import { makeLimiter, allow, keyFor } from './auth.js';
 import { sb, tasterIdFromRequest, LEVEL } from './roles.js';
 import { gate } from './staff.js';
@@ -29,6 +34,8 @@ const REPLY_COLUMNS = 'reply_text,reply_created_at,reply_by_name,taster_reply_te
 const HIDDEN_COLUMNS = 'hidden_at,hidden_reason';
 // r53c: deleted by its author (migration 38): out of the list, except for Seb's Analytics' record.
 const DELETED_COLUMNS = 'deleted_at';
+// r54: waiting its 48 hours, approved, and whether its author's phone may be shown (migration 39). Asked apart again.
+const WAIT_COLUMNS = 'waiting_until,approved_at,phone_ok';
 
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 1 && Number(v) <= 5 ? Number(v) : null);
 const text = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -65,6 +72,9 @@ async function list(req, res, body, tasterId) {
   const talks = canModerate ? await talksOf(who.rid) : {};
   // The names of reviewers whose review has none stored (reviews from before names were saved with them).
   const names = await namesFor(rows.filter((r) => !text(r.reviewer_name)).map((r) => r.taster_id));
+  // r54: the phone numbers, for the moderators only, of the authors of reviews written after the change (never a deleted one)
+  const phones = canModerate ? await phonesFor(rows.filter((r) => r.phone_ok === true && !r.deleted_at).map((r) => r.taster_id)) : new Map();
+  const nowMs = Date.now();
   const timezone = (booking && booking.settings && booking.settings.timezone) || 'America/New_York';
   // Who wrote what goes out as a number that means something only inside this answer (1, 2, 3…), never
   // the guest's account number: it is enough to put one guest's comments about the restaurant together.
@@ -88,7 +98,8 @@ async function list(req, res, body, tasterId) {
     more: rows.length >= MAX_REVIEWS,
     repliesReady: rv.withReplies,
     moderation: { ready: sw.ready, on: sw.on, at: sw.at || null, by: sw.by || null, canModerate, platform: who.level >= LEVEL.platform,
-                  reasons: REASONS, deletedReady: rv.withDeleted === true },
+                  reasons: REASONS, deletedReady: rv.withDeleted === true, waitReady: rv.withWait === true },          // r54
+    now: new Date(nowMs).toISOString(),                                                                              // r54: the server's clock
     dishes,
     reviews: rows.map((r) => {
       const n = names.get(Number(r.taster_id)) || {};
@@ -112,6 +123,9 @@ async function list(req, res, body, tasterId) {
         ...(canModerate ? { visit: dots[r.id] || null } : {}),
         ...(canModerate && talks[r.id] ? { talk: talks[r.id] } : {}),
         ...(platform && r.deleted_at ? { deleted: { at: r.deleted_at } } : {}),
+        // r54: still waiting its 48 hours (not approved, not hidden, not deleted): only here, never on the public pages
+        ...(r.waiting_until && !r.approved_at && !r.hidden_at && !r.deleted_at && Date.parse(r.waiting_until) > nowMs ? { waiting: { until: r.waiting_until } } : {}),
+        ...(canModerate && r.phone_ok === true && !r.deleted_at && phones.get(Number(r.taster_id)) ? { phone: phones.get(Number(r.taster_id)) } : {}),
         replies: [
           text(r.reply_text) ? { side: 'restaurant', text: r.reply_text, at: r.reply_created_at || null, by: text(r.reply_by_name) } : null,
           text(r.taster_reply_text) ? { side: 'guest', text: r.taster_reply_text, at: r.taster_reply_created_at || null } : null,
@@ -125,6 +139,9 @@ async function list(req, res, body, tasterId) {
 // The reviews with their conversation; without it when the reply columns are not there (an older database).
 async function readReviews(rid) {
   const base = `/reviews?restaurant_id=eq.${rid}&order=created_at.desc,id.desc&limit=${MAX_REVIEWS}&select=`;
+  const waits = await sb(base + REVIEW_COLUMNS + ',' + REPLY_COLUMNS + ',' + HIDDEN_COLUMNS + ',' + DELETED_COLUMNS + ',' + WAIT_COLUMNS);   // r54
+  if (waits.ok) return { ...waits, withReplies: true, withDeleted: true, withWait: true };
+  if (waits.status !== 400) return waits;
   const kept = await sb(base + REVIEW_COLUMNS + ',' + REPLY_COLUMNS + ',' + HIDDEN_COLUMNS + ',' + DELETED_COLUMNS);    // r53c
   if (kept.ok) return { ...kept, withReplies: true, withDeleted: true };
   if (kept.status !== 400) return kept;
@@ -173,6 +190,18 @@ async function menuOf(rid) {
 export function serviceDayIn(timezone) {
   const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' });
   return (at) => { const t = Date.parse(at); return Number.isFinite(t) ? fmt.format(new Date(t - 5 * 3600 * 1000)) : null; };
+}
+
+// r54: { tasterId: '+12125550147' } — the account's phone number as saved (the page writes it (212) 555-0147).
+async function phonesFor(ids) {
+  const want = [...new Set(ids.map(Number).filter((x) => Number.isInteger(x) && x > 0))].slice(0, 1000);
+  const map = new Map();
+  if (!want.length) return map;
+  const got = await sb(`/tasters?id=in.(${want.join(',')})&select=id,phone_number`);
+  if (got.ok && Array.isArray(got.data)) {
+    got.data.forEach((t) => { const p = text(t.phone_number); if (p && /^\+?[0-9() .-]{7,20}$/.test(p)) map.set(Number(t.id), p); });
+  }
+  return map;
 }
 
 async function namesFor(ids) {
