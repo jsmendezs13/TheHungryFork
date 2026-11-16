@@ -502,6 +502,8 @@
   .rv-your-row .rv-your-stars { justify-content:flex-start; gap:2px; }
   .rv-your-row .rv-your-stars svg { width:15px; height:15px; }
   .rv-your-row .review-date { flex:1; margin:0; white-space:nowrap; }
+  .rv-your-row .review-date { min-width:0; }
+  .rv-your-wait { display:block; white-space:normal; font-size:.72rem; line-height:1.3; color:#8A6A12; }   /* r54: on its own line, so Delete stays in the box */
   .rv-your-hint { font-family:var(--sans); font-size:.72rem; color:var(--muted,#8A7B6E); text-align:center; margin-top:.35rem; }
   /* These two colours only reach the old glyph (an older stars.js still live);
      the card's stars bring their own (rateStarGlyph). */
@@ -2394,6 +2396,9 @@ async function submitRating(){
     ({ok,data,status}=await sbFetch('/rest/v1/reviews','POST',payload));
     if(ok){
       closeRatingModal();
+      // r54: where moderation is on, the review waits up to 48 hours (migration 39): the guest is told, with the rules
+      const saved=Array.isArray(data)?data[0]:data;
+      if(hfWaiting(saved))hfReviewThanks(currentTaster.first_name||'');
     }
     if(ok){
       loadOverallRating();
@@ -2518,7 +2523,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';
       return;
     }
-    label.textContent=`Reviews (${data.filter(r=>!r.hidden_at).length})`;
+    label.textContent=`Reviews (${data.filter(r=>!hfOut(r)).length})`;   // r54: hidden or still waiting: not counted
     // 2 = manager. Owners and the platform admin are above it.
     const canReply = MY_LEVEL >= 2 && String(restaurantId) === String(RESTAURANT_ID);
     list.innerHTML=data.map(r=>{
@@ -2526,10 +2531,10 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       const name=reviewerLabel(r);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
-      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId, r.id) : replyBlocks(r)
+      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId, r.id) : hfWaiting(r) ? hfWaitNote(r) : replyBlocks(r)
         + replyTail(r, canReply, isGuest, 'reply-input',
             `postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')`);
-      return`<div class="review-item${r.hidden_at?' hf-hidden':''}">
+      return`<div class="review-item${r.hidden_at?' hf-hidden':''}${hfWaiting(r)?' hf-waiting':''}">
         <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
         <div class="review-date">${date}</div>
@@ -2585,7 +2590,7 @@ function rvScore(r){return(r.flavor+r.worth_every_bite+r.signature_style)/3;}
 // stars.js. This line runs as the page loads, and a missing function here
 // would stop the whole menu. Anywhere else it would only affect a panel.
 let rvWindow = (typeof ratingDefaultDays === 'function') ? ratingDefaultDays() : 365;   // days; 0 = all time
-function rvWindowed(){ return rvData.filter(r => !r.hidden_at && ratingInWindow(r, rvWindow)); }   // r53: a hidden review never counts
+function rvWindowed(){ return rvData.filter(r => !hfOut(r) && ratingInWindow(r, rvWindow)); }   // r53: a hidden review never counts; r54: nor a waiting one
 let rvHidMine={};
 
 // The five scores a rating is made of, split the way the rating FORM splits
@@ -2723,7 +2728,7 @@ function rvRenderSummary(){
   const avgEl=document.getElementById('rv-avg'),cntEl=document.getElementById('rv-count'),bars=document.getElementById('rv-bars');
   const rows=rvWindowed();
   let avg=0;
-  if(!rvData.filter(r=>!r.hidden_at).length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
+  if(!rvData.filter(r=>!hfOut(r)).length){avgEl.textContent='–';cntEl.textContent='No ratings yet';bars.innerHTML='';}
   else if(!rows.length){avgEl.textContent='–';cntEl.textContent='(0 ratings)';bars.innerHTML='';}
   else{
     avg=rows.reduce((s,r)=>s+rvScore(r),0)/rows.length;
@@ -2759,13 +2764,13 @@ function rvRender(){
     yr.innerHTML=`<div class="rv-your-box rv-your-many"><div class="rv-your-label">Your rating${mineAll.length>1?'s ('+mineAll.length+')':''}</div>`
       +mineAll.map(m=>{
         const day=new Date(m.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-        return `<div class="rv-your-row"><span class="rv-your-stars">${rvStarsInline(Math.round(rvScore(m)))}</span><span class="review-date">${day}${m.hidden_at?' · hidden':''}</span>`
+        return `<div class="rv-your-row"><span class="rv-your-stars">${rvStarsInline(Math.round(rvScore(m)))}</span><span class="review-date">${day}${m.hidden_at?' · hidden':hfWaiting(m)?'<span class="rv-your-wait">waiting to appear</span>':''}</span>`
           +(HF_TALK_READY===true?`<button type="button" class="hf-del-btn" onclick="event.stopPropagation();hfReviewDelete(${Number(m.id)},${hfEsc(JSON.stringify({dish:dishName,img:img?hfImgSrc(img,96):null,score:Number(rvScore(m).toFixed(1)),date:day}))},hfAfterDelete)">${HF_TRASH}Delete</button>`:'')+'</div>';
       }).join('')
       +(mineAll.length>1?'<div class="rv-your-hint">Rating again adds a new rating. Every rating counts.</div>':'')+'</div>';
   }else if(mine){
     const md=new Date(mine.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-    yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating${mine.hidden_at?' (hidden)':''}</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
+    yr.innerHTML=`<div class="rv-your-box"><div class="rv-your-label">Your rating${mine.hidden_at?' (hidden)':hfWaiting(mine)?' (waiting to appear)':''}</div><div class="rv-your-stars">${rvStarsInline(Math.round(rvScore(mine)))}</div><div class="review-date">${md}</div></div>`;
   }else{
     yr.innerHTML=`<div class="rv-your-box" onclick="closeReviewsPanel();caveRate();" style="cursor:pointer;"><div class="rv-your-label">${currentTaster?'Tap to rate this dish':'Log in and rate this dish'}</div><div class="rv-your-stars">${rvStarsInline(0)}</div></div>`;
   }
@@ -2790,12 +2795,12 @@ function rvRenderList(){
     const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
     const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
 
-    return`<div class="review-item${r.hidden_at?' hf-hidden':''}">
+    return`<div class="review-item${r.hidden_at?' hf-hidden':''}${hfWaiting(r)?' hf-waiting':''}">
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
       ${(!rvFull&&r.dish_comment)?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
       <div class="review-date">${date}</div>
       ${rvFull?rvFullBlock(r):''}
-      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID, r.id):replyBlocks(r)+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
+      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID, r.id):hfWaiting(r)?hfWaitNote(r):replyBlocks(r)+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
     </div>`;
   }).join('');
 }
@@ -2908,7 +2913,7 @@ async function loadMyTastings(){
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
           <div class="review-text brand-red-text">The Hungry Fork</div>
           <div class="review-date">${date}</div>
-          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):''}
+          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):hfWaiting(r)?hfWaitNote(r):''}
           ${talkOnly}
           ${del}
         </div>
