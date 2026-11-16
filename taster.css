@@ -444,3 +444,15 @@ button.hf-l-terms { background:none; border:none; margin:0; cursor:pointer; text
 .hf-del-btns .d{background:#B01015;color:#fff;border:none;}
 .hf-del-btns .d:disabled{opacity:.6;cursor:wait;}
 .hf-del-btns .k{background:#fff;color:#2B211A;border:1px solid #E9E0D3;}
+
+/* r54: a review waiting its 48 hours (only its author sees it), and the thank-you window after Post Review */
+.hf-wait-note{background:#FFF6D9;border:1px solid #F0D58A;color:#5C4300;}
+.hf-wait-note b{color:#3D2C00;}
+.review-item.hf-waiting{opacity:.92;}
+.hf-thx-box{text-align:center;}
+.hf-thx-box h3{margin:.1rem 0 .55rem;}
+.hf-thx-box p{font-size:.92rem;line-height:1.5;}
+.hf-thx-ico{width:46px;height:46px;border-radius:50%;background:#FBEDE9;color:#B01015;display:flex;align-items:center;justify-content:center;margin:0 auto .55rem;}
+.hf-thx-rules a{color:#B01015;font-weight:600;font-size:.86rem;}
+.hf-thx-ok{display:block;width:100%;margin-top:.85rem;min-height:46px;border:none;border-radius:999px;background:#B01015;color:#fff;font-weight:700;font-size:.95rem;font-family:inherit;cursor:pointer;}
+.hf-thx-ok:focus-visible{outline:3px solid #2B211A;outline-offset:2px;}
