@@ -819,23 +819,72 @@ async function hfKept(fetcher,path,extra){
   }
   return fetcher(extra?path+sep+extra:path);
 }
+// r54 (Sebastian, 15 Nov; migration 39): where moderation is on, a new review waits up to 48 hours before it appears
+// (Approve shows it at once). The database never gives anyone a waiting review but its author; the pages leave the
+// author's own waiting ones out of every score too (by this phone's clock, which only matters on the author's own screen),
+// and show them to the author with "Waiting to appear". Before migration 39 there is no waiting_until: asked once, then not.
+var HF_WAIT_COL=true;
+function hfWaitGone(r){return !!r&&!r.ok&&r.status===400&&!!r.data&&/waiting_until|approved_at/.test(String(r.data.message||''))&&/does not exist|could not find/i.test(String(r.data.message||''));}
+function hfNowIso(){return new Date().toISOString().slice(0,19)+'Z';}
+function hfWaiting(r){return !!r&&!!r.waiting_until&&!r.approved_at&&!r.hidden_at&&new Date(r.waiting_until).getTime()>Date.now();}
+// Out of the score and the counts: hidden by the restaurant, or still waiting.
+function hfOut(r){return !!r&&(!!r.hidden_at||hfWaiting(r));}
 async function hfShown(fetcher,path){
   if(HF_HIDDEN_COL){
-    var r=await hfKept(fetcher,path,'hidden_at=is.null');
+    var r;
+    if(HF_WAIT_COL){
+      r=await hfKept(fetcher,path,'hidden_at=is.null&or=(waiting_until.is.null,approved_at.not.is.null,waiting_until.lte.'+hfNowIso()+')');
+      if(!hfWaitGone(r)&&!hfHiddenGone(r))return r;
+      if(hfWaitGone(r))HF_WAIT_COL=false;
+    }
+    r=await hfKept(fetcher,path,'hidden_at=is.null');
     if(!hfHiddenGone(r))return r;
     HF_HIDDEN_COL=false;
   }
   return hfKept(fetcher,path);
 }
-// The shown reviews, and this account's own even when hidden (so it can be told why).
+// The shown reviews, and this account's own even when hidden or waiting (so it can be told why). Someone else's waiting
+// review never reaches the page (the database's rule); if one ever did, it is left out here too.
 async function hfShownOrMine(fetcher,path){
   if(typeof currentTaster==='undefined'||!currentTaster||!currentTaster.id)return hfShown(fetcher,path);
+  var me=Number(currentTaster.id),r;
   if(HF_HIDDEN_COL){
-    var r=await hfKept(fetcher,path,'or=(hidden_at.is.null,taster_id.eq.'+Number(currentTaster.id)+')');
-    if(!hfHiddenGone(r))return r;
+    r=await hfKept(fetcher,path,'or=(hidden_at.is.null,taster_id.eq.'+me+')');
+    if(!hfHiddenGone(r))return hfMineOnlyWaiting(r,me);
     HF_HIDDEN_COL=false;
   }
-  return hfKept(fetcher,path);
+  return hfMineOnlyWaiting(await hfKept(fetcher,path),me);
+}
+function hfMineOnlyWaiting(r,me){
+  if(r&&r.ok&&Array.isArray(r.data))r.data=r.data.filter(function(x){return !hfWaiting(x)||Number(x.taster_id)===me;});
+  return r;
+}
+// "Mon, Nov 16, 12:00 PM": when a waiting review appears at the latest (New York time, the restaurant's).
+function hfWaitWhen(at){
+  var t=new Date(at);if(!isFinite(t.getTime()))return '';
+  return t.toLocaleString('en-US',{timeZone:'America/New_York',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+}
+// The author's own review while it waits (My Tastings, the dish's reviews).
+function hfWaitNote(r){
+  return '<div class="hf-hidden-note hf-wait-note" data-waiting="1" onclick="event.stopPropagation()"><b>Waiting to appear.</b> Only you can see it for now. It will appear by <b>'
+    +hfEsc(hfWaitWhen(r.waiting_until))+'</b> at the latest. \u00b7 <a href="/review-rules">Review rules</a></div>';
+}
+// Right after Post Review, when the review waits (Sebastian, 15 Nov 15:16: "you are right, I like your idea").
+function hfReviewThanks(first,done){
+  var o=document.createElement('div');o.className='hf-del-ov hf-thx-ov';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-labelledby','hf-thx-h');
+  o.innerHTML='<div class="hf-del-box hf-thx-box"><div class="hf-thx-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>'
+    +'<h3 id="hf-thx-h">Thank you'+(first?', '+hfEsc(first):'')+'!</h3>'
+    +'<p>Every review is checked before it appears. Yours will appear <b>within 48 hours</b>.</p>'
+    +'<p class="hf-thx-rules"><a href="/review-rules">Review rules</a></p>'
+    +'<button type="button" class="hf-thx-ok">OK</button></div>';
+  var close=function(){o.remove();document.removeEventListener('keydown',esc);if(typeof done==='function')done();};
+  var esc=function(e){if(e.key==='Escape')close();};
+  document.addEventListener('keydown',esc);
+  o.addEventListener('click',function(e){if(e.target===o)close();});
+  o.querySelector('.hf-thx-ok').onclick=close;
+  document.body.appendChild(o);
+  setTimeout(function(){var b=o.querySelector('.hf-thx-ok');if(b)b.focus();},30);
+  return o;
 }
 // This account's hidden reviews: { id: {reason, team} } (the reason in the words the author was told).
 var HF_MY_HIDDEN=null;
