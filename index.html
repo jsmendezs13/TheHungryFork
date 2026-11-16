@@ -912,7 +912,7 @@ async function loadMyTastings(){
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
           <div class="review-text brand-red-text">The Hungry Fork</div>
           <div class="review-date">${date}</div>
-          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):''}
+          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):hfWaiting(r)?hfWaitNote(r):''}
           ${talkOnly}
           ${del}
         </div>
