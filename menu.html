@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/site.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1253,6 +1254,10 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
   'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'shots':{label:'Shots',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
   'top-starters':{label:'Top Rated Appetizers',short:'Appetizers',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
   'top-salads':{label:'Top Rated Salads',short:'Salads',emoji:'\u{1F957}',top:true},'top-drinks':{label:'Top Rated Drinks',short:'Drinks',emoji:'\u{1F964}',top:true}};
+// Havana (19 Nov): a restaurant's own names for the parts of its menu (site.js), e.g. "Aperitivos" for the appetizers.
+(function(){const L=window.HF_SITE&&HF_SITE.labels;if(!L)return;
+  Object.keys(L).forEach(k=>{if(WARP_META[k])WARP_META[k].label=L[k];const c=CATEGORIES.find(x=>x.key===k);if(c)c.label=L[k];
+    const t=WARP_META['top-'+k];if(t){t.label='Top Rated · '+L[k];t.short=L[k];}});})();
 function topKind(key){return TOP_KEYS[key]||null;}
 function topCounts(){
   const t=(typeof HF_HOURS!=='undefined'&&HF_HOURS.top)||null, o={};
@@ -1340,8 +1345,8 @@ let currentDishId=null, activeFilter='chefs-pick';
 // These two travel together. Every page here hardcodes the restaurant it
 // belongs to, so when this menu is deployed for another client, both lines
 // change — the id decides what is loaded, the name signs the replies.
-const RESTAURANT_ID=1;
-const RESTAURANT_NAME='The Hungry Fork';
+const RESTAURANT_ID=HF_SITE.id;              // site.js: which restaurant this website is
+const RESTAURANT_NAME=HF_SITE.name;
 
 // ── MAY THIS ACCOUNT REPLY? ──
 //
@@ -1671,7 +1676,7 @@ function renderCave(animClass,mediaOnly){
         <a class="cave-share-btn cave-reserve-btn" href="/reservations">${caveIcon('calendar')}Reserve</a>
       </div>
     </section>
-    ${d.category==='drinks'?'':`<section class="cave-sec cave-sec-recs">
+    ${d.category==='drinks'||(window.HF_SITE&&HF_SITE.noTypedPairs&&!pairDrink(d,'wine')&&!pairDrink(d,'cocktail')&&!d.wine&&!d.cocktail)?'':`<section class="cave-sec cave-sec-recs">
       <div class="cave-recs">
         ${caveRecHTML(d,'wine',"Sommelier's<br>Recommendation")}
         ${caveRecHTML(d,'cocktail','Suggested<br>Cocktail')}

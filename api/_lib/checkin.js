@@ -1,3 +1,4 @@
+import { siteHost } from './sites.js';   // Havana: the website the guest is on
 // api/_lib/checkin.js
 //
 // The small pieces the three check-in endpoints share: the ticket itself, and
@@ -53,7 +54,10 @@ export function newYorkDate(d = new Date()) {
 
 // Where the QR points. Set SITE_URL in Vercel if the domain ever changes;
 // the fallback is the live site so nothing breaks if it is missing.
-export function siteUrl() {
+export function siteUrl(req) {
+  // Havana (19 Nov): the QR and the invite link stay on the website the guest is on
+  const h = siteHost(req);
+  if (h) return 'https://' + h;
   const raw = process.env.SITE_URL || 'https://thehungryfork.fun';
   return raw.replace(/\/+$/, '');
 }

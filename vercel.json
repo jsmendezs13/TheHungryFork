@@ -21,6 +21,10 @@
       {
         "pathname": "^/[A-Za-z0-9_-]+\\.(png|jpg|jpeg)$",
         "search": ""
+      },
+      {
+        "pathname": "^/[a-z0-9-]+/photos/[A-Za-z0-9_-]+\\.(png|jpg|jpeg)$",
+        "search": ""
       }
     ]
   },

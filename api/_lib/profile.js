@@ -28,6 +28,7 @@ import {
 } from './auth.js';
 import { sb, tasterIdFromRequest } from './roles.js';
 import { cleanEmail, loadBooking, DEFAULT_RESTAURANT_ID } from './booking.js';
+import { siteRestaurant } from './sites.js';   // Havana: the website's restaurant
 import { emailReady, senderFor, sendEmail, sendableAddress, mailboxKey, emailCodeEmail, hostOf } from './email.js';
 
 const saveLimiter  = makeLimiter({ requests: 30, window: '10 m', prefix: 'me:save' });
@@ -202,7 +203,7 @@ async function save(req, res, body, tasterId, { row, promo }) {
 
   let sent = null;
   if (pending) {
-    sent = await sendCode(tasterId, pending, saved);
+    sent = await sendCode(tasterId, pending, saved, Number(body.restaurantId) || siteRestaurant(req));
     if (!sent.ok) return res.status(sent.status).json({ ...view(saved, promo), success: false, error: sent.error, field: 'email', saved: true });
   }
   return res.status(200).json(view(saved, promo, {
@@ -211,8 +212,9 @@ async function save(req, res, body, tasterId, { row, promo }) {
   }));
 }
 
-async function sendCode(tasterId, address, row) {
-  const loaded = await loadBooking(DEFAULT_RESTAURANT_ID);
+async function sendCode(tasterId, address, row, restaurantId) {
+  // Havana (19 Nov): the code comes from the restaurant whose website the guest is on
+  const loaded = await loadBooking(restaurantId || DEFAULT_RESTAURANT_ID);
   const settings = loaded && !loaded.error ? loaded.settings : null;
   if (!emailReady(settings)) return { ok: false, status: 503, error: 'We cannot send the code by email right now. Your other changes are saved; try the email again later.' };
   if (!(await allow(codeSend, keyFor('a' + tasterId), { failOpen: false }))

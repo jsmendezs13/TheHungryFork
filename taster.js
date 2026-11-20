@@ -687,7 +687,7 @@ function hfLoadRole(who){
 var HF_IMG_SIZES=[96,256,384,640,828,1080,1200];
 function hfImgSrc(src,cssWidth){
   var s=String(src||'');
-  if(!/^\/?[A-Za-z0-9_-]+\.(png|jpe?g)$/.test(s))return s;   // lower-case endings only, as vercel.json allows
+  if(!/^\/?(?:[a-z0-9-]+\/photos\/)?[A-Za-z0-9_-]+\.(png|jpe?g)$/.test(s))return s;   // lower-case endings only, as vercel.json allows (19 Nov: also a restaurant's own folder, havana/photos/…)
   var want=Math.ceil((Number(cssWidth)||420)*Math.min(window.devicePixelRatio||1,3)), w=HF_IMG_SIZES[HF_IMG_SIZES.length-1];
   for(var i=0;i<HF_IMG_SIZES.length;i++){if(HF_IMG_SIZES[i]>=want){w=HF_IMG_SIZES[i];break;}}
   return '/_vercel/image?url='+encodeURIComponent('/'+s.replace(/^\//,''))+'&w='+w+'&q=75';
@@ -2342,7 +2342,7 @@ function hfSocialClean(s){
                        .map(function(l){return {kind:l.kind,url:l.url,label:typeof l.label==='string'?l.label.slice(0,80):''};})};
 }
 function hfHoursFetch(){
-  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:1})})
+  fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hours',restaurantId:(window.HF_SITE&&HF_SITE.id)||1})})
     .then(function(r){return r.ok?r.json():null;})
     .then(hfHoursApply)
     .catch(function(){});

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/site.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <title>Manager · The Hungry Fork</title>
 <!-- r38 (Sebastian, 16 Oct): this page as an app on the staff's phones. Share → Add to Home Screen (iPhone) or
@@ -1497,7 +1498,9 @@ async function boot(){
     return;
   }
 
-  RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id)) || ACCESS.restaurants[0];
+  // Havana (19 Nov): on a restaurant's own website its own dashboard opens first (site.js says which one).
+  RESTAURANT = ACCESS.restaurants.find(r=>String(r.id)===String(RESTAURANT&&RESTAURANT.id))
+    || ACCESS.restaurants.find(r=>window.HF_SITE&&String(r.id)===String(HF_SITE.id)) || ACCESS.restaurants[0];
   // r43: a tapped notification (#chat=, #reqchat=, #day=, #request=…&at=): its restaurant first, then the place.
   const nf = nfParse(), rqm = /^#request=(\d+)(?:&at=(\d+))?$/.exec(window.location.hash || '');
   const nfRid = nf ? nf.at : rqm ? Number(rqm[2]) || null : null;

@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       const invite = action === 'invite_make'
         ? await makeInvite(tasterId, body.restaurantId, body.dishId)
         : await inviteForGiver(tasterId, body.passId);
-      const link = `${siteUrl()}/invite?c=${encodeURIComponent(invite.code)}`;
+      const link = `${siteUrl(req)}/invite?c=${encodeURIComponent(invite.code)}`;
       return { invite, link, svg: tableQrSvg(link) };
     });
   }
@@ -181,7 +181,7 @@ async function issueToken(req, res, tasterId, extra = null) {
     console.error('[checkins:token] sweep failed', e?.message);
   }
 
-  const url = `${siteUrl()}/checkin?t=${encodeURIComponent(token)}`;
+  const url = `${siteUrl(req)}/checkin?t=${encodeURIComponent(token)}`;
 
   // Drawn on the server, as an SVG. No QR library in the browser, no request to
   // a QR website, and nothing about this customer ever leaves our own servers

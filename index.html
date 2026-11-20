@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/site.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -614,8 +615,8 @@ const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F37
 let currentDishId=null, activeFilter='chefs-pick';
 // These two travel together, as on menu.html: when this site is deployed for
 // another client, both change.
-const RESTAURANT_ID=1;
-const RESTAURANT_NAME='The Hungry Fork';
+const RESTAURANT_ID=HF_SITE.id;              // site.js: which restaurant this website is
+const RESTAURANT_NAME=HF_SITE.name;
 
 
 // ── MENU ──

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/site.js"></script>
 <meta name="referrer" content="no-referrer">
 <title>Reward terms · The Hungry Fork</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -109,7 +110,7 @@
 // writes them in Settings, and a reward cannot be on without them. Every
 // "Terms and conditions apply" link on the site opens this page, at the
 // reward it is about (/rewards?r=1#lucky). Nothing here needs an account.
-const DEFAULT_RESTAURANT_ID = 1;
+const DEFAULT_RESTAURANT_ID = (window.HF_SITE && HF_SITE.id) || 1;   // site.js: this website's restaurant
 const ICONS = {
   meal:    '<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 21V3c-2 0-3.5 2.5-3.5 6s1.5 4.5 3.5 4.5"/>',
   drink:   '<path d="M6.5 8h11l-1.4 12.2a1 1 0 0 1-1 .8H8.9a1 1 0 0 1-1-.8L6.5 8z"/><path d="M7 12.5h10"/><path d="M13.5 8l2-5H19"/>',

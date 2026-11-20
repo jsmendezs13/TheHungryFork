@@ -57,6 +57,7 @@ import {
 } from './_lib/email.js';
 import { staff, requestMailList } from './_lib/staff.js';
 import { socialPublic } from './_lib/social.js';                     // r52
+import { siteRestaurant } from './_lib/sites.js';                   // Havana: the website's restaurant
 import { reviewsStaff } from './_lib/reviewlist.js';
 import { reviewTalk, talkBell } from './_lib/reviewtalk.js';        // r53c: delete by the author; the conversation about a hidden review
 import { moderation, reviewBell } from './_lib/moderation.js';                // r53: moderation                // r52: the Reviews tab
@@ -205,7 +206,7 @@ async function slots(req, res, body) {
     return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
   }
 
-  const restaurantId = Number(body.restaurantId) || DEFAULT_RESTAURANT_ID;
+  const restaurantId = Number(body.restaurantId) || siteRestaurant(req);
 
   const loaded = await loadBooking(restaurantId);
   if (loaded && loaded.error) {
@@ -281,7 +282,7 @@ async function hours(req, res, body) {
   if (!(await allow(hoursLimiter, keyFor(clientIp(req)), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many requests. Wait a moment and try again.' });
   }
-  const restaurantId = Number(body.restaurantId) || DEFAULT_RESTAURANT_ID;
+  const restaurantId = Number(body.restaurantId) || siteRestaurant(req);
   const got = await publicHours(restaurantId, null);
   if (!got) {
     console.error('[reservations:hours] read failed');
@@ -344,7 +345,7 @@ async function publicHours(restaurantId, timezone) {
 // on that restaurant and day, re-checks the seats and the tables, and inserts.
 // Two guests tapping the last table at the same second cannot both get it.
 async function book(req, res, body) {
-  const restaurantId = Number(body.restaurantId) || DEFAULT_RESTAURANT_ID;
+  const restaurantId = Number(body.restaurantId) || siteRestaurant(req);
 
   const loaded = await loadBooking(restaurantId);
   if (!loaded || loaded.error) {
@@ -978,7 +979,7 @@ async function requestByEmail({ requestId, staffName, loaded, timezone }) {
 // a set menu and whether anyone is bringing a cake. So nothing is booked here:
 // what the guest wants is written down for the restaurant to answer.
 async function request(req, res, body) {
-  const restaurantId = Number(body.restaurantId) || DEFAULT_RESTAURANT_ID;
+  const restaurantId = Number(body.restaurantId) || siteRestaurant(req);
 
   const loaded = await loadBooking(restaurantId);
   if (!loaded || loaded.error) {

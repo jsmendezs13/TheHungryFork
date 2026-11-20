@@ -180,7 +180,7 @@ async function menuOf(rid) {
   return got.data.map((d) => ({
     id: d.id, slug: d.slug || null, name: d.name || 'A dish',
     category: d.restaurant_category || null, kind: d.drink_kind || null,
-    img: /^[A-Za-z0-9_-]+\.(png|jpe?g)$/.test(String(d.image || '')) || /^https:\/\//.test(String(d.image || '')) ? d.image : null,
+    img: /^(?:[a-z0-9-]+\/photos\/)?[A-Za-z0-9_-]+\.(png|jpe?g)$/.test(String(d.image || '')) || /^https:\/\//.test(String(d.image || '')) ? d.image : null,   // 19 Nov: or havana/photos/…
     hidden: !!d.is_hidden,
   }));
 }

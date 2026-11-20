@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/site.js"></script>
 <script>
 // r24 · The free times are asked for here, in the first line of the page.
 // Before, the page waited for the Google Fonts file and for its own scripts
@@ -31,7 +32,7 @@ window.hfEarlyMine = (function () {
     if (!token) return null;               // logged out: nothing to ask, the page says "log in"
     return { token: token, ask: fetch('/api/reservations', { method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ action: 'mine', restaurantId: 1 }) })
+      body: JSON.stringify({ action: 'mine', restaurantId: HF_SITE.id }) })
       .then(function (r) { return r.json().then(function (d) { return r.ok ? d : null; }); })
       .catch(function () { return null; }) };
   } catch (e) { return null; }
@@ -41,8 +42,8 @@ window.hfEarlyMine = (function () {
 window.hfEarlySlots = (function () {
   if (window.hfEarlyMine) return null;     // the tables first; the free times are asked for right after (start)
   try {
-    return { rid: 1, ask: fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'slots', restaurantId: 1, withHours: true }) })
+    return { rid: HF_SITE.id, ask: fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'slots', restaurantId: HF_SITE.id, withHours: true }) })
       .then(function (r) { return r.json().then(function (d) { return r.ok ? d : null; }); })
       .catch(function () { return null; }) };
   } catch (e) { return null; }
@@ -816,7 +817,7 @@ window.TASTER = { successLabel: 'Continue', onSuccess: function () { if (typeof 
 // server checks again and can still say "taken". That is not an error, it is
 // the honest answer, and the page just asks for the times again.
 
-const RESTAURANT_ID = 1;
+const RESTAURANT_ID = HF_SITE.id;   // site.js: which restaurant this website is
 
 // The account menu in the corner comes from taster.js. r36 (Sebastian, 16 Oct: back to exactly the window I
 // was before): Log In and My Visits open here, on this page (taster.js has them on every page now); My
