@@ -23,7 +23,7 @@
       hero: null,          // a photo for the top of the home page (not needed while there is the video)
       heroVideo: '/havana/havana-hero.mp4',  // the top of the home page (20 Nov: his video, graded, the repeat taken out; no sound)
       heroPoster: '/havana/havana-hero.jpg',  // 1280x720 since 20 Nov 05:53 ("es posible tenerlo de mejor calidad?")
-      heroVideoTall: '/havana/havana-hero-tall.mp4',  // the middle of the same video, for a phone held upright (what it shows anyway; half the download)
+      heroVideoTall: '/havana/havana-hero-tall.mp4',  // the same video made 9:16 for phones (20 Nov 14:11): each shot reframed, the sign whole at the end
       heroPosterTall: '/havana/havana-hero-tall.jpg',
       // its Google rating, next to Fork's Rating on the home page (20 Nov: typed by hand for now, as Google Maps shows it;
       // later it comes from Google by itself). No score → nothing is shown.
@@ -111,8 +111,8 @@
       watch.disconnect();
       if (S.heroVideo) {                                         // its own video instead (muted, as browsers require to play by itself)
         v.muted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.loop = true;
-        // a phone held upright gets the tall copy; turned sideways, the whole picture (and back)
-        var up = S.heroVideoTall && window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
+        // a phone held upright (a screen narrower than 2:3) gets the 9:16 copy; turned sideways, a tablet or a computer, the whole picture
+        var up = S.heroVideoTall && window.matchMedia ? window.matchMedia('(max-aspect-ratio: 2/3)') : null;
         var pick = function () {
           var tall = !!(up && up.matches), src = tall ? S.heroVideoTall : S.heroVideo, poster = tall ? (S.heroPosterTall || S.heroPoster) : S.heroPoster;
           if (v.getAttribute('src') === src) return;
