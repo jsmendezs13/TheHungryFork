@@ -160,6 +160,35 @@
               'waze.com': 'https://waze.com/ul?q=45%20Stone%20Street%20New%20York%20NY&navigate=yes' };
     Object.keys(M).forEach(function (k) { document.querySelectorAll('#maps-modal a[href*="' + k + '"]').forEach(function (a) { a.href = M[k]; }); });
   }
-  function start() { hero(); sections(); food(0); maps(); }
+  // The Google rating next to Fork's Rating (20 Nov: "just a picture for now, later we will do it well"): the numbers
+  // typed in site.js (S.google), with "Google Maps" written, as Google asks; it opens the restaurant on Google Maps.
+  // Google's stars: the same five stars as Fork's Rating (a copy of its drawing), grey under, yellow over up to the score
+  function stars(score) {
+    var base = document.querySelector('.vh-rating-live svg.fork-stars');
+    if (!base) return '';
+    var copy = function (fill, cls) {
+      var c = base.cloneNode(true); c.removeAttribute('id');
+      var d = c.querySelector('defs'); if (d) d.remove();
+      c.querySelectorAll('path').forEach(function (p) { p.setAttribute('fill', fill); });
+      c.setAttribute('class', 'fork-stars ' + cls); return c.outerHTML;
+    };
+    var cut = (100 - Math.max(0, Math.min(100, Number(score) / 5 * 100))).toFixed(1);   // a 4.5 shows four and a half
+    return '<span class="hv-gstars" aria-hidden="true">' + copy('rgba(255,255,255,.38)', 'hv-g-base')
+      + copy('#F6D919', 'hv-g-fill').replace('<svg', '<svg style="clip-path:inset(0 ' + cut + '% 0 0)"') + '</span>';
+  }
+  function google() {
+    var g = S.google; if (!g || !(Number(g.score) > 0)) return;
+    var live = document.querySelector('.vh-rating-live'), cap = document.querySelector('.vh-rating-caption');
+    if (!live || !cap || document.querySelector('.hv-ratings')) return;
+    var row = document.createElement('div'); row.className = 'hv-ratings';
+    var fork = document.createElement('div'); fork.className = 'hv-rate hv-rate-fork';
+    live.parentNode.insertBefore(row, live); fork.appendChild(live); fork.appendChild(cap); row.appendChild(fork);
+    var n = Number(g.count) || 0;
+    row.insertAdjacentHTML('beforeend', '<a class="hv-rate hv-rate-google" href="' + esc(g.url) + '" target="_blank" rel="noopener" aria-label="Rated '
+      + Number(g.score).toFixed(1) + ' out of 5 on Google Maps' + (n ? ' by ' + n.toLocaleString('en-US') + ' people' : '') + '">'
+      + stars(g.score) + '<span class="hv-rate-cap">Google Maps<span> · ' + Number(g.score).toFixed(1) + (n ? ' (' + n.toLocaleString('en-US') + ')' : '') + '</span></span></a>');
+  }
+
+  function start() { hero(); google(); sections(); food(0); maps(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
