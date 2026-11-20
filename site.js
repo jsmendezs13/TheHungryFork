@@ -22,7 +22,9 @@
       logo: '/havana/havana-logo.webp',   // the restaurant's logo, as on its sign (20 Nov; his file Havana_Social_II.png)
       hero: null,          // a photo for the top of the home page (not needed while there is the video)
       heroVideo: '/havana/havana-hero.mp4',  // the top of the home page (20 Nov: his video, graded, the repeat taken out; no sound)
-      heroPoster: '/havana/havana-hero.jpg',
+      heroPoster: '/havana/havana-hero.jpg',  // 1280x720 since 20 Nov 05:53 ("es posible tenerlo de mejor calidad?")
+      heroVideoTall: '/havana/havana-hero-tall.mp4',  // the middle of the same video, for a phone held upright (what it shows anyway; half the download)
+      heroPosterTall: '/havana/havana-hero-tall.jpg',
       // its Google rating, next to Fork's Rating on the home page (20 Nov: typed by hand for now, as Google Maps shows it;
       // later it comes from Google by itself). No score → nothing is shown.
       google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', score: null, count: null },
@@ -109,8 +111,17 @@
       watch.disconnect();
       if (S.heroVideo) {                                         // its own video instead (muted, as browsers require to play by itself)
         v.muted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.loop = true;
-        if (S.heroPoster) v.poster = S.heroPoster;
-        v.src = S.heroVideo;
+        // a phone held upright gets the tall copy; turned sideways, the whole picture (and back)
+        var up = S.heroVideoTall && window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
+        var pick = function () {
+          var tall = !!(up && up.matches), src = tall ? S.heroVideoTall : S.heroVideo, poster = tall ? (S.heroPosterTall || S.heroPoster) : S.heroPoster;
+          if (v.getAttribute('src') === src) return;
+          if (poster) v.poster = poster;
+          v.src = src;
+          if (v.play) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+        };
+        pick();
+        if (up) { if (up.addEventListener) up.addEventListener('change', pick); else if (up.addListener) up.addListener(pick); }
         document.documentElement.classList.add('hv-has-video');
       } else { v.removeAttribute('src'); v.removeAttribute('autoplay'); v.preload = 'none'; }
     });

@@ -1430,9 +1430,10 @@ function portalDish(k){
     return list.find(d=>d&&d.img&&!PORTAL_BAD.has(d.img))||null;
   }catch(e){return null;}
 }
+// The photo is shown about 210 px wide on a phone and 280-290 px on a computer (20 Nov: 220 everywhere made it soft on a computer)
 function portalIconHTML(k){
   const m=WARP_META[k],pd=portalDish(k);
-  return pd?`<img class="portal-photo" src="${hfImgSrc(pd.img,220)}" data-orig="${pd.img}" alt="" decoding="async" draggable="false" onerror="portalImgErr(this)">`:`<span class="portal-emoji" data-orig="">${m.emoji}</span>`;
+  return pd?`<img class="portal-photo" src="${hfImgSrc(pd.img,hfPhotoW(220,300))}" data-orig="${pd.img}" alt="" decoding="async" draggable="false" onerror="portalImgErr(this)">`:`<span class="portal-emoji" data-orig="">${m.emoji}</span>`;
 }
 // The ratings arrive after the caves are drawn: a Top Rated cave's first dish can change without the caves changing.
 function portalPaint(){
