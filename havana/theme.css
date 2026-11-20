@@ -46,6 +46,15 @@ html[data-site="havana"]:not(.hv-has-hero) .video-hero-overlay { background: rad
 html[data-site="havana"] .video-hero-content { color: var(--hv-navy); }
 html[data-site="havana"] .video-hero-title { font-size: 0; line-height: 0; }
 html[data-site="havana"] .video-hero-title .hv-hero-logo { width: min(84vw, 430px); height: auto; display: block; margin: 0 auto; }
+/* the home page's own video (20 Nov): it plays at the top; the logo sits on a faded sky blue that melts into the video
+   (05:07: he chose it over a white card and the wood wall), the words below on the sky */
+html[data-site="havana"].hv-has-video .video-hero-bg { display: block; }
+html[data-site="havana"].hv-has-video .video-hero-overlay {
+  background: linear-gradient(to bottom, rgba(22,32,58,.18) 0%, rgba(22,32,58,0) 22%, rgba(138,204,239,0) 40%, rgba(138,204,239,.82) 60%, #8ACCEF 74%); }
+html[data-site="havana"].hv-has-video .video-hero-title { box-sizing: border-box; margin-left: auto; margin-right: auto; width: min(100vw, 560px); padding: 34px 44px 30px;
+  background: radial-gradient(closest-side, rgba(200,232,248,.9) 0%, rgba(175,221,245,.82) 62%, rgba(150,210,242,.45) 84%, rgba(138,204,239,0) 100%); }
+html[data-site="havana"].hv-has-video .video-hero-title .hv-hero-logo { width: 100%; }
+html[data-site="havana"].hv-has-video .video-hero-eyebrow { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 12px rgba(0,0,0,.55); }
 html[data-site="havana"] .video-hero-title .hv-word { display: block; font-family: var(--hv-display); font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: 1; color: var(--hv-purple); text-transform: uppercase; }
 html[data-site="havana"] .video-hero-eyebrow { font-family: var(--hv-label); font-size: 1.1rem; letter-spacing: .2em; color: var(--hv-navy); opacity: 1; }
 html[data-site="havana"] .video-hero-tagline { font-family: var(--hv-display); font-style: normal; font-size: clamp(1.1rem, 4.4vw, 1.55rem); text-transform: uppercase;
@@ -64,6 +73,7 @@ html[data-site="havana"] .vh-btn span:not(.hv-ico) { font-family: var(--hv-label
 html[data-site="havana"] footer { background: var(--hv-yellow); color: var(--hv-navy); border-top: 0; }
 html[data-site="havana"] footer a { color: var(--hv-navy); }
 html[data-site="havana"] footer img.site-logo { width: 220px; height: auto; }
+html[data-site="havana"] img.site-logo { border-radius: 0 !important; object-fit: contain; }   /* the logo is wide: never cut to a circle */
 
 /* ── Havana's own parts of the home page (havana/home.js) ── */
 html[data-site="havana"] .hv-sec { padding: 56px 20px; text-align: center; color: var(--hv-navy); }

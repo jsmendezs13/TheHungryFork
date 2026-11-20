@@ -19,8 +19,10 @@
       pages: '/havana/pages.js',
       ring: true,          // photos of dishes and drinks in the ring of leaves (the restaurant's sign)
       noTypedPairs: true,  // no wine or cocktail suggestions unless the team chooses them
-      logo: null,          // the original logo file: coming from Sebastian (19 Nov: the client prefers it to the neon one)
-      hero: null,          // the photo of the restaurant: coming
+      logo: '/havana/havana-logo.webp',   // the restaurant's logo, as on its sign (20 Nov; his file Havana_Social_II.png)
+      hero: null,          // a photo for the top of the home page (not needed while there is the video)
+      heroVideo: '/havana/havana-hero.mp4',  // the top of the home page (20 Nov: his video, graded, the repeat taken out; no sound)
+      heroPoster: '/havana/havana-hero.jpg',
       plate: 'havana/photos/hv-churrasco.png',   // the dish at the top of Reservations (The Hungry Fork's steak there)
       eyebrow: 'Caribbean & Mexican · Stone Street, New York',
       tagline: 'There’s no party like a Latin party',
@@ -95,12 +97,19 @@
 
   var page = location.pathname.replace(/\/+$/, '').replace(/\.html$/, '') || '/';
   var home = page === '/' || page === '/index';
-  // The Hungry Fork's chef video never loads here: its address is taken away the moment the page reads it.
+  // The Hungry Fork's chef video never loads here: the moment the page reads it, its address becomes the restaurant's own video (or none).
   var watch = null;
   if (home) try {
     watch = new MutationObserver(function () {
       var v = document.querySelector('video.video-hero-bg');
-      if (v) { v.removeAttribute('src'); v.removeAttribute('autoplay'); v.preload = 'none'; watch.disconnect(); }
+      if (!v) return;
+      watch.disconnect();
+      if (S.heroVideo) {                                         // its own video instead (muted, as browsers require to play by itself)
+        v.muted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.loop = true;
+        if (S.heroPoster) v.poster = S.heroPoster;
+        v.src = S.heroVideo;
+        document.documentElement.classList.add('hv-has-video');
+      } else { v.removeAttribute('src'); v.removeAttribute('autoplay'); v.preload = 'none'; }
     });
     watch.observe(document.documentElement, { childList: true, subtree: true });
   } catch (e) {}
