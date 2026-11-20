@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/site.js"></script>
+<title>Terms of Service · The Hungry Fork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --red:#B01015; --red-dark:#7E0A0E; --red-light:#F7E3E1;
+    --white:#FCF9F4; --off-white:#F5EEE3; --text:#2B211A;
+    --muted:#8A7B6E; --border:#E9E0D3; --ink:#2B211A;
+    --serif:'Cormorant Garamond', Georgia, serif;
+    --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  body { font-family:var(--sans); color:var(--text); background:var(--off-white); line-height:1.75; -webkit-font-smoothing:antialiased; }
+
+  .p-topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px; background:rgba(21,13,9,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .p-home { color:rgba(252,249,244,.8); text-decoration:none; font-size:.8rem; letter-spacing:.06em; white-space:nowrap; }
+  .p-topbar-title { font-family:var(--serif); font-size:1.1rem; font-weight:600; color:var(--white); }
+  .p-spacer { width:56px; }
+
+  .p-wrap { max-width:720px; margin:0 auto; padding:2.2rem 1.15rem 4rem; }
+  h1 { font-family:var(--serif); font-size:clamp(2rem,7vw,2.9rem); font-weight:600; line-height:1.1; margin-bottom:.4rem; }
+  .p-updated { font-size:.78rem; color:var(--muted); letter-spacing:.04em; margin-bottom:2rem; }
+  h2 { font-family:var(--serif); font-size:1.4rem; font-weight:600; margin:2.4rem 0 .7rem; }
+  p { margin-bottom:.95rem; font-weight:300; }
+  strong { font-weight:600; }
+  a { color:var(--red); }
+  ul { margin:0 0 1.1rem 1.1rem; font-weight:300; }
+  li { margin-bottom:.5rem; padding-left:.2rem; }
+
+  .p-lead { background:var(--white); border:1px solid var(--border); border-left:3px solid var(--red); border-radius:12px; padding:1.1rem 1.2rem; margin-bottom:2rem; }
+  .p-lead p:last-child { margin-bottom:0; }
+
+  .p-warn { background:var(--red-light); border:1px solid rgba(176,16,21,.25); border-radius:12px; padding:1.1rem 1.2rem; margin:1.4rem 0; }
+  .p-warn p:last-child { margin-bottom:0; }
+  .p-warn strong { color:var(--red-dark); }
+
+  .p-foot { border-top:1px solid var(--border); margin-top:3rem; padding-top:1.4rem; font-size:.8rem; color:var(--muted); }
+  .p-foot a { margin-right:1rem; }
+</style>
+</head>
+<body>
+
+<div class="p-topbar">
+  <a href="/" class="p-home" data-hf-back>&#8249; Site</a>
+  <div class="p-topbar-title">Terms</div>
+  <span class="p-spacer"></span>
+</div>
+<script>
+// r36 (Sebastian, 16 Oct): the way back. "‹ Site" goes back to the page you came from, as you left it (the
+// browser's own Back, so that page comes back where it was), and says which page: "‹ Manager", "‹ Menu"…
+// Opened from outside the site (a QR code, an email, a typed address) it stays "‹ Site" and goes home. A page
+// that opened in a new tab (its address has nt=1) closes that tab, which shows the page that opened it. Places
+// this page adds to the browser's history (a #hash, a dish) are skipped. The same lines on every page (the tests
+// check they match).
+(function(){
+  var NAMES={'':'Site',index:'Site',menu:'Menu',manager:'Manager',reservations:'Reservations',checkin:'Check In',rewards:'Reward terms',terms:'Terms',privacy:'Privacy',invite:'Invite'};
+  function page(p){return String(p||'').replace(/^\/+|\/+$/g,'').replace(/\.html$/,'');}
+  var from=null,depth=0,H=window.history,newTab=/[?&]nt=1(&|$)/.test(location.search);
+  try{
+    var r=document.referrer?new URL(document.referrer):null,rp=r?page(r.pathname):'';
+    // (the home page with ?dish= in its address only passes the visitor on to the menu: it is not a page to go back to)
+    if(r&&r.origin===location.origin&&rp!==page(location.pathname)&&Object.prototype.hasOwnProperty.call(NAMES,rp)
+       &&!((rp===''||rp==='index')&&/[?&]dish=/.test(r.search)))from=r;
+  }catch(e){}
+  try{
+    var push=H.pushState,rep=H.replaceState;
+    var mark=function(s){if(s===null||s===undefined)s={};if(typeof s==='object'&&!Array.isArray(s)){s=Object.assign({},s);s.hfDepth=depth;}return s;};
+    if(H.state&&typeof H.state.hfDepth==='number')depth=H.state.hfDepth;
+    rep.call(H,mark(H.state),'');
+    H.pushState=function(s,t,u){depth++;return push.call(H,mark(s),t,u);};
+    H.replaceState=function(s,t,u){return rep.call(H,mark(s),t,u);};
+    window.addEventListener('popstate',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;});
+    window.addEventListener('hashchange',function(){var s=H.state;if(s&&typeof s.hfDepth==='number')depth=s.hfDepth;else{depth++;rep.call(H,mark(s),'');}});
+  }catch(e){}
+  function go(){location.href=from?from.href:'/';}
+  window.hfBackFrom=from?NAMES[page(from.pathname)]:null;
+  window.hfBackCan=function(){return !!from&&H.length>depth+1;};
+  window.hfBack=function(){
+    if(!from){location.href='/';return;}
+    if(H.length<=depth+1){if(newTab){try{window.close();}catch(e){}}setTimeout(go,newTab?300:0);return;}
+    var t=setTimeout(go,900);
+    window.addEventListener('pagehide',function(){clearTimeout(t);});
+    H.go(-(depth+1));
+  };
+  function paint(){
+    var els=document.querySelectorAll('[data-hf-back]');
+    for(var i=0;i<els.length;i++){
+      var a=els[i],name=window.hfBackFrom;
+      if(from)a.setAttribute('href',from.href);
+      if(a.getAttribute('data-hf-back')==='icon')a.setAttribute('aria-label',name?'Back to '+name:'Home');
+      else a.textContent='‹ '+(name||'Site');
+      if(!a.hfBack){a.hfBack=1;a.addEventListener('click',function(ev){if(!from||ev.metaKey||ev.ctrlKey||ev.shiftKey||ev.altKey)return;ev.preventDefault();window.hfBack();});}
+    }
+  }
+  paint();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);
+})();
+</script>
+
+<div class="p-wrap">
+
+<h1>Terms of Service</h1>
+<div class="p-updated">The Hungry Fork &middot; Last updated 16 November 2026</div>
+
+<div class="p-lead">
+  <p><strong>The short version.</strong> Rate dishes honestly, under your own name, and don&rsquo;t pretend to be someone else. Check in only when you are really at the restaurant. Menus and allergen notes come from the restaurant, so always check with them before you eat. We can remove reviews that break these rules.</p>
+  <p><strong>Rewards come from the restaurants, never from us.</strong> Lucky Bite, stamp cards, invites and any other reward are offered, paid for and given by each restaurant. Seb&rsquo;s Analytics and Fork&rsquo;s Rating do not give away food or discounts; we only provide the tools a restaurant uses to run its own rewards.</p>
+</div>
+
+<p>The Hungry Fork is operated by <strong>Seb&rsquo;s Analytics LLC</strong>, a limited liability company in the State of New York. By using thehungryfork.fun or creating an account, you agree to these terms.</p>
+
+<h2>What this service is</h2>
+
+<p>The Hungry Fork shows restaurant menus and collects ratings and comments from people who have eaten the dishes &mdash; we call them tasters. Fork&rsquo;s Rating is the score those tasters produce. We are not paid by restaurants to raise a score, and restaurants cannot remove a review they dislike.</p>
+
+<h2>Your account</h2>
+
+<ul>
+  <li>You must be at least <strong>13 years old</strong>.</li>
+  <li>You must be in the <strong>United States</strong>, with a US phone number. We cannot send verification codes anywhere else.</li>
+  <li><strong>One account per phone number.</strong></li>
+  <li>Give your <strong>real first and last name</strong>. Both appear publicly on the reviews you write, next to your handle.</li>
+  <li><strong>Your PIN is yours.</strong> Do not share it. Anything done from your account is treated as done by you, so if you think someone else has your PIN, change it immediately.</li>
+</ul>
+
+<h2>Reviews</h2>
+
+<p><strong>Who can write a review.</strong> To write a review you need an account, and an account needs a US phone number. When you rate a dish or a restaurant, you are saying that you ate there yourself and that the review is your own honest opinion.</p>
+
+<p><strong>Your review is yours.</strong> You keep ownership of what you write. When you post a review, you give the restaurant you reviewed and Seb&rsquo;s Analytics LLC a non-exclusive, worldwide, royalty-free permission to show, store and copy it. That covers the restaurant&rsquo;s website, forksrating.com, the copy the restaurant can receive if it stops using Fork&rsquo;s Rating, and the aggregate research described in our <a href="/privacy">Privacy Policy</a>. No one changes your words.</p>
+
+<p><strong>Your reviews are public</strong> once they appear. Anyone can read them, alongside your name and your handle. At a restaurant that checks its reviews, a new review waits up to 48 hours before it appears (see <em>How moderation works</em> below).</p>
+
+<p><strong>The restaurant may contact you.</strong> When you write a review, the restaurant&rsquo;s owner and the managers it authorizes to check reviews can see your phone number (see our <a href="/privacy">Privacy Policy</a>). It is not shared with anyone outside the restaurant. By accepting these Terms, you agree that the restaurant may contact you from time to time about your visit and the quality of its service, in a professional conversation only about the restaurant, so it can give its guests the best experience. It may not use your number to advertise to you, and it may not pressure you about your review.</p>
+
+<p><strong>A review can&rsquo;t be changed once it is posted</strong> &mdash; not by the restaurant, not by us, not by you. You can rate the same dish again 30 days after your last rating of it: that adds a new review, your earlier one stays, and every rating counts.</p>
+
+<p><strong>You can delete your own review</strong> at any time in My Tastings. It disappears from the site and stops counting in the rating at once, and the restaurant&rsquo;s reply goes with it. Seb&rsquo;s Analytics keeps a private copy for its records for 5 years (see our <a href="/privacy">Privacy Policy</a>); the restaurant can&rsquo;t see it. Only you can delete your review. After deleting one, you can rate that dish again whenever you like.</p>
+
+<p><strong>What a review may not contain</strong> (the <a href="/review-rules">Review rules</a> list them in full):</p>
+
+<ul>
+  <li>Insults, harassment or threats, or obscene or sexual content</li>
+  <li>Discrimination because of race, gender, sexuality, ethnicity or a similar trait</li>
+  <li>Someone&rsquo;s private information (a phone number, an address, an email&hellip;), or a business&rsquo;s confidential information</li>
+  <li>Statements of fact that you know are false</li>
+  <li>A fake review: a visit that didn&rsquo;t happen, or a review written for someone else, paid for, or written by the owner or staff of a competing restaurant</li>
+  <li>Content that has nothing to do with the restaurant (ads, spam, politics, another business)</li>
+  <li>Demands or threats (for example, &ldquo;a free dinner or 1 star&rdquo;)</li>
+  <li>Ads, sales links or contact details, and scam links</li>
+  <li>Pretending to be someone else</li>
+  <li>A review where you have a conflict of interest: you compete with the restaurant, supply it, or are a relative or close friend of its owner or staff</li>
+  <li>Meaningless text, or illegal or dangerous content</li>
+  <li>Something that isn&rsquo;t your own experience</li>
+  <li>The same review posted twice</li>
+</ul>
+
+<p><strong>Reviews by the restaurant&rsquo;s own team.</strong> While someone is an owner or manager of a restaurant, all their ratings of that restaurant are hidden automatically, and those written while in that role stay hidden for good. Members of its crew cannot rate it while they work there. Reviews written before someone joined the crew stay as they are, and former crew members can rate it again.</p>
+
+<h2>Checking in at a restaurant</h2>
+
+<p>A check-in is a record that you were at a restaurant on a particular day. You tap <strong>Check In</strong>, your phone shows a code for ninety seconds, and a member of restaurant staff confirms it. When you arrive with a booking and staff scan the booking&rsquo;s QR code at the door, that counts as a check-in too, for the account that made the booking or the account with the booking&rsquo;s phone number. Checking in is optional; it is what makes your visit count for a restaurant&rsquo;s rewards &mdash; see <em>Rewards, Lucky Bite and invites</em> below.</p>
+
+<ul>
+  <li><strong>One check-in per restaurant per day.</strong> Showing the code again the same day adds nothing.</li>
+  <li><strong>Only a member of that restaurant&rsquo;s staff can confirm a visit</strong>, and never their own.</li>
+  <li><strong>Check in only when you are really there.</strong> Do not ask staff to confirm a visit that did not happen, and do not lend your code to somebody else &mdash; it would record the visit against your account anyway.</li>
+  <li>We can <strong>remove check-ins</strong> we have good reason to believe are not real, and suspend an account that does this repeatedly.</li>
+</ul>
+
+<p><strong>A check-in is a record, not a promise.</strong> It does not by itself entitle you to anything. Where a restaurant chooses to offer something for returning customers, that offer is the restaurant&rsquo;s &mdash; see <em>Rewards, Lucky Bite and invites</em> below.</p>
+
+<h2>How moderation works, and who can do what</h2>
+
+<p><strong>Who moderates reviews.</strong> Each restaurant manages the reviews on its own website. Once a restaurant has signed its review agreement with Seb&rsquo;s Analytics LLC, its owner, or a manager the owner chooses, can hide a review that breaks the <a href="/review-rules">Review rules</a>. A hidden review is hidden as a whole, comment and stars, and no longer counts in the rating, either on the restaurant&rsquo;s website or on Fork&rsquo;s Rating. The same rules apply to every review, whatever its stars. You can still see what was hidden in your account. Restaurants cannot delete or change reviews. Fork&rsquo;s Rating does not check each decision: we rely in good faith on restaurants to follow these rules.</p>
+
+<p><strong>What a restaurant may not do.</strong> A restaurant may not hide a review because it is negative, has a low score or is bad for business. It may not hide a complaint about the food, the service, the staff, the waiting time, a booking, the prices or the cleanliness. It may not offer you anything to remove or change a review, and it may not threaten or pressure you. It may reply to your review in public, and you may answer.</p>
+
+<p><strong>Every new review is checked before it appears.</strong> At a restaurant that has signed its review agreement, a new review waits up to 48 hours. Its owner, or a manager the owner chooses, approves it (it appears at once) or hides it for a reason in the <a href="/review-rules">Review rules</a>. If nobody decides, it appears by itself after 48 hours, and it can still be hidden later for one of those reasons. A restaurant must check good and bad reviews the same way; it may not hold a review back for any other reason. It may use a reviewer&rsquo;s phone number only to talk with them, professionally, about their visit and the restaurant: never to advertise, and never to pressure them about their review.</p>
+
+<p><strong>If your review is hidden.</strong> The restaurant tells you in your account, with the reason. If you think it&rsquo;s a mistake, write to the restaurant from My Tastings (<em>Message the restaurant</em>, under your review): its owner and the managers who moderate reviews answer you there, and they can show your review again. The conversation is kept with the review&rsquo;s moderation record. If you still disagree, the <a href="/review-rules">Review rules</a> page tells you how to reach us.</p>
+
+<p><strong>Questions, complaints and requests.</strong> Write to the restaurant first. If you prefer not to, write to us at <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a>. If a restaurant misuses the moderation tool, Seb&rsquo;s Analytics may restore what it hid or switch off that restaurant&rsquo;s tool. We do not watch every review, and we have no duty to.</p>
+
+<p><strong>What Seb&rsquo;s Analytics may remove.</strong> Seb&rsquo;s Analytics does not moderate opinions. It may remove content or suspend an account when the law or a court order requires it, when content puts someone&rsquo;s safety at risk, or when an account breaks these Terms (for example, a fake or duplicate account).</p>
+
+<h2>Menus, prices and allergens</h2>
+
+<p>Restaurant staff maintain their own menus here: prices, descriptions, what is sold out. We do not verify what they enter, and it can be out of date or wrong.</p>
+
+<div class="p-warn">
+  <p><strong>If you have a food allergy or intolerance, do not rely on this website.</strong> Allergen information shown here is provided by the restaurant, may be incomplete, and can change without notice &mdash; recipes and suppliers change, and kitchens share equipment.</p>
+  <p><strong>Always speak to restaurant staff directly before you order.</strong> Seb&rsquo;s Analytics LLC does not prepare the food and is not responsible for what a kitchen serves you.</p>
+</div>
+
+<h2 id="grades">Sanitary inspection grades</h2>
+
+<p>In New York City, the Health Department inspects restaurants and gives each one a letter grade &mdash; A, B or C &mdash; on a card the restaurant must post where people passing by can see it.</p>
+
+<p><strong>The grade shown on a restaurant&rsquo;s pages here is chosen by that restaurant.</strong> A restaurant can show A, B or C, or choose to show no grade at all: whether to show it here is up to the restaurant. Seb&rsquo;s Analytics LLC and Fork&rsquo;s Rating do not inspect restaurants, and we do not check, confirm or update the grade a restaurant shows. The restaurant is responsible for showing only the grade on its current Health Department card, and for changing or removing it when that grade changes.</p>
+
+<p>The official grade is the card posted at the restaurant and the inspection results the NYC Health Department publishes on nyc.gov. If what you see here is different, the Health Department&rsquo;s grade is the right one &mdash; please tell us at <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a>.</p>
+
+<h2>Rewards, Lucky Bite and invites</h2>
+
+<div class="p-warn">
+  <p><strong>Neither Seb&rsquo;s Analytics LLC nor Fork&rsquo;s Rating gives away food, drinks, discounts or prizes, and neither pays for them.</strong> Every reward on this site &mdash; a Lucky Bite, a full stamp card, an invite&rsquo;s discount, or any other promotion &mdash; is offered, paid for and honoured by the restaurant that chose to run it. We provide the tools the restaurant uses to run its own rewards: we keep the count, show the reward, and record when it is used.</p>
+</div>
+
+<p><strong>The restaurant decides.</strong> Each restaurant chooses whether it runs any of these, what they give and how many dishes or visits they take, and can change or end them at any time. Whether and how a reward is honoured is the restaurant&rsquo;s decision, and any question or disagreement about a reward is between you and that restaurant.</p>
+
+<p><strong>Each reward has the restaurant&rsquo;s own terms and conditions.</strong> A restaurant cannot run a reward without writing them. You can read them on the restaurant&rsquo;s <a href="/rewards">reward terms</a> page, and from the &ldquo;Terms and conditions apply&rdquo; link shown with every reward. They apply together with these Terms: for that reward, the restaurant&rsquo;s terms apply, but they cannot change what these Terms say about us, your account or your information.</p>
+
+<p>How each one works, where a restaurant runs it:</p>
+
+<ul>
+  <li><strong>Lucky Bite.</strong> Each visit the restaurant&rsquo;s staff confirm (a check-in, or your booking&rsquo;s QR scanned at the door; at most one per restaurant per day) gets the next number at that restaurant, in the order the visits are confirmed, and you see your number as soon as the visit is confirmed. Every Nth number, as the restaurant sets it, wins the prize the restaurant chose, given during that same visit; a prize not given by the end of the restaurant&rsquo;s day (5 AM, New York time) runs out. The restaurant&rsquo;s own staff do not take part at their own restaurant.</li>
+  <li><strong>Stamp card.</strong> Each scanned visit is one stamp, at most one per restaurant per day. When the card is full you receive the reward the restaurant chose for it, and a new card starts.</li>
+  <li><strong>Invites.</strong> After a visit the staff confirmed, you can make one invite for that visit: you pick a dish you recommend, and your phone shows a QR code (or a link) for one friend. The friend who receives it saves it to their own account, with their own phone number; once saved it is theirs, and nobody else &mdash; including you &mdash; can use it. It gives the restaurant&rsquo;s discount on that dish, once, from the day after it was made until the date shown.</li>
+</ul>
+
+<p>For every reward:</p>
+
+<ul>
+  <li>It is shown with a QR code on your phone and <strong>given by the restaurant&rsquo;s staff</strong>, once. After that it is used.</li>
+  <li>It <strong>expires</strong> on the date shown in your account.</li>
+  <li>It has <strong>no cash value</strong> and cannot be exchanged, sold or transferred &mdash; other than sharing an invite in the way described above.</li>
+  <li>We can <strong>cancel a reward</strong> that came from a visit that did not happen, from several accounts used by one person, from a mistake in our system, or from any other abuse, and suspend the accounts involved.</li>
+</ul>
+
+<p><strong>We never ask you for money.</strong> The Hungry Fork is free to use. We do not take payments, we do not hold card details, and no one on this site will ever ask you to pay for anything. If you are ever asked to pay to claim something you saw here, it did not come from us &mdash; write to <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a> and tell us.</p>
+
+<h2>Availability</h2>
+
+<p>We do our best to keep the site running, but it is provided as it is. We do not promise it will always be available, or free of mistakes. We may change or stop parts of it. If we close the service entirely, we will give you notice and a way to get your reviews first.</p>
+
+<h2>Limits</h2>
+
+<p>The Hungry Fork is a free service. To the fullest extent the law allows, Seb&rsquo;s Analytics LLC is not liable for indirect or consequential losses arising from your use of it. Nothing here limits any liability that cannot lawfully be limited.</p>
+
+<h2>Ending your account</h2>
+
+<p>You can ask us to close your account at any time by writing to <a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a>. We can suspend or close an account that breaks these terms, and we will tell you why.</p>
+
+<h2>Changes</h2>
+
+<p>If we change these terms, the new version appears here with a new date at the top. Continuing to use the service after a change means you accept it.</p>
+
+<h2>Law</h2>
+
+<p>These terms are governed by the laws of the State of New York, and any dispute belongs to the courts of that state.</p>
+
+<h2>Contact</h2>
+
+<p>Seb&rsquo;s Analytics LLC &middot; New York, NY<br>
+<a href="mailto:advisory@sebsanalytics.com">advisory@sebsanalytics.com</a></p>
+
+<div class="p-foot">
+  <a href="/">Home</a>
+  <a href="/privacy">Privacy Policy</a>
+  <br><br>
+  &copy;2026 Seb&rsquo;s Analytics LLC
+</div>
+
+</div>
+</body>
+</html>
