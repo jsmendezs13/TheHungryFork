@@ -80,11 +80,8 @@ html[data-site="havana"] .video-hero-tagline { font-family: var(--hv-display); f
   letter-spacing: .01em; color: var(--hv-purple); opacity: 1; text-shadow: none; }
 html[data-site="havana"] .vh-rating-caption { font-family: var(--hv-label); font-size: 1.05rem; letter-spacing: .2em; color: var(--hv-navy); }
 html[data-site="havana"] .vh-flag { filter: hue-rotate(200deg) saturate(1.3); }
-html[data-site="havana"] .vh-btn img { opacity: 0; }
-html[data-site="havana"] .vh-btn .hv-ico { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%;
-  display: grid; place-items: center; background: var(--hv-yellow); color: var(--hv-navy); box-shadow: 0 0 0 3px #fff, 0 8px 18px rgba(22,32,58,.25); pointer-events: none; }
-html[data-site="havana"] .vh-btn:nth-child(2n) .hv-ico { background: #fff; color: var(--hv-leaf); box-shadow: 0 0 0 3px var(--hv-yellow), 0 8px 18px rgba(22,32,58,.25); }
-html[data-site="havana"] .vh-btn .hv-ico svg { width: 40px; height: 40px; }
+html[data-site="havana"] .vh-btn img { opacity: 0; }   /* The Hungry Fork's steak button, until home.js puts Havana's palm */
+html[data-site="havana"] .vh-btn img.hv-palm { opacity: 1; width: 76px; height: 76px; filter: drop-shadow(0 6px 14px rgba(0,0,0,.5)); }
 html[data-site="havana"] .vh-btn span:not(.hv-ico) { font-family: var(--hv-label); font-size: .98rem; letter-spacing: .12em; font-weight: 400;
   background: none; -webkit-background-clip: initial; background-clip: initial; -webkit-text-fill-color: var(--hv-navy); color: var(--hv-navy); text-shadow: none; }
 

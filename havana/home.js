@@ -32,6 +32,7 @@
     { name: 'Call', ico: 'phone', tel: true }
   ];
   var PLACE = { Menu: { menu: 1 }, Drinks: { drinks: 1 }, Reserve: { book: 1 }, Social: { social: 1 } };
+  var PALM = '/havana/palm-button.webp';   // drawn for Havana (palm/make_options.py, look A)
 
   function hero() {
     if (S.hero) { document.documentElement.style.setProperty('--hv-hero', 'url("' + S.hero + '")'); document.documentElement.classList.add('hv-has-hero'); }
@@ -51,9 +52,10 @@
       if (r.go) b.dataset.hvGo = r.go; else delete b.dataset.hvGo;
       if (r.tel) b.dataset.hvTel = '1';
       var label = b.querySelector('span'); if (label) label.textContent = r.name;
-      var img = b.querySelector('img'); if (img) img.alt = '';
-      if (!b.querySelector('.hv-ico')) b.insertAdjacentHTML('afterbegin', '<span class="hv-ico" aria-hidden="true"></span>');
-      b.querySelector('.hv-ico').innerHTML = svg(r.ico);
+      // every button shows Havana's glossy palm (21 Nov: "I love the first one, Glossy palm"), as The Hungry Fork's show its steak
+      var img = b.querySelector('img');
+      if (img) { img.alt = ''; if (img.getAttribute('src') !== PALM) { img.src = PALM; img.setAttribute('data-orig', PALM); } img.classList.add('hv-palm'); }
+      var ico = b.querySelector('.hv-ico'); if (ico) ico.remove();
     });
     // Specials, Events, Parties and Visit Us go down the page; Call calls. (Before the page's own click.)
     var rail = document.getElementById('vh-btn-rail');
