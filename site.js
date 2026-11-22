@@ -28,7 +28,7 @@
       // its Google rating, next to Fork's Rating on the home page (20 Nov: typed by hand for now, as Google Maps shows it;
       // later it comes from Google by itself). No score → nothing is shown.
       google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', score: null, count: null },
-      plate: 'havana/photos/hv-churrasco.png',   // the dish at the top of Reservations (The Hungry Fork's steak there)
+      plate: 'havana/photos/churrasco.png',   // the dish at the top of Reservations (The Hungry Fork's steak there)
       eyebrow: 'Caribbean & Mexican · Stone Street, New York',
       tagline: 'There’s no party like a Latin party',
       address: '45 Stone Street, New York, NY 10004',
