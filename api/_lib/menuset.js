@@ -26,9 +26,9 @@
 //
 // 23 Nov 2026 (Sebastian, 03:58 and 04:40): menu_top_save may carry design: { side: 'main' | 'drinks', value } — how
 // guests look through the food menu or the drinks (menu_settings.menu_design_main / menu_design_drinks, migration
-// 41): 'original' (the carousel) or 'rows' (the Chef's Pick on top, a row that turns for each part of the menu). Grid
-// and Wheel come next: the database already allows them, this file takes them when the menu can draw them
-// (DESIGNS_READY). The menu gets it as top.design; without migration 41 it is not there (the menu shows the original).
+// 41): 'original' (the carousel), 'rows' (the Chef's Pick on top, a row that turns for each part of the menu), 'grid'
+// (titles that open into two columns of dishes) or 'wheel' (the carousel, then the dish page over a wheel of the part's
+// dishes). DESIGNS_READY: the ones this website can draw. The menu gets it as top.design; without migration 41 it is not there (the menu shows the original).
 //
 // Reached through api/reservations.js like Settings, so the site still deploys
 // as twelve functions. Managers, owners and Seb's Analytics: the same people
@@ -60,7 +60,7 @@ export const CAVES = {
 const ORDER_COLUMN = { main: 'cave_order_main', drinks: 'cave_order_drinks' };
 // 23 Nov (migration 41): the menu's design, for the food and for the drinks
 export const DESIGNS = ['original', 'grid', 'rows', 'wheel'];          // what the database allows
-export const DESIGNS_READY = ['original', 'rows'];                       // what the menu can draw now
+export const DESIGNS_READY = ['original', 'rows', 'grid', 'wheel'];      // what the menu can draw now (23 Nov: Grid and Wheel too)
 const DESIGN_COLUMN = { main: 'menu_design_main', drinks: 'menu_design_drinks' };
 const DESIGN_NOT_READY = 'The menu design is not set up yet: migration 41 has not been run.';
 // The saved designs as the pages use them: { main, drinks } ('original' for anything this website cannot draw).

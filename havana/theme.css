@@ -204,6 +204,37 @@ html[data-site="havana"] .rw-arr { background: #fff; color: var(--hv-purple); bo
 html[data-site="havana"] .rw-empty { color: var(--hv-navy); }
 @media (min-width: 760px) { html[data-site="havana"] .rw-hero-name { font-size: 2.3rem; } html[data-site="havana"] .rw-head h2 { font-size: 1.7rem; } }
 
+/* ── the menu's design "Grid" (23 Nov 2026): white titles that open, Knewave names, the open one purple ── */
+html[data-site="havana"] #grid-room { background: radial-gradient(120% 80% at 50% 0%, #E2F3FC 0%, #B9E1F5 45%, #8ACCEF 100%); }
+html[data-site="havana"] .gd-bar { background: #fff; color: var(--hv-navy); box-shadow: 0 6px 16px rgba(22,32,58,.12); }
+html[data-site="havana"] .gd-bar:focus-visible, html[data-site="havana"] .gd-card:focus-visible { outline-color: var(--hv-purple); }
+html[data-site="havana"] .gd-name { font-family: var(--hv-display); font-weight: 400; color: var(--hv-purple); font-size: 1.4rem; }
+html[data-site="havana"] .gd-n { font-family: var(--hv-label); font-size: .95rem; font-weight: 400; letter-spacing: .1em; color: var(--hv-blue, #3A78C2); }
+html[data-site="havana"] .gd-pk { background: var(--hv-sky-pale); box-shadow: 0 2px 6px rgba(22,32,58,.12); }
+html[data-site="havana"] .gd-chev { background: var(--hv-yellow); box-shadow: 0 2px 0 rgba(45,0,119,.18); }
+html[data-site="havana"] .gd-chev::before { border-color: var(--hv-purple); }
+html[data-site="havana"] .gd-sec.open .gd-bar { background: linear-gradient(135deg, #2D0077, #4C1FB0); }
+html[data-site="havana"] .gd-sec.open .gd-name { color: #fff; }
+html[data-site="havana"] .gd-sec.open .gd-n { color: var(--hv-yellow); }
+html[data-site="havana"] .gd-card { background: #fff; box-shadow: 0 6px 16px rgba(22,32,58,.12); }
+html[data-site="havana"] .gd-cn { color: var(--hv-navy); font-weight: 700; }
+html[data-site="havana"] .gd-cp { color: var(--hv-purple); font-weight: 900; }
+@media (min-width: 700px) { html[data-site="havana"] .gd-name { font-size: 1.7rem; } }
+
+/* ── the menu's design "Wheel" (23 Nov 2026): the part's name in Bebas, the wheel white with the ring of blue leaves ── */
+html[data-site="havana"] #cave.cave-wheel .cave-wname { font-family: var(--hv-label); font-size: 1.15rem; font-weight: 400; letter-spacing: .2em; color: var(--hv-purple); }
+html[data-site="havana"] #cave.cave-wheel .cave-wv { background: rgba(255,255,255,.4); border-color: var(--hv-yellow); color: var(--hv-navy); }
+html[data-site="havana"] .cave-wl-dots i { background: rgba(45,0,119,.25); }
+html[data-site="havana"] .cave-wl-dots i.on { background: var(--hv-purple); }
+html[data-site="havana"] .cave-wl-names { font-family: var(--hv-label); font-size: .9rem; font-weight: 400; letter-spacing: .1em; color: rgba(45,0,119,.4); }
+html[data-site="havana"] .cave-wl-names b.on { color: var(--hv-purple); }
+html[data-site="havana"] .cw-ptr { border-top-color: var(--hv-purple); }
+html[data-site="havana"] .cw-disc { background: #fff; box-shadow: 0 -6px 30px rgba(22,32,58,.18), inset 0 0 0 14px var(--hv-sky-pale); }
+html[data-site="havana"] .cw-leaf { background: url('/havana/leaf-ring.webp') center / 100% 100% no-repeat; opacity: .9; }
+html[data-site="havana"] .cw-spot { background: var(--hv-sky-pale); box-shadow: 0 4px 10px rgba(22,32,58,.15); }
+html[data-site="havana"] .cw-spot.on { background: var(--hv-yellow); box-shadow: 0 0 0 4px #fff, 0 8px 18px rgba(45,0,119,.35); }
+html[data-site="havana"] .cw-hint { background: #fff; color: var(--hv-purple); font-family: var(--hv-label); font-size: .9rem; font-weight: 400; letter-spacing: .14em; box-shadow: 0 2px 8px rgba(22,32,58,.12); }
+
 /* ── reservations ── */
 html[data-site="havana"] .rv-hero { background: linear-gradient(135deg, #E2F3FC 0%, #B9E1F5 100%); }
 html[data-site="havana"] .rv-eyebrow { font-family: var(--hv-label); font-size: .9rem; letter-spacing: .16em; color: var(--hv-navy); }

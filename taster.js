@@ -2335,11 +2335,11 @@ function hfOrderClean(o){
   return out;
 }
 // 23 Nov 2026 (Sebastian, 03:58): how guests look through the menu, as the manager chose (Manager → Menu → Menu
-// design): { main, drinks }, each 'original' or 'rows' (Grid and Wheel later). Missing (an older server, migration 41
+// design): { main, drinks }, each 'original', 'rows', 'grid' or 'wheel'. Missing (an older server, migration 41
 // not run): null, and the menu shows the original carousel.
 function hfDesignClean(o){
   if(!o||typeof o!=='object')return null;
-  var ok={original:1,rows:1},out={};
+  var ok={original:1,rows:1,grid:1,wheel:1},out={};
   ['main','drinks'].forEach(function(s){out[s]=ok[o[s]]?o[s]:'original';});
   return out;
 }

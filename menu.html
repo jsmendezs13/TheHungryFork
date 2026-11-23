@@ -398,6 +398,81 @@
   #warp-room { animation:pageIn .55s ease; }
   @keyframes pageIn { from{opacity:0; transform:scale(1.1);} to{opacity:1; transform:scale(1);} }
 
+  /* ── THE MENU'S DESIGN "GRID" (23 Nov 2026): the Chef's Pick on top (the same card as Rows), then each part of the
+     menu as a title that opens (its dishes slide down in two columns, more on a computer) and closes again. ── */
+  #grid-room { position:relative; overflow:visible; overflow-x:clip; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:.2rem 0 2.2rem; min-height:60vh; animation:rwIn .45s ease; --gd-ph:112px; }
+  #grid-room[hidden] { display:none; }
+  #grid-room.tall { --gd-ph:200px; }
+  #grid-room .rw-in { overflow:visible; }      /* (no overflow:hidden above an open title, or it would not stay under the top bar) */
+  .gd-sec { margin:10px 16px 0; }
+  .gd-bar { width:100%; display:flex; align-items:center; gap:10px; padding:12px 12px 12px 16px; border:0; border-radius:18px; background:var(--white); color:var(--text); cursor:pointer; text-align:left; font:inherit;
+    box-shadow:0 6px 16px rgba(0,0,0,.28); -webkit-tap-highlight-color:transparent; transition:background .25s ease; }
+  .gd-bar:focus-visible { outline:3px solid var(--star-on); outline-offset:2px; }
+  .gd-tx { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .gd-name { font-family:var(--serif); font-size:1.35rem; font-weight:600; line-height:1.15; }
+  .gd-n { font-size:.6rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+  .gd-peek { display:flex; padding-left:12px; flex:none; }
+  .gd-pk { width:44px; height:44px; margin-left:-12px; border-radius:50%; background:var(--off-white); border:2px solid #fff; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.14); }
+  .gd-pk img { max-width:88%; max-height:82%; object-fit:contain; } .gd-pk .rw-emoji { font-size:1.2rem; }
+  #grid-room.tall .gd-pk img { max-height:92%; }
+  .gd-chev { width:34px; height:34px; flex:none; border-radius:50%; background:var(--star-on); display:flex; align-items:center; justify-content:center; }
+  .gd-chev::before { content:''; width:9px; height:9px; border-right:3px solid #2B211A; border-bottom:3px solid #2B211A; transform:translateY(-3px) rotate(45deg); transition:transform .3s ease; }
+  .gd-sec.open .gd-bar { position:sticky; top:var(--gd-top,60px); z-index:6; background:linear-gradient(135deg, #7E0A0E, #B01015); color:#fff; }
+  .gd-sec.open .gd-n { color:var(--star-on); } .gd-sec.open .gd-peek { display:none; }
+  .gd-sec.open .gd-chev::before { transform:translateY(3px) rotate(-135deg); }
+  .gd-body { display:grid; grid-template-rows:0fr; transition:grid-template-rows .35s ease; }
+  .gd-sec.open .gd-body { grid-template-rows:1fr; }
+  .gd-in { overflow:hidden; min-height:0; }
+  .gd-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; padding:12px 0 6px; }
+  .gd-card { display:flex; flex-direction:column; min-width:0; border:0; border-radius:18px; padding:10px 10px 12px; background:var(--white); color:var(--text); text-align:left; font:inherit; cursor:pointer;
+    box-shadow:0 6px 16px rgba(0,0,0,.24); -webkit-tap-highlight-color:transparent; }
+  .gd-card:focus-visible { outline:3px solid var(--star-on); outline-offset:2px; }
+  .gd-card .rw-ph { height:var(--gd-ph); }
+  .gd-cn { font-weight:600; font-size:.92rem; line-height:1.22; margin:.5rem .1rem 0; height:2.44em; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .gd-cp { font-weight:600; font-size:.92rem; color:var(--red); margin:.2rem .1rem 0; min-height:1.3em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  @media (min-width:700px){ .gd-grid { grid-template-columns:repeat(3, minmax(0,1fr)); } #grid-room { --gd-ph:132px; } #grid-room.tall { --gd-ph:230px; } .gd-sec { margin-left:24px; margin-right:24px; } .gd-name { font-size:1.6rem; } }
+  @media (min-width:1000px){ .gd-grid { grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px; } }
+  @media (prefers-reduced-motion: reduce) { .gd-body { transition:none; } }
+
+  /* ── THE MENU'S DESIGN "WHEEL" (23 Nov 2026): the carousel as the original; a part opens as the dish page over a
+     wheel of its dishes. Only the part's name at the top (his option 1). Swipe the card left or right: photo, second
+     photo, information; spin the wheel (or tap a dish on it) for the next dish. ── */
+  .cave-wname, .cave-wlabels, .cave-wv, #cave-wheel { display:none; }
+  #cave.cave-wheel .cave-catbar, #cave.cave-wheel .cave-swipe, #cave.cave-wheel .cave-dish-arrow { display:none !important; }
+  #cave.cave-wheel .cave-wname { display:block; text-align:center; font-family:var(--sans); font-size:.78rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.85); margin:46px 0 2px; min-height:1.2em; }
+  #cave.cave-wheel .cave-inner { padding-bottom:calc(var(--cw-h) + env(safe-area-inset-bottom,0px)) !important; }
+  #cave.cave-wheel .cave-photo-row { position:relative; }
+  #cave.cave-wheel .cave-wv { display:flex; position:absolute; top:50%; z-index:6; width:36px; height:36px; margin-top:-18px; border-radius:50%; border:2px solid var(--star-on); background:rgba(20,13,9,.35); color:var(--white);
+    align-items:center; justify-content:center; cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent; }
+  #cave.cave-wheel .cave-wv svg { width:18px; height:18px; } #cave.cave-wheel .cave-wv.l { left:8px; } #cave.cave-wheel .cave-wv.r { right:8px; }
+  #cave.cave-wheel .cave-text-view { padding-left:48px !important; padding-right:48px !important; }      /* the words clear the arrows */
+  #cave.cave-wheel .cave-wlabels { display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:.35rem; }
+  .cave-wl-dots { display:flex; gap:6px; align-items:center; } .cave-wl-dots i { width:8px; height:8px; border-radius:50%; background:rgba(252,249,244,.35); cursor:pointer; }
+  .cave-wl-dots i.on { width:22px; border-radius:6px; background:var(--star-on); }
+  .cave-wl-names { font-family:var(--sans); font-size:.6rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:rgba(252,249,244,.45); }
+  .cave-wl-names b { font-weight:600; } .cave-wl-names b.on { color:var(--white); }
+  :root { --cw-h:228px; --cw-d:620px; }
+  #cave.cave-wheel #cave-wheel { display:block; position:absolute; left:0; right:0; bottom:0; height:calc(var(--cw-h) + env(safe-area-inset-bottom,0px)); overflow:hidden; z-index:30; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #cave.cave-wheel #cave-wheel[hidden] { display:none; }
+  .cw-ptr { position:absolute; left:50%; top:4px; margin-left:-9px; width:0; height:0; border:9px solid transparent; border-top:12px solid var(--star-on); z-index:3; }
+  .cw-disc { position:absolute; left:50%; top:30px; width:var(--cw-d); height:var(--cw-d); margin-left:calc(var(--cw-d) / -2); border-radius:50%; background:#2A1C14;
+    box-shadow:0 -6px 30px rgba(0,0,0,.35), inset 0 0 0 3px rgba(217,164,65,.55), inset 0 0 0 16px rgba(252,249,244,.05); }
+  .cw-leaf { position:absolute; inset:-22px; pointer-events:none; }
+  .cw-spots { position:absolute; left:50%; top:50%; width:0; height:0; }
+  .cw-spot { position:absolute; left:0; top:0; width:62px; height:62px; border-radius:50%; border:0; padding:0; background:var(--off-white); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden;
+    box-shadow:0 4px 10px rgba(0,0,0,.3); transition:transform .38s cubic-bezier(.2,.7,.2,1), opacity .3s ease; -webkit-tap-highlight-color:transparent; }
+  .cw-spot img { max-width:86%; max-height:70%; object-fit:contain; pointer-events:none; } .cw-spot.tall img { max-height:86%; }
+  .cw-spot .rw-emoji { font-size:1.5rem; }
+  .cw-spot.on { background:var(--star-on); box-shadow:0 0 0 3px var(--white), 0 8px 18px rgba(0,0,0,.4); }
+  .cw-hint { position:absolute; left:50%; bottom:calc(14px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); white-space:nowrap; z-index:3; pointer-events:none;
+    font-family:var(--sans); font-size:.56rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--white); background:rgba(20,13,9,.75); border-radius:999px; padding:.4rem .9rem; }
+  @media (min-width:760px){
+    :root { --cw-h:240px; --cw-d:660px; }
+    #cave.cave-wheel .cave-wname { margin-top:50px; font-size:.86rem; }
+    #cave.cave-wheel .cave-photo-row { height:min(calc(100vh - 430px), 520px) !important; max-height:min(calc(100vh - 430px), 520px) !important; }
+    #cave.cave-wheel .cave-scroll { max-height:calc(100vh - var(--cw-h) - 150px) !important; }
+    .cw-spot { width:70px; height:70px; }
+  }
   /* ── THE MENU'S DESIGN "ROWS" (23 Nov 2026, Manager → Menu → Menu design) ──
      The Chef's Pick big on top, then a row for each part of the menu that turns without end, the dish in the middle
      big (the sanitary inspection grade stays on the home page and the dish page). The Hungry Fork's night look here; Havana's in havana/theme.css. */
@@ -1063,6 +1138,8 @@
 </div>
 <!-- 23 Nov 2026: the menu's design "Rows" (Manager → Menu → Menu design), drawn here instead of the carousel when chosen -->
 <div id="rows-room" hidden></div>
+<!-- 23 Nov 2026: the menu's design "Grid", drawn here instead of the carousel when chosen -->
+<div id="grid-room" hidden></div>
 <!-- CAVE INTERIOR -->
 <div id="cave" class="cave-overlay">
   <div class="cave-topbar" aria-hidden="true"></div>
@@ -1076,10 +1153,18 @@
       <div class="cave-cat-track" id="cave-cat-track"></div>
       <button type="button" class="cave-cat-arrow" onclick="caveCatGo(1)" aria-label="Next category"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L12 12 L6 18 M12 6 L18 12 L12 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
     </div>
+    <!-- 23 Nov 2026, the design "Wheel": only the part's name at the top (instead of the bar of names) -->
+    <div class="cave-wname" id="cave-wname" aria-hidden="true"></div>
     <div class="cave-card-zone" id="cave-card-zone">
       <div class="cave-card" id="cave-card"></div>
     </div>
     <div class="cave-hdots" id="cave-hdots"></div>
+  </div>
+  <!-- 23 Nov 2026, the design "Wheel": the dishes of this part on a wheel; spin it (or tap a dish) for the next one -->
+  <div id="cave-wheel" hidden role="group" aria-label="The dishes on a wheel">
+    <div class="cw-ptr" aria-hidden="true"></div>
+    <div class="cw-disc"><div class="cw-leaf" aria-hidden="true"></div><div class="cw-spots" id="cw-spots"></div></div>
+    <div class="cw-hint">Spin the wheel for the next dish</div>
   </div>
 </div>
 <!-- END 3D WARP MENU -->
@@ -1563,7 +1648,7 @@ function enterCave(startId){
   caveViewIdx=0;
   document.getElementById('cave-cat').textContent=WARP_META[key].label;
   const stage=document.getElementById('warp-stage');
-  const rows=DESIGN_NOW==='rows';                           // 23 Nov: from Rows the dish page opens at once (no carousel to zoom into)
+  const rows=DESIGN_NOW==='rows'||DESIGN_NOW==='grid';      // 23 Nov: from Rows or the Grid the dish page opens at once (no carousel to zoom into)
   if(!rows)stage.classList.add('warp-zoom');
   setTimeout(()=>{
     document.getElementById('cave').classList.add('open');
@@ -1574,7 +1659,7 @@ function enterCave(startId){
   },rows?30:380);
 }
 function exitCave(){
-  document.getElementById('cave').classList.remove('open');
+  document.getElementById('cave').classList.remove('open','cave-wheel');
   document.body.style.overflow='';
   CAVE_ARRIVED=false;
 }
@@ -1665,6 +1750,7 @@ function renderCave(animClass,mediaOnly){
     hdots.innerHTML='';
     updateCaveDots();playCardAnim(card,animClass);
     caveScrollBar();
+    cwSync();
     return;
   }
   const d=caveDishes[caveDishIdx];
@@ -1702,7 +1788,9 @@ function renderCave(animClass,mediaOnly){
     if(mediaEl){
       mediaEl.className = 'cave-media' + (soldOut ? ' is-sold' : '');
       mediaEl.innerHTML = media + soldTag;
+      const wl=card.querySelector('.cave-wlabels');if(wl)wl.innerHTML=caveWheelLabels(d);   // 23 Nov: the Wheel's names of the views
       playCardAnim(card,animClass);
+      cwSync();
       return;
     }
   }
@@ -1716,12 +1804,14 @@ function renderCave(animClass,mediaOnly){
       <div class="cave-photo-row">
         ${multi?`<button class="cave-side" onclick="caveDish(-1)" aria-label="Previous dish"><span class="hint-tri">&#9664;</span><span class="side-emoji">${prevD.emoji}</span></button>`:'<span class="cave-side"></span>'}
         <div class="cave-media${soldOut?' is-sold':''}">${media}${soldTag}</div>
+        ${caveViews(d).length>1?`<button type="button" class="cave-wv l" onclick="caveView(-1)" aria-label="Previous view of this dish">${caveChevron(-1)}</button><button type="button" class="cave-wv r" onclick="caveView(1)" aria-label="Next view of this dish">${caveChevron(1)}</button>`:''}
         ${multi?`<button class="cave-side" onclick="caveDish(1)" aria-label="Next dish"><span class="side-emoji">${nextD.emoji}</span><span class="hint-tri">&#9654;</span></button>`:'<span class="cave-side"></span>'}
       </div>
       ${caveSwipeHint('down')}
       <div class="cave-vdots-h">
         ${caveViews(d).map(v=>`<span class="cave-vdot${caveViewIdx===v?' active':''}" onclick="caveSetView(${v})" title="${['Plate','Ingredients','Description'][v]}"></span>`).join('')}
       </div>
+      <div class="cave-wlabels">${caveWheelLabels(d)}</div>
     </section>
     <div class="cave-scroll">
     <section class="cave-sec cave-sec-info">
@@ -1747,6 +1837,7 @@ function renderCave(animClass,mediaOnly){
   updateCaveDots();playCardAnim(card,animClass);
   loadZoneStars(d);
   caveScrollBar();
+  cwSync();                                // 23 Nov: the Wheel follows the dish
 }
 // r39 (Sebastian, 19 Oct): the kind of a drink, in red over its name ("GIN"), where the cave has more than one kind.
 function caveKindTag(d){
@@ -1885,7 +1976,7 @@ function caveDish(dir){if(!caveDishes.length)return;caveDishIdx=(caveDishIdx+dir
 // r40 (Sebastian, 19 Oct 23:57): neither the appetizers nor the sides have it either.
 const NO_OPEN_VIEW=['drinks','starters','appetizers','sides'];
 function caveViews(d){return d&&!NO_OPEN_VIEW.includes(d.category)&&d.imgOpen?[0,1,2]:[0,2];}
-function caveView(dir){if(!caveDishes.length)return;const v=caveViews(caveDishes[caveDishIdx]),i=Math.max(0,v.indexOf(caveViewIdx));caveViewIdx=v[(i+dir+v.length)%v.length];renderCave(dir>0?'anim-u':'anim-d',true);}
+function caveView(dir){if(!caveDishes.length)return;const v=caveViews(caveDishes[caveDishIdx]),i=Math.max(0,v.indexOf(caveViewIdx));caveViewIdx=v[(i+dir+v.length)%v.length];renderCave(caveWheelOn()?(dir>0?'anim-l':'anim-r'):(dir>0?'anim-u':'anim-d'),true);}
 function caveSetView(i){if(!caveDishes.length||i===caveViewIdx||!caveViews(caveDishes[caveDishIdx]).includes(i))return;const dir=i>caveViewIdx?'anim-u':'anim-d';caveViewIdx=i;renderCave(dir,true);}
 function caveSetDish(i){if(i===caveDishIdx)return;const dir=i>caveDishIdx?'anim-l':'anim-r';caveDishIdx=i;renderCave(dir);}
 function caveOpenDish(id){
@@ -1927,7 +2018,7 @@ function caveInitTouch(){
     if(!tracking)return;
     const adx=Math.abs(sx-e.touches[0].clientX),ady=Math.abs(sy-e.touches[0].clientY);
     // block the page only for horizontal swipes, or vertical swipes that start on the photo
-    if(adx>ady||(inMedia&&ady>adx))e.preventDefault();
+    if(adx>ady||(inMedia&&ady>adx&&!caveWheelOn()))e.preventDefault();      // the Wheel: up and down scrolls the card
   },{passive:false});
   zone.addEventListener('touchend',e=>{
     if(!tracking)return;tracking=false;
@@ -1940,6 +2031,8 @@ function caveInitTouch(){
     if(!document.getElementById('cave').classList.contains('open'))return;
     if(e.target.matches('input,textarea,select'))return;
     if(e.key==='Escape')exitCave();
+    else if(caveWheelOn()&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){if(!e.target.closest('#rows-room,#grid-room'))caveView(e.key==='ArrowRight'?1:-1);}   // the Wheel: ← → the views,
+    else if(caveWheelOn()&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();cwGo(e.key==='ArrowDown'?1:-1);}                                   // ↓ ↑ the wheel
     else if(e.key==='ArrowRight')caveDish(1);
     else if(e.key==='ArrowLeft')caveDish(-1);
     else if(e.key==='ArrowDown')caveView(1);
@@ -1948,6 +2041,7 @@ function caveInitTouch(){
 }
 function caveGesture(dx,dy,inMedia){
   const adx=Math.abs(dx),ady=Math.abs(dy);
+  if(caveWheelOn()){if(adx>ady&&adx>36)caveView(dx>0?1:-1);return;}      // 23 Nov, the Wheel: left and right are the views
   if(adx>ady){ if(adx>36)caveDish(dx>0?1:-1); return; }
   if(inMedia&&ady>36)caveView(dy>0?1:-1);
 }
@@ -2241,7 +2335,7 @@ document.addEventListener('click',e=>{
 // Every design opens the same dish page (the cave), and Back comes back to the design. ?design=rows shows a design to
 // whoever opens that address (the manager's Preview) and changes nothing for anyone else. The choice rides with the
 // opening hours (HF_HOURS.design, taster.js); without it (migration 41 not run): the original.
-const MENU_DESIGNS=['original','rows'];
+const MENU_DESIGNS=['original','rows','grid','wheel'];
 const DESIGN_PREVIEW=(()=>{try{const v=new URLSearchParams(location.search).get('design');return MENU_DESIGNS.includes(v)?v:null;}catch(e){return null;}})();
 let DESIGN_NOW=null;
 function menuDesign(){
@@ -2251,13 +2345,15 @@ function menuDesign(){
   return MENU_DESIGNS.includes(v)?v:'original';
 }
 function designApply(){
-  const room=document.getElementById('rows-room'),warp=document.getElementById('warp-room');
-  if(!room||!warp)return;
+  const room=document.getElementById('rows-room'),grid=document.getElementById('grid-room'),warp=document.getElementById('warp-room');
+  if(!room||!warp||!grid)return;
   const d=menuDesign();DESIGN_NOW=d;
-  document.body.classList.toggle('design-rows',d==='rows');
-  warp.style.display=d==='rows'?'none':'';
-  room.hidden=d!=='rows';
+  MENU_DESIGNS.forEach(x=>document.body.classList.toggle('design-'+x,d===x));
+  warp.style.display=d==='rows'||d==='grid'?'none':'';      // the Wheel starts from the carousel, like the original
+  room.hidden=d!=='rows';grid.hidden=d!=='grid';
   if(d==='rows')rowsBuild();else room.innerHTML='';
+  if(d==='grid')gridBuild();else grid.innerHTML='';
+  if(document.getElementById('cave').classList.contains('open'))cwSync();
 }
 const RW_PICKS=['chefs-pick','bartenders-pick'], RW_SIDE=.74;
 function rowsBuild(){
@@ -2371,7 +2467,7 @@ function rowsCardTap(card){
 }
 document.addEventListener('click',e=>{
   const room=document.getElementById('rows-room');
-  if(!room||room.hidden||!e.target.closest||!room.contains(e.target))return;
+  if(!room||room.hidden||!e.target.closest||!room.contains(e.target))return;   // (the Grid has its own, below)
   const arr=e.target.closest('.rw-arr');if(arr){rowsGo(arr.closest('.rw-car'),+arr.dataset.go);return;}
   const all=e.target.closest('[data-all]');if(all){const k=all.dataset.all,l=caveListFor(k);if(l.length)rowsOpen(k,l[0].id);return;}
   const hero=e.target.closest('.rw-hero');if(hero){rowsOpen(hero.dataset.key,hero.dataset.id);return;}
@@ -2383,6 +2479,158 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const car=card.closest('.rw-car');rowsGo(car,e.key==='ArrowRight'?1:-1);const m=car.querySelector('.rw-card.mid');if(m)m.focus({preventScroll:true});}
 });
 window.addEventListener('resize',()=>{document.querySelectorAll('#rows-room .rw-car').forEach(c=>rowsLayout(c,0,false));});
+// ── GRID (23 Nov 2026, his picture B: "delete those tittles … deslizar hacia abajo los titulos y se abre todos los
+// platos de esa sección y si se oprime de nuevo se recoje"; 03:58 "For E I loved how you set chef's pick please do it
+// the same for B"). The Chef's Pick on top (the Rows card), then each part of the menu with dishes as a title with its
+// first photos; a tap opens it (its dishes slide down in two columns, three or four on a computer), another tap closes
+// it. An open title stays under the top bar while its dishes scroll by. Which ones are open is kept while the page is
+// open (food and drinks apart). A dish opens its dish page, at that dish, with ‹ › through that part.
+const GRID_OPEN={main:new Set(),drinks:new Set()};
+function gridBuild(){
+  const room=document.getElementById('grid-room');if(!room)return;
+  const drinks=RING==='drinks',open=GRID_OPEN[drinks?'drinks':'main'];
+  let hero='',secs='';
+  CATEGORY_ORDER.forEach(k=>{
+    if(!WARP_META[k])return;
+    const list=caveListFor(k).filter(Boolean);
+    if(!list.length)return;
+    if(RW_PICKS.includes(k)&&!hero){hero=rowsHeroHTML(k,list[0],drinks);return;}
+    secs+=gridSecHTML(k,list,drinks,open.has(k));
+  });
+  room.classList.toggle('tall',drinks);
+  room.innerHTML='<div class="rw-in">'
+    +(drinks?'<div class="rw-back-wrap"><button type="button" class="warp-ring-back" onclick="closeDrinksRing()">&#8249; Back to the menu</button></div>':'')
+    +'<div class="rw-top"><div class="rw-hint">Tap a part of the menu to open it</div></div>'
+    +hero+(secs||(hero?'':'<div class="rw-empty">This part of the menu is being prepared. Please check back soon.</div>'))+'</div>';
+  gridTop();
+}
+function gridSecHTML(k,list,drinks,isOpen){
+  const m=WARP_META[k],id='gd-'+k,n=list.length,word=drinks?(n===1?'drink':'drinks'):(n===1?'dish':'dishes');
+  return `<section class="gd-sec${isOpen?' open':''}" data-key="${k}">`
+    +`<button type="button" class="gd-bar" data-open="${k}" aria-expanded="${isOpen}" aria-controls="${id}">`
+    +`<span class="gd-tx"><span class="gd-name">${hfEsc(m.label)}</span><span class="gd-n">${n} ${word}</span></span>`
+    +`<span class="gd-peek" aria-hidden="true">${list.slice(0,3).map(d=>`<span class="gd-pk">${rowsPic(d,120,true)}</span>`).join('')}</span>`
+    +`<span class="gd-chev" aria-hidden="true"></span></button>`
+    +`<div class="gd-body" id="${id}"${isOpen?'':' inert'}><div class="gd-in"><div class="gd-grid">`
+    +list.map(d=>`<button type="button" class="gd-card" data-key="${k}" data-id="${hfEsc(d.id)}" aria-label="${hfEsc(d.name)}">`
+      +`<span class="rw-ph">${rowsPic(d,hfPhotoW(300,420),true)}${dishIsSoldOut(d)?'<span class="rw-sold">Sold out</span>':''}</span>`
+      +`<span class="gd-cn">${hfEsc(d.name)}</span><span class="gd-cp">${hfEsc(dishPriceText(d))}</span></button>`).join('')
+    +'</div></div></div></section>';
+}
+// The top bar's height, for an open title to stay under it
+function gridTop(){const t=document.querySelector('.menu-topbar'),g=document.getElementById('grid-room');if(t&&g)g.style.setProperty('--gd-top',(t.offsetHeight||60)+'px');}
+window.addEventListener('resize',gridTop);
+function gridToggle(k,force){
+  const sec=document.querySelector(`#grid-room .gd-sec[data-key="${k}"]`);if(!sec)return;
+  const open=force===undefined?!sec.classList.contains('open'):!!force,set=GRID_OPEN[RING==='drinks'?'drinks':'main'];
+  const bar=sec.querySelector('.gd-bar'),y=bar.getBoundingClientRect().top,th=(document.querySelector('.menu-topbar')||{}).offsetHeight||60;
+  const back=sec.getBoundingClientRect().top+window.scrollY-th-8;      // where its title sits when not stuck
+  sec.classList.toggle('open',open);bar.setAttribute('aria-expanded',String(open));
+  const body=sec.querySelector('.gd-body');if(open)body.removeAttribute('inert');else body.setAttribute('inert','');
+  if(open)set.add(k);else set.delete(k);
+  // closing a part whose title was stuck at the top: its title comes back into view
+  if(!open&&y<=th+2)window.scrollTo({top:Math.max(0,back),behavior:'instant'});
+}
+document.addEventListener('click',e=>{
+  const room=document.getElementById('grid-room');
+  if(!room||room.hidden||!e.target.closest||!room.contains(e.target))return;
+  const bar=e.target.closest('.gd-bar');if(bar){gridToggle(bar.dataset.open);return;}
+  const card=e.target.closest('.gd-card');if(card){rowsOpen(card.dataset.key,card.dataset.id);return;}
+  const hero=e.target.closest('.rw-hero');if(hero)rowsOpen(hero.dataset.key,hero.dataset.id);
+});
+// ?cat=… on the Grid: that part opens and comes into view
+function gridShow(k){
+  gridToggle(k,true);
+  const r=document.querySelector(`#grid-room .gd-sec[data-key="${k}"]`);
+  if(r)setTimeout(()=>{const y=r.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:Math.max(0,y)});},60);
+}
+
+// ── WHEEL (23 Nov 2026, his picture G: "that's the dish that you share and have the whole information about it … you
+// move the dish left or right for next photo and the information, and you move the wheel down for change the dish";
+// 04:30 it keeps the carousel; 04:40 "I choose number 1 only the name"). The menu starts from the same carousel as the
+// original. A part opens as the dish page (the same one guests share) with only the part's name at the top, and the
+// part's dishes on a wheel at the bottom: spin it with a finger (any way round), the mouse's wheel or ↓ ↑, or tap a
+// dish on it. On the card, left and right (a swipe, the arrows, ← →) go photo → second photo → information.
+// ↺ goes back to the carousel.
+const CW_STEP=17;
+function caveWheelOn(){return DESIGN_NOW==='wheel';}
+function caveWheelLabels(d){
+  const v=caveViews(d),names=['Photo',HF_SITE.secondPhotoFull?'Second photo':'Ingredients','Information'];
+  if(v.length<2)return '';
+  return '<div class="cave-wl-dots">'+v.map(x=>`<i class="${x===caveViewIdx?'on':''}" onclick="caveSetView(${x})"></i>`).join('')+'</div>'
+    +'<div class="cave-wl-names">'+v.map(x=>`<b class="${x===caveViewIdx?'on':''}">${names[x]}</b>`).join(' &middot; ')+'</div>';
+}
+function cwSync(){
+  const cave=document.getElementById('cave'),w=document.getElementById('cave-wheel');if(!cave||!w)return;
+  const on=caveWheelOn();
+  cave.classList.toggle('cave-wheel',on);
+  w.hidden=!on||caveDishes.length<1;
+  const nm=document.getElementById('cave-wname'),cc=document.getElementById('cave-cat');
+  if(nm&&cc)nm.textContent=cc.textContent;
+  const hint=w.querySelector('.cw-hint');if(hint)hint.textContent=RING==='drinks'?'Spin the wheel for the next drink':'Spin the wheel for the next dish';
+  if(on&&caveDishes.length){cwInit();cwRender(true,0);}
+}
+function cwRadius(){const d=document.querySelector('#cave-wheel .cw-disc');return ((d&&d.offsetWidth)||620)/2-52;}
+function cwRender(anim,rot){
+  const spots=document.getElementById('cw-spots');if(!spots)return;
+  const n=caveDishes.length,sig=RING+'|'+caveDishes.map(d=>d.id).join('|');
+  if(spots._sig!==sig){
+    spots._sig=sig;anim=false;
+    spots.innerHTML=caveDishes.map((d,i)=>`<button type="button" class="cw-spot${RING==='drinks'?' tall':''}" data-i="${i}" data-id="${hfEsc(d.id)}" aria-label="${hfEsc(d.name)}">`
+      +(d.img?`<img src="${hfImgSrc(d.img,160)}" data-orig="${hfEsc(d.img)}" data-emoji="${hfEsc(d.emoji||'\u{1F37D}️')}" alt="" draggable="false" loading="lazy" onerror="rowsImgErr(this)">`:`<span class="rw-emoji">${hfEsc(d.emoji||'\u{1F37D}️')}</span>`)
+      +'</button>').join('');
+  }
+  const R=cwRadius(),steps=spots._steps||0;spots._steps=0;
+  spots.querySelectorAll('.cw-spot').forEach(s=>{
+    let o=((+s.dataset.i-caveDishIdx)%n+n)%n;if(o>n/2)o-=n;
+    const prev=s._o;s._o=o;
+    const jump=prev!==undefined&&o-prev!==-steps;            // went round the back of the wheel: no slide across
+    const a=(-90+o*CW_STEP+(rot||0))*Math.PI/180,show=Math.abs(o)<=5;
+    s.style.transition=anim&&!jump?'':'none';
+    s.style.transform=`translate(-50%,-50%) translate(${(R*Math.cos(a)).toFixed(1)}px,${(R*Math.sin(a)).toFixed(1)}px) scale(${o===0?1.3:1})`;
+    s.style.opacity=show?'1':'0';s.style.pointerEvents=show?'':'none';
+    s.tabIndex=o===0?0:-1;
+    s.classList.toggle('on',o===0);s.setAttribute('aria-current',o===0?'true':'false');
+  });
+}
+function cwGo(steps){
+  const n=caveDishes.length;if(n<2||!steps)return;
+  const spots=document.getElementById('cw-spots');if(spots)spots._steps=steps;
+  caveDishIdx=((caveDishIdx+steps)%n+n)%n;caveViewIdx=0;
+  renderCave(steps>0?'anim-l':'anim-r');
+}
+function cwInit(){
+  const w=document.getElementById('cave-wheel');if(!w||w._init)return;w._init=1;
+  let on=false,a0=0,cx=0,cy=0,moved=false,pid=null,delta=0;
+  const ang=e=>Math.atan2(e.clientY-cy,e.clientX-cx)*180/Math.PI;
+  w.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;
+    const r=w.querySelector('.cw-disc').getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;
+    a0=ang(e);on=true;moved=false;pid=e.pointerId;delta=0;
+  });
+  w.addEventListener('pointermove',e=>{
+    if(!on||e.pointerId!==pid)return;
+    let d=ang(e)-a0;d=((d+540)%360)-180;
+    if(!moved&&Math.abs(d)<2.5)return;
+    if(!moved){moved=true;try{w.setPointerCapture(pid);}catch(err){}}
+    delta=d;cwRender(false,d);
+  });
+  const end=e=>{
+    if(!on||e.pointerId!==pid)return;on=false;
+    if(!moved){                                          // a tap: the dish tapped comes to the top
+      const el=document.elementFromPoint(e.clientX,e.clientY),s=el&&el.closest&&el.closest('.cw-spot');
+      if(s&&s._o)cwGo(s._o);
+      return;
+    }
+    const st=Math.round(-delta/CW_STEP);                  // turned to the right: the dishes before come up
+    if(st)cwGo(st);else cwRender(true,0);
+  };
+  w.addEventListener('pointerup',end);w.addEventListener('pointercancel',end);
+  w.addEventListener('wheel',e=>{e.preventDefault();if(w._at&&Date.now()-w._at<280)return;w._at=Date.now();cwGo((e.deltaY||e.deltaX)>0?1:-1);},{passive:false});
+  w.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();}});
+}
+window.addEventListener('resize',()=>{if(caveWheelOn()&&document.getElementById('cave').classList.contains('open'))cwRender(false,0);});
+
 // ?cat=… on Rows: that part's row comes into view
 function rowsShow(k){
   const r=document.querySelector(`#rows-room .rw-row[data-key="${k}"]`);
@@ -3298,6 +3546,7 @@ loadMyLevel();
     // ?enter=1 opens the cave straight away — the home page video uses it.
     if(params.get('enter')==='1'&&caveListFor(cat).length){enterCave();CAVE_ARRIVED=true;}
     else if(DESIGN_NOW==='rows')rowsShow(cat);            // 23 Nov: on Rows, that part's row
+    else if(DESIGN_NOW==='grid')gridShow(cat);            // on the Grid, that part open
   }
 })();
 </script>
