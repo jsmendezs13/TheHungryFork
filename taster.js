@@ -2308,7 +2308,8 @@ function hfHoursApply(d){
   HF_HOURS.caveOrder=hfOrderClean(d.top&&d.top.order);       // r40
   HF_HOURS.social=hfSocialClean(d.social);                   // r52
   HF_HOURS.pairings=!(d.top&&d.top.pairings===false);        // 23 Nov: the drink recommendations on the dishes (migration 40)
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,pairings:HF_HOURS.pairings,at:Date.now()}));}catch(e){}
+  HF_HOURS.design=hfDesignClean(d.top&&d.top.design);        // 23 Nov: the menu's design, food and drinks (migration 41)
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,pairings:HF_HOURS.pairings,design:HF_HOURS.design,at:Date.now()}));}catch(e){}
   hfHoursFill();
   HF_HOURS.fresh=true;
   try{document.dispatchEvent(new Event('hf-hours'));}catch(e){}
@@ -2331,6 +2332,15 @@ function hfOrderClean(o){
   if(!o||typeof o!=='object')return null;
   var out={};
   ['main','drinks','hidden'].forEach(function(s){out[s]=Array.isArray(o[s])?o[s].filter(function(k){return typeof k==='string'&&/^[a-z-]{2,30}$/.test(k);}).slice(0,20):[];});
+  return out;
+}
+// 23 Nov 2026 (Sebastian, 03:58): how guests look through the menu, as the manager chose (Manager → Menu → Menu
+// design): { main, drinks }, each 'original' or 'rows' (Grid and Wheel later). Missing (an older server, migration 41
+// not run): null, and the menu shows the original carousel.
+function hfDesignClean(o){
+  if(!o||typeof o!=='object')return null;
+  var ok={original:1,rows:1},out={};
+  ['main','drinks'].forEach(function(s){out[s]=ok[o[s]]?o[s]:'original';});
   return out;
 }
 // r52 (Sebastian, 9 Nov): the restaurant's pages on social media (Settings → Social media), for the home page's
@@ -2362,6 +2372,7 @@ function hfHoursLoad(){
       HF_HOURS.caveOrder=hfOrderClean(kept.caveOrder);       // r40
       HF_HOURS.social=hfSocialClean(kept.social);            // r52
       HF_HOURS.pairings=kept.pairings!==false;               // 23 Nov
+      HF_HOURS.design=hfDesignClean(kept.design);            // 23 Nov (migration 41)
       hfHoursFill();
     }
   }catch(e){}

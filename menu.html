@@ -397,6 +397,54 @@
   body { background:#150D09; }
   #warp-room { animation:pageIn .55s ease; }
   @keyframes pageIn { from{opacity:0; transform:scale(1.1);} to{opacity:1; transform:scale(1);} }
+
+  /* ── THE MENU'S DESIGN "ROWS" (23 Nov 2026, Manager → Menu → Menu design) ──
+     The Chef's Pick big on top, then a row for each part of the menu that turns without end, the dish in the middle
+     big (the sanitary inspection grade stays on the home page and the dish page). The Hungry Fork's night look here; Havana's in havana/theme.css. */
+  :root { --rw-w:168px; --rw-ph:100px; --rw-h:200px; }
+  #rows-room { position:relative; overflow:hidden; background:radial-gradient(130% 90% at 50% 0%, #33241C 0%, #20150F 55%, #150D09 100%); padding:.2rem 0 2.2rem; min-height:60vh; animation:rwIn .45s ease; }
+  #rows-room[hidden] { display:none; }
+  #rows-room.tall { --rw-ph:190px; --rw-h:290px; }
+  @keyframes rwIn { from{opacity:0;} to{opacity:1;} }
+  .rw-in { max-width:1180px; margin:0 auto; }
+  .rw-back-wrap { text-align:center; padding:.9rem 16px 0; }
+  .rw-top { padding:1rem 16px .1rem; }
+  .rw-hint { text-align:center; font-family:var(--sans); font-size:.6rem; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:rgba(252,249,244,.55); }
+  .rw-hero { display:block; position:relative; width:calc(100% - 32px); margin:.55rem 16px .3rem; height:200px; border:0; border-radius:22px; padding:0; overflow:hidden; cursor:pointer; text-align:left; font:inherit; color:#fff;
+    background:linear-gradient(135deg, #7E0A0E, #B01015); box-shadow:0 12px 28px rgba(0,0,0,.35); }
+  .rw-hero-tag { position:absolute; left:16px; top:16px; background:var(--star-on); color:#2B211A; font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; border-radius:999px; padding:.34rem .8rem; }
+  .rw-hero-name { position:absolute; z-index:2; left:16px; top:54px; width:52%; font-family:var(--serif); font-size:1.75rem; font-weight:600; line-height:1.05; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.45); }
+  .rw-hero-price { position:absolute; z-index:2; left:16px; bottom:16px; font-weight:600; font-size:1.15rem; color:var(--star-on); }
+  .rw-hero img { position:absolute; right:-5%; bottom:-2px; height:80%; max-width:62%; object-fit:contain; filter:drop-shadow(0 10px 14px rgba(0,0,0,.4)); pointer-events:none; }
+  .rw-hero.tall img { right:18px; bottom:10px; height:88%; max-width:40%; }
+  .rw-hero .rw-emoji { position:absolute; right:28px; bottom:22px; font-size:4.5rem; }
+  .rw-row { margin-top:.35rem; }
+  .rw-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:.8rem 16px .25rem; }
+  .rw-head h2 { font-family:var(--serif); font-size:1.45rem; font-weight:600; color:var(--white); line-height:1.15; }
+  .rw-all { flex:none; background:none; border:0; cursor:pointer; padding:.3rem 0 .3rem .6rem; font-family:var(--sans); font-size:.64rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:rgba(252,249,244,.78); }
+  .rw-car { position:relative; height:var(--rw-h); margin:0 calc(50% - 50vw); overflow:hidden; touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  .rw-card { position:absolute; left:50%; top:50%; width:var(--rw-w); background:var(--white); border-radius:16px; padding:8px; cursor:pointer; outline:none;
+    box-shadow:0 6px 16px rgba(0,0,0,.28); transition:transform .38s cubic-bezier(.2,.7,.2,1), opacity .3s ease; will-change:transform; transform:translate(-50%,-50%); }
+  .rw-card.mid { box-shadow:0 0 0 3px var(--star-on), 0 12px 26px rgba(0,0,0,.35); }
+  .rw-card:focus-visible { box-shadow:0 0 0 3px var(--white), 0 0 0 6px var(--red); }
+  .rw-ph { position:relative; height:var(--rw-ph); border-radius:12px; background:var(--off-white); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .rw-ph img { max-width:96%; max-height:94%; object-fit:contain; pointer-events:none; }
+  .rw-ph .rw-emoji { font-size:2.4rem; }
+  .rw-nm { font-weight:600; font-size:.9rem; color:var(--text); line-height:1.22; margin:.45rem .15rem 0; height:2.44em; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .rw-pr { font-weight:600; font-size:.9rem; color:var(--red); margin:.15rem .15rem 0; min-height:1.3em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rw-sold { position:absolute; left:6px; top:6px; background:var(--red); color:#fff; font-size:.55rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; border-radius:999px; padding:.22rem .55rem; }
+  .rw-arr { display:none; position:absolute; top:50%; z-index:40; width:42px; height:42px; margin-top:-21px; border-radius:50%; border:1px solid rgba(252,249,244,.35); background:rgba(20,13,9,.6); color:#fff; font-size:1.5rem; line-height:1; cursor:pointer; align-items:center; justify-content:center; padding-bottom:3px; }
+  .rw-arr.l { left:12px; } .rw-arr.r { right:12px; }
+  @media (hover:hover) and (pointer:fine) { .rw-arr { display:flex; } }
+  .rw-empty { text-align:center; color:rgba(252,249,244,.72); padding:3rem 1.2rem; }
+  @media (min-width:760px){
+    :root { --rw-w:210px; --rw-ph:124px; --rw-h:236px; }
+    #rows-room.tall { --rw-ph:232px; --rw-h:344px; }
+    .rw-top { padding-left:24px; padding-right:24px; } .rw-head { padding-left:24px; padding-right:24px; }
+    .rw-hero { width:calc(100% - 48px); margin-left:24px; margin-right:24px; height:250px; } .rw-hero-name { font-size:2.3rem; width:48%; } .rw-hero-tag, .rw-hero-name, .rw-hero-price { left:28px; }
+    .rw-head h2 { font-size:1.7rem; } .rw-nm, .rw-pr { font-size:.95rem; }
+  }
+  @media (min-width:1100px){ :root { --rw-w:236px; --rw-ph:140px; --rw-h:256px; } #rows-room.tall { --rw-ph:250px; --rw-h:366px; } .rw-hero { height:290px; } }
   .menu-topbar { position:sticky; top:0; z-index:120; display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px; background:rgba(21,13,9,.92); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-bottom:1px solid rgba(252,249,244,.08); }
   .menu-home { color:rgba(252,249,244,.8); text-decoration:none; font-family:var(--sans); font-size:.8rem; letter-spacing:.06em; }
   .menu-topbar-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--white); }
@@ -1013,6 +1061,8 @@
   <div class="warp-cat-name" id="warp-cat-name"></div>
   <div class="warp-tap-hint">Tap the cave to enter</div>
 </div>
+<!-- 23 Nov 2026: the menu's design "Rows" (Manager → Menu → Menu design), drawn here instead of the carousel when chosen -->
+<div id="rows-room" hidden></div>
 <!-- CAVE INTERIOR -->
 <div id="cave" class="cave-overlay">
   <div class="cave-topbar" aria-hidden="true"></div>
@@ -1322,7 +1372,7 @@ function topRatedDishes(kind){
 let MENU_BUILT=false;
 function menuApplyTop(){
   const next=menuOrder();
-  if(next.join()===CATEGORY_ORDER.join()){portalPaint();return;}
+  if(next.join()===CATEGORY_ORDER.join()){portalPaint();if(menuDesign()!==DESIGN_NOW)designApply();return;}
   const key=CATEGORY_ORDER[warpIdx];
   CATEGORY_ORDER=next;
   let i=CATEGORY_ORDER.indexOf(key);
@@ -1331,6 +1381,7 @@ function menuApplyTop(){
   warpIdx=i;warpPos=i;activeFilter=CATEGORY_ORDER[i];
   warpBuild();updateWarpCatName();warpRender();
   caveCatBuild();caveCatW=[];caveCatMeasure();caveCatPos=caveCatTarget=warpIdx;caveCatRender();
+  designApply();                                           // 23 Nov: the rows follow the new caves
 }
 document.addEventListener('hf-hours',()=>{if(MENU_BUILT)menuApplyTop();});
 // At the start: the numbers kept from the last visit, or the fresh ones (up to 1.5 s; then 5 each).
@@ -1512,14 +1563,15 @@ function enterCave(startId){
   caveViewIdx=0;
   document.getElementById('cave-cat').textContent=WARP_META[key].label;
   const stage=document.getElementById('warp-stage');
-  stage.classList.add('warp-zoom');
+  const rows=DESIGN_NOW==='rows';                           // 23 Nov: from Rows the dish page opens at once (no carousel to zoom into)
+  if(!rows)stage.classList.add('warp-zoom');
   setTimeout(()=>{
     document.getElementById('cave').classList.add('open');
     document.body.style.overflow='hidden';
     caveCatJump();
     renderCave();
     setTimeout(()=>stage.classList.remove('warp-zoom'),200);
-  },380);
+  },rows?30:380);
 }
 function exitCave(){
   document.getElementById('cave').classList.remove('open');
@@ -1752,6 +1804,7 @@ function ringSet(ring,key){
   warpBuild();updateWarpCatName();warpRender();
   caveCatBuild();caveCatW=[];caveCatMeasure();caveCatPos=caveCatTarget=warpIdx;caveCatRender();
   ringChrome();
+  designApply();                                           // 23 Nov: the food and the drinks each have their own design
 }
 function ringChrome(){
   const drinks=RING==='drinks';
@@ -2177,6 +2230,164 @@ document.addEventListener('click',e=>{
   if(!a||RING!=='drinks'||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
   e.preventDefault();closeDrinksRing();
 });
+
+// ── THE MENU'S DESIGN (23 Nov 2026, Sebastian 03:58 … 04:41) ──
+// Manager → Menu → Menu design: how guests look through the food menu and the drinks, each chosen apart.
+//   original  the carousel of caves (warp-room), as always
+//   rows      the Chef's Pick (the drinks: the Bartender's Pick) big on top; then, for each part of the menu, a row that
+//             turns without end (after the last dish the first one comes again), the dish in the middle the big one.
+//             The sanitary inspection grade is not here (04:58: "it only goes in the main home page and in the dishes
+//             where are the option for to share and reservation, not in the middle"): the dish page has it, top left.
+// Every design opens the same dish page (the cave), and Back comes back to the design. ?design=rows shows a design to
+// whoever opens that address (the manager's Preview) and changes nothing for anyone else. The choice rides with the
+// opening hours (HF_HOURS.design, taster.js); without it (migration 41 not run): the original.
+const MENU_DESIGNS=['original','rows'];
+const DESIGN_PREVIEW=(()=>{try{const v=new URLSearchParams(location.search).get('design');return MENU_DESIGNS.includes(v)?v:null;}catch(e){return null;}})();
+let DESIGN_NOW=null;
+function menuDesign(){
+  if(DESIGN_PREVIEW)return DESIGN_PREVIEW;
+  const d=typeof HF_HOURS!=='undefined'&&HF_HOURS.design;
+  const v=d&&d[RING==='drinks'?'drinks':'main'];
+  return MENU_DESIGNS.includes(v)?v:'original';
+}
+function designApply(){
+  const room=document.getElementById('rows-room'),warp=document.getElementById('warp-room');
+  if(!room||!warp)return;
+  const d=menuDesign();DESIGN_NOW=d;
+  document.body.classList.toggle('design-rows',d==='rows');
+  warp.style.display=d==='rows'?'none':'';
+  room.hidden=d!=='rows';
+  if(d==='rows')rowsBuild();else room.innerHTML='';
+}
+const RW_PICKS=['chefs-pick','bartenders-pick'], RW_SIDE=.74;
+function rowsBuild(){
+  const room=document.getElementById('rows-room');if(!room)return;
+  const drinks=RING==='drinks';
+  let hero='',rows='';
+  CATEGORY_ORDER.forEach(k=>{
+    if(!WARP_META[k])return;
+    const list=caveListFor(k).filter(Boolean);
+    if(!list.length)return;                                   // a Top Rated nobody has rated yet, an empty part: no row
+    if(RW_PICKS.includes(k)&&!hero){hero=rowsHeroHTML(k,list[0],drinks);return;}
+    rows+=rowsRowHTML(k,list);
+  });
+  room.classList.toggle('tall',drinks);                       // the drinks' photos are tall
+  room.innerHTML='<div class="rw-in">'
+    +(drinks?'<div class="rw-back-wrap"><button type="button" class="warp-ring-back" onclick="closeDrinksRing()">&#8249; Back to the menu</button></div>':'')
+    +'<div class="rw-top"><div class="rw-hint">Swipe the rows &middot; tap a dish to open it</div></div>'
+    +hero+(rows||(hero?'':'<div class="rw-empty">This part of the menu is being prepared. Please check back soon.</div>'))+'</div>';
+  room.querySelectorAll('.rw-car').forEach(rowsInitCar);
+}
+function rowsPic(d,w,lazy){
+  return d.img?`<img${lazy?' loading="lazy"':''} src="${hfImgSrc(d.img,w)}" data-orig="${hfEsc(d.img)}" data-emoji="${hfEsc(d.emoji||'\u{1F37D}️')}" alt="" decoding="async" draggable="false" onerror="rowsImgErr(this)">`
+    :`<span class="rw-emoji">${hfEsc(d.emoji||'\u{1F37D}️')}</span>`;
+}
+function rowsImgErr(img){
+  if(hfImgBack(img))return;                                    // the lighter copy failed: the original file once
+  const sp=document.createElement('span');sp.className='rw-emoji';sp.textContent=img.getAttribute('data-emoji')||'\u{1F37D}️';
+  img.replaceWith(sp);
+}
+function rowsHeroHTML(k,d,tall){
+  return `<button type="button" class="rw-hero${tall?' tall':''}" data-key="${k}" data-id="${hfEsc(d.id)}" aria-label="${hfEsc(WARP_META[k].label+': '+d.name)}">`
+    +`<span class="rw-hero-tag">${hfEsc(WARP_META[k].label)}</span><span class="rw-hero-name">${hfEsc(d.name)}</span><span class="rw-hero-price">${hfEsc(dishPriceText(d))}</span>`
+    +rowsPic(d,hfPhotoW(420,640))+'</button>';
+}
+function rowsRowHTML(k,list){
+  const m=WARP_META[k],many=list.length>1;
+  return `<section class="rw-row" data-key="${k}"><div class="rw-head"><h2>${hfEsc(m.label)}</h2>${many?`<button type="button" class="rw-all" data-all="${k}">See all &rsaquo;</button>`:''}</div>`
+    +`<div class="rw-car" data-key="${k}" data-idx="0" role="group" aria-label="${hfEsc(m.label)}">`
+    +list.map((d,i)=>rowsCardHTML(d,i,i>2&&i<list.length-1)).join('')     // the cards that show first load first
+    +(many?'<button type="button" class="rw-arr l" data-go="-1" aria-label="Previous dish">&#8249;</button><button type="button" class="rw-arr r" data-go="1" aria-label="Next dish">&#8250;</button>':'')
+    +'</div></section>';
+}
+function rowsCardHTML(d,i,lazy){
+  return `<div class="rw-card" data-i="${i}" data-id="${hfEsc(d.id)}" role="button" tabindex="0" aria-label="${hfEsc(d.name)}">`
+    +`<div class="rw-ph">${rowsPic(d,hfPhotoW(300,480),lazy)}${dishIsSoldOut(d)?'<span class="rw-sold">Sold out</span>':''}</div>`
+    +`<div class="rw-nm">${hfEsc(d.name)}</div><div class="rw-pr">${hfEsc(dishPriceText(d))}</div></div>`;
+}
+// Where each card of a row goes: the one at data-idx in the middle, the others beside it, smaller; the row has no end
+// (a card's place is counted round the row, so the last dish sits left of the first). dx: the finger's pull.
+function rowsLayout(car,dx,anim){
+  const cards=car.querySelectorAll('.rw-card'),n=cards.length;if(!n)return;
+  const idx=+car.dataset.idx||0,W=cards[0].offsetWidth||168,g=W*.07,ws=W*RW_SIDE,cw=car.clientWidth||W;
+  const vis=Math.max(1,Math.ceil((cw/2-W/2)/(ws+g)));          // the cards that show beside the middle one (the last cut by the edge)
+  const steps=car._steps||0;car._steps=0;
+  cards.forEach(c=>{
+    let o=((+c.dataset.i-idx)%n+n)%n;if(o>n/2)o-=n;
+    const prev=c._o;c._o=o;
+    const jump=prev!==undefined&&o-prev!==-steps;               // it went round the back of the row: no slide across
+    const x=(o===0?0:Math.sign(o)*(W/2+g+ws/2+(Math.abs(o)-1)*(ws+g)))+(dx||0);
+    const show=Math.abs(o)<=vis;
+    c.style.transition=anim&&!jump?'':'none';
+    c.style.transform=`translate(-50%,-50%) translateX(${x.toFixed(1)}px) scale(${o===0?1:RW_SIDE})`;
+    c.style.opacity=show?(o===0?'1':'.82'):'0';
+    c.style.zIndex=String(30-Math.min(29,Math.abs(o)));
+    c.style.pointerEvents=show?'':'none';
+    c.tabIndex=show?0:-1;
+    c.classList.toggle('mid',o===0);
+    c.setAttribute('aria-current',o===0?'true':'false');
+  });
+}
+function rowsGo(car,steps){
+  const n=car.querySelectorAll('.rw-card').length;if(!n)return;
+  car.dataset.idx=String((((+car.dataset.idx||0)+steps)%n+n)%n);
+  car._steps=steps;rowsLayout(car,0,true);
+}
+function rowsInitCar(car){
+  rowsLayout(car,0,false);
+  if(car.querySelectorAll('.rw-card').length<2)return;
+  let sx=0,sy=0,dx=0,on=false,axis=null,pid=null;
+  car.addEventListener('pointerdown',e=>{if(e.button>0||e.target.closest('.rw-arr'))return;on=true;axis=null;dx=0;sx=e.clientX;sy=e.clientY;pid=e.pointerId;});
+  car.addEventListener('pointermove',e=>{
+    if(!on||e.pointerId!==pid)return;
+    const mx=e.clientX-sx,my=e.clientY-sy;
+    if(!axis){if(Math.abs(mx)<7&&Math.abs(my)<7)return;axis=Math.abs(mx)>Math.abs(my)?'x':'y';if(axis==='x'){try{car.setPointerCapture(pid);}catch(err){}}}
+    if(axis!=='x')return;
+    dx=mx;rowsLayout(car,dx,false);
+  });
+  const end=e=>{
+    if(!on||e.pointerId!==pid)return;on=false;
+    if(axis!=='x')return;
+    car._moved=Date.now();
+    const W=car.querySelector('.rw-card').offsetWidth||168,step=W*RW_SIDE+W*.07;
+    let st=Math.round(-dx/step);
+    if(!st&&Math.abs(dx)>28)st=dx<0?1:-1;
+    rowsGo(car,st);                                            // 0: back into place
+  };
+  car.addEventListener('pointerup',end);car.addEventListener('pointercancel',end);
+}
+// A dish from a row (or the big card on top) opens the dish page of that part of the menu, at that dish; its ‹ › go
+// through the same dishes as the row.
+function rowsOpen(k,id){
+  const i=CATEGORY_ORDER.indexOf(k);if(i<0)return;
+  warpIdx=i;warpPos=i;activeFilter=k;updateWarpCatName();
+  enterCave(id);
+}
+function rowsCardTap(card){
+  const car=card.closest('.rw-car');if(!car)return;
+  if(car._moved&&Date.now()-car._moved<350)return;             // the end of a swipe is not a tap
+  if(card.classList.contains('mid'))rowsOpen(car.dataset.key,card.dataset.id);
+  else rowsGo(car,card._o||0);
+}
+document.addEventListener('click',e=>{
+  const room=document.getElementById('rows-room');
+  if(!room||room.hidden||!e.target.closest||!room.contains(e.target))return;
+  const arr=e.target.closest('.rw-arr');if(arr){rowsGo(arr.closest('.rw-car'),+arr.dataset.go);return;}
+  const all=e.target.closest('[data-all]');if(all){const k=all.dataset.all,l=caveListFor(k);if(l.length)rowsOpen(k,l[0].id);return;}
+  const hero=e.target.closest('.rw-hero');if(hero){rowsOpen(hero.dataset.key,hero.dataset.id);return;}
+  const card=e.target.closest('.rw-card');if(card)rowsCardTap(card);
+});
+document.addEventListener('keydown',e=>{
+  const card=e.target&&e.target.closest&&e.target.closest('#rows-room .rw-card');if(!card)return;
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();rowsCardTap(card);}
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const car=card.closest('.rw-car');rowsGo(car,e.key==='ArrowRight'?1:-1);const m=car.querySelector('.rw-card.mid');if(m)m.focus({preventScroll:true});}
+});
+window.addEventListener('resize',()=>{document.querySelectorAll('#rows-room .rw-car').forEach(c=>rowsLayout(c,0,false));});
+// ?cat=… on Rows: that part's row comes into view
+function rowsShow(k){
+  const r=document.querySelector(`#rows-room .rw-row[data-key="${k}"]`);
+  if(r)setTimeout(()=>{const y=r.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:Math.max(0,y)});},60);
+}
 
 // ── DISH MODAL ──
 function renderDishModal(id){
@@ -3058,6 +3269,7 @@ loadMyLevel();
   loadOverallRating();
   CATEGORY_ORDER=menuOrder();                 // r36: the Top Rated caves the manager chose
   warpInit();
+  designApply();                              // 23 Nov: the design the manager chose (Manager → Menu → Menu design)
   MENU_BUILT=true;
   const params=new URLSearchParams(window.location.search);
   // r36: My Tastings, asked for by another page's corner menu
@@ -3085,6 +3297,7 @@ loadMyLevel();
     warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
     // ?enter=1 opens the cave straight away — the home page video uses it.
     if(params.get('enter')==='1'&&caveListFor(cat).length){enterCave();CAVE_ARRIVED=true;}
+    else if(DESIGN_NOW==='rows')rowsShow(cat);            // 23 Nov: on Rows, that part's row
   }
 })();
 </script>

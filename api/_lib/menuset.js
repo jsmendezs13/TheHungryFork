@@ -24,6 +24,12 @@
 // Sommelier's Recommendation and the Suggested Cocktail (menu_settings.show_pairings, migration 40). The menu gets it
 // as top.pairings; without migration 40 it is not there (and the menu shows them, as before).
 //
+// 23 Nov 2026 (Sebastian, 03:58 and 04:40): menu_top_save may carry design: { side: 'main' | 'drinks', value } — how
+// guests look through the food menu or the drinks (menu_settings.menu_design_main / menu_design_drinks, migration
+// 41): 'original' (the carousel) or 'rows' (the Chef's Pick on top, a row that turns for each part of the menu). Grid
+// and Wheel come next: the database already allows them, this file takes them when the menu can draw them
+// (DESIGNS_READY). The menu gets it as top.design; without migration 41 it is not there (the menu shows the original).
+//
 // Reached through api/reservations.js like Settings, so the site still deploys
 // as twelve functions. Managers, owners and Seb's Analytics: the same people
 // who may change the dishes (canEditDishes).
@@ -52,6 +58,20 @@ export const CAVES = {
   drinks: ['bartenders-pick', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other', 'top-drinks'],
 };
 const ORDER_COLUMN = { main: 'cave_order_main', drinks: 'cave_order_drinks' };
+// 23 Nov (migration 41): the menu's design, for the food and for the drinks
+export const DESIGNS = ['original', 'grid', 'rows', 'wheel'];          // what the database allows
+export const DESIGNS_READY = ['original', 'rows'];                       // what the menu can draw now
+const DESIGN_COLUMN = { main: 'menu_design_main', drinks: 'menu_design_drinks' };
+const DESIGN_NOT_READY = 'The menu design is not set up yet: migration 41 has not been run.';
+// The saved designs as the pages use them: { main, drinks } ('original' for anything this website cannot draw).
+function designOf(row) {
+  const out = {};
+  for (const side of Object.keys(DESIGN_COLUMN)) {
+    const v = row ? row[DESIGN_COLUMN[side]] : null;
+    out[side] = DESIGNS_READY.includes(v) ? v : 'original';
+  }
+  return out;
+}
 // The caves a manager may take off the menu: the parts of the menu and the kinds of drink (not Chef's Pick, the
 // Drinks door, Bartender's Pick or the Top Rated ones: those have their own switches).
 export const HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other'];
@@ -100,6 +120,7 @@ export async function publicTop(restaurantId) {
   const top = topOf(row);
   if (row && (ORDER_COLUMN.main in row)) top.order = orderOf(row);
   if (row && ('show_pairings' in row)) top.pairings = row.show_pairings !== false;   // 23 Nov (migration 40)
+  if (row && (DESIGN_COLUMN.main in row)) top.design = designOf(row);                // 23 Nov (migration 41)
   return top;
 }
 
@@ -140,17 +161,30 @@ async function settings(res, rid) {
   // 23 Nov: the drink recommendations switch (migration 40); without a row, the column list is asked for
   let pairingsReady = row ? 'show_pairings' in row : null;
   if (pairingsReady === null) pairingsReady = (await sb('/menu_settings?select=show_pairings&limit=1')).ok;
+  // 23 Nov: the menu design (migration 41); without a row, the column list is asked for
+  let designReady = row ? DESIGN_COLUMN.main in row : null;
+  if (designReady === null) designReady = (await sb(`/menu_settings?select=${DESIGN_COLUMN.main}&limit=1`)).ok;
   return res.status(200).json({ ready: true, top: topOf(row), chosen: !!row, changedOn: row ? row.updated_at : null,
-                                order: orderOf(row), orderReady, pairings: !row || row.show_pairings !== false, pairingsReady });
+                                order: orderOf(row), orderReady, pairings: !row || row.show_pairings !== false, pairingsReady,
+                                design: designOf(row), designReady, designs: DESIGNS_READY });
 }
 
 async function topSave(res, rid, body, tasterId) {
-  const top = body.top, order = body.order, hidden = body.hidden, pairings = body.pairings;
+  const top = body.top, order = body.order, hidden = body.hidden, pairings = body.pairings, design = body.design;
   const hasTop = top && typeof top === 'object' && !Array.isArray(top);
   const hasOrder = order && typeof order === 'object' && !Array.isArray(order);
   const hasHidden = hidden !== undefined;
   const hasPairings = pairings !== undefined;                                    // 23 Nov
-  if (!hasTop && !hasOrder && !hasHidden && !hasPairings) return res.status(400).json({ error: 'Nothing to save.' });
+  const hasDesign = design !== undefined;                                        // 23 Nov (migration 41)
+  if (!hasTop && !hasOrder && !hasHidden && !hasPairings && !hasDesign) return res.status(400).json({ error: 'Nothing to save.' });
+  if (hasDesign) {
+    if (!design || typeof design !== 'object' || !Object.prototype.hasOwnProperty.call(DESIGN_COLUMN, design.side)) {
+      return res.status(400).json({ error: 'Which menu: the food or the drinks?' });
+    }
+    if (!DESIGNS_READY.includes(design.value)) {
+      return res.status(400).json({ error: DESIGNS.includes(design.value) ? 'That design is not ready yet.' : 'Which design?' });
+    }
+  }
   if (hasPairings && typeof pairings !== 'boolean') return res.status(400).json({ error: 'Drink recommendations: on or off?' });
   const row = { restaurant_id: rid, updated_at: new Date().toISOString(), updated_by: tasterId };
   if (hasTop) {
@@ -187,6 +221,11 @@ async function topSave(res, rid, body, tasterId) {
     if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : 'The drink recommendations switch is not set up yet: migration 40 has not been run.' });
     row.show_pairings = pairings;
   }
+  if (hasDesign) {
+    const probe = await sb(`/menu_settings?select=${DESIGN_COLUMN[design.side]}&limit=1`);
+    if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : DESIGN_NOT_READY });
+    row[DESIGN_COLUMN[design.side]] = design.value;
+  }
   // r43: as it was, for the notification
   const was = await sb(`/menu_settings?restaurant_id=eq.${rid}&select=*&limit=1`);
   const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
@@ -200,18 +239,24 @@ async function topSave(res, rid, body, tasterId) {
     if (missing(saved)) return res.status(409).json({ error: NOT_READY });
     return res.status(502).json({ error: failWords('save the Top Rated settings', saved) });
   }
-  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden, hasPairings });
+  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden, hasPairings, hasDesign });
   if (what) await tellChange(rid, tasterId, what, { go: 'menu' });
   return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at, order: orderOf(saved.data[0]),
-                                pairings: saved.data[0].show_pairings !== false });
+                                pairings: saved.data[0].show_pairings !== false, design: designOf(saved.data[0]) });
 }
 
 // r43: "changed Top Rated: Appetizers 5 → 3; Drinks off", "changed the order of the menu's sections", …
 const TOP_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', drinks: 'Drinks' };
 const CAVE_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', sides: 'Sides', desserts: 'Desserts', wines: 'Wines',
   cocktails: 'Cocktails', beers: 'Beers', spirits: 'Spirits', shots: 'Shots', 'drinks-other': 'Other drinks' };
-export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden, hasPairings }) {
+const DESIGN_WORDS = { original: 'the Original', rows: 'Rows', grid: 'Grid', wheel: 'Wheel' };
+export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden, hasPairings, hasDesign }) {
   const parts = [];
+  if (hasDesign) {                                                                                        // 23 Nov
+    const a = designOf(prev), b = designOf(now);
+    if (a.main !== b.main) parts.push(`changed the food menu's design to ${DESIGN_WORDS[b.main]}`);
+    if (a.drinks !== b.drinks) parts.push(`changed the drinks' design to ${DESIGN_WORDS[b.drinks]}`);
+  }
   if (hasPairings && (prev ? prev.show_pairings !== false : true) !== (now.show_pairings !== false)) {   // 23 Nov
     parts.push(now.show_pairings === false ? 'turned the drink recommendations off' : 'turned the drink recommendations on');
   }

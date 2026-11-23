@@ -296,6 +296,27 @@
   .tr-note { font-size:.72rem; color:var(--muted); margin-top:.55rem; }
   .tr-err { font-size:.78rem; color:var(--red); margin-top:.55rem; }
   .m-switch:disabled { opacity:.45; cursor:default; }
+  /* 23 Nov 2026: Menu design (the Menu tab) — how guests look through the food menu and the drinks */
+  .ds-card { padding:1.15rem 1.1rem 1rem; }
+  .ds-grp { border-top:1px solid var(--border); margin-top:.8rem; padding-top:.8rem; }
+  .ds-gh { display:flex; align-items:baseline; justify-content:space-between; gap:.6rem; margin-bottom:.6rem; }
+  .ds-gh b { font-family:var(--serif); font-size:1.05rem; font-weight:600; }
+  .ds-gh span { font-size:.74rem; color:var(--muted); text-align:right; }
+  .ds-opts { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.6rem; }
+  @media (min-width:620px) { .ds-opts { grid-template-columns:repeat(4, minmax(0,1fr)); } }
+  .ds-opt { border:2px solid var(--border); border-radius:14px; background:#fff; display:flex; flex-direction:column; align-items:stretch; overflow:hidden; }
+  .ds-opt.on { border-color:var(--green); box-shadow:0 0 0 3px rgba(76,122,76,.16); }
+  .ds-opt.soon { opacity:.55; }
+  .ds-pick { display:flex; flex-direction:column; align-items:center; gap:.15rem; border:none; background:none; padding:.7rem .5rem .55rem; font:inherit; color:var(--text); cursor:pointer; text-align:center; }
+  .ds-pick:disabled { cursor:default; }
+  .ds-pick svg { width:62px; height:93px; color:var(--red); margin-bottom:.3rem; }
+  .ds-pick b { font-size:.92rem; font-weight:600; }
+  .ds-pick small { font-size:.7rem; color:var(--muted); line-height:1.3; }
+  .ds-badge, .ds-use, .ds-soon { margin-top:.4rem; font-size:.6rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; border-radius:999px; padding:.3rem .6rem; }
+  .ds-badge { background:var(--green); color:#fff; } .ds-use { border:1px solid var(--border); color:var(--red); } .ds-soon { color:var(--muted); }
+  .ds-pv { display:block; text-align:center; font-size:.7rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--red); text-decoration:none; padding:.45rem 0 .5rem; border-top:1px solid var(--border); }
+  .ds-pv:hover { background:#FBF7F1; }
+  .ds-s { fill:none; stroke:currentColor; stroke-width:2.2; } .ds-k { fill:currentColor; } .ds-l { fill:currentColor; opacity:.28; } .ds-bg { fill:#FBF7F1; stroke:var(--border); stroke-width:1.5; }
   /* r36: Change the order (option B) */
   .m-dish-group.has-btn { margin-bottom:.7rem; }
   .m-dish-group.has-btn::after { display:none; }
@@ -1675,8 +1696,8 @@ function render(){
     if(DISHES_ERROR){ wrap().innerHTML = top + '<div class="m-err">'+esc(DISHES_ERROR)+'</div>'; return; }
     if(!DISHES_LOADED){ wrap().innerHTML = top + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
     // r40: the dishes and drinks first (the way to find them at the top), the Top Rated settings after them.
-    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS) + '<div class="mg-tr-gap"></div>' + trCardHtml()
-                                                 : trCardHtml() + '<div class="m-empty">This restaurant has no dishes yet.</div>');
+    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS) + '<div class="mg-tr-gap"></div>' + dsCardHtml() + trCardHtml()
+                                                 : dsCardHtml() + trCardHtml() + '<div class="m-empty">This restaurant has no dishes yet.</div>');
     return;
   }
   if(TAB==='events'){ wrap().innerHTML = top + '<div id="ev-root"></div>'; evPaint(); return; }     // r50
@@ -1707,6 +1728,8 @@ async function trLoad(){
     CAVE_HIDDEN = Array.isArray(o.hidden) ? o.hidden : [];
     CO_READY = d.orderReady === true;
     TR.pairings = d.pairings !== false; TR.pairingsReady = d.pairingsReady === true;     // 23 Nov (migration 40)
+    TR.design = dsClean(d.design); TR.designReady = d.designReady === true;             // 23 Nov (migration 41)
+    TR.designs = Array.isArray(d.designs) ? d.designs : ['original'];
     if(TAB === 'menu' && DISHES_LOADED && !CO.ui) render();
   }catch(e){
     if(TR.rid !== rid) return;
@@ -1767,7 +1790,72 @@ async function prSwitch(){
   trPaint();
   if(TAB === 'menu' && DISHES_LOADED && !CO.ui && typeof render === 'function') render();
 }
-function trPaint(){ const c = document.getElementById('tr-card'); if(c) c.innerHTML = trInner(); }
+function trPaint(){ const c = document.getElementById('tr-card'); if(c) c.innerHTML = trInner(); dsPaint(); }
+
+// ── MENU DESIGN (23 Nov 2026, Sebastian 03:58: "the manager will have the option to change to any of the four menu
+// designs, the original, and those other three … and it has to be the same for drinks") ──
+// One choice for the food menu and one for the drinks, saved the moment it is tapped (api/_lib/menuset.js, migration 41).
+// Original (the carousel) and Rows are ready; Grid and Wheel are shown as coming. Preview opens the menu in that design
+// for this person only (menu?design=…); it changes nothing for the guests.
+const DS_LIST = [
+  ['original', 'Original', 'The carousel',
+   '<rect class="ds-bg" x="1" y="1" width="78" height="118" rx="9"/><circle class="ds-s" cx="40" cy="50" r="21"/><circle class="ds-l" cx="4" cy="50" r="13"/><circle class="ds-l" cx="76" cy="50" r="13"/><circle class="ds-k" cx="40" cy="50" r="8"/><g class="ds-k"><circle cx="30" cy="84" r="2.2"/><circle cx="37" cy="84" r="2.2"/><circle cx="44" cy="84" r="2.2" opacity=".35"/><circle cx="51" cy="84" r="2.2" opacity=".35"/></g><rect class="ds-l" x="22" y="94" width="36" height="6" rx="3"/>'],
+  ['rows', 'Rows', 'Chef’s Pick on top, a row for each part',
+   '<rect class="ds-bg" x="1" y="1" width="78" height="118" rx="9"/><rect class="ds-k" x="8" y="9" width="64" height="24" rx="5"/><g><rect class="ds-l" x="-6" y="46" width="16" height="18" rx="3"/><rect class="ds-s" x="22" y="42" width="36" height="26" rx="4"/><rect class="ds-l" x="70" y="46" width="16" height="18" rx="3"/></g><g><rect class="ds-l" x="-6" y="80" width="16" height="18" rx="3"/><rect class="ds-s" x="22" y="76" width="36" height="26" rx="4"/><rect class="ds-l" x="70" y="80" width="16" height="18" rx="3"/></g><rect class="ds-l" x="8" y="108" width="24" height="5" rx="2.5"/>'],
+  ['grid', 'Grid', 'Titles that open',
+   '<rect class="ds-bg" x="1" y="1" width="78" height="118" rx="9"/><rect class="ds-k" x="8" y="9" width="64" height="22" rx="5"/><rect class="ds-l" x="8" y="37" width="64" height="11" rx="4"/><rect class="ds-k" x="8" y="53" width="64" height="11" rx="4"/><rect class="ds-s" x="9" y="69" width="29" height="22" rx="4"/><rect class="ds-s" x="42" y="69" width="29" height="22" rx="4"/><rect class="ds-s" x="9" y="95" width="29" height="18" rx="4"/><rect class="ds-s" x="42" y="95" width="29" height="18" rx="4"/>'],
+  ['wheel', 'Wheel', 'Spin for the next dish',
+   '<rect class="ds-bg" x="1" y="1" width="78" height="118" rx="9"/><rect class="ds-l" x="26" y="8" width="28" height="4" rx="2"/><rect class="ds-s" x="12" y="17" width="56" height="34" rx="5"/><rect class="ds-l" x="22" y="57" width="36" height="5" rx="2.5"/><rect class="ds-l" x="30" y="66" width="20" height="5" rx="2.5"/><path class="ds-s" d="M4 118 A44 40 0 0 1 76 118"/><circle class="ds-k" cx="40" cy="86" r="7"/><circle class="ds-l" cx="22" cy="93" r="5"/><circle class="ds-l" cx="58" cy="93" r="5"/><circle class="ds-l" cx="10" cy="106" r="5"/><circle class="ds-l" cx="70" cy="106" r="5"/>'],
+];
+const DS_SIDES = [['main', 'Food menu', ''], ['drinks', 'Drinks menu', '&ring=drinks']];
+function dsClean(o){ const ok = ['original','grid','rows','wheel'], out = {}; DS_SIDES.forEach(x => { out[x[0]] = o && ok.includes(o[x[0]]) ? o[x[0]] : 'original'; }); return out; }
+function dsName(v){ const d = DS_LIST.find(x => x[0] === v); return d ? d[1] : 'Original'; }
+function dsCardHtml(){ return '<div class="m-card ds-card" id="ds-card">'+dsInner()+'</div>'; }
+function dsInner(){
+  const head = '<div class="m-eyebrow">Menu design</div>'
+    + '<div class="tr-lead">How guests look through the menu. Every design opens the same dish page (the one guests share), with Fork’s Rating, Share and Reserve.</div>';
+  if(!TR.loaded) return head + '<div class="tr-note">Loading…</div>';
+  const ready = TR.designReady === true && !TR.failed, ok = TR.designs || ['original'], des = TR.design || dsClean(null);
+  return head + DS_SIDES.map(function(sd){
+      const side = sd[0];
+      return '<div class="ds-grp"><div class="ds-gh"><b>'+sd[1]+'</b><span id="ds-now-'+side+'">Guests see: '+dsName(des[side])+'</span></div>'
+        + '<div class="ds-opts" role="radiogroup" aria-label="'+sd[1]+' design">'
+        + DS_LIST.map(function(d){
+            const v = d[0], on = des[side] === v, can = ok.includes(v);
+            return '<div class="ds-opt'+(on?' on':'')+(can?'':' soon')+'" id="ds-'+side+'-'+v+'">'
+              + '<button type="button" class="ds-pick" role="radio" aria-checked="'+on+'" aria-label="'+sd[1]+': '+d[1]+'"'
+              +   (can && ready && !TR.dsBusy && !on ? ' onclick="dsChoose(\''+side+'\',\''+v+'\')"' : ' tabindex="'+(on?'0':'-1')+'"') + (can ? '' : ' disabled') + '>'
+              +   '<svg viewBox="0 0 80 120" aria-hidden="true">'+d[3]+'</svg><b>'+d[1]+'</b><small>'+d[2]+'</small>'
+              +   (on ? '<span class="ds-badge">✓ On the menu</span>' : can ? '<span class="ds-use">Use this</span>' : '<span class="ds-soon">Coming soon</span>')
+              + '</button>'
+              + (can ? '<a class="ds-pv" href="/menu?design='+v+sd[2]+'" target="_blank" rel="noopener">Preview</a>' : '')
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    }).join('')
+    + (!TR.designReady && !TR.failed ? '<div class="tr-err" id="ds-err">Not set up yet: Seb’s Analytics has to run migration 41.</div>' : '')
+    + (TR.dsError ? '<div class="tr-err" id="ds-err">'+esc(TR.dsError)+'</div>' : '')
+    + '<div class="tr-note" id="ds-note">'+esc(TR.dsNote || 'Preview opens the menu in that design for you only. Choosing one shows it to guests at once; the dishes, photos, prices and ratings stay the same, and you can switch back any time.')+'</div>';
+}
+function dsPaint(){ const c = document.getElementById('ds-card'); if(c) c.innerHTML = dsInner(); }
+async function dsChoose(side, value){
+  if(!TR.loaded || !TR.designReady || TR.dsBusy || !(TR.designs || []).includes(value)) return;
+  const rid = TR.rid, was = (TR.design || dsClean(null))[side];
+  if(was === value) return;
+  TR.design = Object.assign({}, TR.design || dsClean(null)); TR.design[side] = value;
+  TR.dsBusy = true; TR.dsError = ''; TR.dsNote = 'Saving…'; dsPaint();
+  try{
+    const d = await rvApi({ action:'menu_top_save', design:{ side:side, value:value } });
+    if(TR.rid !== rid) return;
+    TR.design = dsClean(d.design);
+    TR.dsNote = 'Saved. Guests see '+dsName(TR.design[side])+' on the '+(side === 'drinks' ? 'drinks' : 'food menu')+' now (a guest with the menu open sees it the next time it loads).';
+  }catch(e){
+    if(TR.rid !== rid) return;
+    TR.design[side] = was; TR.dsError = e.message; TR.dsNote = '';
+  }finally{ if(TR.rid === rid) TR.dsBusy = false; }
+  dsPaint();
+  const b = document.querySelector('#ds-'+side+'-'+TR.design[side]+' .ds-pick'); if(b) b.focus({preventScroll:true});
+}
 function trSet(k, n){
   if(!TR.loaded || !TR.ready || TR.failed) return;
   TR.top[k] = Math.max(0, Math.min(10, n));

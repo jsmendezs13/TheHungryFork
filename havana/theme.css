@@ -183,6 +183,27 @@ html[data-site="havana"] .warp-dot.active { background: var(--hv-purple); box-sh
 html[data-site="havana"] .warp-arrow { background: #fff; border-color: rgba(22,32,58,.18); color: var(--hv-navy); }
 html[data-site="havana"] .warp-ring-back { background: #fff; color: var(--hv-navy); border-color: transparent; font-family: var(--hv-label); font-size: 1rem; font-weight: 400; letter-spacing: .12em; }
 
+/* ── the menu's design "Rows" (23 Nov 2026, Manager → Menu → Menu design): sky blue, white cards, the dish in the middle
+   ringed in yellow, the titles in Knewave, the Chef's Pick on a purple card ── */
+html[data-site="havana"] #rows-room { background: radial-gradient(120% 80% at 50% 0%, #E2F3FC 0%, #B9E1F5 45%, #8ACCEF 100%); }
+html[data-site="havana"] .rw-hint { font-family: var(--hv-label); font-size: .95rem; font-weight: 400; letter-spacing: .14em; color: var(--hv-navy); }
+html[data-site="havana"] .rw-hero { background: linear-gradient(135deg, #2D0077, #4C1FB0); box-shadow: 0 10px 24px rgba(45,0,119,.3); }
+html[data-site="havana"] .rw-hero-tag { background: var(--hv-yellow); color: var(--hv-purple); font-family: var(--hv-label); font-size: 1rem; font-weight: 400; letter-spacing: .1em; padding: .22rem .8rem .12rem; }
+html[data-site="havana"] .rw-hero-name { font-family: var(--hv-display); font-weight: 400; font-size: 1.7rem; text-shadow: 0 2px 8px rgba(45,0,119,.8); }
+html[data-site="havana"] .rw-hero-price { color: var(--hv-yellow); font-weight: 900; font-size: 1.3rem; }
+html[data-site="havana"] .rw-head h2 { font-family: var(--hv-display); font-weight: 400; color: var(--hv-purple); font-size: 1.4rem; }
+html[data-site="havana"] .rw-all { font-family: var(--hv-label); font-size: 1rem; font-weight: 400; letter-spacing: .1em; color: var(--hv-navy); }
+html[data-site="havana"] .rw-card { background: #fff; box-shadow: 0 5px 12px rgba(22,32,58,.12); }
+html[data-site="havana"] .rw-card.mid { box-shadow: 0 0 0 3px var(--hv-yellow), 0 10px 22px rgba(45,0,119,.22); }
+html[data-site="havana"] .rw-card:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--hv-purple); }
+html[data-site="havana"] .rw-ph { background: var(--hv-sky-pale); }
+html[data-site="havana"] .rw-nm { color: var(--hv-navy); font-weight: 700; }
+html[data-site="havana"] .rw-pr { color: var(--hv-purple); font-weight: 900; }
+html[data-site="havana"] .rw-sold { background: var(--hv-purple); }
+html[data-site="havana"] .rw-arr { background: #fff; color: var(--hv-purple); border-color: transparent; box-shadow: 0 2px 8px rgba(22,32,58,.18); }
+html[data-site="havana"] .rw-empty { color: var(--hv-navy); }
+@media (min-width: 760px) { html[data-site="havana"] .rw-hero-name { font-size: 2.3rem; } html[data-site="havana"] .rw-head h2 { font-size: 1.7rem; } }
+
 /* ── reservations ── */
 html[data-site="havana"] .rv-hero { background: linear-gradient(135deg, #E2F3FC 0%, #B9E1F5 100%); }
 html[data-site="havana"] .rv-eyebrow { font-family: var(--hv-label); font-size: .9rem; letter-spacing: .16em; color: var(--hv-navy); }
