@@ -18,6 +18,7 @@
       home: '/havana/home.js',
       pages: '/havana/pages.js',
       ring: true,          // photos of dishes and drinks in the ring of leaves (the restaurant's sign)
+      secondPhotoFull: true,   // 22 Nov: a dish's second photo is another photo of the plate, shown as big as the first (not the small ingredients frame)
       noTypedPairs: true,  // no wine or cocktail suggestions unless the team chooses them
       logo: '/havana/havana-logo.webp',   // the restaurant's logo, as on its sign (20 Nov; his file Havana_Social_II.png)
       hero: null,          // a photo for the top of the home page (not needed while there is the video)

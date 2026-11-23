@@ -1621,6 +1621,9 @@ function renderCave(animClass,mediaOnly){
   let media;
   if(caveViewIdx===0){
     media=`<img src="${hfImgSrc(d.img,hfPhotoW(420,640))}" data-orig="${d.img||''}" class="cave-photo" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
+  }else if(caveViewIdx===1&&HF_SITE.secondPhotoFull){
+    // Havana (22 Nov): the second photo is the same plate served another way: the same size and place as the first
+    media=`<img src="${hfImgSrc(d.imgOpen,hfPhotoW(420,640))}" data-orig="${d.imgOpen||''}" class="cave-photo cave-photo-second" alt="${d.name}" onerror="caveImgErr(this,'${d.emoji}')">`;
   }else if(caveViewIdx===1){
     const ing=(d.ingredients&&d.ingredients.length)?`<ul class="ing-list">`+d.ingredients.map(x=>`<li>${x}</li>`).join('')+`</ul>`:'';
     media=`<div class="exploded-row"><img src="${hfImgSrc(d.imgOpen,hfPhotoW(220,384))}" data-orig="${d.imgOpen||''}" class="cave-photo cave-photo-open" alt="${d.name} ingredients" onerror="caveImgErr(this,'${d.emoji}')">${ing}</div>`;
