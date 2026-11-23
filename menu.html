@@ -1241,7 +1241,10 @@ const CATEGORIES=[{key:'starters',label:'Appetizers'},{key:'entree',label:'Entr�
 // r39 (Sebastian, 19 Oct): Desserts after Sides, and the drinks in a carousel of their own ("a carousel inside the
 // carousel"): the Drinks cave opens Bartender's Pick · Wines · Cocktails · Beers · Spirits · Top Rated Drinks, each a
 // cave of its own. RING says which carousel is showing; CATEGORY_ORDER is always that carousel's caves.
-const MENU_BASE=['chefs-pick','starters','entree','salads','sides','desserts','drinks'];
+// 23 Nov 2026 (Sebastian, 02:52: "take the drink menu off from the food menu … there is no way to return back in the same
+// line"): the food's carousel and its bar of names have no Drinks door; the drinks open from the home page's Drinks button
+// (?ring=drinks), a link (?cat=drinks), or a dish's pairing, and "Back to the menu" brings the food back.
+const MENU_BASE=['chefs-pick','starters','entree','salads','sides','desserts'];
 const TOP_KEYS={'top-starters':'starters','top-entree':'entree','top-salads':'salads','top-drinks':'drinks'};
 const MAIN_TOPS=['top-starters','top-entree','top-salads'];
 const DRINK_CAVES={'wines':['wine'],'cocktails':['cocktail'],'beers':['beer'],'spirits':['gin','whiskey','tequila','vodka','rum','spirit'],'shots':['shot']};   // r40: Shots
@@ -1680,7 +1683,7 @@ function renderCave(animClass,mediaOnly){
         <a class="cave-share-btn cave-reserve-btn" href="/reservations">${caveIcon('calendar')}Reserve</a>
       </div>
     </section>
-    ${d.category==='drinks'||(window.HF_SITE&&HF_SITE.noTypedPairs&&!pairDrink(d,'wine')&&!pairDrink(d,'cocktail')&&!d.wine&&!d.cocktail)?'':`<section class="cave-sec cave-sec-recs">
+    ${d.category==='drinks'||(typeof HF_HOURS!=='undefined'&&HF_HOURS.pairings===false)||(window.HF_SITE&&HF_SITE.noTypedPairs&&!pairDrink(d,'wine')&&!pairDrink(d,'cocktail')&&!d.wine&&!d.cocktail)?'':`<section class="cave-sec cave-sec-recs">
       <div class="cave-recs">
         ${caveRecHTML(d,'wine',"Sommelier's<br>Recommendation")}
         ${caveRecHTML(d,'cocktail','Suggested<br>Cocktail')}
@@ -1775,7 +1778,7 @@ function openDrinksRing(key){
 }
 function closeDrinksRing(){
   PAIR_FROM=null;
-  ringSet('main','drinks');
+  ringSet('main');                                       // 23 Nov: the food's first door (there is no Drinks door now)
   ringAnim('warp-ring-out');
 }
 function loadZoneStars(d){
@@ -3077,7 +3080,7 @@ loadMyLevel();
   // r39: a drinks' cave (?cat=wines, ?cat=top-drinks…) opens in the drinks' carousel
   if(cat&&cat!=='drinks'&&hasDrinkRing()&&drinksRing().includes(cat))ringSet('drinks',cat);
   // r40: ?ring=drinks (the home page's Drinks button): the drinks' carousel, at its first cave
-  else if(params.get('ring')==='drinks'&&hasDrinkRing()){ringSet('drinks',drinksRing()[0]);return;}
+  else if((params.get('ring')==='drinks'||cat==='drinks')&&hasDrinkRing()){ringSet('drinks',drinksRing()[0]);return;}   // 23 Nov: ?cat=drinks too (no Drinks door now)
   if(cat&&CATEGORY_ORDER.includes(cat)){
     warpIdx=CATEGORY_ORDER.indexOf(cat);warpPos=warpIdx;updateWarpCatName();warpRender();
     // ?enter=1 opens the cave straight away — the home page video uses it.

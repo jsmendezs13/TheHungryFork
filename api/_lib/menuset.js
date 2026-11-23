@@ -20,6 +20,10 @@
 // caves the manager took off the menu (their dishes stay; only the door goes),
 // in caves_hidden.
 //
+// 23 Nov 2026 (Sebastian, 02:52): menu_top_save may carry pairings: true | false — whether the dishes show the
+// Sommelier's Recommendation and the Suggested Cocktail (menu_settings.show_pairings, migration 40). The menu gets it
+// as top.pairings; without migration 40 it is not there (and the menu shows them, as before).
+//
 // Reached through api/reservations.js like Settings, so the site still deploys
 // as twelve functions. Managers, owners and Seb's Analytics: the same people
 // who may change the dishes (canEditDishes).
@@ -95,6 +99,7 @@ export async function publicTop(restaurantId) {
   const row = got.data[0] || null;
   const top = topOf(row);
   if (row && (ORDER_COLUMN.main in row)) top.order = orderOf(row);
+  if (row && ('show_pairings' in row)) top.pairings = row.show_pairings !== false;   // 23 Nov (migration 40)
   return top;
 }
 
@@ -132,16 +137,21 @@ async function settings(res, rid) {
     const probe = await sb(`/menu_settings?select=${ORDER_COLUMN.main}&limit=1`);
     orderReady = probe.ok;
   }
+  // 23 Nov: the drink recommendations switch (migration 40); without a row, the column list is asked for
+  let pairingsReady = row ? 'show_pairings' in row : null;
+  if (pairingsReady === null) pairingsReady = (await sb('/menu_settings?select=show_pairings&limit=1')).ok;
   return res.status(200).json({ ready: true, top: topOf(row), chosen: !!row, changedOn: row ? row.updated_at : null,
-                                order: orderOf(row), orderReady });
+                                order: orderOf(row), orderReady, pairings: !row || row.show_pairings !== false, pairingsReady });
 }
 
 async function topSave(res, rid, body, tasterId) {
-  const top = body.top, order = body.order, hidden = body.hidden;
+  const top = body.top, order = body.order, hidden = body.hidden, pairings = body.pairings;
   const hasTop = top && typeof top === 'object' && !Array.isArray(top);
   const hasOrder = order && typeof order === 'object' && !Array.isArray(order);
   const hasHidden = hidden !== undefined;
-  if (!hasTop && !hasOrder && !hasHidden) return res.status(400).json({ error: 'Nothing to save.' });
+  const hasPairings = pairings !== undefined;                                    // 23 Nov
+  if (!hasTop && !hasOrder && !hasHidden && !hasPairings) return res.status(400).json({ error: 'Nothing to save.' });
+  if (hasPairings && typeof pairings !== 'boolean') return res.status(400).json({ error: 'Drink recommendations: on or off?' });
   const row = { restaurant_id: rid, updated_at: new Date().toISOString(), updated_by: tasterId };
   if (hasTop) {
     for (const k of TOP_KINDS) {
@@ -172,6 +182,11 @@ async function topSave(res, rid, body, tasterId) {
     if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : ORDER_NOT_READY });
     row.caves_hidden = hidden;
   }
+  if (hasPairings) {
+    const probe = await sb('/menu_settings?select=show_pairings&limit=1');
+    if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : 'The drink recommendations switch is not set up yet: migration 40 has not been run.' });
+    row.show_pairings = pairings;
+  }
   // r43: as it was, for the notification
   const was = await sb(`/menu_settings?restaurant_id=eq.${rid}&select=*&limit=1`);
   const prev = was.ok && Array.isArray(was.data) ? was.data[0] || null : null;
@@ -185,17 +200,21 @@ async function topSave(res, rid, body, tasterId) {
     if (missing(saved)) return res.status(409).json({ error: NOT_READY });
     return res.status(502).json({ error: failWords('save the Top Rated settings', saved) });
   }
-  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden });
+  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden, hasPairings });
   if (what) await tellChange(rid, tasterId, what, { go: 'menu' });
-  return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at, order: orderOf(saved.data[0]) });
+  return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at, order: orderOf(saved.data[0]),
+                                pairings: saved.data[0].show_pairings !== false });
 }
 
 // r43: "changed Top Rated: Appetizers 5 → 3; Drinks off", "changed the order of the menu's sections", …
 const TOP_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', drinks: 'Drinks' };
 const CAVE_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', sides: 'Sides', desserts: 'Desserts', wines: 'Wines',
   cocktails: 'Cocktails', beers: 'Beers', spirits: 'Spirits', shots: 'Shots', 'drinks-other': 'Other drinks' };
-export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden }) {
+export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden, hasPairings }) {
   const parts = [];
+  if (hasPairings && (prev ? prev.show_pairings !== false : true) !== (now.show_pairings !== false)) {   // 23 Nov
+    parts.push(now.show_pairings === false ? 'turned the drink recommendations off' : 'turned the drink recommendations on');
+  }
   if (hasTop) {
     const a = topOf(prev), b = topOf(now), tops = [];
     TOP_KINDS.forEach((k) => {

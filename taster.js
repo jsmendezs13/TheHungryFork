@@ -2307,7 +2307,8 @@ function hfHoursApply(d){
   HF_HOURS.top=hfTopClean(d.top);                            // r36
   HF_HOURS.caveOrder=hfOrderClean(d.top&&d.top.order);       // r40
   HF_HOURS.social=hfSocialClean(d.social);                   // r52
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,at:Date.now()}));}catch(e){}
+  HF_HOURS.pairings=!(d.top&&d.top.pairings===false);        // 23 Nov: the drink recommendations on the dishes (migration 40)
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,pairings:HF_HOURS.pairings,at:Date.now()}));}catch(e){}
   hfHoursFill();
   HF_HOURS.fresh=true;
   try{document.dispatchEvent(new Event('hf-hours'));}catch(e){}
@@ -2360,6 +2361,7 @@ function hfHoursLoad(){
       HF_HOURS.top=hfTopClean(kept.top);                     // r36
       HF_HOURS.caveOrder=hfOrderClean(kept.caveOrder);       // r40
       HF_HOURS.social=hfSocialClean(kept.social);            // r52
+      HF_HOURS.pairings=kept.pairings!==false;               // 23 Nov
       hfHoursFill();
     }
   }catch(e){}

@@ -1706,6 +1706,7 @@ async function trLoad(){
     CAVE_ORDER = { food:Array.isArray(o.main) ? o.main : [], drinks:Array.isArray(o.drinks) ? o.drinks : [] };
     CAVE_HIDDEN = Array.isArray(o.hidden) ? o.hidden : [];
     CO_READY = d.orderReady === true;
+    TR.pairings = d.pairings !== false; TR.pairingsReady = d.pairingsReady === true;     // 23 Nov (migration 40)
     if(TAB === 'menu' && DISHES_LOADED && !CO.ui) render();
   }catch(e){
     if(TR.rid !== rid) return;
@@ -1735,7 +1736,36 @@ function trInner(){
         + '</div></div>';
     }).join('')
     + (TR.error ? '<div class="tr-err" id="tr-err">'+esc(TR.error)+'</div>' : '')
-    + '<div class="tr-note" id="tr-note">'+esc(TR.note || 'Up to 10 dishes each. A dish nobody has rated in the last twelve months is not in them.')+'</div>';
+    + '<div class="tr-note" id="tr-note">'+esc(TR.note || 'Up to 10 dishes each. A dish nobody has rated in the last twelve months is not in them.')+'</div>'
+    + prRowHtml();
+}
+// 23 Nov 2026 (Sebastian, 02:52: "make optional the option for to add recommendation for both cocktail and wines"):
+// one switch for the Sommelier's Recommendation and the Suggested Cocktail. Off: the menu shows neither on its dishes,
+// and a dish's settings no longer ask for them (what was chosen stays, and is back when it is switched on again).
+function prRowHtml(){
+  if(!TR.loaded) return '';
+  const on = TR.pairings !== false, locked = !TR.pairingsReady || TR.prBusy;
+  return '<div class="m-eyebrow pr-eyebrow" style="margin-top:1.1rem">Drink recommendations</div>'
+    + '<div class="tr-row'+(on?'':' off')+'" id="pr-row"><div class="tr-name"><b>Sommelier’s Recommendation and Suggested Cocktail</b>'
+    + '<small id="pr-sub">'+(!TR.pairingsReady ? 'Not set up yet: Seb’s Analytics has to run migration 40.' : on ? 'On each dish of the menu, when you choose them in the dish' : 'Off: not on the menu, and the dishes do not ask for them')+'</small></div>'
+    + '<div class="tr-ctrl"><button type="button" class="m-switch'+(on?' on':'')+'" id="pr-sw" role="switch" aria-checked="'+on+'" aria-label="Drink recommendations on the dishes" onclick="prSwitch()"'+(locked?' disabled':'')+'></button></div></div>'
+    + (TR.prNote ? '<div class="tr-note" id="pr-note">'+esc(TR.prNote)+'</div>' : '')
+    + (TR.prError ? '<div class="tr-err" id="pr-err">'+esc(TR.prError)+'</div>' : '');
+}
+async function prSwitch(){
+  if(!TR.loaded || !TR.pairingsReady || TR.prBusy) return;
+  const rid = TR.rid, want = TR.pairings === false;
+  TR.prBusy = true; TR.prError = ''; TR.prNote = 'Saving…'; TR.pairings = want; trPaint();
+  try{
+    const d = await rvApi({ action:'menu_top_save', pairings:want });
+    if(TR.rid !== rid) return;
+    TR.pairings = d.pairings !== false; TR.prNote = TR.pairings ? 'Saved. The dishes show their drink recommendations again.' : 'Saved. The menu no longer shows drink recommendations.';
+  }catch(e){
+    if(TR.rid !== rid) return;
+    TR.pairings = !want; TR.prError = e.message; TR.prNote = '';
+  }finally{ if(TR.rid === rid) TR.prBusy = false; }
+  trPaint();
+  if(TAB === 'menu' && DISHES_LOADED && !CO.ui && typeof render === 'function') render();
 }
 function trPaint(){ const c = document.getElementById('tr-card'); if(c) c.innerHTML = trInner(); }
 function trSet(k, n){
@@ -1916,7 +1946,7 @@ function cavesFor(side){
       drinks.some(d => [].concat(...DRINK_GROUPS.map(g => g[2])).indexOf(d.drink_kind) < 0) ? ['drinks-other'] : [],
       top.drinks > 0 ? ['top-drinks'] : []);
   } else {
-    base = ['chefs-pick', 'starters', 'entree', 'salads', 'sides', 'desserts', 'drinks']
+    base = ['chefs-pick', 'starters', 'entree', 'salads', 'sides', 'desserts']   // 23 Nov: no Drinks door in the food's carousel
       .concat(['starters', 'entree', 'salads'].filter(k => top[k] > 0).map(k => 'top-'+k));
   }
   const saved = (CAVE_ORDER[side] || []).filter(k => base.indexOf(k) >= 0);
@@ -2361,6 +2391,8 @@ async function setKind(id, kind){
   const saved = await save(id, { drink_kind: kind });
 }
 function pairField(d, which){
+  if(TR.loaded && TR.pairings === false)                                          // 23 Nov: switched off in Menu
+    return which === 'wine' ? '<div class="m-field"><div class="m-field-label">Drink recommendations</div><div class="pk-note">Off for this menu. Switch them on in Menu, under Top Rated.</div></div>' : '';
   const col = which==='wine' ? 'pair_wine_id' : 'pair_cocktail_id';
   const title = which==='wine' ? 'Sommelier\'s Recommendation' : 'Suggested Cocktail';
   if(!DRINKS_READY) return '<div class="m-field"><div class="m-field-label">'+title+'</div><div class="pk-note">Choosing from your drinks is not set up yet: Seb\'s Analytics has to run migration 26.</div></div>';
