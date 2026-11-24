@@ -54,7 +54,8 @@ export default async function handler(req, res) {
 
   let places = [];
   if (access.isPlatformAdmin) {
-    const all = await sb('/restaurants?select=id,name&order=name.asc');
+    // r60: on a restaurant's website, that restaurant only (Sebastian, 24 Nov: "they need to be separate")
+    const all = await sb('/restaurants?select=id,name&order=name.asc' + (access.siteRid ? `&id=eq.${Number(access.siteRid)}` : ''));
     if (!all.ok) return res.status(502).json({ error: 'Could not read the restaurants list.' });
     places = (Array.isArray(all.data) ? all.data : []).map((r) => ({ id: r.id, name: r.name, role: 'platform' }));
   } else {

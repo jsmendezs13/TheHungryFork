@@ -46,6 +46,7 @@ import { serviceDateOf, serviceToday, addDays, canMessageAt } from './staff.js';
 import { waitingOnly, addHandles, handlesById } from './guests.js';
 import { makeSlot, claimFile, filesById, fileLinks, fileLine, fileError } from './files.js';
 import { notifyStaff, line } from './push.js';      // r43: the team's phones
+import { siteScope } from './sites.js';              // r60: each website its own restaurant
 
 export const KEEP_DAYS = 90;
 export const KEEP_MS = KEEP_DAYS * 24 * 3600 * 1000;
@@ -509,7 +510,7 @@ async function inbox(req, res, body, helpers = {}) {
         const l = places[r.restaurant_id];
         const tz = (l && l.settings && l.settings.timezone) || 'America/New_York';
         bell.push({
-          reservationId: Number(id), count: b.count,
+          reservationId: Number(id), count: b.count, restaurantId: Number(r.restaurant_id),
           who: b.who || 'The team', handle: handles[b.by] || null, restaurant: (l && l.restaurant && l.restaurant.name) || 'The restaurant',
           at: new Date(b.at).toISOString(), label: whenLabel(tz, b.at),
           table: tableDay(tz, r.reserved_at) + ' · ' + clockIn(tz, r.reserved_at).label,
@@ -530,6 +531,9 @@ async function inbox(req, res, body, helpers = {}) {
     catch (err) { console.error('[messages] review bell', err && err.message); }
   }
   bell.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  // r60: on a restaurant's website, only that restaurant's news (Sebastian, 24 Nov: "they need to be separate").
+  const site = siteScope(req);
+  const shown = site ? bell.filter((b) => !b.restaurantId || Number(b.restaurantId) === Number(site)) : bell;
 
   let staff = null;
   if (body.staff) {
@@ -539,6 +543,7 @@ async function inbox(req, res, body, helpers = {}) {
       // restaurants he holds a role at, not every client's (he would always see one).
       const rids = [];
       for (const [rid, e] of Object.entries(access.byRestaurant || {})) {
+        if (access.siteRid && Number(rid) !== Number(access.siteRid)) continue;        // r60: this website's restaurant only
         if (await canMessageAt(tasterId, rid, e.level)) rids.push(Number(rid));
       }
       if (rids.length) {
@@ -555,7 +560,7 @@ async function inbox(req, res, body, helpers = {}) {
       }
     }
   }
-  return res.status(200).json({ success: true, bell, staff });
+  return res.status(200).json({ success: true, bell: shown, staff });
 }
 
 // ── THE RESTAURANT ────────────────────────────────────────────────────────────

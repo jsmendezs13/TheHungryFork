@@ -421,7 +421,7 @@ export async function reviewBell(tasterId) {
   const placeName = {};
   (places.ok && Array.isArray(places.data) ? places.data : []).forEach((p) => { placeName[p.id] = p.name; });
   return rows.map((r) => ({
-    reviewNotice: Number(r.id), kind: r.kind, review: Number(r.review_id), at: new Date(r.created_at).toISOString(), label: whenLabel('America/New_York', r.created_at),
+    reviewNotice: Number(r.id), restaurantId: Number(r.restaurant_id), kind: r.kind, review: Number(r.review_id), at: new Date(r.created_at).toISOString(), label: whenLabel('America/New_York', r.created_at),
     restaurant: placeName[r.restaurant_id] || 'The restaurant', dish: names[dishOf[r.review_id]] || 'a dish',
     reason: r.kind === 'hidden' ? (r.reason || null) : null,
   }));

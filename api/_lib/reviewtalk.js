@@ -168,10 +168,38 @@ async function deleteMine(res, tasterId, body) {
 }
 
 // ── 2 · the author's side ─────────────────────────────────────────────────────
+// r60 (Sebastian, 24 Nov: a dish rated at Havana showed as "Dish #8" on The Hungry Fork's website): every review's
+// dish and restaurant by name, for My Tastings on any restaurant's website (another restaurant's dishes are not in
+// this website's menu). { dishes: { id: { slug, name, img, emoji, rid } }, restaurants: { rid: { name, site } } }
+export async function tastingPlaces(tasterId) {
+  const out = { dishes: {}, restaurants: {} };
+  const rv = await sb(`/reviews?taster_id=eq.${Number(tasterId)}&select=dish_id,restaurant_id&limit=2000`);
+  const rows = rv.ok && Array.isArray(rv.data) ? rv.data : [];
+  if (!rows.length) return out;
+  const dishIds = [...new Set(rows.map((r) => Number(r.dish_id)).filter((n) => Number.isInteger(n) && n > 0))];
+  const rids = [...new Set(rows.map((r) => Number(r.restaurant_id)).filter((n) => Number.isInteger(n) && n > 0))];
+  const [dishes, places, sites] = await Promise.all([
+    dishIds.length ? sb(`/dishes?id=in.(${dishIds.join(',')})&select=id,slug,name,image,emoji,restaurant_id`) : { ok: true, data: [] },
+    rids.length ? sb(`/restaurants?id=in.(${rids.join(',')})&select=id,name`) : { ok: true, data: [] },
+    rids.length ? sb(`/restaurant_booking_settings?restaurant_id=in.(${rids.join(',')})&select=restaurant_id,site_url`) : { ok: true, data: [] },
+  ]);
+  (dishes.ok && Array.isArray(dishes.data) ? dishes.data : []).forEach((d) => {
+    out.dishes[d.id] = { slug: d.slug || null, name: d.name || 'A dish', img: d.image || null, emoji: d.emoji || '🍽️', rid: Number(d.restaurant_id) || null };
+  });
+  const site = {};
+  (sites.ok && Array.isArray(sites.data) ? sites.data : []).forEach((s) => { site[s.restaurant_id] = s.site_url || null; });
+  (places.ok && Array.isArray(places.data) ? places.data : []).forEach((p) => {
+    const u = String(site[p.id] || '');
+    out.restaurants[p.id] = { name: p.name || 'The restaurant', site: /^https:\/\/[a-z0-9.-]+$/i.test(u.replace(/\/+$/, '')) ? u.replace(/\/+$/, '') : null };
+  });
+  return out;
+}
+
 async function mine(res, tasterId) {
   if (!(await allow(guestRead, keyFor('m' + tasterId), { failOpen: true }))) return res.status(429).json({ error: 'Too many requests. Wait a moment.' });
+  const places = await tastingPlaces(tasterId).catch(() => null);                         // r60
   const t = await sb(`/review_threads?taster_id=eq.${Number(tasterId)}&select=review_id,closed_at&limit=500`);
-  if (!t.ok) return res.status(200).json({ success: true, ready: false, threads: {} });      // before migration 38
+  if (!t.ok) return res.status(200).json({ success: true, ready: false, threads: {}, places });      // before migration 38
   const rows = Array.isArray(t.data) ? t.data : [];
   const out = {};
   if (rows.length) {
@@ -184,7 +212,7 @@ async function mine(res, tasterId) {
       if (!x.from_guest && !x.read_at) o.unread += 1;
     });
   }
-  return res.status(200).json({ success: true, ready: true, threads: out });
+  return res.status(200).json({ success: true, ready: true, threads: out, places });
 }
 
 function guestView(r, thread, list, place, dish, handles, fileOf) {
@@ -421,7 +449,7 @@ export async function talkBell(tasterId) {
   const pn = {}; (places.ok && Array.isArray(places.data) ? places.data : []).forEach((p) => { pn[p.id] = p.name; });
   const placeOfReview = {}; th.data.forEach((x) => { placeOfReview[x.review_id] = x.restaurant_id; });
   return Object.entries(by).map(([id, b]) => ({
-    reviewTalk: Number(id), count: b.count, who: b.who || 'The team', restaurant: pn[placeOfReview[id]] || 'The restaurant',
+    reviewTalk: Number(id), restaurantId: Number(placeOfReview[id]), count: b.count, who: b.who || 'The team', restaurant: pn[placeOfReview[id]] || 'The restaurant',
     dish: dn[dishOf[id]] || 'a dish', at: new Date(b.at).toISOString(), label: whenLabel('America/New_York', b.at),
   }));
 }

@@ -67,7 +67,31 @@
   }
   var S = SITES[key];
   window.HF_SITE = S;
+  // r60: the website of each restaurant (My Tastings links a dish rated at another restaurant to that restaurant's menu)
+  window.HF_SITE_KEYS = {};
+  for (var k in SITES) window.HF_SITE_KEYS[SITES[k].id] = k;
   document.documentElement.setAttribute('data-site', key);
+  // r60 (24 Nov 2026, Sebastian: "they need to be separate"): every request to this website's own server says which
+  // restaurant's website it is (X-HF-Site), so the Manager page, the bell and the messages stay with this restaurant.
+  // On our real addresses the server knows it anyway; this is for the test bench and preview addresses.
+  try {
+    var nativeFetch = window.fetch;
+    if (nativeFetch && !nativeFetch.hfSite) {
+      var siteFetch = function (input, init) {
+        try {
+          var url = typeof input === 'string' ? input : (input && input.url) || '';
+          if (url.indexOf('/api/') === 0 || url.indexOf(location.origin + '/api/') === 0) {
+            var h = new Headers((init && init.headers) || (typeof input !== 'string' && input && input.headers) || {});
+            if (!h.has('X-HF-Site')) h.set('X-HF-Site', String(S.id));
+            init = Object.assign({}, init || {}, { headers: h });
+          }
+        } catch (e) {}
+        return nativeFetch.call(window, input, init);
+      };
+      siteFetch.hfSite = true;
+      window.fetch = siteFetch;
+    }
+  } catch (e) {}
   if (!S.theme) return;
 
   // Its own look: the theme file goes in right here, while <head> is still being read, so the
@@ -79,9 +103,19 @@
     for (var i = 0; i < S.words.length; i++) if (t.indexOf(S.words[i][0]) !== -1) t = t.split(S.words[i][0]).join(S.words[i][1]);
     return t;
   }
+  // r60: never inside [data-keep] — names that come from the system (the restaurants in My Visits, My Tastings, the
+  // bell): The Hungry Fork's visits are The Hungry Fork's, on any website (24 Nov: Santiago's showed as Havana's).
+  function isKept(node) {
+    var el = node && (node.nodeType === 1 ? node : node.parentElement);
+    return !!(el && el.closest && el.closest('[data-keep]'));
+  }
   function rebrand(root) {
-    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
+    if (isKept(root)) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+      acceptNode: function (x) { return x.nodeType === 1 && x.hasAttribute('data-keep') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+    }), n;
     while ((n = w.nextNode())) {
+      if (n.nodeType !== 3) continue;
       var p = n.parentNode && n.parentNode.nodeName;
       if (p === 'SCRIPT' || p === 'STYLE') continue;
       if (/Hungry Fork|Stone St|Delicious Cousin|cave to enter/.test(n.nodeValue)) n.nodeValue = swap(n.nodeValue);
@@ -89,7 +123,7 @@
     var imgs = root.querySelectorAll ? [].slice.call(root.querySelectorAll('img')) : [];
     if (root.nodeName === 'IMG') imgs.push(root);
     imgs.forEach(function (img) {
-      if (/Hungry Fork/.test(img.alt || '')) img.alt = swap(img.alt);
+      if (/Hungry Fork/.test(img.alt || '') && !isKept(img)) img.alt = swap(img.alt);
       if (!/hungry-fork-logo/.test((img.getAttribute('src') || '') + ' ' + (img.getAttribute('data-orig') || ''))) return;
       img.removeAttribute('onerror');
       if (S.logo) { img.src = S.logo; img.setAttribute('data-orig', S.logo); img.classList.add('site-logo'); return; }
@@ -139,7 +173,7 @@
         for (var i = 0; i < list.length; i++) for (var j = 0; j < list[i].addedNodes.length; j++) {
           var nd = list[i].addedNodes[j];
           if (nd.nodeType === 1) rebrand(nd);
-          else if (nd.nodeType === 3 && /Hungry Fork|Stone St|Delicious Cousin|cave to enter/.test(nd.nodeValue)) nd.nodeValue = swap(nd.nodeValue);
+          else if (nd.nodeType === 3 && /Hungry Fork|Stone St|Delicious Cousin|cave to enter/.test(nd.nodeValue) && !isKept(nd)) nd.nodeValue = swap(nd.nodeValue);
         }
       }).observe(document.body, { childList: true, subtree: true });
     } catch (e) {}

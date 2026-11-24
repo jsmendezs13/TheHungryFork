@@ -16,8 +16,17 @@ import {
   stripSecrets,
 } from './_lib/auth.js';
 import {
-  isStaff, findDevice, deviceLabel, sessionFor, challengeFor, readChallenge, createDevice, touchDevice, newDeviceEmail,
+  isStaff, hasRoleAt, findDevice, deviceLabel, sessionFor, challengeFor, readChallenge, createDevice, touchDevice, newDeviceEmail,
 } from './_lib/devices.js';
+import { siteScope } from './_lib/sites.js';
+
+// r60: the restaurant whose website this login is on — our address says it; elsewhere (the test bench) the page.
+function siteOf(req, body) {
+  const s = siteScope(req);
+  if (s) return s;
+  const v = Number(body && body.restaurantId);
+  return Number.isInteger(v) && v > 0 ? v : null;
+}
 import { sendCode, checkCode, phoneHint } from './_lib/sms.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
@@ -93,6 +102,15 @@ export default async function handler(req, res) {
 
     // r43: staff log in on a trusted device only.
     if (await isStaff(taster)) {
+      // r60 (Sebastian, 24 Nov: "If it's a different restaurant … there is no reason to ask for a new code"): on the
+      // website of a restaurant where this account has no role, no code — and a guest's session there: nothing of the
+      // team opens with it (roles.js, claim "gst"). The code stays for a new device where they work.
+      const site = siteOf(req, body);
+      if (site && !(await hasRoleAt(taster, site))) {
+        console.log('[login] staff account', taster.id, 'on restaurant', site, 'where it has no role: a guest session');
+        return res.status(200).json({ success: true, guestOnly: true, session: sessionFor(taster, null, { guestOnly: true }),
+          taster: { ...stripSecrets(taster), is_platform_admin: false, is_restaurant_admin: false } });
+      }
       const found = await findDevice(taster.id, body.devices);
       if (found.row) {
         await touchDevice(found.row);
@@ -132,7 +150,7 @@ async function confirmDevice(req, res, body) {
   const ok = await checkCode(taster.id, taster.phone_number, body.code);
   if (!ok.ok) return res.status(ok.status).json({ error: ok.error });
   const label = deviceLabel(req.headers['user-agent'], body.app === true);
-  const made = await createDevice(taster.id, label, body.app === true);
+  const made = await createDevice(taster.id, label, body.app === true, siteOf(req, body));
   if (!made) return res.status(502).json({ error: 'Could not save this device. Please try again.' });
   console.log('[login] staff account', taster.id, 'trusted a new device', made.row.id, label);
   await newDeviceEmail(taster, made.row);

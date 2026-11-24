@@ -82,14 +82,16 @@ function gate(res, access, restaurantId) {
 // Seb's Analytics.
 function myRestaurants(access) {
   return Object.entries(access.byRestaurant || {})
-    .filter(([, r]) => r.level >= LEVEL.manager).map(([id]) => Number(id)).filter((n) => Number.isInteger(n) && n > 0);
+    .filter(([, r]) => r.level >= LEVEL.manager).map(([id]) => Number(id)).filter((n) => Number.isInteger(n) && n > 0)
+    .filter((n) => !access.siteRid || n === Number(access.siteRid));             // r60: this website's restaurant only
 }
 
 // How many messages from the other side are not read yet, per restaurant.
 // null when the table is not there (migration 24 not run).
 async function waitingCounts(access) {
   let q;
-  if (access.isPlatformAdmin) q = '/support_messages?from_platform=eq.false&read_at=is.null&select=restaurant_id&limit=2000';
+  if (access.isPlatformAdmin) q = '/support_messages?from_platform=eq.false&read_at=is.null&select=restaurant_id&limit=2000'
+    + (access.siteRid ? `&restaurant_id=eq.${Number(access.siteRid)}` : '');                  // r60: this website's restaurant only
   else {
     const ids = myRestaurants(access);
     if (!ids.length) return [];

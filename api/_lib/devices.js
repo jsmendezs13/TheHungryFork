@@ -39,6 +39,16 @@ export async function isStaff(taster) {
   return got.data.length > 0;
 }
 
+// r60: does this account have a role at this restaurant (or is it the platform admin)? When the roles cannot be
+// read, the answer is yes (the code is asked): never a session without the code on a guess.
+export async function hasRoleAt(taster, restaurantId) {
+  if (!taster) return false;
+  if (taster.is_platform_admin) return true;
+  const got = await sb(`/restaurant_roles?taster_id=eq.${Number(taster.id)}&restaurant_id=eq.${Number(restaurantId)}&select=id&limit=1`);
+  if (!got.ok || !Array.isArray(got.data)) return true;
+  return got.data.length > 0;
+}
+
 // The account's trusted device among the keys this browser holds.
 // { off: true } before migration 30; { row } when one is trusted; {} otherwise.
 export async function findDevice(tasterId, keys) {
@@ -64,13 +74,16 @@ export function deviceLabel(ua, app) {
 }
 
 // The session: as before, plus the device's number for a staff account.
-export function sessionFor(taster, deviceId) {
+// r60: guestOnly — a team member's account on another restaurant's website, without the code: a guest's session
+// (claim "gst"; roles.js gives it no role anywhere, and no restaurant in the token).
+export function sessionFor(taster, deviceId, { guestOnly } = {}) {
   return jwt.sign(
     {
       role: 'authenticated',
       taster_id: taster.id,
-      restaurant_id: taster.is_restaurant_admin ? taster.restaurant_id : null,
-      ...(deviceId ? { dev: Number(deviceId) } : {}),
+      restaurant_id: !guestOnly && taster.is_restaurant_admin ? taster.restaurant_id : null,
+      ...(deviceId && !guestOnly ? { dev: Number(deviceId) } : {}),
+      ...(guestOnly ? { gst: 1 } : {}),
     },
     process.env.SUPABASE_JWT_SECRET,
     { expiresIn: '30d', algorithm: 'HS256' },
@@ -91,16 +104,19 @@ export function readChallenge(token) {
 }
 
 // A new trusted device. Returns { key, row } (the key goes to the browser once and is never kept here).
-export async function createDevice(tasterId, label, app) {
+// r60: site — the restaurant whose website it was trusted on (each website keeps its own key on the phone), so that
+// restaurant's notifications go to it and another restaurant's do not. Kept from migration 43 on.
+export async function createDevice(tasterId, label, app, site) {
   const key = crypto.randomBytes(32).toString('base64url');
   const now = Date.now();
-  const made = await sb('/staff_devices', {
-    method: 'POST', headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({
-      taster_id: Number(tasterId), token_hash: hashKey(key), label: String(label || 'Device').slice(0, 80), app: !!app,
-      verified_at: new Date(now).toISOString(), trusted_until: new Date(now + TRUST_MS).toISOString(), last_used_at: new Date(now).toISOString(),
-    }),
-  });
+  const row = {
+    taster_id: Number(tasterId), token_hash: hashKey(key), label: String(label || 'Device').slice(0, 80), app: !!app,
+    verified_at: new Date(now).toISOString(), trusted_until: new Date(now + TRUST_MS).toISOString(), last_used_at: new Date(now).toISOString(),
+  };
+  const siteId = Number(site);
+  const post = (body) => sb('/staff_devices', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(body) });
+  let made = Number.isInteger(siteId) && siteId > 0 ? await post({ ...row, site_restaurant_id: siteId }) : await post(row);
+  if (!made.ok && made.status === 400 && Number.isInteger(siteId) && siteId > 0) made = await post(row);      // before migration 43
   if (!made.ok || !Array.isArray(made.data) || !made.data.length) return null;
   return { key, row: made.data[0] };
 }

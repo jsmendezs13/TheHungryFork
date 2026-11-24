@@ -417,6 +417,8 @@
   .tasting-thumb { width:44px; height:34px; object-fit:cover; border-radius:6px; margin:0 .5rem; flex-shrink:0; }
   .tasting-thumb-emoji { display:flex; align-items:center; justify-content:center; font-size:1.1rem; background:var(--off-white); }
   .brand-red-text { background:linear-gradient(180deg,#FF7A6B 0%,#E01C10 45%,#8E0B05 100%); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:600; font-style:normal; }
+  /* r60: My Tastings' restaurant name on Havana's website: plain purple words (the red gradient showed there as a yellow bar) */
+  html[data-site="havana"] .tasting-place { background:none; -webkit-background-clip:initial; background-clip:initial; -webkit-text-fill-color:#2D0077; color:#2D0077; font-weight:700; }
   /* The ☰ corner menu's place ON THE HOME PAGE ONLY (taster.css keeps the
      menu page's). #hf-corner outranks taster.css's .hf-corner, so it wins
      even though taster.css loads after this. Change these two numbers to
@@ -485,7 +487,7 @@
     </div>
     <div class="t-body">
       <div class="t-sub">Every dish you've rated, and where you had it.</div>
-      <div id="tastings-list" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+      <div id="tastings-list" data-keep style="display:flex;flex-direction:column;gap:0.75rem;"></div>
     </div>
   </div>
 </div>
@@ -890,29 +892,38 @@ async function loadMyTastings(){
     const hid=data.some(r=>r.hidden_at)?await hfMyHidden(true):{};
     hfHiddenSeen();
     if(!DISHES.length&&typeof HF_DISHES_P!=='undefined'&&HF_DISHES_P)await HF_DISHES_P.catch(()=>null);   // r58: the dishes' names first (they may still be on their way)
+    // r60 (24 Nov): a dish rated at another restaurant shows with its own name, photo and restaurant (not "Dish #8"),
+    // and opens that restaurant's menu; this website's dishes as before.
+    const T=HF_TASTE||{dishes:{},restaurants:{}};
+    const siteId=(window.HF_SITE&&HF_SITE.id)||1;
     const rows=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);
-      const dishInfo=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
+      const here=r.restaurant_id==null||Number(r.restaurant_id)===Number(siteId);
+      const dishEntry=here?Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id):null;
+      const known=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
+      const far=T.dishes[r.dish_id]||null;
+      const dishInfo=known||(far?{name:far.name,img:far.img,emoji:far.emoji||'🍽️'}:null);
       const dishId=dishEntry?dishEntry[0]:null;
-      return{r,score,dishInfo,dishId,pinned:!!(dishId&&pins.includes(dishId))};
+      const place=(T.restaurants[r.restaurant_id]&&T.restaurants[r.restaurant_id].name)||(here?((window.HF_SITE&&HF_SITE.name)||'The restaurant'):'Another restaurant');
+      const away=!dishId&&far&&far.slug?tastingAwayLink(r.restaurant_id,far.slug):null;
+      return{r,score,dishInfo,dishId,place,away,pinned:!!(dishId&&pins.includes(dishId))};
     });
     rows.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
-    list.innerHTML=rows.map(({r,score,dishInfo,dishId,pinned})=>{
-      const dishName=dishInfo?dishInfo.name:('Dish #'+r.dish_id);
+    list.innerHTML=rows.map(({r,score,dishInfo,dishId,place,away,pinned})=>{
+      const rawName=dishInfo?dishInfo.name:('Dish #'+r.dish_id), dishName=hfEsc(rawName);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-      const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:'';
-      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${dishInfo.img}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
+      const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:away?` onclick="window.location.href=this.dataset.away" data-away="${hfEsc(away)}" style="cursor:pointer;"`:'';
+      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${hfEsc(dishInfo.img)}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
       const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
       // r53c: a conversation about a review shown again (or the team's): it can still be read from here
-      const talkOnly=!r.hidden_at||(hid[r.id]&&hid[r.id].team)?(HF_TALKS[r.id]?`<div onclick="event.stopPropagation()">${hfTalkButton(r.id,'Messages with '+hfPlaceName())}<div class="hf-talk" id="hf-talk-${r.id}" hidden></div></div>`:''):'';
+      const talkOnly=!r.hidden_at||(hid[r.id]&&hid[r.id].team)?(HF_TALKS[r.id]?`<div onclick="event.stopPropagation()">${hfTalkButton(r.id,'Messages with '+place)}<div class="hf-talk" id="hf-talk-${r.id}" hidden></div></div>`:''):'';
       // r53c: only the author deletes their review (kept for the record; the window says so). After migration 38.
-      const del=HF_TALK_READY===true?hfDeleteButton(r.id,JSON.stringify({dish:dishName,img:dishInfo&&dishInfo.img?hfImgSrc(dishInfo.img,96):null,score:Number(score),date:new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})})):'';
+      const del=HF_TALK_READY===true?hfDeleteButton(r.id,JSON.stringify({dish:rawName,img:dishInfo&&dishInfo.img?hfImgSrc(dishInfo.img,96):null,score:Number(score),date:new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})})):'';
       return`<div class="review-item tasting-item"${clickAttr}>
         ${pinBtn}
         <div class="tasting-main">
           <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
-          <div class="review-text brand-red-text">The Hungry Fork</div>
+          <div class="review-text brand-red-text tasting-place">${hfEsc(place)}</div>
           <div class="review-date">${date}</div>
           ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):hfWaiting(r)?hfWaitNote(r):''}
           ${talkOnly}
@@ -929,6 +940,14 @@ async function loadMyTastings(){
 }
 function viewTastingDish(dishId){
   window.location.href='/menu?dish='+encodeURIComponent(dishId);
+}
+// r60: a dish of another restaurant opens on that restaurant's own website (the test bench: ?site= on this one)
+function tastingAwayLink(rid, slug){
+  const key=window.HF_SITE_KEYS&&HF_SITE_KEYS[rid];
+  const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  if(local&&key)return '/menu?site='+encodeURIComponent(key)+'&dish='+encodeURIComponent(slug);
+  const site=HF_TASTE&&HF_TASTE.restaurants[rid]&&HF_TASTE.restaurants[rid].site;
+  return site?site+'/menu?dish='+encodeURIComponent(slug):null;
 }
 
 // ── LUCKY BITE ──

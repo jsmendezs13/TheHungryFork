@@ -521,7 +521,7 @@ var HF_CORNER_HTML =
 +     '</button>'
 +     '<button class="hf-login" id="hf-login" type="button" aria-label="Log in">'+HF_CHEF_SVG+'</button>'
 +   '</div>'
-+   '<div class="hf-bell-panel" id="hf-bell-panel" role="region" aria-label="Notifications" hidden></div>'
++   '<div class="hf-bell-panel" id="hf-bell-panel" role="region" aria-label="Notifications" data-keep hidden></div>'
 +   '<div class="hf-corner-items" id="hf-corner-items"></div>'
 + '</div>';
 
@@ -613,9 +613,11 @@ function hfPaintHeader(){
   if(lg)lg.hidden=!!currentTaster;
   if(tg)tg.hidden=!currentTaster;
   if(!currentTaster)closeCornerMenu();
+  // r60 (24 Nov): the role at THIS website's restaurant (the server answers for this website only); none here → no icon
+  var role=staff?(hfStaffRole()||'manager'):'';     // the clipboard until the server says which
+  if(role==='none')staff=false;
   roleBtn.hidden=!staff;
   if(staff){
-    var role=hfStaffRole()||'manager';            // the clipboard until the server says which
     if(roleBtn.getAttribute('data-role')!==role){
       roleBtn.setAttribute('data-role',role);
       var n=roleBtn.querySelector('.hf-count');
@@ -700,6 +702,7 @@ function hfLoadRole(who){
       if(!d||!Array.isArray(d.restaurants))return;
       var rank={crew:1, manager:2, owner:3, platform:4}, best='';
       d.restaurants.forEach(function(x){ if(rank[x.role]&&(!best||rank[x.role]>rank[best]))best=x.role; });
+      if(!best&&!d.restaurants.length)best='none';   // r60: a role only at another restaurant: no role icon on this website
       try{sessionStorage.setItem('hf_role',JSON.stringify({id:who, role:best, at:Date.now()}));}catch(e){}
       // Redraw only for the same account that asked (a logout in between: nothing).
       if(best&&currentTaster&&(currentTaster.id==null?null:currentTaster.id)===who)updateNavBtn();
@@ -957,6 +960,7 @@ function hfHiddenNote(why,restaurantId,reviewId){
 // The same kind of conversation as a table's: words, a photo or a PDF (a receipt), the restaurant's owner and the
 // managers who moderate answer; the bell says when they did. Read every few seconds while it is open on the screen.
 var HF_TALK_READY=null, HF_TALKS={}, HF_TALK={}, HF_TALK_LINKS={}, HF_TALK_PEND={}, HF_TALK_TIMER=null;
+var HF_TASTE=null;   // r60: each review's dish and restaurant by name (another restaurant's dishes too)
 var HF_TALK_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
 var HF_TALK_CLIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.5 3.5 0 0 1 5 5l-8.6 8.6a2 2 0 0 1-2.8-2.8l7.9-7.9"/></svg>';
 var HF_TALK_SEND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
@@ -970,7 +974,7 @@ function hfRv(body){
 // Which of this account's reviews have a conversation (and how many answers wait). Also says whether migration 38 is in.
 function hfTalksLoad(){
   return hfRv({action:'rvc_mine'}).then(function(d){
-    if(d.__status===200){HF_TALK_READY=d.ready===true;HF_TALKS=d.threads||{};}
+    if(d.__status===200){HF_TALK_READY=d.ready===true;HF_TALKS=d.threads||{};HF_TASTE=d.places||null;}
     hfTalkMarks();
     return HF_TALKS;
   });
@@ -1300,7 +1304,7 @@ async function doLogin(){
   try{
     // r43: the device key this browser keeps for this phone number (a staff account's trusted device)
     const key=hfDeviceKey(phone);
-    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,pin,devices:key?[key]:[],app:hfIsApp()})});
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,pin,devices:key?[key]:[],app:hfIsApp(),restaurantId:(window.HF_SITE&&HF_SITE.id)||1})});
     const d=await res.json();
     if(res.ok&&d.success){
       saveSession(d.taster,d.session);
@@ -1348,7 +1352,7 @@ async function confirmDevice(){
   const btn=document.getElementById('dev-otp-btn');
   btn.disabled=true;btn.textContent='Checking…';
   try{
-    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'device',challenge:pendingDevice.challenge,code:code,app:hfIsApp()})});
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'device',challenge:pendingDevice.challenge,code:code,app:hfIsApp(),restaurantId:(window.HF_SITE&&HF_SITE.id)||1})});
     const d=await res.json();
     if(res.ok&&d.success){
       if(d.device&&d.device.key)hfKeepDevice(pendingDevice.phone,d.device.key);
@@ -1568,7 +1572,7 @@ var HF_VISITS_HTML =
 +       '<h3>My Visits</h3>'
 +       '<button class="t-close" onclick="closeMyVisits()" aria-label="Close">&#10005;</button>'
 +     '</div>'
-+     '<div class="hf-v-body">'
++     '<div class="hf-v-body" data-keep>'
 +       '<div class="hf-v-checkin" id="hf-v-checkin"></div>'
 +       '<div id="hf-v-loyalty"></div>'
 +       '<div id="hf-v-calendar"></div>'

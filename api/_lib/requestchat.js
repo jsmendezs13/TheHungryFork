@@ -310,7 +310,7 @@ export async function requestBell(match) {
     const q = rowOf[id], l = places[q.restaurant_id];
     const tz = (l && l.settings && l.settings.timezone) || 'America/New_York';
     return {
-      requestId: Number(id), count: b.count, who: b.who || 'The team', handle: handles[b.author] || null,
+      requestId: Number(id), count: b.count, restaurantId: Number(q.restaurant_id), who: b.who || 'The team', handle: handles[b.author] || null,
       restaurant: (l && l.restaurant && l.restaurant.name) || 'The restaurant',
       at: new Date(b.at).toISOString(), label: whenLabel(tz, b.at),
       table: dayLabel(q.wanted_date) + ' · ' + q.party_size + ' people',

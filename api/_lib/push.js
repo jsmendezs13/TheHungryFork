@@ -146,8 +146,13 @@ export async function notifyStaff(restaurantId, kind, message, { urgency, except
     const subs = await sb(`/push_subscriptions?taster_id=in.(${who.join(',')})&kinds=cs.{${kind}}&select=id,device_id,endpoint,p256dh,auth,failures&limit=200`);
     if (!subs.ok || !Array.isArray(subs.data) || !subs.data.length) return 0;
     const devIds = [...new Set(subs.data.map((x) => Number(x.device_id)))];
-    const devs = await sb(`/staff_devices?id=in.(${devIds.join(',')})&revoked_at=is.null&trusted_until=gt.${new Date().toISOString()}&select=id`);
-    const live = new Set((devs.ok && Array.isArray(devs.data) ? devs.data : []).map((d) => Number(d.id)));
+    // r60: only the phones trusted on this restaurant's own website (each website keeps its own key), and the ones
+    // trusted before migration 43, which do not say where.
+    const ask = (cols) => sb(`/staff_devices?id=in.(${devIds.join(',')})&revoked_at=is.null&trusted_until=gt.${new Date().toISOString()}&select=${cols}`);
+    let devs = await ask('id,site_restaurant_id');
+    if (!devs.ok && devs.status === 400) devs = await ask('id');                 // before migration 43
+    const live = new Set((devs.ok && Array.isArray(devs.data) ? devs.data : [])
+      .filter((d) => d.site_restaurant_id == null || Number(d.site_restaurant_id) === Number(restaurantId)).map((d) => Number(d.id)));
     const list = subs.data.filter((x) => live.has(Number(x.device_id)));
     const results = await Promise.all(list.map((x) => sendOne(x, { ...message, kind }, { urgency: urgency || (kind === 'messages' || kind === 'requests' ? 'high' : 'normal') })));
     const dead = list.filter((x, i) => results[i].gone).map((x) => Number(x.id));

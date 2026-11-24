@@ -12,6 +12,7 @@ import {
   stripSecrets,
 } from './_lib/auth.js';
 import { isStaff, removeAllDevices, createDevice, deviceLabel, newDeviceEmail, sessionFor } from './_lib/devices.js';
+import { siteScope } from './_lib/sites.js';   // r60
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
 
@@ -89,7 +90,7 @@ export default async function handler(req, res) {
     let device = null;
     if (await isStaff(taster) && await removeAllDevices(taster.id)) {
       const app = !!(req.body && req.body.app === true);
-      const made = await createDevice(taster.id, deviceLabel(req.headers['user-agent'], app), app);
+      const made = await createDevice(taster.id, deviceLabel(req.headers['user-agent'], app), app, siteScope(req) || Number(req.body && req.body.restaurantId) || null);   // r60: this website's device
       if (made) {
         device = { id: made.row.id, label: made.row.label, key: made.key, trustedUntil: made.row.trusted_until };
         console.log('[reset-pin] staff account', taster.id, 'new PIN: other devices logged out, device', made.row.id, 'trusted');

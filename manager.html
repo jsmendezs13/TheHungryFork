@@ -1518,6 +1518,13 @@ async function boot(){
       ? '<div class="m-eyebrow">Nothing to manage</div>'
         + '<div class="m-h">Hi '+(ACCESS.firstName ? whoHtml(ACCESS.firstName, ACCESS.handle) : 'there')+'</div>'
         + '<div class="m-sub">You are the platform admin, so you see every restaurant — and right now the <strong>restaurants</strong> table has no rows in it. Add the restaurant, then reload.</div>'
+      // r60 (24 Nov): a role at another restaurant only — this website shows this restaurant and nothing else.
+      : (Array.isArray(ACCESS.elsewhere) && ACCESS.elsewhere.length && !rvScanToken())
+      ? '<div class="m-eyebrow">Not this restaurant</div>'
+        + '<div class="m-h">Hi '+(ACCESS.firstName ? whoHtml(ACCESS.firstName, ACCESS.handle) : 'there')+'</div>'
+        + '<div class="m-sub" id="m-elsewhere">You don\'t have a role at <strong>'+esc((window.HF_SITE&&HF_SITE.name)||'this restaurant')+'</strong>. '
+        + 'You manage <strong data-keep>'+ACCESS.elsewhere.map(r=>esc(r.name)).join('</strong>, <strong data-keep>')+'</strong>: open the Manager page on '
+        + (ACCESS.elsewhere.length>1?'their':'its')+' own website.</div>'
       : '<div class="m-eyebrow">No access yet</div>'
         + '<div class="m-h">Hi '+(ACCESS.firstName ? whoHtml(ACCESS.firstName, ACCESS.handle) : 'there')+'</div>'
         + (rvScanToken()

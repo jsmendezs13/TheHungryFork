@@ -80,6 +80,24 @@ export default async function handler(req, res) {
     }
   }
 
+  // r60: on a restaurant's website, only that restaurant (for the platform admin too). The others where this
+  // account has a role are named, so the page can say where to go instead of showing another restaurant's book.
+  let elsewhere = [];
+  if (access.siteRid) {
+    const here = restaurants.filter((r) => Number(r.id) === Number(access.siteRid));
+    const gone = restaurants.filter((r) => Number(r.id) !== Number(access.siteRid));
+    if (access.isPlatformAdmin) elsewhere = gone.length ? [{ name: 'every other restaurant', platform: true }] : [];
+    else elsewhere = gone.map((r) => ({ name: r.name }));
+    restaurants = here;
+  }
+  if (access.guestOnly) {                                    // a guest-only session: its roles are elsewhere
+    const roles = await sb(`/restaurant_roles?taster_id=eq.${Number(access.tasterId)}&select=restaurant_id`);
+    const ids = [...new Set((roles.ok && Array.isArray(roles.data) ? roles.data : []).map((x) => Number(x.restaurant_id)))]
+      .filter((id) => id !== Number(access.siteRid));
+    const names = ids.length ? await sb(`/restaurants?id=in.(${ids.join(',')})&select=id,name&order=name.asc`) : { ok: true, data: [] };
+    elsewhere = (names.ok && Array.isArray(names.data) ? names.data : []).map((x) => ({ name: x.name }));
+  }
+
   return res.status(200).json({
     success: true,
     tasterId: access.tasterId,
@@ -87,6 +105,8 @@ export default async function handler(req, res) {
     handle: access.handle || null,
     isPlatformAdmin: access.isPlatformAdmin,
     restaurants,
+    elsewhere,
+    site: access.siteRid || null,
   });
 }
 

@@ -13,6 +13,7 @@
 // One extra query per write, and removing someone takes effect immediately.
 
 import jwt from 'jsonwebtoken';
+import { siteScope } from './sites.js';
 
 const SUPABASE_URL =
   process.env.SUPABASE_URL || 'https://pkdwrjwsqrlfdxgqmpva.supabase.co';
@@ -76,6 +77,17 @@ export function deviceIdFromRequest(req) {
   }
 }
 
+// r60: a guest-only session (claim "gst"): an account with a role at another restaurant that logged in on a
+// website where it has none. No code was asked (Sebastian, 24 Nov: "only if we try to login from a new device, not for
+// login in a different restaurant"), so the session can do what a guest does and nothing a team member does.
+export function guestOnlyFromRequest(req) {
+  const header = (req && req.headers && req.headers.authorization) || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  if (!token || !process.env.SUPABASE_JWT_SECRET) return false;
+  try { return !!jwt.verify(token, process.env.SUPABASE_JWT_SECRET, { algorithms: ['HS256'] }).gst; }
+  catch { return false; }
+}
+
 // Ranked, so "at least a manager" is one comparison instead of a list of
 // role names that someone will forget to update.
 export const LEVEL = { none: 0, crew: 1, manager: 2, owner: 3, platform: 4 };
@@ -98,6 +110,12 @@ export async function loadAccess(tasterId, req) {
   ]);
 
   if (!who.ok || !Array.isArray(who.data) || who.data.length === 0) return null;
+  // r60: a guest-only session is a guest here, whatever roles the account has elsewhere.
+  if (req && guestOnlyFromRequest(req)) {
+    return { tasterId: who.data[0].id, firstName: who.data[0].first_name, handle: who.data[0].username || null, isPlatformAdmin: false,
+             byRestaurant: {}, rolesUnavailable: false, device: null, deviceProblem: null, devicesOff: false, guestOnly: true,
+             siteRid: siteScope(req) };
+  }
 
   // If the roles table itself could not be read, we do NOT know what this
   // person may do — and "no roles" is not the answer. It only looks like one.
@@ -158,6 +176,7 @@ export async function loadAccess(tasterId, req) {
     device: deviceRow,                           // r43: the trusted device of this session (null for guests)
     deviceProblem,
     devicesOff,
+    siteRid: req ? siteScope(req) : null,        // r60: the restaurant whose website this is (null: not said)
   };
 }
 
@@ -196,6 +215,8 @@ export function accessProblem(access) {
 // their role at the restaurant actually being touched.
 export function levelAt(access, restaurantId) {
   if (!access) return LEVEL.none;
+  // r60: on a restaurant's website, only that restaurant — for Sebastian too ("not from different restaurants sides").
+  if (access.siteRid && Number(restaurantId) !== Number(access.siteRid)) return LEVEL.none;
   if (access.isPlatformAdmin) return LEVEL.platform;
   const entry = access.byRestaurant[String(restaurantId)] || access.byRestaurant[Number(restaurantId)];
   return entry ? entry.level : LEVEL.none;
