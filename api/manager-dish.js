@@ -24,10 +24,13 @@
 // Bartender's Pick, one drink at a time. A dish's pairings are chosen from the
 // restaurant's drinks: pair_wine_id one of its wines, pair_cocktail_id one of
 // its cocktails. A price may be left empty (no price yet).
+//
+// r58 (Sebastian, 23 Nov 16:25, migration 42): a drink may have a Happy Hour
+// price; the drinks that have one are the Happy Hour part of the drinks' menu.
 
 import { makeLimiter, allow, keyFor } from './_lib/auth.js';
 import { tasterIdFromRequest, loadAccess, canEditDishes, sb, accessProblem } from './_lib/roles.js';
-import { TEXT_FIELDS, isAllergen, DRINK_KINDS, PAIRINGS, DRINK_PRICES } from './_lib/dish-fields.js';
+import { TEXT_FIELDS, isAllergen, DRINK_KINDS, PAIRINGS, DRINK_PRICES, HAPPY_HOUR_PRICE } from './_lib/dish-fields.js';
 import { tellChange, describeDish } from './_lib/changes.js';     // r43: a notification to the owners and managers
 
 // Generous, because a manager marking a busy Friday night sold out will click
@@ -62,7 +65,7 @@ function clean(field, raw) {
     return { ok: true, column: 'sold_out_until', value: raw ? new Date().toISOString() : null };
   }
 
-  if (field === 'price' || DRINK_PRICES.includes(field)) {
+  if (field === 'price' || DRINK_PRICES.includes(field) || field === HAPPY_HOUR_PRICE) {   // r58: and the Happy Hour price
     // r39: a dish may have no price yet (the menu then shows none). r40: the same for a drink's other prices.
     if (raw === null || (typeof raw === 'string' && raw.trim() === '')) return { ok: true, value: null };
     if (typeof raw !== 'number' && typeof raw !== 'string') return { ok: false, error: 'Price must be between 0 and 10000.' };   // r40: not true → $1
@@ -163,7 +166,14 @@ export default async function handler(req, res) {
   if (patch.drink_kind === 'shot' && !('price_glass' in before)) {
     return res.status(409).json({ error: 'Shots are not set up yet: migration 27 has not been run.' });
   }
+  // r58 (migration 42): a drink's Happy Hour price.
+  if (HAPPY_HOUR_PRICE in patch && !(HAPPY_HOUR_PRICE in before)) {
+    return res.status(409).json({ error: 'The Happy Hour is not set up yet: migration 42 has not been run.' });
+  }
   const isDrink = String(before.restaurant_category || '').trim().toLowerCase() === 'drinks';
+  if (patch[HAPPY_HOUR_PRICE] !== undefined && patch[HAPPY_HOUR_PRICE] !== null && !isDrink) {
+    return res.status(400).json({ error: 'Only a drink has a Happy Hour price.' });
+  }
   if (DRINK_PRICES.some((f) => f in patch && patch[f] !== null) && !isDrink) {
     return res.status(400).json({ error: 'Only a drink has prices by the glass, the bottle, the shot or the mixed drink.' });
   }

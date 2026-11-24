@@ -76,6 +76,7 @@
   .m-flag.sold { background:#F6E2E1; color:var(--red-dark); }
   .m-flag.hid  { background:var(--off-white); color:var(--muted); }
   .m-flag.pick { background:#EDE3C9; color:#7A5B12; }
+  .m-flag.hh { background:#FFF1A6; color:#5B4A00; }              /* r58: in the Happy Hour */
 
   .m-dish-body { display:none; padding:0 1rem 1.1rem; border-top:1px solid var(--border); }
   .m-dish.open .m-dish-body { display:block; }
@@ -282,6 +283,15 @@
   /* r36: Top Rated on the menu (the Menu tab) */
   .tr-card { padding:1.15rem 1.1rem .9rem; }
   .tr-lead { font-size:.8rem; color:var(--muted); line-height:1.5; margin-bottom:.4rem; }
+  /* r58: the Happy Hour card */
+  .hh-card .hh-when-f { margin:.7rem 0 .2rem; }
+  .hh-row { display:flex; gap:.5rem; align-items:center; } .hh-row .m-input { flex:1; min-width:0; } .hh-row .m-save { flex:none; padding:.62rem 1.1rem; }
+  .hh-list { border-top:1px solid var(--border); margin-top:.9rem; padding-top:.7rem; }
+  .hh-lh { font-size:.62rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:.35rem; } .hh-lh small { font-size:.62rem; color:var(--text); margin-left:.3rem; }
+  .hh-item { display:flex; justify-content:space-between; align-items:baseline; gap:.8rem; width:100%; background:none; border:0; border-bottom:1px solid var(--border); padding:.55rem .1rem; font:inherit; color:var(--text); text-align:left; cursor:pointer; }
+  .hh-item:last-child { border-bottom:0; } .hh-item:hover .hh-nm { text-decoration:underline; }
+  .hh-nm { font-size:.92rem; font-weight:600; } .hh-pr { font-size:.92rem; font-weight:700; white-space:nowrap; } .hh-pr s { font-weight:500; color:var(--muted); margin-left:.35rem; }
+  .hh-field .hh-in { max-width:180px; }
   .tr-row { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.7rem 0; border-bottom:1px solid var(--border); }
   .tr-row:last-of-type { border-bottom:none; }
   .tr-name { min-width:0; }
@@ -1610,6 +1620,7 @@ window.addEventListener('hashchange', function(){
 
 let DRINKS_READY = true;          // r39: false while migration 26 has not been run
 let PRICES_READY = true;          // r40: false while migration 27 has not been run (the drink prices)
+let HH_READY = true;              // r58: false while migration 42 has not been run (the Happy Hour price)
 async function loadDishes(){
   DISHES_ERROR = null;
   ARR = null;                      // r36: an order not saved yet belongs to the list that is going away
@@ -1622,7 +1633,9 @@ async function loadDishes(){
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     // r39: the drinks' columns (migration 26); without them before it is run.
     const R39 = COLS+',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id';
-    let res = await ask(R39+',price_glass,price_bottle,price_shot,price_mixed');      // r40 (migration 27)
+    let res = await ask(R39+',price_glass,price_bottle,price_shot,price_mixed,happy_hour_price');      // r58 (migration 42)
+    HH_READY = res.ok;
+    if(!res.ok && res.status>=400 && res.status<500) res = await ask(R39+',price_glass,price_bottle,price_shot,price_mixed');      // r40 (migration 27)
     PRICES_READY = res.ok;
     if(!res.ok && res.status>=400 && res.status<500) res = await ask(R39);
     DRINKS_READY = res.ok;
@@ -1696,8 +1709,8 @@ function render(){
     if(DISHES_ERROR){ wrap().innerHTML = top + '<div class="m-err">'+esc(DISHES_ERROR)+'</div>'; return; }
     if(!DISHES_LOADED){ wrap().innerHTML = top + '<div class="m-skel"></div><div class="m-skel"></div><div class="m-skel"></div>'; return; }
     // r40: the dishes and drinks first (the way to find them at the top), the Top Rated settings after them.
-    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS) + '<div class="mg-tr-gap"></div>' + dsCardHtml() + trCardHtml()
-                                                 : dsCardHtml() + trCardHtml() + '<div class="m-empty">This restaurant has no dishes yet.</div>');
+    wrap().innerHTML = top + (DISHES_ROWS.length ? dishGroupsHtml(DISHES_ROWS) + '<div class="mg-tr-gap"></div>' + dsCardHtml() + hhCardHtml() + trCardHtml()
+                                                 : dsCardHtml() + hhCardHtml() + trCardHtml() + '<div class="m-empty">This restaurant has no dishes yet.</div>');
     return;
   }
   if(TAB==='events'){ wrap().innerHTML = top + '<div id="ev-root"></div>'; evPaint(); return; }     // r50
@@ -1730,6 +1743,7 @@ async function trLoad(){
     TR.pairings = d.pairings !== false; TR.pairingsReady = d.pairingsReady === true;     // 23 Nov (migration 40)
     TR.design = dsClean(d.design); TR.designReady = d.designReady === true;             // 23 Nov (migration 41)
     TR.designs = Array.isArray(d.designs) ? d.designs : ['original'];
+    TR.hh = typeof d.happyHour === 'string' ? d.happyHour : ''; TR.hhReady = d.happyHourReady === true;   // r58 (migration 42)
     if(TAB === 'menu' && DISHES_LOADED && !CO.ui) render();
   }catch(e){
     if(TR.rid !== rid) return;
@@ -1790,7 +1804,7 @@ async function prSwitch(){
   trPaint();
   if(TAB === 'menu' && DISHES_LOADED && !CO.ui && typeof render === 'function') render();
 }
-function trPaint(){ const c = document.getElementById('tr-card'); if(c) c.innerHTML = trInner(); dsPaint(); }
+function trPaint(){ const c = document.getElementById('tr-card'); if(c) c.innerHTML = trInner(); dsPaint(); hhPaint(); }
 
 // ── MENU DESIGN (23 Nov 2026, Sebastian 03:58: "the manager will have the option to change to any of the four menu
 // designs, the original, and those other three … and it has to be the same for drinks") ──
@@ -1855,6 +1869,62 @@ async function dsChoose(side, value){
   }finally{ if(TR.rid === rid) TR.dsBusy = false; }
   dsPaint();
   const b = document.querySelector('#ds-'+side+'-'+TR.design[side]+' .ds-pick'); if(b) b.focus({preventScroll:true});
+}
+// ── THE HAPPY HOUR (r58, Sebastian 23 Nov 16:25: "set 'happy hour' and it opens the menu for happy hour … prices are
+// different and there is only part of the drinks") ──
+// The drinks with a Happy Hour price (each drink: Happy Hour price) are the Happy Hour part of the drinks' menu, at that
+// price. Here: when it is, in the restaurant's words ("Every day, 2 PM to 7 PM"; menu_settings.happy_hour_note,
+// migration 42), shown with the Happy Hour drinks, and the drinks that are in it now (tap one to open it).
+function hhCardHtml(){ return '<div class="m-card hh-card" id="hh-card">'+hhInner()+'</div>'; }
+function hhInner(){
+  const head = '<div class="m-eyebrow">Happy Hour</div>'
+    + '<div class="tr-lead">The drinks with a Happy Hour price are the Happy Hour on the drinks’ menu, at that price. To add a drink, open it below and fill in its Happy Hour price.</div>';
+  if(!TR.loaded) return head + '<div class="tr-note">Loading…</div>';
+  const ready = TR.hhReady === true && HH_READY && !TR.failed;
+  const hh = DISHES_ROWS.filter(d => isDrinkRow(d) && !d.is_hidden && d.happy_hour_price != null);
+  const reg = d => { const ways = drinkWays(d), p = ways ? ways.map(w => d[w[0]]).find(v => v != null) : d.price; return p != null ? ' <s>'+esc(hhMoney(p))+'</s>' : ''; };
+  const list = hh.length
+    ? '<div class="hh-list"><div class="hh-lh">In the Happy Hour now <small>'+hh.length+'</small></div>'
+      + hh.map(d => '<button type="button" class="hh-item" onclick="hhOpen('+d.id+')"><span class="hh-nm">'+esc(d.name)+'</span><span class="hh-pr">'+esc(hhMoney(d.happy_hour_price))+reg(d)+'</span></button>').join('') + '</div>'
+    : '<div class="tr-note hh-none">No drink has a Happy Hour price yet, so the menu has no Happy Hour.</div>';
+  return head
+    + '<div class="m-field hh-when-f"><label class="m-field-label" for="hh-when">When is the Happy Hour?</label>'
+    + '<div class="hh-row"><input class="m-input" id="hh-when" maxlength="80" placeholder="Every day, 2 PM to 7 PM" value="'+esc(TR.hh || '')+'" oninput="hhDirty()"'+(ready && !TR.hhBusy ? '' : ' disabled')+'>'
+    + '<button type="button" class="m-save" id="hh-save" onclick="hhSave()" disabled>'+(TR.hhBusy ? 'Saving…' : 'Save')+'</button></div>'
+    + '<div class="tr-note" id="hh-note">'+esc(TR.hhNote || 'Shown with the Happy Hour drinks on the menu. Leave it empty to show no hours.')+'</div></div>'
+    + (!TR.hhReady && !TR.failed || !HH_READY ? '<div class="tr-err" id="hh-err">Not set up yet: Seb’s Analytics has to run migration 42.</div>' : '')
+    + (TR.hhError ? '<div class="tr-err" id="hh-err">'+esc(TR.hhError)+'</div>' : '')
+    + list;
+}
+function hhPaint(){ const c = document.getElementById('hh-card'); if(c) c.innerHTML = hhInner(); }
+function hhDirty(){
+  const el = document.getElementById('hh-when'), b = document.getElementById('hh-save');
+  if(el && b) b.disabled = el.value.replace(/\s+/g, ' ').trim() === (TR.hh || '');
+}
+async function hhSave(){
+  const el = document.getElementById('hh-when');
+  if(!el || !TR.loaded || !TR.hhReady || TR.hhBusy) return;
+  const rid = TR.rid, want = el.value.replace(/\s+/g, ' ').trim();
+  TR.hhBusy = true; TR.hhError = ''; TR.hhNote = 'Saving…'; TR.hhDraft = want; hhPaint();
+  try{
+    const d = await rvApi({ action:'menu_top_save', happyHour:want });
+    if(TR.rid !== rid) return;
+    TR.hh = typeof d.happyHour === 'string' ? d.happyHour : want;
+    TR.hhNote = TR.hh ? 'Saved. The menu shows “'+TR.hh+'” with the Happy Hour drinks.' : 'Saved. The menu shows no hours for the Happy Hour.';
+  }catch(e){
+    if(TR.rid !== rid) return;
+    TR.hhError = e.message; TR.hhNote = '';
+  }finally{ if(TR.rid === rid) TR.hhBusy = false; }
+  hhPaint();
+  const el2 = document.getElementById('hh-when');
+  if(el2 && TR.hhError){ el2.value = TR.hhDraft || ''; hhDirty(); }
+}
+function hhOpen(id){
+  const d = rowFor(id); if(!d) return;
+  openDishId = id; MG_Q = ''; MG_SIDE = isDrinkRow(d) ? 'drinks' : 'food';
+  render();
+  const el = document.getElementById('dish-' + id);
+  if(el) el.scrollIntoView({ block:'start', behavior:'smooth' });
 }
 function trSet(k, n){
   if(!TR.loaded || !TR.ready || TR.failed) return;
@@ -2013,8 +2083,8 @@ function mgFoldTap(key){
 // and drag it to its place (the arrow keys too); Done saves. A cave taken off the menu shows dimmed here.
 const CAVE_LABEL = { 'chefs-pick':"Chef's Pick", starters:'Appetizers', appetizers:'Appetizers', entree:'Entrées', salads:'Salads', sides:'Sides', desserts:'Desserts',
   drinks:'Drinks', 'top-starters':'Top Rated Appetizers', 'top-entree':'Top Rated Entrées', 'top-salads':'Top Rated Salads', 'bartenders-pick':"Bartender's Pick",
-  wines:'Wines', cocktails:'Cocktails', beers:'Beers', spirits:'Spirits', shots:'Shots', 'drinks-other':'More Drinks', 'top-drinks':'Top Rated Drinks' };
-const CAVE_EMOJI = { 'chefs-pick':'👨‍🍳', drinks:'🍸', 'bartenders-pick':'🍸', 'top-starters':'⭐', 'top-entree':'⭐', 'top-salads':'⭐', 'top-drinks':'⭐' };
+  wines:'Wines', cocktails:'Cocktails', beers:'Beers', spirits:'Spirits', shots:'Shots', 'drinks-other':'More Drinks', 'top-drinks':'Top Rated Drinks', 'happy-hour':'Happy Hour' };
+const CAVE_EMOJI = { 'chefs-pick':'👨‍🍳', drinks:'🍸', 'bartenders-pick':'🍸', 'happy-hour':'🍻', 'top-starters':'⭐', 'top-entree':'⭐', 'top-salads':'⭐', 'top-drinks':'⭐' };
 const CAVE_HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other'];
 let CAVE_ORDER = { food:[], drinks:[] };               // what the manager saved (empty: the menu's own order)
 let CAVE_HIDDEN = [];                                   // the caves taken off the menu
@@ -2030,6 +2100,7 @@ function cavesFor(side){
   if(side === 'drinks'){
     const drinks = DISHES_ROWS.filter(d => isDrinkRow(d) && !d.is_hidden), has = l => drinks.some(d => l.indexOf(d.drink_kind) >= 0);
     base = [].concat(drinks.some(d => d.is_bartenders_pick) ? ['bartenders-pick'] : [],
+      drinks.some(d => d.happy_hour_price != null) ? ['happy-hour'] : [],          // r58
       DRINK_GROUPS.filter(g => has(g[2])).map(g => g[0].slice(7)),
       drinks.some(d => [].concat(...DRINK_GROUPS.map(g => g[2])).indexOf(d.drink_kind) < 0) ? ['drinks-other'] : [],
       top.drinks > 0 ? ['top-drinks'] : []);
@@ -2044,6 +2115,7 @@ function caveFirstDish(k){
   const rows = DISHES_ROWS.filter(d => !d.is_hidden);
   if(k === 'chefs-pick') return rows.find(d => d.is_chefs_pick) || null;
   if(k === 'bartenders-pick') return rows.find(d => d.is_bartenders_pick) || null;
+  if(k === 'happy-hour'){ const hh = rows.filter(d => isDrinkRow(d) && d.happy_hour_price != null); return hh.find(d => d.image || d.image_open) || hh[0] || null; }   // r58
   if(k === 'drinks'){ const c = cavesFor('drinks').find(x => CAVE_HIDDEN.indexOf(x) < 0 && x.indexOf('top-') < 0); return c ? caveFirstDish(c) : rows.find(isDrinkRow) || null; }
   if(k.indexOf('top-') === 0) return null;
   const g = groupOf(k === 'drinks-other' ? 'drinks:other' : DRINK_GROUPS.some(x => x[0] === 'drinks:'+k) ? 'drinks:'+k : k);
@@ -2369,6 +2441,7 @@ function dishCard(d){
     .concat(d.is_hidden ? '<span class="m-flag hid">Hidden</span>' : [])
     .concat(d.is_chefs_pick ? '<span class="m-flag pick">Chef\'s Pick</span>' : [])
     .concat(d.is_bartenders_pick ? '<span class="m-flag pick">Bartender\'s Pick</span>' : [])
+    .concat(isDrinkRow(d) && d.happy_hour_price != null ? '<span class="m-flag hh">Happy Hour '+esc(hhMoney(d.happy_hour_price))+'</span>' : [])   // r58
     // Visible from the list, because a dish with no allergens declared is the
     // one that needs attention.
     .concat(allergenCount(d) === 0 ? '<span class="m-flag sold">No allergens set</span>' : []);
@@ -2414,7 +2487,20 @@ function switchRow(dishId, field, on, label, note, warn){
 const DRINK_WAYS = { wine:[['price_glass','Glass'],['price_bottle','Bottle']],
                      spirit:[['price_shot','Shot'],['price_mixed','Mixed drink'],['price_bottle','Bottle']] };
 function drinkWays(d){ return !isDrinkRow(d) ? null : d.drink_kind === 'wine' ? DRINK_WAYS.wine : isSpiritKind(d.drink_kind) ? DRINK_WAYS.spirit : null; }
+// r58 (Sebastian, 23 Nov 16:25): a drink's Happy Hour price. With one, the drink is in the Happy Hour part of the
+// drinks' menu, at that price; empty = not in the Happy Hour.
+function hhMoney(v){ const n = Number(v); return '$'+(Number.isInteger(n) ? n : n.toFixed(2)); }
+function hhField(d){
+  if(!isDrinkRow(d)) return '';
+  if(!HH_READY) return '<div class="pk-note" style="margin:-.4rem 0 .9rem;">Happy Hour prices are not set up yet: Seb\'s Analytics has to run migration 42.</div>';
+  return '<div class="m-field hh-field"><label class="m-field-label" for="f-'+d.id+'-happy_hour_price">Happy Hour price</label>'
+    + '<span class="pz-in hh-in">$<input class="m-input" id="f-'+d.id+'-happy_hour_price" type="number" step="0.01" min="0" max="10000" inputmode="decimal" value="'+esc(d.happy_hour_price==null?'':d.happy_hour_price)+'" oninput="dirty('+d.id+',\'happy_hour_price\')" placeholder="—"></span>'
+    + '<div class="pk-note">With a Happy Hour price, this drink is in the Happy Hour on the menu, at that price. Leave it empty if it is not in the Happy Hour.</div></div>';
+}
 function priceFields(d, f){
+  return priceFieldsBase(d, f) + hhField(d);
+}
+function priceFieldsBase(d, f){
   const ways = drinkWays(d);
   if(!ways) return f('price','Price',d.price,'price');
   if(!PRICES_READY) return f('price','Price',d.price,'price')
@@ -2849,7 +2935,7 @@ function anyOver(id){
 function collectText(id){
   const d = rowFor(id); if(!d) return {};
   const out = {};
-  ['price', 'price_glass', 'price_bottle', 'price_shot', 'price_mixed'].forEach(field => {   // r40: and the drink prices
+  ['price', 'price_glass', 'price_bottle', 'price_shot', 'price_mixed', 'happy_hour_price'].forEach(field => {   // r40: and the drink prices; r58: the Happy Hour price
     const el = document.getElementById('f-'+id+'-'+field);
     if(!el) return;
     // r39: a price may be left empty (no price yet on the menu).

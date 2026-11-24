@@ -30,6 +30,11 @@
 // (titles that open into two columns of dishes) or 'wheel' (the carousel, then the dish page over a wheel of the part's
 // dishes). DESIGNS_READY: the ones this website can draw. The menu gets it as top.design; without migration 41 it is not there (the menu shows the original).
 //
+// r58 (23 Nov 2026, Sebastian 16:25: "set 'happy hour' and it opens the menu for happy hour"): the drinks with a Happy
+// Hour price (dishes.happy_hour_price, migration 42) are the Happy Hour part of the drinks' carousel ('happy-hour').
+// menu_top_save may carry happyHour: "Every day, 2 PM to 7 PM" — when it is, in the restaurant's words (up to 80
+// characters; '' = not shown), in menu_settings.happy_hour_note. The menu gets it as top.happyHour.
+//
 // Reached through api/reservations.js like Settings, so the site still deploys
 // as twelve functions. Managers, owners and Seb's Analytics: the same people
 // who may change the dishes (canEditDishes).
@@ -55,7 +60,7 @@ const ORDER_NOT_READY = 'The order of the caves is not set up yet: migration 27 
 // The caves each carousel may have (the menu adds the ones it has, in this order, after the saved ones).
 export const CAVES = {
   main:   ['chefs-pick', 'starters', 'entree', 'salads', 'sides', 'desserts', 'drinks', 'top-starters', 'top-entree', 'top-salads'],
-  drinks: ['bartenders-pick', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other', 'top-drinks'],
+  drinks: ['bartenders-pick', 'happy-hour', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other', 'top-drinks'],   // r58: Happy Hour
 };
 const ORDER_COLUMN = { main: 'cave_order_main', drinks: 'cave_order_drinks' };
 // 23 Nov (migration 41): the menu's design, for the food and for the drinks
@@ -63,6 +68,10 @@ export const DESIGNS = ['original', 'grid', 'rows', 'wheel'];          // what t
 export const DESIGNS_READY = ['original', 'rows', 'grid', 'wheel'];      // what the menu can draw now (23 Nov: Grid and Wheel too)
 const DESIGN_COLUMN = { main: 'menu_design_main', drinks: 'menu_design_drinks' };
 const DESIGN_NOT_READY = 'The menu design is not set up yet: migration 41 has not been run.';
+// r58 (migration 42): when the Happy Hour is, in the restaurant's words
+export const HH_NOTE_MAX = 80;
+const HH_NOT_READY = 'The Happy Hour is not set up yet: migration 42 has not been run.';
+function hhNoteOf(row) { return row && typeof row.happy_hour_note === 'string' ? row.happy_hour_note : ''; }
 // The saved designs as the pages use them: { main, drinks } ('original' for anything this website cannot draw).
 function designOf(row) {
   const out = {};
@@ -121,6 +130,7 @@ export async function publicTop(restaurantId) {
   if (row && (ORDER_COLUMN.main in row)) top.order = orderOf(row);
   if (row && ('show_pairings' in row)) top.pairings = row.show_pairings !== false;   // 23 Nov (migration 40)
   if (row && (DESIGN_COLUMN.main in row)) top.design = designOf(row);                // 23 Nov (migration 41)
+  if (hhNoteOf(row)) top.happyHour = hhNoteOf(row);                                  // r58 (migration 42)
   return top;
 }
 
@@ -164,19 +174,31 @@ async function settings(res, rid) {
   // 23 Nov: the menu design (migration 41); without a row, the column list is asked for
   let designReady = row ? DESIGN_COLUMN.main in row : null;
   if (designReady === null) designReady = (await sb(`/menu_settings?select=${DESIGN_COLUMN.main}&limit=1`)).ok;
+  // r58: the Happy Hour (migration 42): its hours here, the prices in the dishes
+  let happyHourReady = row ? 'happy_hour_note' in row : null;
+  if (happyHourReady === null) happyHourReady = (await sb('/menu_settings?select=happy_hour_note&limit=1')).ok;
+  if (happyHourReady) happyHourReady = (await sb('/dishes?select=happy_hour_price&limit=1')).ok;
   return res.status(200).json({ ready: true, top: topOf(row), chosen: !!row, changedOn: row ? row.updated_at : null,
                                 order: orderOf(row), orderReady, pairings: !row || row.show_pairings !== false, pairingsReady,
-                                design: designOf(row), designReady, designs: DESIGNS_READY });
+                                design: designOf(row), designReady, designs: DESIGNS_READY, happyHour: hhNoteOf(row), happyHourReady });
 }
 
 async function topSave(res, rid, body, tasterId) {
-  const top = body.top, order = body.order, hidden = body.hidden, pairings = body.pairings, design = body.design;
+  const top = body.top, order = body.order, hidden = body.hidden, pairings = body.pairings, design = body.design, happyHour = body.happyHour;
   const hasTop = top && typeof top === 'object' && !Array.isArray(top);
   const hasOrder = order && typeof order === 'object' && !Array.isArray(order);
   const hasHidden = hidden !== undefined;
   const hasPairings = pairings !== undefined;                                    // 23 Nov
   const hasDesign = design !== undefined;                                        // 23 Nov (migration 41)
-  if (!hasTop && !hasOrder && !hasHidden && !hasPairings && !hasDesign) return res.status(400).json({ error: 'Nothing to save.' });
+  const hasHappyHour = happyHour !== undefined;                                  // r58 (migration 42)
+  if (!hasTop && !hasOrder && !hasHidden && !hasPairings && !hasDesign && !hasHappyHour) return res.status(400).json({ error: 'Nothing to save.' });
+  let hhNote = '';
+  if (hasHappyHour) {
+    if (typeof happyHour !== 'string') return res.status(400).json({ error: 'When is the Happy Hour?' });
+    hhNote = happyHour.replace(/\s+/g, ' ').trim();
+    if (/[\u0000-\u001f\u007f<>]/.test(hhNote)) return res.status(400).json({ error: 'The Happy Hour\'s hours: letters, numbers and punctuation only.' });
+    if (hhNote.length > HH_NOTE_MAX) return res.status(400).json({ error: `The Happy Hour's hours: up to ${HH_NOTE_MAX} characters.` });
+  }
   if (hasDesign) {
     if (!design || typeof design !== 'object' || !Object.prototype.hasOwnProperty.call(DESIGN_COLUMN, design.side)) {
       return res.status(400).json({ error: 'Which menu: the food or the drinks?' });
@@ -221,6 +243,11 @@ async function topSave(res, rid, body, tasterId) {
     if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : 'The drink recommendations switch is not set up yet: migration 40 has not been run.' });
     row.show_pairings = pairings;
   }
+  if (hasHappyHour) {
+    const probe = await sb('/menu_settings?select=happy_hour_note&limit=1');
+    if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : HH_NOT_READY });
+    row.happy_hour_note = hhNote;
+  }
   if (hasDesign) {
     const probe = await sb(`/menu_settings?select=${DESIGN_COLUMN[design.side]}&limit=1`);
     if (!probe.ok) return res.status(409).json({ error: missing(probe) ? NOT_READY : DESIGN_NOT_READY });
@@ -239,19 +266,22 @@ async function topSave(res, rid, body, tasterId) {
     if (missing(saved)) return res.status(409).json({ error: NOT_READY });
     return res.status(502).json({ error: failWords('save the Top Rated settings', saved) });
   }
-  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden, hasPairings, hasDesign });
+  const what = describeMenuSettings(prev, saved.data[0], { hasTop, hasOrder, hasHidden, hasPairings, hasDesign, hasHappyHour });
   if (what) await tellChange(rid, tasterId, what, { go: 'menu' });
   return res.status(200).json({ ready: true, top: topOf(saved.data[0]), chosen: true, changedOn: saved.data[0].updated_at, order: orderOf(saved.data[0]),
-                                pairings: saved.data[0].show_pairings !== false, design: designOf(saved.data[0]) });
+                                pairings: saved.data[0].show_pairings !== false, design: designOf(saved.data[0]), happyHour: hhNoteOf(saved.data[0]) });
 }
 
 // r43: "changed Top Rated: Appetizers 5 → 3; Drinks off", "changed the order of the menu's sections", …
 const TOP_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', drinks: 'Drinks' };
 const CAVE_WORDS = { starters: 'Appetizers', entree: 'Entrées', salads: 'Salads', sides: 'Sides', desserts: 'Desserts', wines: 'Wines',
-  cocktails: 'Cocktails', beers: 'Beers', spirits: 'Spirits', shots: 'Shots', 'drinks-other': 'Other drinks' };
+  cocktails: 'Cocktails', beers: 'Beers', spirits: 'Spirits', shots: 'Shots', 'drinks-other': 'Other drinks', 'happy-hour': 'Happy Hour' };
 const DESIGN_WORDS = { original: 'the Original', rows: 'Rows', grid: 'Grid', wheel: 'Wheel' };
-export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden, hasPairings, hasDesign }) {
+export function describeMenuSettings(prev, now, { hasTop, hasOrder, hasHidden, hasPairings, hasDesign, hasHappyHour }) {
   const parts = [];
+  if (hasHappyHour && hhNoteOf(prev) !== hhNoteOf(now)) {                                                 // r58
+    parts.push(hhNoteOf(now) ? `changed when the Happy Hour is to "${hhNoteOf(now)}"` : 'took the Happy Hour\'s hours off the menu');
+  }
   if (hasDesign) {                                                                                        // 23 Nov
     const a = designOf(prev), b = designOf(now);
     if (a.main !== b.main) parts.push(`changed the food menu's design to ${DESIGN_WORDS[b.main]}`);

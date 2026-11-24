@@ -38,7 +38,7 @@
       lat: 40.70433, lng: -74.01055,
       // The parts of the menu, in Havana's own words (the keys stay the system's)
       labels: { starters: 'Aperitivos', entree: 'Platos Fuertes', salads: 'Ensaladas', sides: 'Algo Más',
-                desserts: 'Postres', drinks: 'Bebidas', cocktails: 'Cócteles', beers: 'Cervezas' },
+                desserts: 'Postres', drinks: 'Bebidas', cocktails: 'Cócteles', beers: 'Cervezas', 'drinks-other': 'Sin Alcohol' },   // r58: the aguas frescas, the N/A beer, Jarritos
       words: [
         ['123 Stone St, Manhattan, NY', '45 Stone Street, New York, NY 10004'],
         ['Steakhouse · Stone Street, New York', 'Caribbean & Mexican · Stone Street, New York'],

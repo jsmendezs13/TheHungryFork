@@ -371,6 +371,15 @@
   .cave-stars-caption { font-family:var(--sans); font-size:.62rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-top:.35rem; }
   .cave-dish-name { font-family:var(--serif); font-size:1.5rem; font-weight:600; color:var(--text); text-align:center; margin-top:.5rem; line-height:1.15; }
   .cave-dish-price { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--red); margin-top:.15rem; }
+  /* r58: the Happy Hour — its price, the regular one after it (small), when it is */
+  .hh-was { font-size:.55em; font-weight:500; opacity:.72; white-space:nowrap; vertical-align:.12em; }
+  .rw-pr .hh-was, .gd-cp .hh-was, .rw-hero-price .hh-was { font-size:.78em; vertical-align:0; }
+  .cave-hh-tag { display:inline-block; font-size:.66rem; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:#16203A; background:var(--star-on); border-radius:999px; padding:.28rem .8rem .24rem; margin:.15rem 0 .2rem; }
+  .cave-hh-when { font-size:.85rem; color:var(--muted); margin-top:.2rem; }
+  .cave-hh-line { display:inline-block; font-size:.78rem; font-weight:700; letter-spacing:.06em; color:var(--star-on); border:1.5px solid currentColor; border-radius:999px; padding:.2rem .7rem; margin-top:.4rem; }
+  .rw-hh-when { display:block; font-family:system-ui, sans-serif; font-size:.72rem; font-weight:600; letter-spacing:.08em; color:var(--star-on); margin-top:.15rem; }
+  /* the Wheel on a phone: its name at the top says "Happy Hour" already; the price stays above the wheel */
+  @media (max-width:759px){ #cave.cave-wheel .cave-hh-tag { display:none; } }
   .cave-view-caption { font-family:var(--serif); font-style:italic; color:var(--muted); font-size:.95rem; margin-top:.25rem; }
   .cave-text-view { width:100%; height:100%; overflow-y:auto; padding:0 .3rem; -webkit-overflow-scrolling:touch; }
   .cave-about { font-family:var(--sans); font-weight:300; font-size:.95rem; line-height:1.8; color:var(--text); margin:.9rem 0 1rem; }
@@ -463,15 +472,38 @@
     box-shadow:0 4px 10px rgba(0,0,0,.3); transition:transform .38s cubic-bezier(.2,.7,.2,1), opacity .3s ease; -webkit-tap-highlight-color:transparent; }
   .cw-spot img { max-width:86%; max-height:70%; object-fit:contain; pointer-events:none; } .cw-spot.tall img { max-height:86%; }
   .cw-spot .rw-emoji { font-size:1.5rem; }
+  .cw-spot { box-shadow:0 0 0 3px var(--star-on), 0 4px 10px rgba(0,0,0,.3); }      /* 24 Nov: a yellow ring, so the dishes on the wheel are easy to see */
   .cw-spot.on { background:var(--star-on); box-shadow:0 0 0 3px var(--white), 0 8px 18px rgba(0,0,0,.4); }
   .cw-hint { position:absolute; left:50%; bottom:calc(14px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); white-space:nowrap; z-index:3; pointer-events:none;
-    font-family:var(--sans); font-size:.56rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--white); background:rgba(20,13,9,.75); border-radius:999px; padding:.4rem .9rem; }
+    font-family:var(--sans); font-size:.7rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; color:var(--white); background:rgba(20,13,9,.75); border-radius:999px; padding:.3rem .75rem;
+    display:flex; align-items:center; gap:.45rem; }                                   /* 24 Nov: only ← SPIN → */
+  .cw-hint b { font-weight:inherit; margin-right:-.24em; } .cw-sa { width:1.9em; height:.95em; flex:none; } .cw-sa.r { transform:scaleX(-1); }
+  /* 24 Nov 2026 (Sebastian, his phone: "people need to see both Share and Reserve immediately … move the wheel down a
+     little"): on a phone the Wheel's dish page shows the price and Share / Reserve above the wheel — the words under the
+     dots go (the dots stay), the photo gives up the height it needs, the wheel sits lower. */
+  @media (max-width:759px){
+    :root { --cw-h:176px; }
+    #cave.cave-wheel .cave-wl-names { display:none; }
+    #cave.cave-wheel .cave-wname { margin-top:44px; }
+    #cave.cave-wheel .cave-sec-media { padding-top:.5rem !important; }                 /* the grade and the heart sit on the photo's corners */
+    #cave.cave-wheel .cave-grade { width:46px !important; top:6px !important; } #cave.cave-wheel .cave-grade img { width:34px !important; }
+    #cave.cave-wheel .cave-grade-label { font-size:.42rem !important; }
+    #cave.cave-wheel .cave-stars-wrap { margin-top:.35rem; }
+    #cave.cave-wheel .cave-wv { top:auto; bottom:2px; margin-top:0; }                  /* ‹ › low on the photo, clear of the grade */
+    #cave.cave-wheel .cave-photo-row { height:clamp(150px, calc(100svh - var(--cw-h) - 320px), 44vh) !important; max-height:clamp(150px, calc(100svh - var(--cw-h) - 320px), 44vh) !important; }
+  }
+  @media (max-width:759px) and (max-height:640px){    /* the shorter phones: the wheel lower still, the photo smaller */
+    :root { --cw-h:154px; }
+    #cave.cave-wheel .cave-wname { margin-top:40px; }
+    #cave.cave-wheel .cave-photo-row { height:clamp(88px, calc(100svh - var(--cw-h) - 306px), 44vh) !important; max-height:clamp(88px, calc(100svh - var(--cw-h) - 306px), 44vh) !important; }
+  }
   @media (min-width:760px){
     :root { --cw-h:240px; --cw-d:660px; }
     #cave.cave-wheel .cave-wname { margin-top:50px; font-size:.86rem; }
     #cave.cave-wheel .cave-photo-row { height:min(calc(100vh - 430px), 520px) !important; max-height:min(calc(100vh - 430px), 520px) !important; }
     #cave.cave-wheel .cave-scroll { max-height:calc(100vh - var(--cw-h) - 150px) !important; }
-    .cw-spot { width:70px; height:70px; }
+    .cw-spot { width:70px; height:70px; box-shadow:0 0 0 4px var(--star-on), 0 4px 10px rgba(0,0,0,.3); }
+    .cw-spot.on { box-shadow:0 0 0 4px var(--white), 0 8px 18px rgba(0,0,0,.4); }
   }
   /* ── THE MENU'S DESIGN "ROWS" (23 Nov 2026, Manager → Menu → Menu design) ──
      The Chef's Pick big on top, then a row for each part of the menu that turns without end, the dish in the middle
@@ -1164,7 +1196,7 @@
   <div id="cave-wheel" hidden role="group" aria-label="The dishes on a wheel">
     <div class="cw-ptr" aria-hidden="true"></div>
     <div class="cw-disc"><div class="cw-leaf" aria-hidden="true"></div><div class="cw-spots" id="cw-spots"></div></div>
-    <div class="cw-hint">Spin the wheel for the next dish</div>
+    <div class="cw-hint"><svg class="cw-sa l" viewBox="0 0 40 20" aria-hidden="true"><path d="M36 6C26 2 12 4 6 14M12.4 11.1 6 14 5.5 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Spin</b><svg class="cw-sa r" viewBox="0 0 40 20" aria-hidden="true"><path d="M36 6C26 2 12 4 6 14M12.4 11.1 6 14 5.5 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   </div>
 </div>
 <!-- END 3D WARP MENU -->
@@ -1389,7 +1421,7 @@ let RING='main';
 let CATEGORY_ORDER=MENU_BASE.concat(MAIN_TOPS);
 const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Appetizers',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},
   'desserts':{label:'Desserts',emoji:'\u{1F370}'},'bartenders-pick':{label:"Bartender's Pick",emoji:'\u{1F378}'},'wines':{label:'Wines',emoji:'\u{1F377}'},
-  'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'shots':{label:'Shots',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
+  'happy-hour':{label:'Happy Hour',emoji:'\u{1F37B}'},'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'shots':{label:'Shots',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
   'top-starters':{label:'Top Rated Appetizers',short:'Appetizers',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
   'top-salads':{label:'Top Rated Salads',short:'Salads',emoji:'\u{1F957}',top:true},'top-drinks':{label:'Top Rated Drinks',short:'Drinks',emoji:'\u{1F964}',top:true}};
 // Havana (19 Nov): a restaurant's own names for the parts of its menu (site.js), e.g. "Aperitivos" for the appetizers.
@@ -1426,6 +1458,7 @@ function drinkCaveOf(d){
 function drinksRing(){
   const all=drinksAll(),r=[];
   if(all.some(d=>d.barPick))r.push('bartenders-pick');
+  if(all.some(d=>d.hhPrice!=null))r.push('happy-hour');                                  // r58: the Happy Hour
   Object.keys(DRINK_CAVES).forEach(k=>{if(all.some(d=>DRINK_CAVES[k].includes(d.kind)))r.push(k);});
   if(all.some(d=>!DRINK_KIND_ORDER.includes(d.kind)))r.push('drinks-other');
   if(r.length&&topCounts().drinks>0)r.push('top-drinks');
@@ -1633,10 +1666,30 @@ function caveListFor(key){
   if(key==='chefs-pick')return chefsPickDishes();
   if(topKind(key))return topRatedDishes(topKind(key));     // r36
   if(key==='bartenders-pick')return drinksAll().filter(d=>d.barPick);                    // r39
+  if(key==='happy-hour')return drinksAll().map((d,i)=>({d,i})).filter(x=>x.d.hhPrice!=null)   // r58: the drinks with a Happy Hour price
+    .sort((a,b)=>hhKindRank(a.d)-hhKindRank(b.d)||a.i-b.i).map(x=>x.d);
   if(DRINK_CAVES[key])return drinksAll().map((d,i)=>({d,i})).filter(x=>DRINK_CAVES[key].includes(x.d.kind))
     .sort((a,b)=>DRINK_KIND_ORDER.indexOf(a.d.kind)-DRINK_KIND_ORDER.indexOf(b.d.kind)||a.i-b.i).map(x=>x.d);
   if(key==='drinks-other')return drinksAll().filter(d=>!DRINK_KIND_ORDER.includes(d.kind));
   return DISHES.filter(d=>d.category===key);
+}
+// r58 (23 Nov 2026, Sebastian 16:25: "set 'happy hour' and it opens the menu for happy hour, it's different from the
+// regular drink menu because prices are different and there is only part of the drinks"): the drinks the manager gave a
+// Happy Hour price, in the drinks' own order (cocktails, beers…), each at its Happy Hour price. CAVE_KEY: the part of the
+// menu the dish page is in now (caveSetCat), so the page knows to show the Happy Hour price.
+function hhKindRank(d){const i=DRINK_KIND_ORDER.indexOf(d.kind);return i<0?DRINK_KIND_ORDER.length:i;}
+let CAVE_KEY=null;
+function caveSetCat(key){CAVE_KEY=key;document.getElementById('cave-cat').textContent=WARP_META[key].label;}
+function hhWhen(){return typeof HF_HOURS!=='undefined'&&typeof HF_HOURS.happyHour==='string'?HF_HOURS.happyHour:'';}
+function hhMoney(n){return '$'+(Number.isInteger(n)?n:n.toFixed(2));}
+// The price of a drink where it is shown: in the Happy Hour, its Happy Hour price with the regular one after it (small);
+// anywhere else, the regular price (dishPriceText).
+function dishPriceHTML(d,key){
+  if(key==='happy-hour'&&d&&d.hhPrice!=null){
+    const reg=dishPriceText(d);
+    return `<span class="hh-now">${hhMoney(d.hhPrice)}</span>${reg?` <span class="hh-was">regular ${hfEsc(reg)}</span>`:''}`;
+  }
+  return hfEsc(dishPriceText(d));
 }
 // r40: the cave of a dish opened by a link when the manager took that cave off the menu (its door is not shown).
 let CAVE_FORCE=null;
@@ -1646,7 +1699,7 @@ function enterCave(startId){
   caveDishes=caveListFor(key);
   caveDishIdx=Math.max(0,caveDishes.findIndex(d=>d.id===startId));
   caveViewIdx=0;
-  document.getElementById('cave-cat').textContent=WARP_META[key].label;
+  caveSetCat(key);
   const stage=document.getElementById('warp-stage');
   const rows=DESIGN_NOW==='rows'||DESIGN_NOW==='grid';      // 23 Nov: from Rows or the Grid the dish page opens at once (no carousel to zoom into)
   if(!rows)stage.classList.add('warp-zoom');
@@ -1733,6 +1786,15 @@ function dishPriceText(d){
   if(set.length)return set.map(w=>w[1]+' '+money(p[w[0]])).join(' · ');
   return d&&d.price!=null?money(d.price):'';
 }
+// r58: the price line of the dish page. In the Happy Hour: "Happy Hour" over its Happy Hour price (the regular price
+// after it, small) and when the Happy Hour is; elsewhere a drink in the Happy Hour says so under its regular price.
+function caveHHPrice(d){
+  const hh=CAVE_KEY==='happy-hour'&&d.hhPrice!=null,reg=dishPriceText(d),when=hhWhen();
+  if(hh)return `<div class="cave-hh-tag">Happy Hour</div><div class="cave-dish-price cave-hh-price">${dishPriceHTML(d,'happy-hour')}</div>`
+    +(when?`<div class="cave-hh-when">${hfEsc(when)}</div>`:'');
+  return (reg?`<div class="cave-dish-price">${reg}</div>`:'')
+    +(d.hhPrice!=null&&drinksRing().includes('happy-hour')?`<div class="cave-hh-line">Happy Hour ${hhMoney(d.hhPrice)}${when?' &middot; '+hfEsc(when):''}</div>`:'');
+}
 function caveGradeBlock(){
   const g=typeof hfGrade==='function'?hfGrade():null;
   const html=typeof hfGradeHtml==='function'?hfGradeHtml('Sanitary Inspection Grade'):'';
@@ -1818,7 +1880,7 @@ function renderCave(animClass,mediaOnly){
       <div class="cave-stars-wrap" onclick="openReviewsPanel()" style="cursor:pointer;" title="See all reviews"><div class="cave-stars">${FORK_STARS}<div id="cave-stars-fill"></div></div><div class="cave-stars-caption" id="cave-stars-caption">Fork's Rating</div></div>
       ${caveKindTag(d)}
       ${caveNameRow(d,multi)}
-      ${dishPriceText(d)?`<div class="cave-dish-price">${dishPriceText(d)}</div>`:''}
+      ${caveHHPrice(d)}
       ${soldOut?'<div class="cave-sold-note">Sold out today</div>':''}
       <div class="cave-acts">
         <button class="cave-share-btn" onclick="caveShare(this)">${caveIcon('share')}Share</button>
@@ -1868,7 +1930,7 @@ function caveGoDrink(id){
   caveDishes=caveListFor(CATEGORY_ORDER[warpIdx]);
   caveDishIdx=Math.max(0,caveDishes.findIndex(x=>x.id===id));
   caveViewIdx=0;
-  document.getElementById('cave-cat').textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
+  caveSetCat(CATEGORY_ORDER[warpIdx]);
   PAIR_FROM=from;
   renderCave('anim-l');
 }
@@ -1878,7 +1940,7 @@ function pairBack(){
   caveDishes=f.list.length?f.list:caveListFor(f.key);
   caveDishIdx=Math.max(0,caveDishes.findIndex(x=>x.id===f.dish));
   caveViewIdx=0;
-  document.getElementById('cave-cat').textContent=WARP_META[f.key].label;
+  caveSetCat(f.key);
   renderCave('anim-r');
 }
 // ── r39: the drinks' carousel ──
@@ -2165,7 +2227,7 @@ function caveCatEnter(idx,dir){
   if(RING==='main'&&CATEGORY_ORDER[idx]==='drinks'&&hasDrinkRing()){                    // r39
     ringSet('drinks',drinksRing()[0]);
     caveDishes=caveListFor(CATEGORY_ORDER[warpIdx]);caveDishIdx=0;caveViewIdx=0;
-    document.getElementById('cave-cat').textContent=WARP_META[CATEGORY_ORDER[warpIdx]].label;
+    caveSetCat(CATEGORY_ORDER[warpIdx]);
     renderCave(dir>0?'anim-l':'anim-r');
     return 'ring';
   }
@@ -2179,7 +2241,7 @@ function caveCatEnter(idx,dir){
   caveDishes=caveListFor(key);
   caveDishIdx=0;
   caveViewIdx=0;
-  document.getElementById('cave-cat').textContent=WARP_META[key].label;
+  caveSetCat(key);
   renderCave(dir>0?'anim-l':'anim-r');
 }
 // Drag the names like the caves: a short flick moves one, a long drag several.
@@ -2385,21 +2447,22 @@ function rowsImgErr(img){
 }
 function rowsHeroHTML(k,d,tall){
   return `<button type="button" class="rw-hero${tall?' tall':''}" data-key="${k}" data-id="${hfEsc(d.id)}" aria-label="${hfEsc(WARP_META[k].label+': '+d.name)}">`
-    +`<span class="rw-hero-tag">${hfEsc(WARP_META[k].label)}</span><span class="rw-hero-name">${hfEsc(d.name)}</span><span class="rw-hero-price">${hfEsc(dishPriceText(d))}</span>`
+    +`<span class="rw-hero-tag">${hfEsc(WARP_META[k].label)}</span><span class="rw-hero-name">${hfEsc(d.name)}</span><span class="rw-hero-price">${dishPriceHTML(d,k)}</span>`
     +rowsPic(d,hfPhotoW(420,640))+'</button>';
 }
 function rowsRowHTML(k,list){
   const m=WARP_META[k],many=list.length>1;
-  return `<section class="rw-row" data-key="${k}"><div class="rw-head"><h2>${hfEsc(m.label)}</h2>${many?`<button type="button" class="rw-all" data-all="${k}">See all &rsaquo;</button>`:''}</div>`
+  const when=k==='happy-hour'?hhWhen():'';                     // r58: when the Happy Hour is, under its name
+  return `<section class="rw-row" data-key="${k}"><div class="rw-head"><h2>${hfEsc(m.label)}${when?`<small class="rw-hh-when">${hfEsc(when)}</small>`:''}</h2>${many?`<button type="button" class="rw-all" data-all="${k}">See all &rsaquo;</button>`:''}</div>`
     +`<div class="rw-car" data-key="${k}" data-idx="0" role="group" aria-label="${hfEsc(m.label)}">`
-    +list.map((d,i)=>rowsCardHTML(d,i,i>2&&i<list.length-1)).join('')     // the cards that show first load first
+    +list.map((d,i)=>rowsCardHTML(d,i,i>2&&i<list.length-1,k)).join('')     // the cards that show first load first
     +(many?'<button type="button" class="rw-arr l" data-go="-1" aria-label="Previous dish">&#8249;</button><button type="button" class="rw-arr r" data-go="1" aria-label="Next dish">&#8250;</button>':'')
     +'</div></section>';
 }
-function rowsCardHTML(d,i,lazy){
+function rowsCardHTML(d,i,lazy,k){
   return `<div class="rw-card" data-i="${i}" data-id="${hfEsc(d.id)}" role="button" tabindex="0" aria-label="${hfEsc(d.name)}">`
     +`<div class="rw-ph">${rowsPic(d,hfPhotoW(300,480),lazy)}${dishIsSoldOut(d)?'<span class="rw-sold">Sold out</span>':''}</div>`
-    +`<div class="rw-nm">${hfEsc(d.name)}</div><div class="rw-pr">${hfEsc(dishPriceText(d))}</div></div>`;
+    +`<div class="rw-nm">${hfEsc(d.name)}</div><div class="rw-pr">${dishPriceHTML(d,k)}</div></div>`;
 }
 // Where each card of a row goes: the one at data-idx in the middle, the others beside it, smaller; the row has no end
 // (a card's place is counted round the row, so the last dish sits left of the first). dx: the finger's pull.
@@ -2508,13 +2571,13 @@ function gridSecHTML(k,list,drinks,isOpen){
   const m=WARP_META[k],id='gd-'+k,n=list.length,word=drinks?(n===1?'drink':'drinks'):(n===1?'dish':'dishes');
   return `<section class="gd-sec${isOpen?' open':''}" data-key="${k}">`
     +`<button type="button" class="gd-bar" data-open="${k}" aria-expanded="${isOpen}" aria-controls="${id}">`
-    +`<span class="gd-tx"><span class="gd-name">${hfEsc(m.label)}</span><span class="gd-n">${n} ${word}</span></span>`
+    +`<span class="gd-tx"><span class="gd-name">${hfEsc(m.label)}</span><span class="gd-n">${n} ${word}${k==='happy-hour'&&hhWhen()?' &middot; '+hfEsc(hhWhen()):''}</span></span>`
     +`<span class="gd-peek" aria-hidden="true">${list.slice(0,3).map(d=>`<span class="gd-pk">${rowsPic(d,120,true)}</span>`).join('')}</span>`
     +`<span class="gd-chev" aria-hidden="true"></span></button>`
     +`<div class="gd-body" id="${id}"${isOpen?'':' inert'}><div class="gd-in"><div class="gd-grid">`
     +list.map(d=>`<button type="button" class="gd-card" data-key="${k}" data-id="${hfEsc(d.id)}" aria-label="${hfEsc(d.name)}">`
       +`<span class="rw-ph">${rowsPic(d,hfPhotoW(300,420),true)}${dishIsSoldOut(d)?'<span class="rw-sold">Sold out</span>':''}</span>`
-      +`<span class="gd-cn">${hfEsc(d.name)}</span><span class="gd-cp">${hfEsc(dishPriceText(d))}</span></button>`).join('')
+      +`<span class="gd-cn">${hfEsc(d.name)}</span><span class="gd-cp">${dishPriceHTML(d,k)}</span></button>`).join('')
     +'</div></div></div></section>';
 }
 // The top bar's height, for an open title to stay under it
@@ -2567,7 +2630,7 @@ function cwSync(){
   w.hidden=!on||caveDishes.length<1;
   const nm=document.getElementById('cave-wname'),cc=document.getElementById('cave-cat');
   if(nm&&cc)nm.textContent=cc.textContent;
-  const hint=w.querySelector('.cw-hint');if(hint)hint.textContent=RING==='drinks'?'Spin the wheel for the next drink':'Spin the wheel for the next dish';
+  w.setAttribute('aria-label',RING==='drinks'?'The drinks on a wheel: spin it for the next drink':'The dishes on a wheel: spin it for the next dish');
   if(on&&caveDishes.length){cwInit();cwRender(true,0);}
 }
 function cwRadius(){const d=document.querySelector('#cave-wheel .cw-disc');return ((d&&d.offsetWidth)||620)/2-52;}
@@ -3538,6 +3601,7 @@ loadMyLevel();
   if(cat==='top-rated')cat=CATEGORY_ORDER.find(k=>topKind(k))||null;      // the old single Top Rated cave
   if(dishId&&DISHES.find(d=>d.id===dishId)){caveOpenDish(dishId);CAVE_ARRIVED=true;return;}
   // r39: a drinks' cave (?cat=wines, ?cat=top-drinks…) opens in the drinks' carousel
+  if(cat==='happy-hour'&&hasDrinkRing()&&!drinksRing().includes(cat))cat='drinks';     // r58: no drink in the Happy Hour (yet): the drinks
   if(cat&&cat!=='drinks'&&hasDrinkRing()&&drinksRing().includes(cat))ringSet('drinks',cat);
   // r40: ?ring=drinks (the home page's Drinks button): the drinks' carousel, at its first cave
   else if((params.get('ring')==='drinks'||cat==='drinks')&&hasDrinkRing()){ringSet('drinks',drinksRing()[0]);return;}   // 23 Nov: ?cat=drinks too (no Drinks door now)

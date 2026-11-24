@@ -252,7 +252,7 @@ async function mailTickets(o, ev, tickets, loaded, tz) {
   const areas = await areaNames(o.restaurant_id);
   const sender = senderFor(settings, loaded.restaurant);
   const list = tickets.filter((x) => x.status === 'valid').map((x) => ({ seq: x.seq, cid: `ticket-${x.seq}`, share: ticketLink(settings, x.token), token: x.token }));
-  const attachments = list.map((x) => ({ filename: `ticket-${x.seq}.png`, content: drawTableQr(ticketQrText(settings, x.token)).toString('base64'), content_id: x.cid }));
+  const attachments = list.map((x) => ({ filename: `ticket-${x.seq}.png`, content: drawTableQr(ticketQrText(settings, x.token), settings && settings.restaurant_id).toString('base64'), content_id: x.cid }));
   const mail = ticketsEmail({
     restaurant: loaded.restaurant, timezone: tz, event: { ...ev, areaName: ev.area_id ? areas.names[ev.area_id] : null },
     order: o, tickets: list, link: orderLink(settings, o.token), siteHost: hostOf(settings),
@@ -393,7 +393,7 @@ async function ticketsGet(req, res, body) {
   const w = whenWords(tz, ev.starts_at, ev.ends_at);
   const tickets = rows(list).map((x) => ({
     seq: x.seq, of: order.quantity, status: x.status, usedAt: x.used_at, usedClock: x.used_at ? clock(tz, x.used_at) : null,
-    link: ticketLink(loaded.settings, x.token), qr: order.status === 'paid' && x.status === 'valid' ? tableQrSvg(ticketQrText(loaded.settings, x.token)) : null,
+    link: ticketLink(loaded.settings, x.token), qr: order.status === 'paid' && x.status === 'valid' ? tableQrSvg(ticketQrText(loaded.settings, x.token), loaded.settings && loaded.settings.restaurant_id) : null,
   }));
   return res.status(200).json({
     success: true,
@@ -532,7 +532,7 @@ async function evShareInfo({ res, body, who, loaded, settings }) {
   const e = first(r);
   if (!e) return res.status(404).json({ error: 'This event is not here any more.' });
   const link = eventLink(settings, e.public_key);
-  return res.status(200).json({ success: true, link, qr: 'data:image/png;base64,' + drawTableQr(link).toString('base64'),
+  return res.status(200).json({ success: true, link, qr: 'data:image/png;base64,' + drawTableQr(link, who.rid).toString('base64'),
     restaurant: (loaded.restaurant && loaded.restaurant.name) || null, address: (loaded.restaurant && loaded.restaurant.address) || null });
 }
 

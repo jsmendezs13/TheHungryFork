@@ -485,9 +485,31 @@ function logout(){localStorage.removeItem('hf_taster');try{sessionStorage.remove
 // for staff (key = owner, clipboard = manager, chef hat = crew, his eagle for
 // the platform admin; it goes to the manager page and carries the count of
 // guest messages waiting), and the ☰, which is now personal only.
+// 24 Nov 2026 (Sebastian's pictures): logged out, a chef in a circle takes the ☰'s place — the invitation to log in (the
+// ☰ only held "Log In" then). Logged in, the round "Check In" badge sits left of the bell: one tap shows the visit code
+// for the waiter (My Visits). Each site paints them in its own colours (taster.css; havana/theme.css).
+var HF_CHECKIN_SVG = '<svg class="hf-badge" viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true" focusable="false">'
++ '<defs><clipPath id="hf-badge-clip"><circle cx="50" cy="50" r="46"/></clipPath></defs>'
++ '<circle cx="50" cy="50" r="47" class="hf-b-face" stroke-width="5"/>'
++ '<path d="M17 46 A33 33 0 0 1 83 46" fill="none" class="hf-b-arc" stroke-width="3.2" stroke-linecap="round"/>'
++ '<path class="hf-b-ink" d="M21 26v13a4 4 0 0 0 3 3.9V66h3.4V42.9a4 4 0 0 0 3-3.9V26h-1.9v11h-1.5V26h-1.8v11h-1.5V26h-1.8v11h-1.5V26z"/>'
++ '<path class="hf-b-ink" d="M76.5 26c-4.6 1.8-6.3 9-6.3 16h3V66h3.3z"/>'
++ '<g class="hf-b-ink"><path fill-rule="evenodd" d="M36 24h11v11H36zm2.3 2.3v6.4h6.4v-6.4zM53 24h11v11H53zm2.3 2.3v6.4h6.4v-6.4zM36 41h11v11H36zm2.3 2.3v6.4h6.4v-6.4z"/>'
++   '<rect x="40" y="28" width="3" height="3"/><rect x="57" y="28" width="3" height="3"/><rect x="40" y="45" width="3" height="3"/>'
++   '<rect x="50" y="41" width="3.4" height="3.4"/><rect x="55" y="44" width="3.4" height="3.4"/><rect x="60.6" y="41" width="3.4" height="3.4"/>'
++   '<rect x="50" y="48.6" width="3.4" height="3.4"/><rect x="58" y="49" width="6" height="3.4"/><rect x="50" y="36.6" width="3.4" height="3.4"/></g>'
++ '<g clip-path="url(#hf-badge-clip)"><rect x="0" y="67" width="100" height="40" class="hf-b-band"/></g>'
++ '<text x="50" y="87" text-anchor="middle" class="hf-b-text">Check In</text></svg>';
+var HF_CHEF_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true" focusable="false">'
++ '<g class="hf-chef"><path d="M33 40c-8.3-1.2-12.6-7.6-11.4-14.1 1.3-6.8 8.1-10.6 14.4-8.9C38.9 11 44 7.6 50 7.6s11.1 3.4 14 9.4c6.3-1.7 13.1 2.1 14.4 8.9 1.2 6.5-3.1 12.9-11.4 14.1z"/>'
++ '<path d="M34 42.5h32v7.5H34z"/><circle cx="50" cy="62" r="13"/>'
++ '<path d="M22 100c0-15 9.8-24.6 20.6-26.6L50 84.6l7.4-11.2C68.2 75.4 78 85 78 100z"/></g>'
++ '<g class="hf-chef-cut"><path d="M44.5 21c2-2.6 7.6-3.2 9.6 1.2" fill="none" stroke-width="2.4" stroke-linecap="round"/>'
++ '<circle cx="50" cy="88" r="2.4" stroke="none"/><circle cx="50" cy="95.5" r="2.4" stroke="none"/></g></svg>';
 var HF_CORNER_HTML =
   '<div class="hf-corner" id="hf-corner">'
 +   '<div class="hf-corner-bar">'
++     '<button class="hf-checkin" id="hf-checkin" type="button" aria-label="Check in: show your visit code to the waiter" hidden>'+HF_CHECKIN_SVG+'</button>'
 +     '<button class="hf-bell" id="hf-bell" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="hf-bell-panel" hidden>'
 +       '<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
 +         '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2.1H4.4z"/><path d="M9.8 20.6a2.4 2.4 0 0 0 4.4 0"/></svg>'
@@ -497,6 +519,7 @@ var HF_CORNER_HTML =
 +     '<button class="hf-corner-toggle" id="hf-corner-toggle" type="button" aria-label="Account menu" aria-expanded="false" aria-controls="hf-corner-items">'
 +       '<span></span><span></span><span></span><i class="hf-corner-dot"></i>'
 +     '</button>'
++     '<button class="hf-login" id="hf-login" type="button" aria-label="Log in">'+HF_CHEF_SVG+'</button>'
 +   '</div>'
 +   '<div class="hf-bell-panel" id="hf-bell-panel" role="region" aria-label="Notifications" hidden></div>'
 +   '<div class="hf-corner-items" id="hf-corner-items"></div>'
@@ -584,6 +607,12 @@ function hfPaintHeader(){
   if(!bell||!roleBtn)return;
   var staff=!!(currentTaster&&(currentTaster.is_platform_admin||currentTaster.is_restaurant_admin));
   bell.hidden=!currentTaster;
+  // 24 Nov: logged in, the Check In badge and the ☰; logged out, only the chef (log in)
+  var ck=document.getElementById('hf-checkin'), lg=document.getElementById('hf-login'), tg=document.getElementById('hf-corner-toggle');
+  if(ck)ck.hidden=!currentTaster;
+  if(lg)lg.hidden=!!currentTaster;
+  if(tg)tg.hidden=!currentTaster;
+  if(!currentTaster)closeCornerMenu();
   roleBtn.hidden=!staff;
   if(staff){
     var role=hfStaffRole()||'manager';            // the clipboard until the server says which
@@ -1195,6 +1224,8 @@ document.addEventListener('click',function(e){
     return;
   }
   if(t.closest('#hf-corner-toggle')){toggleCornerMenu();return;}
+  if(t.closest('#hf-login')){closeCornerMenu();hfBellClose();openTasterModal();return;}                     // 24 Nov: the chef
+  if(t.closest('#hf-checkin')){closeCornerMenu();hfBellClose();if(typeof openMyVisits==='function')openMyVisits(true);return;}   // 24 Nov: Check In
   if(t.closest('#hf-bell')){var p=document.getElementById('hf-bell-panel');if(p&&p.hidden)hfBellOpen();else hfBellClose();return;}
   var bellItem=t.closest('.hf-bell-item');
   if(bellItem){
@@ -1555,12 +1586,13 @@ var HFV = {
   ticketId: null, poll: null, asking: false   // r32: "has the waiter confirmed it yet?"
 };
 
-function openMyVisits(){
+function openMyVisits(checkIn){
   if(!currentTaster){openTasterModal();return;}
   const o=document.getElementById('hf-v-overlay');
   if(!o)return;
   o.classList.add('open');
   hfvShowIdle();
+  if(checkIn===true)hfvRequestCode();      // 24 Nov: the Check In badge: straight to the code for the waiter
   hfvLoadLoyalty();
   hfvLoadCalendar();
 }
@@ -1612,7 +1644,8 @@ function hfvRequestCode(){
   // r31: the same ticket, for a prize or a saved invite (HFV.showing).
   const sh=HFV.showing;
   box.innerHTML='<div class="hf-v-qr-msg">Making your code…</div>';
-  hfvApi('/api/checkins',sh?{action:'show_reward',rewardId:sh.rewardId,passId:sh.passId}:{action:'token'}).then(function(d){
+  var siteRid=(window.HF_SITE&&HF_SITE.id)||1;   // 24 Nov: the code wears this site's look (Havana: yellow frame, palm)
+  hfvApi('/api/checkins',sh?{action:'show_reward',rewardId:sh.rewardId,passId:sh.passId,restaurantId:siteRid}:{action:'token',restaurantId:siteRid}).then(function(d){
     // The SVG comes from our own server, but it goes into innerHTML, so it is
     // still checked for being what it claims to be before it gets there.
     const svg=(typeof d.svg==='string'&&d.svg.trim().slice(0,4)==='<svg')?d.svg:'';
@@ -2309,7 +2342,8 @@ function hfHoursApply(d){
   HF_HOURS.social=hfSocialClean(d.social);                   // r52
   HF_HOURS.pairings=!(d.top&&d.top.pairings===false);        // 23 Nov: the drink recommendations on the dishes (migration 40)
   HF_HOURS.design=hfDesignClean(d.top&&d.top.design);        // 23 Nov: the menu's design, food and drinks (migration 41)
-  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,pairings:HF_HOURS.pairings,design:HF_HOURS.design,at:Date.now()}));}catch(e){}
+  HF_HOURS.happyHour=hfHHClean(d.top&&d.top.happyHour);      // r58: when the Happy Hour is (migration 42)
+  try{localStorage.setItem('hf_hours',JSON.stringify({rows:d.hours,holidays:HF_HOURS.holidays,tz:HF_HOURS.tz,grade:HF_HOURS.grade,top:HF_HOURS.top,caveOrder:HF_HOURS.caveOrder,social:HF_HOURS.social,pairings:HF_HOURS.pairings,design:HF_HOURS.design,happyHour:HF_HOURS.happyHour,at:Date.now()}));}catch(e){}
   hfHoursFill();
   HF_HOURS.fresh=true;
   try{document.dispatchEvent(new Event('hf-hours'));}catch(e){}
@@ -2343,6 +2377,11 @@ function hfDesignClean(o){
   ['main','drinks'].forEach(function(s){out[s]=ok[o[s]]?o[s]:'original';});
   return out;
 }
+// r58 (23 Nov 2026): when the Happy Hour is, in the restaurant's words (Manager → Menu → Happy Hour): "Every day, 2 PM
+// to 7 PM". Missing or empty: '' (the menu then says nothing about when).
+function hfHHClean(t){
+  return typeof t==='string'?t.replace(/[\u0000-\u001f\u007f<>]/g,'').replace(/\s+/g,' ').trim().slice(0,80):'';
+}
 // r52 (Sebastian, 9 Nov): the restaurant's pages on social media (Settings → Social media), for the home page's
 // Social button: { links:[{kind, url, label}] }, only the ones filled in. Missing (an older server, migration 36
 // not run): null, and the button says "coming soon".
@@ -2373,6 +2412,7 @@ function hfHoursLoad(){
       HF_HOURS.social=hfSocialClean(kept.social);            // r52
       HF_HOURS.pairings=kept.pairings!==false;               // 23 Nov
       HF_HOURS.design=hfDesignClean(kept.design);            // 23 Nov (migration 41)
+      HF_HOURS.happyHour=hfHHClean(kept.happyHour);          // r58 (migration 42)
       hfHoursFill();
     }
   }catch(e){}

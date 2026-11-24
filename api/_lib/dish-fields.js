@@ -81,3 +81,8 @@ export const DRINK_PRICES = ['price_glass', 'price_bottle', 'price_shot', 'price
 export function isAllergen(field) {
   return ALLERGENS.includes(field);
 }
+
+// ── The Happy Hour (r58, migration 42) ─────────────────────────────────────
+// A drink's Happy Hour price. The drinks that have one are the Happy Hour part
+// of the drinks' menu, at that price. Empty = not in Happy Hour.
+export const HAPPY_HOUR_PRICE = 'happy_hour_price';

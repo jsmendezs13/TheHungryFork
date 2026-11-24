@@ -53,7 +53,10 @@ function normalizeDish(row) {
     pairCocktailId: row.pair_cocktail_id || null,
     // r40 (migration 27): a wine by the glass and the bottle; a spirit as a
     // shot, a mixed drink and the bottle. Only the ones filled in.
-    prices: dishPrices(row)
+    prices: dishPrices(row),
+    // r58 (migration 42): the drink's Happy Hour price; null = not in Happy Hour.
+    hhPrice: row.happy_hour_price === null || row.happy_hour_price === undefined || row.happy_hour_price === '' || !Number.isFinite(Number(row.happy_hour_price))
+      ? null : Number(row.happy_hour_price)
   };
 }
 function dishPrices(row) {
@@ -92,8 +95,17 @@ const DISH_COLUMNS = [
 const DISH_COLUMNS_R39 = DISH_COLUMNS + ',drink_kind,is_bartenders_pick,pair_wine_id,pair_cocktail_id';
 // r40: and the drink prices (migration 27); without them, as r39 asked.
 const DISH_COLUMNS_R40 = DISH_COLUMNS_R39 + ',price_glass,price_bottle,price_shot,price_mixed';
+// r58: and the Happy Hour price (migration 42); without it, as r40 asked.
+const DISH_COLUMNS_R58 = DISH_COLUMNS_R40 + ',happy_hour_price';
 
-async function loadDishes() {
+// r58: the menu's request while it is on its way, for a part of a page that needs the dishes' names and may be drawn
+// before they arrive (My Tastings on the home page): it waits for this instead of showing "Dish #103".
+var HF_DISHES_P = null;
+function loadDishes() {
+  HF_DISHES_P = loadDishesNow();
+  return HF_DISHES_P;
+}
+async function loadDishesNow() {
   const ask = (cols) => fetch(SUPABASE_URL
     + '/rest/v1/dishes?restaurant_id=eq.' + RESTAURANT_ID
     + '&is_hidden=eq.false'
@@ -102,7 +114,8 @@ async function loadDishes() {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   });
 
-  let res = await ask(DISH_COLUMNS_R40);
+  let res = await ask(DISH_COLUMNS_R58);
+  if (!res.ok && res.status >= 400 && res.status < 500) res = await ask(DISH_COLUMNS_R40);
   if (!res.ok && res.status >= 400 && res.status < 500) res = await ask(DISH_COLUMNS_R39);
   if (!res.ok && res.status >= 400 && res.status < 500) res = await ask(DISH_COLUMNS);
   if (!res.ok) throw new Error('dishes request failed: ' + res.status);

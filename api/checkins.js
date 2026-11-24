@@ -12,6 +12,7 @@
 // parameter to tamper with.
 
 import { tableQrSvg } from './_lib/qr.js';
+import { siteRestaurant } from './_lib/sites.js';
 import { makeLimiter, allow, keyFor, clientIp } from './_lib/auth.js';
 import { tasterIdFromRequest, sb } from './_lib/roles.js';
 import {
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
         ? await makeInvite(tasterId, body.restaurantId, body.dishId)
         : await inviteForGiver(tasterId, body.passId);
       const link = `${siteUrl(req)}/invite?c=${encodeURIComponent(invite.code)}`;
-      return { invite, link, svg: tableQrSvg(link) };
+      return { invite, link, svg: tableQrSvg(link, Number(body.restaurantId) || siteRestaurant(req)) };   // 24 Nov: the restaurant's look
     });
   }
   // r32: has the waiter confirmed this check-in code yet? Then: what did the
@@ -194,7 +195,9 @@ async function issueToken(req, res, tasterId, extra = null) {
   // QR readers, sharp and damaged, like the table's.
   let svg;
   try {
-    svg = tableQrSvg(url);
+    // 24 Nov: the look of the site the guest is on (Havana: yellow frame, palm); the page says which, else the address
+    const askedRid = Number(req.body && req.body.restaurantId);
+    svg = tableQrSvg(url, Number.isInteger(askedRid) && askedRid > 0 ? askedRid : siteRestaurant(req));
   } catch (e) {
     console.error('[checkins:token] qr failed', e?.message);
     return res.status(500).json({ error: 'Could not draw your check-in code.' });

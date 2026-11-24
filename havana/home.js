@@ -19,11 +19,10 @@
   };
   var svg = function (k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + '</svg>'; };
 
-  // The round buttons: the same nine places, Havana's names. Menu stays in the middle.
+  // The round buttons: Havana's places (24 Nov 2026: "Parties" off with its section). Menu stays in the middle.
   var RAIL = [
     { name: 'Specials', ico: 'star', go: '#hv-specials' },
     { name: 'Events', ico: 'party', go: '#hv-events' },
-    { name: 'Parties', ico: 'calendar', go: '#hv-party' },
     { name: 'Menu', ico: 'taco' },
     { name: 'Drinks', ico: 'drink' },
     { name: 'Reserve', ico: 'book' },
@@ -57,6 +56,9 @@
       if (img) { img.alt = ''; if (img.getAttribute('src') !== PALM) { img.src = PALM; img.setAttribute('data-orig', PALM); } img.classList.add('hv-palm'); }
       var ico = b.querySelector('.hv-ico'); if (ico) ico.remove();
     });
+    // 24 Nov: one round button fewer (Parties): the page's extra button goes, and the ring starts on Menu again
+    for (var k = buttons.length - 1; k >= RAIL.length; k--) buttons[k].remove();
+    try { var mi = RAIL.map(function (r) { return r.name; }).indexOf('Menu'); railPos = railIdx = mi; railRender(); } catch (e) {}
     // Specials, Events, Parties and Visit Us go down the page; Call calls. (Before the page's own click.)
     var rail = document.getElementById('vh-btn-rail');
     if (rail && !rail.dataset.hv) {
@@ -81,15 +83,46 @@
     { ends: '2026-12-05T17:00:00-05:00', month: 'Dec', day: '5', when: 'Saturday, December 5 · VIP 1–5 PM · General 2–5 PM · 21+',
       name: 'Feliz Navidad: a Tequila & Mezcal Fiesta',
       about: 'Unlimited tequila, mezcal and beer tastings, Latin food, a live mariachi band, a Latin DJ, holiday games and a photo booth.',
-      link: 'https://bucketlisters.com/experience/feliz-navidad-a-tequila-mezcal-fiesta', label: 'Get tickets' }
+      link: 'https://bucketlisters.com/experience/feliz-navidad-a-tequila-mezcal-fiesta', label: 'Get tickets',
+      pic: ['havana/photos/feliz-navidad.jpg', 'Feliz Navidad: a Tequila & Mezcal Fiesta. December 5th, 1 PM to 5 PM.', 1400, 1050] }
+  ];
+
+  // 23 Nov 2026 (his flyer): Karaoke on Wednesdays and a live DJ Thursday to Saturday, with the sponsors in words (no
+  // logos). 24 Nov: his framed pictures — the four days in Specials, Karaoke & DJ and the Dec 5 party in Events.
+  var WEEKLY_PIC = 'havana/photos/karaoke-dj.jpg';
+  var WEEKLY_ALT = 'Karaoke Night: Wednesdays, 7 PM to 10 PM. Thursday to Saturday: live DJ, no cover fee.';
+  var DAY_PICS = [   // [file, alt (what the picture says), width, height]
+    ['havana/photos/margarita-mondays.jpg', 'Margarita Mondays. All day: $10 margaritas and $10 frozen margaritas.', 1400, 1050],
+    ['havana/photos/taco-tuesday.jpg', 'Taco Tuesday. All day: $4 tacos (beef, chicken or veggie), $12 frozen drinks, $12 well drinks, $10 wine.', 1254, 1254],
+    ['havana/photos/salsa-bachata.jpg', 'Friday Salsa & Bachata. Free dance class every Friday at 7 PM. No cover.', 1254, 1254],
+    ['havana/photos/churrasco-saturdays.jpg', 'Churrasco Saturdays. A frozen drink or a beer on the house with any churrasco.', 1254, 1254]
+  ];
+  // A picture through Vercel's image service (640 or 1080 wide), the original if that fails.
+  function pic(file, alt, w, h, cls) {
+    var u = function (px) { return '/_vercel/image?url=' + encodeURIComponent('/' + file) + '&w=' + px + '&q=75'; };
+    return '<img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + u(1080) + '" srcset="' + u(640) + ' 640w, ' + u(1080) + ' 1080w" sizes="(min-width: 760px) 640px, 92vw"'
+      + ' data-orig="/' + esc(file) + '" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.dataset.orig" alt="' + esc(alt) + '"'
+      + ' width="' + w + '" height="' + h + '" loading="lazy" decoding="async">';
+  }
+  // The beers, from the printed menu's "Cervezas y Más" page (23 Nov 2026), with its card prices.
+  var BEER = [
+    ['Cans or bottles · $8', '($8.24 by card)', 'NÜTRL Black Cherry, Corona, Modelo Especial, Dos XX, Pacifico, Victoria, Tecate, Negra Modelo, High Noon · Michelob Ultra $9'],
+    ['Draft · $9', '($9.27 by card)', 'Modelo Especial, Stone Buenaveza, Stella, Lagunitas IPA, Kona Big Wave, Michelob Ultra, Sixpoint Crisp, Goose Island IPA'],
+    ['For the table', '', 'Cubetazo: 5 for $35 ($36.05 by card) · Pitcher $45 ($46.35 by card) · Tower $75 ($77.25 by card)'],
+    ['Without alcohol', '', 'Aguas frescas $8: sandía, mango, piña, naranja, limonada, maracuyá, horchata, jamaica · N/A beer $8: Stella 0.0, Michelob Zero · Jarritos $5']
   ];
 
   function sections() {
     if (document.getElementById('hv-specials')) return;
     var anchor = document.querySelector('.video-hero'); if (!anchor) return;
-    var week = WEEK.map(function (d) { return '<div class="hv-day"><span class="hv-label">' + esc(d[0]) + '</span><h3>' + esc(d[1]) + '</h3><p>' + esc(d[2]) + '</p></div>'; }).join('');
+    var week = DAY_PICS.map(function (d) { return '<figure class="hv-pic">' + pic(d[0], d[1], d[2], d[3]) + '</figure>'; }).join('');
     var now = Date.now();
     var events = EVENTS.filter(function (e) { return Date.parse(e.ends) > now; }).map(function (e) {
+      if (e.pic) {   // 24 Nov: his picture, the button under it, the details in one line
+        return '<article class="hv-event-pic"><figure class="hv-pic">' + pic(e.pic[0], e.pic[1], e.pic[2], e.pic[3]) + '</figure>'
+          + '<a class="hv-btn" href="' + esc(e.link) + '" target="_blank" rel="noopener">' + esc(e.label) + '</a>'
+          + '<p class="hv-event-line">' + esc(e.when) + '</p></article>';
+      }
       return '<article class="hv-event"><div class="hv-event-when"><div class="hv-date">' + esc(e.month) + ' ' + esc(e.day) + '</div>'
         + '<div class="hv-label" style="font-size:1rem;line-height:1.3">' + esc(e.when) + '</div></div>'
         + '<div class="hv-event-body"><h3>' + esc(e.name) + '</h3><p>' + esc(e.about) + '</p>'
@@ -98,30 +131,19 @@
     var html = ''
       + '<section class="hv-sec hv-specials" id="hv-specials"><div class="hv-wrap">'
       +   '<h2 class="hv-title">Specials</h2>'
-      +   '<div class="hv-hh"><b>Happy Hour · every day 2–7 PM</b><p>$9 house shots · $10 house wines · $12 frozen drinks · 5 beers for $35</p></div>'
-      +   '<div class="hv-week">' + week + '</div>'
-      + '</div></section>'
-      + '<section class="hv-sec hv-food" id="hv-food"><div class="hv-wrap">'
-      +   '<h2 class="hv-title">Cuban cuisine, perfected</h2>'
-      +   '<p class="hv-sub">Ropa vieja, churrasco, tostones, tacos and fajitas. Rate what you eat with Fork’s Rating, and see what everyone else loved.</p>'
-      +   '<div class="hv-grid" id="hv-grid"></div>'
-      +   '<div class="hv-btns"><a class="hv-btn" href="/menu">See the menu</a><a class="hv-btn alt" href="/menu?ring=drinks">Drinks</a></div>'
+      // 24 Nov: the old website's Happy Hour box is off ("ignora los precios del viejo website"); the Happy Hour part of
+      // the drinks appears when drinks get Happy Hour prices in Manager.
+      +   '<div class="hv-week hv-pics">' + week + '</div>'
+      +   '<div class="hv-beer"><b>Cervezas y más</b><div class="hv-beer-cols">'
+      +     BEER.map(function (r) { return '<div><span class="hv-label">' + esc(r[0]) + (r[1] ? ' <small>' + esc(r[1]) + '</small>' : '') + '</span><p>' + esc(r[2]) + '</p></div>'; }).join('')
+      +   '</div></div>'
       + '</div></section>'
       + '<section class="hv-sec hv-events" id="hv-events"><div class="hv-wrap">'
       +   '<h2 class="hv-title">Events</h2>'
       +   (events || '<p class="hv-sub">New events are on the way. Follow us on Instagram to hear first.</p>')
-      +   '<p class="hv-sub" style="margin-top:18px">Every week: Mariachi on Wednesdays, Salsa &amp; Bachata on Fridays.</p>'
-      + '</div></section>'
-      + '<section class="hv-sec hv-reserve" id="hv-reserve"><div class="hv-wrap">'
-      +   '<h2 class="hv-title">Reservations</h2>'
-      +   '<p class="hv-sub">Pick a day and a time, and your table is booked. You get an email with your QR code.</p>'
-      +   '<div class="hv-btns"><a class="hv-btn" href="/reservations">Book a table</a></div>'
-      + '</div></section>'
-      + '<section class="hv-sec hv-party" id="hv-party"><div class="hv-wrap">'
-      +   '<h2 class="hv-title">There’s no party like a Latin party</h2>'
-      +   '<p class="hv-sub">Birthdays, office parties, the holidays: Havana Social is made for private parties. Pre-fixe menus, buffets and open bar packages. Tell us the day, how many people and what you have in mind.</p>'
-      +   '<div class="hv-btns"><a class="hv-btn" href="/reservations">Send a request</a><a class="hv-btn alt" href="tel:' + esc(S.tel) + '">Call ' + esc(S.phone) + '</a></div>'
-      +   '<p class="hv-sub" style="margin-top:14px;font-size:.92rem;opacity:.8">For 9 people or more, choose the number of people on the booking page and send a request.</p>'
+      +   '<figure class="hv-pic hv-weekly">' + pic(WEEKLY_PIC, WEEKLY_ALT, 1352, 1163)
+      +     '<figcaption>Sponsored by NÜTRL and Casamigos</figcaption></figure>'
+      +   '<p class="hv-sub" style="margin-top:18px">Wednesdays: live mariachi too.</p>'      // 24 Nov: "Keep both" (he checks with the owner)
       + '</div></section>'
       + '<section class="hv-sec hv-visit" id="hv-visit"><div class="hv-wrap">'
       +   '<h2 class="hv-title">Visit us</h2>'
@@ -191,6 +213,6 @@
       + stars(g.score) + '<span class="hv-rate-cap">Google Maps<span> · ' + Number(g.score).toFixed(1) + (n ? ' (' + n.toLocaleString('en-US') + ')' : '') + '</span></span></a>');
   }
 
-  function start() { hero(); google(); sections(); food(0); maps(); }
+  function start() { hero(); google(); sections(); maps(); }   // 24 Nov: the dishes' section is off (food() stays for later)
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -109,6 +109,17 @@ html[data-site="havana"] .hv-specials { background: var(--hv-yellow); }
 html[data-site="havana"] .hv-hh { display: inline-block; background: #fff; border: 4px solid var(--hv-sky); border-radius: 22px; padding: 16px 24px; margin: 0 auto 26px; max-width: 640px; }
 html[data-site="havana"] .hv-hh b { font-family: var(--hv-label); font-weight: 400; font-size: 1.7rem; letter-spacing: .06em; color: var(--hv-purple); display: block; }
 html[data-site="havana"] .hv-hh p { margin: 6px 0 0; font-size: 1.02rem; line-height: 1.55; }
+/* 23 Nov 2026: the beers from the printed menu ("Cervezas y Más"), under the Happy Hour box */
+html[data-site="havana"] .hv-beer { background: #fff; border: 4px solid var(--hv-sky); border-radius: 22px; padding: 16px 22px 18px; margin: 0 auto 26px; max-width: 760px; text-align: left; }
+html[data-site="havana"] .hv-beer > b { font-family: var(--hv-label); font-weight: 400; font-size: 1.7rem; letter-spacing: .06em; color: var(--hv-purple); display: block; text-align: center; }
+html[data-site="havana"] .hv-beer-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 22px; margin-top: 8px; }
+html[data-site="havana"] .hv-beer .hv-label { display: block; color: var(--hv-purple); font-size: 1.05rem; }
+html[data-site="havana"] .hv-beer .hv-label small { font-family: 'Lato', system-ui, sans-serif; letter-spacing: 0; font-size: .78rem; color: var(--hv-navy); opacity: .7; }
+html[data-site="havana"] .hv-beer p { margin: 2px 0 0; font-size: .95rem; line-height: 1.5; }
+/* 23 Nov 2026: Karaoke & Live DJ, the flyer's framed picture, in Events */
+html[data-site="havana"] .hv-weekly { max-width: 720px; margin: 22px auto 0; }
+html[data-site="havana"] .hv-weekly img { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 14px 30px rgba(22,32,58,.22); }
+html[data-site="havana"] .hv-weekly figcaption { margin-top: 10px; font-family: var(--hv-label); font-size: 1rem; letter-spacing: .14em; color: var(--hv-navy); opacity: .8; }
 html[data-site="havana"] .hv-week { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; text-align: left; }
 html[data-site="havana"] .hv-day { background: var(--hv-sky); border-radius: 18px; padding: 16px 18px; }
 html[data-site="havana"] .hv-day .hv-label { color: var(--hv-navy); display: block; font-size: 1rem; opacity: .8; }
@@ -231,9 +242,11 @@ html[data-site="havana"] .cave-wl-names b.on { color: var(--hv-purple); }
 html[data-site="havana"] .cw-ptr { border-top-color: var(--hv-purple); }
 html[data-site="havana"] .cw-disc { background: #fff; box-shadow: 0 -6px 30px rgba(22,32,58,.18), inset 0 0 0 14px var(--hv-sky-pale); }
 html[data-site="havana"] .cw-leaf { background: url('/havana/leaf-ring.webp') center / 100% 100% no-repeat; opacity: .9; }
-html[data-site="havana"] .cw-spot { background: var(--hv-sky-pale); box-shadow: 0 4px 10px rgba(22,32,58,.15); }
+html[data-site="havana"] .cw-spot { background: var(--hv-sky-pale); box-shadow: 0 0 0 3px var(--hv-yellow), 0 4px 10px rgba(22,32,58,.15); }
 html[data-site="havana"] .cw-spot.on { background: var(--hv-yellow); box-shadow: 0 0 0 4px #fff, 0 8px 18px rgba(45,0,119,.35); }
-html[data-site="havana"] .cw-hint { background: #fff; color: var(--hv-purple); font-family: var(--hv-label); font-size: .9rem; font-weight: 400; letter-spacing: .14em; box-shadow: 0 2px 8px rgba(22,32,58,.12); }
+html[data-site="havana"] .cw-hint { background: #fff; color: var(--hv-purple); font-family: var(--hv-label); font-size: 1.15rem; font-weight: 400; letter-spacing: .2em; box-shadow: 0 2px 8px rgba(22,32,58,.12); }
+html[data-site="havana"] .cw-hint b { margin-right: -.2em; }
+@media (min-width: 760px) { html[data-site="havana"] .cw-spot { box-shadow: 0 0 0 4px var(--hv-yellow), 0 4px 10px rgba(22,32,58,.15); } }
 
 /* ── reservations ── */
 html[data-site="havana"] .rv-hero { background: linear-gradient(135deg, #E2F3FC 0%, #B9E1F5 100%); }
@@ -246,3 +259,29 @@ html[data-site="havana"] .rv-bar-sum b { font-family: var(--hv-label); font-weig
 html[data-site="havana"] .rv-lbl { font-family: var(--hv-label); font-size: 1rem; letter-spacing: .16em; color: var(--hv-navy); }
 html[data-site="havana"] .rv-link { color: var(--hv-purple); }
 html[data-site="havana"] .site-logo-words { display: inline-block; font-family: var(--hv-display); font-size: 2rem; color: var(--hv-purple); text-transform: uppercase; }
+
+/* r58 (23 Nov 2026): the Happy Hour — the yellow tag over its price, the regular price small after it, when it is */
+html[data-site="havana"] .cave-hh-tag { font-family: var(--hv-label); font-weight: 400; font-size: 1.05rem; letter-spacing: .14em; color: var(--hv-purple); background: var(--hv-yellow); padding: .22rem .9rem .12rem; }
+html[data-site="havana"] .cave-hh-when { font-family: var(--hv-body, 'Lato'), sans-serif; font-weight: 700; color: var(--hv-navy); opacity: .78; }
+html[data-site="havana"] .cave-hh-line { font-family: var(--hv-label); font-weight: 400; font-size: .98rem; letter-spacing: .1em; color: var(--hv-purple); background: var(--hv-yellow); border-color: var(--hv-yellow); }
+html[data-site="havana"] .hh-was { font-family: var(--hv-body, 'Lato'), sans-serif; font-weight: 700; }
+html[data-site="havana"] .rw-hh-when { font-family: var(--hv-label); font-weight: 400; font-size: .95rem; letter-spacing: .1em; color: var(--hv-navy); opacity: .8; }
+html[data-site="havana"] .hv-hh .hv-hh-btn { margin-top: 12px; }
+
+/* 24 Nov 2026: his framed pictures — the four days in Specials (one per row on a phone, two side by side from 760px),
+   the Dec 5 party in Events with Get tickets under it */
+html[data-site="havana"] .hv-pic { margin: 0; }
+html[data-site="havana"] .hv-pic img { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 14px 30px rgba(22,32,58,.22); }
+html[data-site="havana"] .hv-week.hv-pics { grid-template-columns: 1fr; gap: 22px; max-width: 640px; margin: 4px auto 30px; }
+@media (min-width: 760px) { html[data-site="havana"] .hv-week.hv-pics { grid-template-columns: repeat(2, 1fr); max-width: 1040px; align-items: center; gap: 28px; } }
+html[data-site="havana"] .hv-event-pic { max-width: 720px; margin: 0 auto 30px; }
+html[data-site="havana"] .hv-event-pic .hv-btn { margin-top: 18px; }
+html[data-site="havana"] .hv-event-line { margin: 12px 0 0; font-size: .95rem; line-height: 1.5; opacity: .85; }
+
+/* 24 Nov 2026: Havana's chef (log in: white on blue, like his picture) and its Check In badge (navy, yellow line) */
+html[data-site="havana"] .hf-login { background:radial-gradient(circle at 30% 20%, #49A8F2, #1D63C8 75%); border:2px solid #fff; }
+html[data-site="havana"] .hf-chef { fill:#fff; } html[data-site="havana"] .hf-chef-cut { fill:#1D63C8; stroke:#1D63C8; }
+html[data-site="havana"] .hf-b-face { fill:#fff; stroke:#1E2A5A; } html[data-site="havana"] .hf-b-arc { stroke:#F2B705; }
+html[data-site="havana"] .hf-b-ink, html[data-site="havana"] .hf-b-band { fill:#1E2A5A; }
+html[data-site="havana"] .hf-b-text { font-family:'Lato', system-ui, sans-serif; font-weight:900; }
+

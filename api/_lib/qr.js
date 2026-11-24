@@ -21,6 +21,7 @@ import QRCode from 'qrcode';
 import zlib from 'node:zlib';
 import { sb } from './roles.js';
 import { LOGO_W, LOGO_H, LOGO_PALETTE, LOGO_PIXELS_DEFLATED } from './qr-logo.js';
+import * as HAVANA_LOGO from './qr-logo-havana.js';
 
 export const QR_CID = 'table-qr';          // the name the email's <img src="cid:…"> points at
 const TOKEN = /^[0-9a-f]{32}$/;
@@ -34,23 +35,35 @@ const TOKEN = /^[0-9a-f]{32}$/;
 // Drawn here into a small palette PNG (node's own zlib, nothing to install):
 // one picture for the page, the shared card and the email alike.
 const INK = [0x16, 0x12, 0x10], RED = [0xE0, 0x1E, 0x1A], WHITE = [0xFF, 0xFF, 0xFF];   // black like the fork, red like his frame
+const YELLOW = [0xF6, 0xD9, 0x19];                                                          // Havana's yellow
 const MOD = 10;                                              // pixels per dot
 const QUIET = 2, FRAME = 1.6, EDGE = 0.7, ROUND = 3.6;       // in dots: white, the red frame, white, its corners
 const LOGO_PAD = 0.6;                                        // dots left white around the logo
 const STEPS = 16;                                            // shades of ink and of red over white (smooth curves)
-// The palette: 0 white, then the ink's shades, then the red's, then the logo's colours.
-const PALETTE = (() => {
+// ── EACH RESTAURANT'S LOOK (24 Nov 2026, Sebastian: Havana's code "a yellow frame instead of the red one, with a palm
+// tree in the middle") ──
+// The frame's colour and the logo in the middle, by restaurant (the site's, the table's, the event's). Every logo is
+// 150 x 190 pixels, so every code keeps the proportions tested with four readers in r22. Anything else: The Hungry Fork's.
+const LOOKS = {
+  1: { key: 'thf', frame: RED, logo: { palette: LOGO_PALETTE, deflated: LOGO_PIXELS_DEFLATED } },
+  2: { key: 'havana', frame: YELLOW, logo: { palette: HAVANA_LOGO.LOGO_PALETTE, deflated: HAVANA_LOGO.LOGO_PIXELS_DEFLATED } },
+};
+if (HAVANA_LOGO.LOGO_W !== LOGO_W || HAVANA_LOGO.LOGO_H !== LOGO_H) throw new Error('qr: every logo must be ' + LOGO_W + ' x ' + LOGO_H);
+export function qrLook(restaurantId) { return LOOKS[Number(restaurantId)] || LOOKS[1]; }
+// The palette: 0 white, then the ink's shades, then the frame's, then the logo's colours.
+function paletteOf(look) {
+  if (look.palette) return look.palette;
   const out = [...WHITE];
-  for (const c of [INK, RED]) {
+  for (const c of [INK, look.frame]) {
     for (let k = 1; k <= STEPS; k++) { const a = k / STEPS; for (let j = 0; j < 3; j++) out.push(Math.round(c[j] * a + 255 * (1 - a))); }
   }
-  return Buffer.from(out.concat(LOGO_PALETTE));
-})();
+  look.palette = Buffer.from(out.concat(look.logo.palette));
+  return look.palette;
+}
 const SHADE_INK = 1, SHADE_RED = 1 + STEPS, LOGO_FIRST = 1 + 2 * STEPS;
-let logoPixels = null;
-function logo() {
-  if (!logoPixels) logoPixels = zlib.inflateSync(Buffer.from(LOGO_PIXELS_DEFLATED, 'base64'));
-  return logoPixels;
+function logo(look = LOOKS[1]) {
+  if (!look.logo.pixels) look.logo.pixels = zlib.inflateSync(Buffer.from(look.logo.deflated, 'base64'));
+  return look.logo.pixels;
 }
 
 // How much of a pixel (its centre at x, y) lies inside a rounded rectangle:
@@ -66,8 +79,9 @@ function inside(x, y, x0, y0, x1, y1, r) {
 // three corner squares and the logo — is drawn once and kept (r23: the
 // pictures cost a fifth of what they did). Only the dots are drawn per code.
 const TEMPLATES = new Map();
-function template(n) {
-  if (TEMPLATES.has(n)) return TEMPLATES.get(n);
+function template(n, look = LOOKS[1]) {
+  const tkey = look.key + ':' + n;
+  if (TEMPLATES.has(tkey)) return TEMPLATES.get(tkey);
   const off = Math.round((QUIET + FRAME + EDGE) * MOD);
   const W = n * MOD + off * 2;
   const px = Buffer.alloc(W * W);                             // palette numbers, 0 = white
@@ -96,11 +110,11 @@ function template(n) {
     }
   }
   // the logo, in the middle (already on white)
-  const mid = n / 2, L = logo();
+  const mid = n / 2, L = logo(look);
   const lx = Math.round(off + mid * MOD - LOGO_W / 2), ly = Math.round(off + mid * MOD - LOGO_H / 2);
   for (let y = 0; y < LOGO_H; y++) for (let x = 0; x < LOGO_W; x++) px[(ly + y) * W + lx + x] = LOGO_FIRST + L[y * LOGO_W + x];
   const t = { W, off, px };
-  TEMPLATES.set(n, t);
+  TEMPLATES.set(tkey, t);
   return t;
 }
 // r51: never smaller than version 8 (49 × 49 dots), the size of the table,
@@ -120,12 +134,13 @@ const underLogo = (n, r, c) => Math.abs(c + 0.5 - n / 2) < LOGO_W / MOD / 2 + LO
 // The finished pictures of the last few hundred links, kept while this server
 // is warm: a guest opening My Reservations again gets them at once.
 const DRAWN = new Map(), KEEP = 300;
-export function drawTableQr(text) {
-  const kept = DRAWN.get(text);
-  if (kept) { DRAWN.delete(text); DRAWN.set(text, kept); return kept; }
+export function drawTableQr(text, restaurantId) {
+  const look = qrLook(restaurantId), dkey = look.key + '|' + text;
+  const kept = DRAWN.get(dkey);
+  if (kept) { DRAWN.delete(dkey); DRAWN.set(dkey, kept); return kept; }
   const qr = makeQr(text);
   const n = qr.modules.size, bits = qr.modules.data;
-  const { W, off, px: base } = template(n);
+  const { W, off, px: base } = template(n, look);
   const px = Buffer.from(base);
   const full = SHADE_INK + STEPS - 1;
   for (let r = 0; r < n; r++) {
@@ -134,8 +149,8 @@ export function drawTableQr(text) {
       for (let y = 0; y < MOD; y++) { const at = (off + r * MOD + y) * W + off + c * MOD; px.fill(full, at, at + MOD); }
     }
   }
-  const picture = png(px, W, W);
-  DRAWN.set(text, picture);
+  const picture = png(px, W, W, paletteOf(look));
+  DRAWN.set(dkey, picture);
   if (DRAWN.size > KEEP) DRAWN.delete(DRAWN.keys().next().value);
   return picture;
 }
@@ -144,15 +159,15 @@ export function drawTableQr(text) {
 // as well as the new version"): sharp at any size; the logo inside it as a
 // small picture.
 const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
-let logoPng = null;
-function logoDataUrl() {
-  if (!logoPng) {
-    const L = logo(), pal = Buffer.from(LOGO_PALETTE);
-    logoPng = 'data:image/png;base64,' + png(L, LOGO_W, LOGO_H, pal).toString('base64');
+function logoDataUrl(look = LOOKS[1]) {
+  if (!look.logo.png) {
+    const L = logo(look), pal = Buffer.from(look.logo.palette);
+    look.logo.png = 'data:image/png;base64,' + png(L, LOGO_W, LOGO_H, pal).toString('base64');
   }
-  return logoPng;
+  return look.logo.png;
 }
-export function tableQrSvg(text) {
+export function tableQrSvg(text, restaurantId) {
+  const look = qrLook(restaurantId);
   const qr = makeQr(text);
   const n = qr.modules.size, bits = qr.modules.data;
   const pad = QUIET + FRAME + EDGE, S = n + pad * 2;
@@ -169,9 +184,9 @@ export function tableQrSvg(text) {
   const lw = LOGO_W / MOD, lh = LOGO_H / MOD, o = -pad;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${o} ${o} ${S} ${S}" role="img" aria-label="QR code">`
     + `<rect x="${o}" y="${o}" width="${S}" height="${S}" fill="#fff"/>`
-    + `<rect x="${o + EDGE + FRAME / 2}" y="${o + EDGE + FRAME / 2}" width="${S - 2 * EDGE - FRAME}" height="${S - 2 * EDGE - FRAME}" rx="${ROUND - FRAME / 2}" fill="none" stroke="${hex(RED)}" stroke-width="${FRAME}"/>`
+    + `<rect x="${o + EDGE + FRAME / 2}" y="${o + EDGE + FRAME / 2}" width="${S - 2 * EDGE - FRAME}" height="${S - 2 * EDGE - FRAME}" rx="${ROUND - FRAME / 2}" fill="none" stroke="${hex(look.frame)}" stroke-width="${FRAME}"/>`
     + `<path fill="${ink}" shape-rendering="crispEdges" d="${dots}"/>` + eyes
-    + `<image href="${logoDataUrl()}" x="${n / 2 - lw / 2}" y="${n / 2 - lh / 2}" width="${lw}" height="${lh}"/>`
+    + `<image href="${logoDataUrl(look)}" x="${n / 2 - lw / 2}" y="${n / 2 - lh / 2}" width="${lw}" height="${lh}"/>`
     + '</svg>';
 }
 
@@ -184,7 +199,7 @@ function chunk(type, data) {
   const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body), 0);
   return Buffer.concat([len, body, crc]);
 }
-function png(px, w, h, palette = PALETTE) {
+function png(px, w, h, palette = paletteOf(LOOKS[1])) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 3;      // 8 bits, a palette
   const rows = Buffer.alloc((w + 1) * h);                                             // each row: filter 0, then its pixels
@@ -224,7 +239,7 @@ export async function arrivalTokens(ids) {
 // For a page: an <img src> the browser can draw at once.
 export async function qrDataUrl(settings, token) {
   if (!TOKEN.test(String(token || ''))) return null;
-  try { return 'data:image/png;base64,' + drawTableQr(arrivalUrl(settings, token)).toString('base64'); }
+  try { return 'data:image/png;base64,' + drawTableQr(arrivalUrl(settings, token), settings && settings.restaurant_id).toString('base64'); }
   catch (err) { console.error('[qr] data url failed', err && err.message); return null; }
 }
 
@@ -233,7 +248,7 @@ export async function qrDataUrl(settings, token) {
 export async function qrAttachment(settings, token) {
   if (!TOKEN.test(String(token || ''))) return null;
   try {
-    const picture = drawTableQr(arrivalUrl(settings, token));
+    const picture = drawTableQr(arrivalUrl(settings, token), settings && settings.restaurant_id);
     return { filename: 'table-qr.png', content: picture.toString('base64'), content_id: QR_CID };
   } catch (err) {
     console.error('[qr] png failed', err && err.message);

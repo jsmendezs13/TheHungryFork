@@ -889,6 +889,7 @@ async function loadMyTastings(){
     // r53: a review the restaurant hid shows here with why; the bell's notices about it are read now
     const hid=data.some(r=>r.hidden_at)?await hfMyHidden(true):{};
     hfHiddenSeen();
+    if(!DISHES.length&&typeof HF_DISHES_P!=='undefined'&&HF_DISHES_P)await HF_DISHES_P.catch(()=>null);   // r58: the dishes' names first (they may still be on their way)
     const rows=data.map(r=>{
       const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
       const dishEntry=Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id);

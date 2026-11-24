@@ -75,7 +75,8 @@ export function clock12(t) {
 }
 
 // One dish: what the patch changed, in a few words each.
-const PRICE_WORDS = { price: 'price', price_glass: 'glass price', price_bottle: 'bottle price', price_shot: 'shot price', price_mixed: 'mixed-drink price' };
+const PRICE_WORDS = { price: 'price', price_glass: 'glass price', price_bottle: 'bottle price', price_shot: 'shot price', price_mixed: 'mixed-drink price',
+  happy_hour_price: 'Happy Hour price' };   // r58 (migration 42)
 const TEXT_WORDS = { description: 'description', about: 'about', ingredients: 'ingredients', modifications: 'modifications', wine: 'wine note',
   cocktail: 'cocktail note', allergens_text: 'allergen note' };
 export function describeDish(before, patch) {
