@@ -1,49 +1,31 @@
-// api/_lib/google.js — r64 (24 Nov 2026, Sebastian 22:56): "put Google's stars there now, and if the person taps it,
-// take them to rate the restaurant directly".
+// api/_lib/google.js — the restaurant's Google rating on its home page.
 //
-// { action: 'google_rating' } through /api/reservations (no login; the website says which restaurant, as everywhere):
-//   → { ready: true, score, count, review }   live from Google (Places API, Place Details: rating, userRatingCount)
-//   → { ready: false, review }                 no key in Vercel yet, or Google didn't answer: the page shows only the
-//                                              "Rate us on Google Maps" link
-//   → { ready: false }                         a restaurant with no Google place here
-// Google's rules for this data: nothing is stored or kept here but the place ID (no cache), the page writes
-// "Google Maps" beside it, and the numbers are Google's as they are now. Each call is one Place Details request
-// (billed by Google past the free monthly amount), so it runs once per page view and is limited per address.
-// The key: GOOGLE_MAPS_API_KEY in Vercel only (restricted to the Places API (New)); never in the code or the chat.
-import { makeLimiter, allow, keyFor, clientIp } from './auth.js';
+// r68 (25 Nov 2026, Sebastian 01:55: "let's delete what we did before and use C1"): Google's own rating box (Places UI
+// Kit, Place Details Compact element), drawn by Google in the visitor's browser. Before (r64–r67) this server asked
+// Google for the numbers on every page view (Place Details Enterprise, 1,000 free a month); that is gone.
+//
+// { action: 'google_box' } through /api/reservations (no login; the website says which restaurant, as everywhere):
+//   → { ready: true, key, place, review }   the browser key, the restaurant's Google place and the "write a review" link
+//   → { ready: false, review }              no browser key in Vercel yet: the page shows only "Rate us on Google"
+//   → { ready: false }                      a restaurant with no Google place here
+// The browser key (GOOGLE_MAPS_BROWSER_KEY, in Vercel only) is not a secret the way a server key is: every page that
+// uses Google's box shows it to the browser. It is kept out of the code (and GitHub) and limited by Google to Havana's
+// web addresses and to the Maps JavaScript API and Places UI Kit.
 import { siteScope } from './sites.js';
 
 // The restaurant's Google place (the place ID is the one thing Google lets us keep).
 export const GOOGLE_PLACES = {
   2: 'ChIJozuRrlFYwokRDQQBl8uRDKI',          // Havana Social, 45 Stone St
 };
-const BASE = process.env.GOOGLE_PLACES_BASE || 'https://places.googleapis.com/v1/places/';   // tests point it elsewhere
-const limiter = makeLimiter({ requests: 30, window: '10 m', prefix: 'google:rating' });
 export const reviewLink = (placeId) => `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
 
-export async function googleRating(req, res) {
+export async function googleBox(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
   const rid = siteScope(req);
   const placeId = rid ? GOOGLE_PLACES[rid] : null;
   if (!placeId) return res.status(200).json({ ready: false });
   const review = reviewLink(placeId);
-  const key = process.env.GOOGLE_MAPS_API_KEY;
+  const key = String(process.env.GOOGLE_MAPS_BROWSER_KEY || '').trim();
   if (!key) return res.status(200).json({ ready: false, review });
-  if (!(await allow(limiter, keyFor('g' + clientIp(req)), { failOpen: true }))) return res.status(200).json({ ready: false, review });
-  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 4000);
-  try {
-    const r = await fetch(BASE + encodeURIComponent(placeId), {
-      headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'rating,userRatingCount' }, signal: ctl.signal,
-    });
-    const d = await r.json().catch(() => ({}));
-    const score = Number(d.rating), count = Number(d.userRatingCount);
-    if (!r.ok || !(score >= 1 && score <= 5)) {
-      console.warn('[google] no rating', r.status, d && d.error ? d.error.status : '');
-      return res.status(200).json({ ready: false, review });
-    }
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ ready: true, score: Math.round(score * 10) / 10, count: Number.isInteger(count) && count >= 0 ? count : null, review });
-  } catch (e) {
-    console.warn('[google] failed', e && e.name);
-    return res.status(200).json({ ready: false, review });
-  } finally { clearTimeout(t); }
+  return res.status(200).json({ ready: true, key, place: placeId, review });
 }

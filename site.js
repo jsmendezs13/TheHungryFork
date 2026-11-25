@@ -27,9 +27,9 @@
       heroPoster: '/havana/havana-hero.jpg',  // 1280x720 since 20 Nov 05:53 ("es posible tenerlo de mejor calidad?")
       heroVideoTall: '/havana/havana-hero-tall.mp4',  // the same video made 9:16 for phones (20 Nov 14:11): each shot reframed, the sign whole at the end
       heroPosterTall: '/havana/havana-hero-tall.jpg',
-      // its Google rating, next to Fork's Rating on the home page (20 Nov: typed by hand for now, as Google Maps shows it;
-      // later it comes from Google by itself). No score → nothing is shown.
-      google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', review: 'https://search.google.com/local/writereview?placeid=ChIJozuRrlFYwokRDQQBl8uRDKI' },   // r64: the stars come live (api/_lib/google.js)
+      // its Google rating, next to Fork's Rating on the home page: Google's own box (r68, his pick C1), drawn by Google in
+      // the visitor's browser (api/_lib/google.js gives the page the key from Vercel). A tap opens "write a review".
+      google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', review: 'https://search.google.com/local/writereview?placeid=ChIJozuRrlFYwokRDQQBl8uRDKI' },
       plate: 'havana/photos/churrasco.png',   // the dish at the top of Reservations (The Hungry Fork's steak there)
       eyebrow: 'Caribbean & Mexican · Stone Street, New York',
       tagline: 'There’s no party like a Latin party',

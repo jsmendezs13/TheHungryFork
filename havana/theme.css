@@ -60,22 +60,29 @@ html[data-site="havana"].hv-has-video .video-hero-eyebrow,
 html[data-site="havana"].hv-has-video .vh-rating-caption { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 12px rgba(0,0,0,.55); }
 html[data-site="havana"].hv-has-video .vh-btn span:not(.hv-ico) { -webkit-text-fill-color: #fff; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.75), 0 0 10px rgba(0,0,0,.5); }
 /* Fork's Rating and Google's, side by side */
-html[data-site="havana"] .hv-ratings { display: flex; justify-content: center; align-items: flex-start; gap: clamp(18px, 6vw, 46px); margin-top: .5rem; }
+html[data-site="havana"] .hv-ratings { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 10px clamp(18px, 6vw, 46px); margin-top: .5rem; }
 html[data-site="havana"] .hv-rate { display: flex; flex-direction: column; align-items: center; }
 html[data-site="havana"] .hv-rate-google { text-decoration: none; }
-html[data-site="havana"] .hv-gstars { position: relative; display: block; }
-html[data-site="havana"] .hv-gstars .hv-g-fill { position: absolute; left: 0; right: 0; top: 0; }
+/* r68 (25 Nov, his pick "C1"): Google's own rating box (Places UI Kit), see-through, in Havana's letters. Google draws
+   its stars and its "Google Maps" credit (white, as its rules allow); we set the background, letters and corners.
+   Hidden until Google says it has loaded. */
+html[data-site="havana"] .hv-gbox { position: absolute; visibility: hidden; pointer-events: none; display: block; width: 200px; max-width: 100%; box-sizing: border-box;
+  border: 0; border-radius: 12px; overflow: hidden; color-scheme: dark; text-align: left;
+  --gmp-mat-color-surface: rgba(0,0,0,.45); --gmp-mat-color-on-surface: #fff; --gmp-mat-color-on-surface-variant: rgba(255,255,255,.88);
+  --gmp-mat-color-primary: #fff; --gmp-mat-color-outline-decorative: transparent; --gmp-mat-font-family: 'Lato', system-ui, sans-serif; }
+html[data-site="havana"] .hv-gbox.on { position: static; visibility: visible; pointer-events: auto; }
+html[data-site="havana"] .hv-rate-google.hv-g-box { padding-top: 0; align-self: center; }
+@media (max-width: 600px) { html[data-site="havana"] .hv-gbox { width: 184px; } }
 /* Fork's own stars on the video: light grey under, Fork's red over (24 Nov 22:56: "the red ones … the yellow are Google")
    — the fill keeps the stars' own red gradients, as on The Hungry Fork */
 html[data-site="havana"].hv-has-video .vh-stars > svg.fork-stars path { fill: rgba(255,255,255,.38); stroke: rgba(0,0,0,.25); }
 html[data-site="havana"].hv-has-video .vh-stars.stars-scored > .fork-stars { filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)) !important; }
 html[data-site="havana"].hv-has-video .vh-stars .fork-stars-fill svg path { stroke: rgba(255,255,255,.7); stroke-width: 5; }   /* r64: the dark reds stand out on the photo */
 html[data-site="havana"] .hv-rate-google { padding-top: .35rem; }
-/* r64: before Google's numbers arrive (or with none): "Rate us on Google", no stars */
+/* before Google's box has loaded (or with none): "Rate us on Google" */
 html[data-site="havana"] .hv-g-plain { justify-content: center; min-height: 3.2rem; }
 html[data-site="havana"] .hv-g-plain .hv-rate-cap { margin-top: .15rem; }
-/* 25 Nov (his pick "C"): one line each — "Google Maps · 4.2 (504)" and "Fork's Rating · 5.0 (3)". The names in Lato:
-   Google's rules want "Google Maps" as written (never in capitals), on one line, 12–16 px, white — Bebas has capitals only. */
+/* 25 Nov (r66): Fork's line in Lato and Havana's letters, "Fork's Rating · 5.0 (3)", on one line. */
 html[data-site="havana"] .hv-rate-name { font-family: 'Lato', system-ui, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0; text-transform: none;
   color: #fff; white-space: nowrap; }
 html[data-site="havana"] .hv-rate-num, html[data-site="havana"] #vh-rating-num.hv-rate-num { letter-spacing: .08em; opacity: 1; white-space: nowrap; margin-left: .35em; }   /* the space before "·" (a line laid out in a row drops it) */
