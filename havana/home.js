@@ -94,6 +94,8 @@
   var DAY_PICS = [   // [file, alt (what the picture says), width, height]
     ['havana/photos/margarita-mondays.jpg', 'Margarita Mondays. All day: $10 margaritas and $10 frozen margaritas.', 1400, 1050],
     ['havana/photos/taco-tuesday.jpg', 'Taco Tuesday. All day: $4 tacos (beef, chicken or veggie), $12 frozen drinks, $12 well drinks, $10 wine.', 1254, 1254],
+    // 24 Nov 22:56: "post it as well" — drawn in the Monday picture's gold frame (r64/build/make_mariachi.py)
+    ['havana/photos/mariachi-wednesdays.jpg', 'Wednesday Mariachi Night. Live mariachi from 7 PM. No cover.', 1400, 1050],
     ['havana/photos/salsa-bachata.jpg', 'Friday Salsa & Bachata. Free dance class every Friday at 7 PM. No cover.', 1254, 1254],
     ['havana/photos/churrasco-saturdays.jpg', 'Churrasco Saturdays. A frozen drink or a beer on the house with any churrasco.', 1254, 1254]
   ];
@@ -104,13 +106,7 @@
       + ' data-orig="/' + esc(file) + '" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.dataset.orig" alt="' + esc(alt) + '"'
       + ' width="' + w + '" height="' + h + '" loading="lazy" decoding="async">';
   }
-  // The beers, from the printed menu's "Cervezas y Más" page (23 Nov 2026), with its card prices.
-  var BEER = [
-    ['Cans or bottles · $8', '($8.24 by card)', 'NÜTRL Black Cherry, Corona, Modelo Especial, Dos XX, Pacifico, Victoria, Tecate, Negra Modelo, High Noon · Michelob Ultra $9'],
-    ['Draft · $9', '($9.27 by card)', 'Modelo Especial, Stone Buenaveza, Stella, Lagunitas IPA, Kona Big Wave, Michelob Ultra, Sixpoint Crisp, Goose Island IPA'],
-    ['For the table', '', 'Cubetazo: 5 for $35 ($36.05 by card) · Pitcher $45 ($46.35 by card) · Tower $75 ($77.25 by card)'],
-    ['Without alcohol', '', 'Aguas frescas $8: sandía, mango, piña, naranja, limonada, maracuyá, horchata, jamaica · N/A beer $8: Stella 0.0, Michelob Zero · Jarritos $5']
-  ];
+  // 24 Nov 22:56: the "Cervezas y más" box is off the home page (the beers are in the drinks menu).
 
   function sections() {
     if (document.getElementById('hv-specials')) return;
@@ -134,16 +130,12 @@
       // 24 Nov: the old website's Happy Hour box is off ("ignora los precios del viejo website"); the Happy Hour part of
       // the drinks appears when drinks get Happy Hour prices in Manager.
       +   '<div class="hv-week hv-pics">' + week + '</div>'
-      +   '<div class="hv-beer"><b>Cervezas y más</b><div class="hv-beer-cols">'
-      +     BEER.map(function (r) { return '<div><span class="hv-label">' + esc(r[0]) + (r[1] ? ' <small>' + esc(r[1]) + '</small>' : '') + '</span><p>' + esc(r[2]) + '</p></div>'; }).join('')
-      +   '</div></div>'
       + '</div></section>'
       + '<section class="hv-sec hv-events" id="hv-events"><div class="hv-wrap">'
       +   '<h2 class="hv-title">Events</h2>'
       +   (events || '<p class="hv-sub">New events are on the way. Follow us on Instagram to hear first.</p>')
       +   '<figure class="hv-pic hv-weekly">' + pic(WEEKLY_PIC, WEEKLY_ALT, 1352, 1163)
-      +     '<figcaption>Sponsored by NÜTRL and Casamigos</figcaption></figure>'
-      +   '<p class="hv-sub" style="margin-top:18px">Wednesdays: live mariachi too.</p>'      // 24 Nov: "Keep both" (he checks with the owner)
+      +     '<figcaption>Sponsored by NÜTRL and Casamigos</figcaption></figure>'   // 24 Nov 22:56: the mariachi has its picture in Specials
       + '</div></section>'
       + '<section class="hv-sec hv-visit" id="hv-visit"><div class="hv-wrap">'
       +   '<h2 class="hv-title">Visit us</h2>'
@@ -184,8 +176,11 @@
               'waze.com': 'https://waze.com/ul?q=45%20Stone%20Street%20New%20York%20NY&navigate=yes' };
     Object.keys(M).forEach(function (k) { document.querySelectorAll('#maps-modal a[href*="' + k + '"]').forEach(function (a) { a.href = M[k]; }); });
   }
-  // The Google rating next to Fork's Rating (20 Nov: "just a picture for now, later we will do it well"): the numbers
-  // typed in site.js (S.google), with "Google Maps" written, as Google asks; it opens the restaurant on Google Maps.
+  // The Google rating next to Fork's Rating. r64 (24 Nov 22:56: "put Google's stars there now, and if the person taps it,
+  // take them to rate the restaurant directly"): live from Google (api/_lib/google.js), and a tap opens Google's "write a
+  // review" for Havana. 23:14 "say Google rating instead": the label is "Google rating"; Google's rules still want its
+  // numbers credited with the words "Google Maps" (exactly so: not in capitals, one line, 12–16 px, white), so they sit
+  // small under it. Until Google answers (or with no key in Vercel): only "Rate us on Google", never made-up numbers.
   // Google's stars: the same five stars as Fork's Rating (a copy of its drawing), grey under, yellow over up to the score
   function stars(score) {
     var base = document.querySelector('.vh-rating-live svg.fork-stars');
@@ -201,16 +196,28 @@
       + copy('#F6D919', 'hv-g-fill').replace('<svg', '<svg style="clip-path:inset(0 ' + cut + '% 0 0)"') + '</span>';
   }
   function google() {
-    var g = S.google; if (!g || !(Number(g.score) > 0)) return;
+    var g = S.google; if (!g || !g.review) return;
     var live = document.querySelector('.vh-rating-live'), cap = document.querySelector('.vh-rating-caption');
     if (!live || !cap || document.querySelector('.hv-ratings')) return;
     var row = document.createElement('div'); row.className = 'hv-ratings';
     var fork = document.createElement('div'); fork.className = 'hv-rate hv-rate-fork';
     live.parentNode.insertBefore(row, live); fork.appendChild(live); fork.appendChild(cap); row.appendChild(fork);
-    var n = Number(g.count) || 0;
-    row.insertAdjacentHTML('beforeend', '<a class="hv-rate hv-rate-google" href="' + esc(g.url) + '" target="_blank" rel="noopener" aria-label="Rated '
-      + Number(g.score).toFixed(1) + ' out of 5 on Google Maps' + (n ? ' by ' + n.toLocaleString('en-US') + ' people' : '') + '">'
-      + stars(g.score) + '<span class="hv-rate-cap">Google Maps<span> · ' + Number(g.score).toFixed(1) + (n ? ' (' + n.toLocaleString('en-US') + ')' : '') + '</span></span></a>');
+    row.insertAdjacentHTML('beforeend', '<a class="hv-rate hv-rate-google hv-g-plain" href="' + esc(g.review) + '" target="_blank" rel="noopener"'
+      + ' aria-label="Rate ' + esc(S.name) + ' on Google"><span class="hv-rate-cap">Rate us on Google</span></a>');
+    try {
+      fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'google_rating' }) })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          var a = row.querySelector('.hv-rate-google'); if (!a || !d) return;
+          if (d.review) a.href = d.review;
+          if (!d.ready || !(Number(d.score) > 0)) return;
+          var s = Number(d.score), n = Number(d.count) || 0, num = s.toFixed(1), cnt = n ? n.toLocaleString('en-US') : '';
+          a.classList.remove('hv-g-plain');
+          a.setAttribute('aria-label', 'Google rating ' + num + ' out of 5' + (n ? ' from ' + cnt + ' reviews' : '') + ', from Google Maps. Tap to write a review on Google.');
+          a.innerHTML = stars(s) + '<span class="hv-rate-cap">Google rating<span> · ' + num + (n ? ' (' + cnt + ')' : '') + '</span></span>'
+            + '<span class="hv-g-attr">Google Maps</span>';
+        }).catch(function () {});
+    } catch (e) {}
   }
 
   function start() { hero(); google(); sections(); maps(); }   // 24 Nov: the dishes' section is off (food() stays for later)

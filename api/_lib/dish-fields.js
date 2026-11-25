@@ -68,7 +68,7 @@ export const LOCKED = ['id', 'slug', 'restaurant_id', 'image', 'image_open'];
 // The kind of a drink. The menu shows the drinks in their own carousel:
 // Bartender's Pick, Wines, Cocktails, Beers, Spirits (gin, whiskey, tequila,
 // vodka, rum, or another spirit) and Top Rated Drinks.
-export const DRINK_KINDS = ['wine', 'cocktail', 'beer', 'shot', 'gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];   // r40: shot
+export const DRINK_KINDS = ['wine', 'cocktail', 'frozen', 'beer', 'shot', 'party', 'gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];   // r40: shot; r61: frozen, party (migration 44)
 // A dish's pairings are chosen from the restaurant's drinks: the Sommelier's
 // Recommendation from its wines, the Suggested Cocktail from its cocktails.
 export const PAIRINGS = { pair_wine_id: 'wine', pair_cocktail_id: 'cocktail' };

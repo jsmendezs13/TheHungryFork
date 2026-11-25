@@ -60,7 +60,7 @@ const ORDER_NOT_READY = 'The order of the caves is not set up yet: migration 27 
 // The caves each carousel may have (the menu adds the ones it has, in this order, after the saved ones).
 export const CAVES = {
   main:   ['chefs-pick', 'starters', 'entree', 'salads', 'sides', 'desserts', 'drinks', 'top-starters', 'top-entree', 'top-salads'],
-  drinks: ['bartenders-pick', 'happy-hour', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other', 'top-drinks'],   // r58: Happy Hour
+  drinks: ['bartenders-pick', 'happy-hour', 'wines', 'cocktails', 'frozen', 'beers', 'spirits', 'shots', 'party', 'drinks-other', 'top-drinks'],   // r58: Happy Hour; r61: Frozen, Party Drinks
 };
 const ORDER_COLUMN = { main: 'cave_order_main', drinks: 'cave_order_drinks' };
 // 23 Nov (migration 41): the menu's design, for the food and for the drinks
@@ -83,7 +83,7 @@ function designOf(row) {
 }
 // The caves a manager may take off the menu: the parts of the menu and the kinds of drink (not Chef's Pick, the
 // Drinks door, Bartender's Pick or the Top Rated ones: those have their own switches).
-export const HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other'];
+export const HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'frozen', 'beers', 'spirits', 'shots', 'party', 'drinks-other'];
 // The saved order as the pages use it: { main: [...], drinks: [...], hidden: [...] } (only known caves, each once).
 function orderOf(row) {
   const out = {};

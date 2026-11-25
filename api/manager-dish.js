@@ -80,7 +80,7 @@ function clean(field, raw) {
   // the dish may have them is decided in the handler, which knows the dish.
   if (field === 'drink_kind') {
     if (raw === null || raw === '') return { ok: true, value: null };
-    if (!DRINK_KINDS.includes(raw)) return { ok: false, error: 'Choose a kind of drink: wine, cocktail, beer, shot, gin, whiskey, tequila, vodka, rum or another spirit.' };
+    if (!DRINK_KINDS.includes(raw)) return { ok: false, error: 'Choose a kind of drink: wine, cocktail, frozen, beer, shot, party drink, gin, whiskey, tequila, vodka, rum or another spirit.' };
     return { ok: true, value: raw };
   }
   if (Object.prototype.hasOwnProperty.call(PAIRINGS, field)) {
@@ -187,7 +187,8 @@ export default async function handler(req, res) {
     const got = await sb(`/dishes?id=eq.${patch[field]}&select=id,restaurant_id,restaurant_category,drink_kind,is_hidden`);
     const drink = got.ok && Array.isArray(got.data) ? got.data[0] : null;
     if (!drink || Number(drink.restaurant_id) !== Number(restaurantId)) return res.status(404).json({ error: 'That drink is not on this menu. Reload the page.' });
-    if (String(drink.restaurant_category || '').trim().toLowerCase() !== 'drinks' || drink.drink_kind !== kind) {
+    const fits = drink.drink_kind === kind || (kind === 'cocktail' && drink.drink_kind === 'frozen');      // r61: a frozen drink is a cocktail to pair
+    if (String(drink.restaurant_category || '').trim().toLowerCase() !== 'drinks' || !fits) {
       return res.status(400).json({ error: kind === 'wine' ? 'The Sommelier\'s Recommendation must be one of your wines.' : 'The Suggested Cocktail must be one of your cocktails.' });
     }
   }
@@ -217,6 +218,10 @@ export default async function handler(req, res) {
     body: JSON.stringify(patch),
   });
 
+  // r61: Frozen and Party drinks are kinds the database knows only from migration 44 on (its check lists the kinds).
+  if (!updated.ok && updated.status === 400 && (patch.drink_kind === 'frozen' || patch.drink_kind === 'party')) {
+    return res.status(409).json({ error: 'Frozen and Party drinks are not set up yet: migration 44 has not been run.' });
+  }
   if (!updated.ok || !Array.isArray(updated.data) || updated.data.length === 0) {
     return res.status(500).json({ error: 'Could not save that change.' });
   }

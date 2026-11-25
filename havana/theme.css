@@ -65,11 +65,19 @@ html[data-site="havana"] .hv-rate { display: flex; flex-direction: column; align
 html[data-site="havana"] .hv-rate-google { text-decoration: none; }
 html[data-site="havana"] .hv-gstars { position: relative; display: block; }
 html[data-site="havana"] .hv-gstars .hv-g-fill { position: absolute; left: 0; right: 0; top: 0; }
-/* Fork's own stars on the video: light grey under, sunny yellow over */
+/* Fork's own stars on the video: light grey under, Fork's red over (24 Nov 22:56: "the red ones … the yellow are Google")
+   — the fill keeps the stars' own red gradients, as on The Hungry Fork */
 html[data-site="havana"].hv-has-video .vh-stars > svg.fork-stars path { fill: rgba(255,255,255,.38); stroke: rgba(0,0,0,.25); }
 html[data-site="havana"].hv-has-video .vh-stars.stars-scored > .fork-stars { filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)) !important; }
-html[data-site="havana"].hv-has-video .vh-stars .fork-stars-fill svg path { fill: #F6D919; }
+html[data-site="havana"].hv-has-video .vh-stars .fork-stars-fill svg path { stroke: rgba(255,255,255,.7); stroke-width: 5; }   /* r64: the dark reds stand out on the photo */
 html[data-site="havana"] .hv-rate-google { padding-top: .35rem; }
+/* r64: before Google's numbers arrive (or with none): "Rate us on Google", no stars */
+html[data-site="havana"] .hv-g-plain { justify-content: center; min-height: 3.2rem; }
+html[data-site="havana"] .hv-g-plain .hv-rate-cap { margin-top: .15rem; }
+/* Google's credit for its numbers, as its rules ask: the words "Google Maps", as written (never in capitals), one line,
+   12–16 px, white (so not in Bebas, which has capitals only) */
+html[data-site="havana"] .hv-g-attr { font-family: 'Lato', system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none;
+  color: #fff; white-space: nowrap; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,.75); }
 html[data-site="havana"] .hv-rate-cap { font-family: var(--hv-label); font-size: 1.05rem; letter-spacing: .2em; text-transform: uppercase; margin-top: .45rem;
   color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 12px rgba(0,0,0,.55); white-space: nowrap; }
 html[data-site="havana"] .hv-rate-cap span { letter-spacing: .08em; }
@@ -117,7 +125,7 @@ html[data-site="havana"] .hv-beer .hv-label { display: block; color: var(--hv-pu
 html[data-site="havana"] .hv-beer .hv-label small { font-family: 'Lato', system-ui, sans-serif; letter-spacing: 0; font-size: .78rem; color: var(--hv-navy); opacity: .7; }
 html[data-site="havana"] .hv-beer p { margin: 2px 0 0; font-size: .95rem; line-height: 1.5; }
 /* 23 Nov 2026: Karaoke & Live DJ, the flyer's framed picture, in Events */
-html[data-site="havana"] .hv-weekly { max-width: 720px; margin: 22px auto 0; }
+html[data-site="havana"] .hv-weekly, html[data-site="havana"] .hv-pic.hv-weekly { max-width: 720px; margin: 22px auto 0; }   /* r64: centered, like the party's */
 html[data-site="havana"] .hv-weekly img { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 14px 30px rgba(22,32,58,.22); }
 html[data-site="havana"] .hv-weekly figcaption { margin-top: 10px; font-family: var(--hv-label); font-size: 1rem; letter-spacing: .14em; color: var(--hv-navy); opacity: .8; }
 html[data-site="havana"] .hv-week { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; text-align: left; }
@@ -273,7 +281,11 @@ html[data-site="havana"] .hv-hh .hv-hh-btn { margin-top: 12px; }
 html[data-site="havana"] .hv-pic { margin: 0; }
 html[data-site="havana"] .hv-pic img { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 14px 30px rgba(22,32,58,.22); }
 html[data-site="havana"] .hv-week.hv-pics { grid-template-columns: 1fr; gap: 22px; max-width: 640px; margin: 4px auto 30px; }
-@media (min-width: 760px) { html[data-site="havana"] .hv-week.hv-pics { grid-template-columns: repeat(2, 1fr); max-width: 1040px; align-items: center; gap: 28px; } }
+@media (min-width: 760px) {
+  /* r64: five days now (the mariachi): two by two, the last one centered under them */
+  html[data-site="havana"] .hv-week.hv-pics { display: flex; flex-wrap: wrap; justify-content: center; max-width: 1040px; align-items: center; gap: 28px; }
+  html[data-site="havana"] .hv-week.hv-pics > .hv-pic { flex: 0 0 calc(50% - 14px); }
+}
 html[data-site="havana"] .hv-event-pic { max-width: 720px; margin: 0 auto 30px; }
 html[data-site="havana"] .hv-event-pic .hv-btn { margin-top: 18px; }
 html[data-site="havana"] .hv-event-line { margin: 12px 0 0; font-size: .95rem; line-height: 1.5; opacity: .85; }

@@ -61,6 +61,7 @@ import { siteRestaurant } from './_lib/sites.js';                   // Havana: t
 import { reviewsStaff } from './_lib/reviewlist.js';
 import { reviewTalk, talkBell } from './_lib/reviewtalk.js';        // r53c: delete by the author; the conversation about a hidden review
 import { moderation, reviewBell } from './_lib/moderation.js';
+import { googleRating } from './_lib/google.js';
 import { reviewEdit, ACTIONS as EDIT_ACTIONS } from './_lib/reviewedit.js';        // r62: Edit                // r53: moderation                // r52: the Reviews tab
 import { floor } from './_lib/floor.js';      // r46: the table map (Reservations → Map)
 import { forgetOldFiles } from './_lib/files.js';
@@ -125,6 +126,7 @@ export default async function handler(req, res) {
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const action = String(body.action || 'slots');
 
+  if (action === 'google_rating') return googleRating(req, res);      // r64: Google's stars, live (no login)
   if (action === 'slots')       return slots(req, res, body);
   if (action === 'hours')       return hours(req, res, body);
   if (action === 'book')        return book(req, res, body);

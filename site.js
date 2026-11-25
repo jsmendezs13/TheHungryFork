@@ -20,6 +20,7 @@
       ring: true,          // photos of dishes and drinks in the ring of leaves (the restaurant's sign)
       secondPhotoFull: true,   // 22 Nov: a dish's second photo is another photo of the plate, shown as big as the first (not the small ingredients frame)
       noTypedPairs: true,  // no wine or cocktail suggestions unless the team chooses them
+      icon: '/havana/icon-180.png', favicon: '/havana/icon-32.png', iconBig: '/havana/icon-192.png',   // r61 (24 Nov 08:32): the home screen's picture, a palm ("Una 🌴")
       logo: '/havana/havana-logo.webp',   // the restaurant's logo, as on its sign (20 Nov; his file Havana_Social_II.png)
       hero: null,          // a photo for the top of the home page (not needed while there is the video)
       heroVideo: '/havana/havana-hero.mp4',  // the top of the home page (20 Nov: his video, graded, the repeat taken out; no sound)
@@ -28,7 +29,7 @@
       heroPosterTall: '/havana/havana-hero-tall.jpg',
       // its Google rating, next to Fork's Rating on the home page (20 Nov: typed by hand for now, as Google Maps shows it;
       // later it comes from Google by itself). No score → nothing is shown.
-      google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', score: null, count: null },
+      google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', review: 'https://search.google.com/local/writereview?placeid=ChIJozuRrlFYwokRDQQBl8uRDKI' },   // r64: the stars come live (api/_lib/google.js)
       plate: 'havana/photos/churrasco.png',   // the dish at the top of Reservations (The Hungry Fork's steak there)
       eyebrow: 'Caribbean & Mexican · Stone Street, New York',
       tagline: 'There’s no party like a Latin party',
@@ -38,7 +39,7 @@
       lat: 40.70433, lng: -74.01055,
       // The parts of the menu, in Havana's own words (the keys stay the system's)
       labels: { starters: 'Aperitivos', entree: 'Platos Fuertes', salads: 'Ensaladas', sides: 'Algo Más',
-                desserts: 'Postres', drinks: 'Bebidas', cocktails: 'Cócteles', beers: 'Cervezas', 'drinks-other': 'Sin Alcohol' },   // r58: the aguas frescas, the N/A beer, Jarritos
+                desserts: 'Postres', drinks: 'Bebidas', cocktails: 'Cócteles', frozen: 'Frozen', beers: 'Cervezas', 'drinks-other': 'Sin Alcohol', party: 'Party Drinks' },   // r61: Frozen, Party Drinks   // r58: the aguas frescas, the N/A beer, Jarritos
       words: [
         ['123 Stone St, Manhattan, NY', '45 Stone Street, New York, NY 10004'],
         ['Steakhouse · Stone Street, New York', 'Caribbean & Mexican · Stone Street, New York'],
@@ -97,6 +98,14 @@
   // Its own look: the theme file goes in right here, while <head> is still being read, so the
   // page never shows The Hungry Fork's look first.
   document.write('<link rel="stylesheet" href="' + S.theme + '">');
+  // r61 (24 Nov 2026, Sebastian 08:31: "change that V for Havana's logo" … 08:32 "Una 🌴"): the picture a phone puts on its home
+  // screen ("Add to Home Screen") and the browser tab's: Havana's palm. Not on the Manager page (the Staff app keeps its own).
+  if (S.icon && !/^\/manager(\.html)?\/?$/.test(location.pathname)) {
+    document.write('<link rel="apple-touch-icon" href="' + S.icon + '">'
+      + '<link rel="icon" type="image/png" sizes="192x192" href="' + S.iconBig + '">'
+      + '<link rel="icon" type="image/png" sizes="32x32" href="' + S.favicon + '">'
+      + '<meta name="apple-mobile-web-app-title" content="' + S.name + '">');
+  }
 
   // Its own words: text, titles and pictures that still say The Hungry Fork.
   function swap(t) {
