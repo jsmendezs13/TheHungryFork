@@ -93,9 +93,9 @@
   var WEEKLY_ALT = 'Karaoke Night: Wednesdays, 7 PM to 10 PM. Thursday to Saturday: live DJ, no cover fee.';
   var DAY_PICS = [   // [file, alt (what the picture says), width, height]
     ['havana/photos/margarita-mondays.jpg', 'Margarita Mondays. All day: $10 margaritas and $10 frozen margaritas.', 1400, 1050],
-    ['havana/photos/taco-tuesday.jpg', 'Taco Tuesday. All day: $4 tacos (beef, chicken or veggie), $12 frozen drinks, $12 well drinks, $10 wine.', 1254, 1254],
-    // 24 Nov 22:56: "post it as well" — drawn in the Monday picture's gold frame (r64/build/make_mariachi.py)
-    ['havana/photos/mariachi-wednesdays.jpg', 'Wednesday Mariachi Night. Live mariachi from 7 PM. No cover.', 1400, 1050],
+    // 24 Nov 23:41: his new Taco Tuesday (without the decorative limes) and his own Mariachi Night picture (r65)
+    ['havana/photos/taco-tuesday-2.jpg', 'Taco Tuesday. All day: $4 tacos (beef, chicken or veggie), $12 frozen drinks, $12 well drinks, $10 wine.', 1254, 1254],
+    ['havana/photos/mariachi-night.jpg', 'Wednesday Mariachi Night. From 7 PM: live mariachi, then karaoke (free to sing), then a DJ. No cover.', 1254, 1254],
     ['havana/photos/salsa-bachata.jpg', 'Friday Salsa & Bachata. Free dance class every Friday at 7 PM. No cover.', 1254, 1254],
     ['havana/photos/churrasco-saturdays.jpg', 'Churrasco Saturdays. A frozen drink or a beer on the house with any churrasco.', 1254, 1254]
   ];
