@@ -21,14 +21,19 @@
       secondPhotoFull: true,   // 22 Nov: a dish's second photo is another photo of the plate, shown as big as the first (not the small ingredients frame)
       noTypedPairs: true,  // no wine or cocktail suggestions unless the team chooses them
       icon: '/havana/icon-180.png', favicon: '/havana/icon-32.png', iconBig: '/havana/icon-192.png',   // r61 (24 Nov 08:32): the home screen's picture, a palm ("Una 🌴")
+      // r69 (25 Nov 02:14): the Staff app on the Home Screen (the Manager page): Havana's own icon and name, not "HF Staff"
+      staffApp: { manifest: '/havana/staff-app.json', icon: '/havana/staff-icon-180.png', name: 'Havana Staff' },
+      // r69 (25 Nov 04:06, his two pictures): Check In as the QR-scan sign, and his chef (white on blue) for log in
+      corner: { checkin: 'scan', login: '/havana/login-chef.png' },
+      sectionWheel: true,  // r69 (25 Nov 04:09, his pick B): the food's dish page changes the part of the menu on a wheel of little caves
       logo: '/havana/havana-logo.webp',   // the restaurant's logo, as on its sign (20 Nov; his file Havana_Social_II.png)
       hero: null,          // a photo for the top of the home page (not needed while there is the video)
       heroVideo: '/havana/havana-hero.mp4',  // the top of the home page (20 Nov: his video, graded, the repeat taken out; no sound)
       heroPoster: '/havana/havana-hero.jpg',  // 1280x720 since 20 Nov 05:53 ("es posible tenerlo de mejor calidad?")
       heroVideoTall: '/havana/havana-hero-tall.mp4',  // the same video made 9:16 for phones (20 Nov 14:11): each shot reframed, the sign whole at the end
       heroPosterTall: '/havana/havana-hero-tall.jpg',
-      // its Google rating, next to Fork's Rating on the home page: Google's own box (r68, his pick C1), drawn by Google in
-      // the visitor's browser (api/_lib/google.js gives the page the key from Vercel). A tap opens "write a review".
+      // its Google rating, next to Fork's Rating on the home page: "Google's Rating", with the numbers the restaurant
+      // types in Settings → Google's Rating (r69; api/_lib/google.js). A tap opens Google's "write a review".
       google: { url: 'https://maps.app.goo.gl/9jtCZ6SoYvdpHMHV9', review: 'https://search.google.com/local/writereview?placeid=ChIJozuRrlFYwokRDQQBl8uRDKI' },
       plate: 'havana/photos/churrasco.png',   // the dish at the top of Reservations (The Hungry Fork's steak there)
       eyebrow: 'Caribbean & Mexican · Stone Street, New York',
@@ -47,7 +52,8 @@
         ['Tap a cave to enter', 'Tap a photo to open it'],
         ['Tap the cave to enter', 'Tap the photo to open it'],
         ['The Hungry Fork', 'Havana Social'],
-        ['Hungry Fork', 'Havana Social']
+        ['Hungry Fork', 'Havana Social'],
+        ['HF Staff', 'Havana Staff']   // r69: the Staff app's name in the Manager page's words
       ]
     }
   };
@@ -127,7 +133,7 @@
       if (n.nodeType !== 3) continue;
       var p = n.parentNode && n.parentNode.nodeName;
       if (p === 'SCRIPT' || p === 'STYLE') continue;
-      if (/Hungry Fork|Stone St|Delicious Cousin|cave to enter/.test(n.nodeValue)) n.nodeValue = swap(n.nodeValue);
+      if (/Hungry Fork|Stone St|Delicious Cousin|cave to enter|HF Staff/.test(n.nodeValue)) n.nodeValue = swap(n.nodeValue);
     }
     var imgs = root.querySelectorAll ? [].slice.call(root.querySelectorAll('img')) : [];
     if (root.nodeName === 'IMG') imgs.push(root);
@@ -182,7 +188,7 @@
         for (var i = 0; i < list.length; i++) for (var j = 0; j < list[i].addedNodes.length; j++) {
           var nd = list[i].addedNodes[j];
           if (nd.nodeType === 1) rebrand(nd);
-          else if (nd.nodeType === 3 && /Hungry Fork|Stone St|Delicious Cousin|cave to enter/.test(nd.nodeValue) && !isKept(nd)) nd.nodeValue = swap(nd.nodeValue);
+          else if (nd.nodeType === 3 && /Hungry Fork|Stone St|Delicious Cousin|cave to enter|HF Staff/.test(nd.nodeValue) && !isKept(nd)) nd.nodeValue = swap(nd.nodeValue);
         }
       }).observe(document.body, { childList: true, subtree: true });
     } catch (e) {}

@@ -116,6 +116,11 @@
   .hf-b-face { fill:#FCF9F4; stroke:#2B211A; } .hf-b-arc { stroke:#C8261B; } .hf-b-ink { fill:#2B211A; } .hf-b-band { fill:#2B211A; }
   .hf-b-text { fill:#fff; font:800 15.5px/1 'Inter','Segoe UI',system-ui,sans-serif; letter-spacing:.2px; }
   .hf-chef { fill:#FCF9F4; } .hf-chef-cut { fill:#2B211A; stroke:#2B211A; }
+  /* r69: a site's own Check In (the QR-scan sign, "Check in" under it) and log-in picture */
+  .hf-s-face { fill:#fff; stroke:rgba(20,16,13,.10); } .hf-s-ink { stroke:#3160CF; } .hf-s-dot { fill:#3160CF; }
+  .hf-s-text { fill:#4C525D; font:800 14.5px/1 'Lato','Inter','Segoe UI',system-ui,sans-serif; letter-spacing:.1px; }
+  .hf-login.hf-login-pic { background:none; border:2px solid #fff; }
+  .hf-login.hf-login-pic img { display:block; width:100%; height:100%; object-fit:cover; border-radius:50%; }
   .hf-role { color:#9A3324; }
   .hf-bell[hidden], .hf-role[hidden], .hf-bell-panel[hidden] { display:none; }
   .hf-bell svg, .hf-role svg { display:block; }

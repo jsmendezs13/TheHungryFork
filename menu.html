@@ -505,6 +505,38 @@
     .cw-spot { width:70px; height:70px; box-shadow:0 0 0 4px var(--star-on), 0 4px 10px rgba(0,0,0,.3); }
     .cw-spot.on { box-shadow:0 0 0 4px var(--white), 0 8px 18px rgba(0,0,0,.4); }
   }
+  /* ── r69 (25 Nov 2026, Sebastian 04:05–04:09: "make the same spin wheel … to change the kind of dishes … using the caves";
+     "Little caves, but don't change the other systems, the vertical for the photos and the scroll right and left for
+     changing the dishes"): on a site that asks for it (site.js sectionWheel), the food's dish page has the parts of the
+     menu on the wheel at the bottom, as little caves with their names; only the part's name at the top. The photos up
+     and down and the dishes ‹ › stay as they are. Not with the design Wheel (that wheel holds the dishes), not on the drinks. ── */
+  #cave-swheel { display:none; }
+  #cave.cave-secw .cave-catbar { display:none !important; }
+  #cave.cave-secw .cave-wname { display:block; text-align:center; font-family:var(--sans); font-size:.78rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(252,249,244,.85); margin:46px 0 2px; min-height:1.2em; }
+  #cave.cave-secw .cave-inner { padding-bottom:calc(var(--sw-h) + env(safe-area-inset-bottom,0px)) !important; }
+  #cave.cave-secw #cave-swheel { display:block; position:absolute; left:0; right:0; bottom:0; height:calc(var(--sw-h) + env(safe-area-inset-bottom,0px)); overflow:hidden; z-index:30; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #cave.cave-secw #cave-swheel[hidden] { display:none; }
+  :root { --sw-h:200px; }
+  .sw-cave { position:absolute; left:0; top:0; width:58px; height:66px; border:0; padding:0; background:none; cursor:pointer; overflow:visible;
+    transition:transform .38s cubic-bezier(.2,.7,.2,1), opacity .3s ease; -webkit-tap-highlight-color:transparent; }
+  .sw-arch { position:absolute; inset:0; border-radius:48% 48% 9px 9px / 40% 40% 9px 9px; background:linear-gradient(160deg,#6E6459,#3E352D); box-shadow:0 0 0 3px var(--star-on), 0 4px 10px rgba(0,0,0,.3);
+    display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .sw-open { position:absolute; inset:7px 6px 6px; border-radius:48% 48% 6px 6px / 42% 42% 6px 6px; background:radial-gradient(80% 60% at 50% 45%,#3A1210,#0D0505); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .sw-open img { max-width:92%; max-height:78%; object-fit:contain; pointer-events:none; } .sw-open .rw-emoji { font-size:1.3rem; }
+  .sw-name { position:absolute; left:50%; bottom:100%; transform:translateX(-50%); margin-bottom:5px; white-space:nowrap; pointer-events:none;
+    font-family:var(--sans); font-size:.56rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#2B211A; background:#FCF9F4; border-radius:999px; padding:2px 8px; box-shadow:0 2px 6px rgba(0,0,0,.25); }
+  .sw-cave.on .sw-name { background:var(--star-on); }
+  @media (max-width:759px){
+    #cave.cave-secw .cave-wname { margin-top:44px; }
+    #cave.cave-secw .cave-photo-row { height:clamp(150px, calc(100svh - var(--sw-h) - 380px), 44vh) !important; max-height:clamp(150px, calc(100svh - var(--sw-h) - 380px), 44vh) !important; }
+  }
+  @media (max-width:759px) and (max-height:640px){ :root { --sw-h:170px; } }
+  @media (min-width:760px){
+    :root { --sw-h:236px; }
+    #cave.cave-secw .cave-wname { margin-top:50px; font-size:.86rem; }
+    #cave.cave-secw .cave-photo-row { height:min(calc(100vh - 470px), 520px) !important; max-height:min(calc(100vh - 470px), 520px) !important; }
+    .sw-cave { width:66px; height:76px; } .sw-name { font-size:.62rem; }
+  }
   /* ── THE MENU'S DESIGN "ROWS" (23 Nov 2026, Manager → Menu → Menu design) ──
      The Chef's Pick big on top, then a row for each part of the menu that turns without end, the dish in the middle
      big (the sanitary inspection grade stays on the home page and the dish page). The Hungry Fork's night look here; Havana's in havana/theme.css. */
@@ -1202,6 +1234,12 @@
     <div class="cave-hdots" id="cave-hdots"></div>
   </div>
   <!-- 23 Nov 2026, the design "Wheel": the dishes of this part on a wheel; spin it (or tap a dish) for the next one -->
+  <!-- r69 (25 Nov 2026, Havana): the parts of the menu on a wheel of little caves; the dish page itself stays as it is -->
+  <div id="cave-swheel" hidden role="group" aria-label="The parts of the menu on a wheel: spin it for another part">
+    <div class="cw-ptr" aria-hidden="true"></div>
+    <div class="cw-disc"><div class="cw-leaf" aria-hidden="true"></div><div class="cw-spots" id="sw-spots"></div></div>
+    <div class="cw-hint"><svg class="cw-sa l" viewBox="0 0 40 20" aria-hidden="true"><path d="M36 6C26 2 12 4 6 14M12.4 11.1 6 14 5.5 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Spin</b><svg class="cw-sa r" viewBox="0 0 40 20" aria-hidden="true"><path d="M36 6C26 2 12 4 6 14M12.4 11.1 6 14 5.5 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  </div>
   <div id="cave-wheel" hidden role="group" aria-label="The dishes on a wheel">
     <div class="cw-ptr" aria-hidden="true"></div>
     <div class="cw-disc"><div class="cw-leaf" aria-hidden="true"></div><div class="cw-spots" id="cw-spots"></div></div>
@@ -1722,7 +1760,7 @@ function enterCave(startId){
   },rows?30:380);
 }
 function exitCave(){
-  document.getElementById('cave').classList.remove('open','cave-wheel');
+  document.getElementById('cave').classList.remove('open','cave-wheel','cave-secw');
   document.body.style.overflow='';
   CAVE_ARRIVED=false;
 }
@@ -2462,12 +2500,22 @@ function rowsRowHTML(k,list){
   const when=k==='happy-hour'?hhWhen():'';                     // r58: when the Happy Hour is, under its name
   return `<section class="rw-row" data-key="${k}"><div class="rw-head"><h2>${hfEsc(m.label)}${when?`<small class="rw-hh-when">${hfEsc(when)}</small>`:''}</h2>${many?`<button type="button" class="rw-all" data-all="${k}">See all &rsaquo;</button>`:''}</div>`
     +`<div class="rw-car" data-key="${k}" data-idx="0" role="group" aria-label="${hfEsc(m.label)}">`
-    +list.map((d,i)=>rowsCardHTML(d,i,i>2&&i<list.length-1,k)).join('')     // the cards that show first load first
+    +rowsRing(list).map((d,i,all)=>rowsCardHTML(d,i,i>2&&i<all.length-1,k,i>=list.length)).join('')     // the cards that show first load first
     +(many?'<button type="button" class="rw-arr l" data-go="-1" aria-label="Previous dish">&#8249;</button><button type="button" class="rw-arr r" data-go="1" aria-label="Next dish">&#8250;</button>':'')
     +'</div></section>';
 }
-function rowsCardHTML(d,i,lazy,k){
-  return `<div class="rw-card" data-i="${i}" data-id="${hfEsc(d.id)}" role="button" tabindex="0" aria-label="${hfEsc(d.name)}">`
+// r69 (25 Nov 2026, Sebastian 02:01: "make this infinity, so if there are only two dishes make the second at the left
+// and at the right, like a circle"): a row of a few dishes goes round more than once, so every place beside the middle
+// card is filled — with two dishes, the second one is at the left and at the right. RW_RING cards fill the widest screens.
+const RW_RING=15;
+function rowsRing(list){
+  if(list.length<2||list.length>=RW_RING)return list;
+  const out=[],reps=Math.ceil(RW_RING/list.length);
+  for(let r=0;r<reps;r++)out.push(...list);
+  return out;
+}
+function rowsCardHTML(d,i,lazy,k,copy){
+  return `<div class="rw-card" data-i="${i}" data-id="${hfEsc(d.id)}"${copy?' data-copy="1"':''} role="button" tabindex="0" aria-label="${hfEsc(d.name)}">`
     +`<div class="rw-ph">${rowsPic(d,hfPhotoW(300,480),lazy)}${dishIsSoldOut(d)?'<span class="rw-sold">Sold out</span>':''}</div>`
     +`<div class="rw-nm">${hfEsc(d.name)}</div><div class="rw-pr">${dishPriceHTML(d,k)}</div></div>`;
 }
@@ -2639,6 +2687,7 @@ function cwSync(){
   if(nm&&cc)nm.textContent=cc.textContent;
   w.setAttribute('aria-label',RING==='drinks'?'The drinks on a wheel: spin it for the next drink':'The dishes on a wheel: spin it for the next dish');
   if(on&&caveDishes.length){cwInit();cwRender(true,0);}
+  swSync();                                          // r69: the parts of the menu on their wheel (Havana)
 }
 function cwRadius(){const d=document.querySelector('#cave-wheel .cw-disc');return ((d&&d.offsetWidth)||620)/2-52;}
 function cwRender(anim,rot){
@@ -2700,6 +2749,90 @@ function cwInit(){
   w.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();}});
 }
 window.addEventListener('resize',()=>{if(caveWheelOn()&&document.getElementById('cave').classList.contains('open'))cwRender(false,0);});
+
+// ── r69 (25 Nov 2026, Sebastian 04:05–04:09, his pick B "Little caves"): THE PARTS OF THE MENU ON A WHEEL ──
+// The same wheel as the design Wheel's, but its spots are the parts of the menu (the caves of the bar at the top, in its
+// order), as little caves with their names: spin it, or tap one, and that part opens at its first dish (caveCatTo, as the
+// bar did). Only where the site asks for it (site.js sectionWheel), on the food (RING main), and not with the design
+// Wheel. The dish page keeps its own ways: the photos up and down, the dishes with ‹ › and a swipe.
+function swOn(){return !!(window.HF_SITE&&window.HF_SITE.sectionWheel)&&RING==='main'&&!caveWheelOn()&&CATEGORY_ORDER.length>1;}
+function swLabel(k){const m=WARP_META[k]||{};return m.top?'Top · '+(m.short||m.label):(m.label||k);}
+function swSync(){
+  const cave=document.getElementById('cave'),w=document.getElementById('cave-swheel');if(!cave||!w)return;
+  const on=swOn();
+  cave.classList.toggle('cave-secw',on);
+  w.hidden=!on;
+  if(!on)return;
+  const nm=document.getElementById('cave-wname'),cc=document.getElementById('cave-cat');
+  if(nm&&cc)nm.textContent=cc.textContent;
+  swInit();swRender(true,0);
+}
+function swRadius(){const d=document.querySelector('#cave-swheel .cw-disc');return ((d&&d.offsetWidth)||620)/2-56;}
+function swRender(anim,rot){
+  const spots=document.getElementById('sw-spots');if(!spots)return;
+  const n=CATEGORY_ORDER.length,sig=CATEGORY_ORDER.map(k=>k+':'+((portalDish(k)||{}).img||'')).join('|');
+  if(spots._sig!==sig){
+    spots._sig=sig;anim=false;
+    spots.innerHTML=CATEGORY_ORDER.map((k,i)=>{const pd=portalDish(k),m=WARP_META[k]||{};
+      return `<button type="button" class="sw-cave" data-i="${i}" aria-label="${hfEsc(m.top?'Top Rated '+(m.short||''):m.label)}"><span class="sw-arch"><span class="sw-open">`
+        +(pd?`<img src="${hfImgSrc(pd.img,160)}" data-orig="${hfEsc(pd.img)}" alt="" draggable="false" loading="lazy" onerror="rowsImgErr(this)">`:`<span class="rw-emoji">${hfEsc(m.emoji||'\u{1F37D}️')}</span>`)
+        +`</span></span><span class="sw-name">${hfEsc(swLabel(k))}</span></button>`;}).join('');
+  }
+  const R=swRadius(),steps=spots._steps||0;spots._steps=0;
+  spots.querySelectorAll('.sw-cave').forEach(s=>{
+    let o=((+s.dataset.i-warpIdx)%n+n)%n;if(o>n/2)o-=n;
+    const prev=s._o;s._o=o;
+    const jump=prev!==undefined&&o-prev!==-steps;
+    const a=(-90+o*SW_STEP+(rot||0))*Math.PI/180,show=Math.abs(o)<=3;
+    s.style.transition=anim&&!jump?'':'none';
+    s.style.transform=`translate(-50%,-50%) translate(${(R*Math.cos(a)).toFixed(1)}px,${(R*Math.sin(a)).toFixed(1)}px) scale(${o===0?1.25:1})`;
+    s.style.opacity=show?'1':'0';s.style.pointerEvents=show?'':'none';
+    s.style.zIndex=String(10-Math.abs(o));
+    s.querySelector('.sw-name').style.opacity=Math.abs(o)<=1?'1':'0';   // the names beside the middle one only (no overlap)
+    s.tabIndex=o===0?0:-1;
+    s.classList.toggle('on',o===0);s.setAttribute('aria-current',o===0?'true':'false');
+  });
+}
+const SW_STEP=19;
+function swGo(steps){
+  if(!steps)return;
+  const spots=document.getElementById('sw-spots');if(spots)spots._steps=steps;
+  caveCatTo(caveCatTarget+steps);                    // as the bar: that part opens at its first dish
+}
+function swInit(){
+  const w=document.getElementById('cave-swheel');if(!w||w._init)return;w._init=1;
+  let on=false,a0=0,cx=0,cy=0,moved=false,pid=null,delta=0;
+  const ang=e=>Math.atan2(e.clientY-cy,e.clientX-cx)*180/Math.PI;
+  w.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;
+    const r=w.querySelector('.cw-disc').getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;
+    a0=ang(e);on=true;moved=false;pid=e.pointerId;delta=0;
+  });
+  w.addEventListener('pointermove',e=>{
+    if(!on||e.pointerId!==pid)return;
+    let d=ang(e)-a0;d=((d+540)%360)-180;
+    if(!moved&&Math.abs(d)<2.5)return;
+    if(!moved){moved=true;try{w.setPointerCapture(pid);}catch(err){}}
+    delta=d;swRender(false,d);
+  });
+  const end=e=>{
+    if(!on||e.pointerId!==pid)return;on=false;
+    if(!moved){                                          // a tap: that part comes to the top and opens
+      const el=document.elementFromPoint(e.clientX,e.clientY),s=el&&el.closest&&el.closest('.sw-cave');
+      if(s&&s._o)swGo(s._o);
+      return;
+    }
+    const st=Math.round(-delta/SW_STEP);
+    if(st)swGo(st);else swRender(true,0);
+  };
+  w.addEventListener('pointerup',end);w.addEventListener('pointercancel',end);
+  w.addEventListener('wheel',e=>{e.preventDefault();if(w._at&&Date.now()-w._at<280)return;w._at=Date.now();swGo((e.deltaY||e.deltaX)>0?1:-1);},{passive:false});
+  w.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();swGo(e.key==='ArrowRight'?1:-1);}
+    else if(e.key==='Enter'||e.key===' '){e.preventDefault();}
+  });
+}
+window.addEventListener('resize',()=>{if(swOn()&&document.getElementById('cave').classList.contains('open'))swRender(false,0);});
 
 // ?cat=… on Rows: that part's row comes into view
 function rowsShow(k){

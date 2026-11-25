@@ -506,10 +506,22 @@ var HF_CHEF_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hi
 + '<path d="M22 100c0-15 9.8-24.6 20.6-26.6L50 84.6l7.4-11.2C68.2 75.4 78 85 78 100z"/></g>'
 + '<g class="hf-chef-cut"><path d="M44.5 21c2-2.6 7.6-3.2 9.6 1.2" fill="none" stroke-width="2.4" stroke-linecap="round"/>'
 + '<circle cx="50" cy="88" r="2.4" stroke="none"/><circle cx="50" cy="95.5" r="2.4" stroke="none"/></g></svg>';
+// r69 (25 Nov 2026, Sebastian 04:06, his two pictures): a site may have its own Check In and log-in pictures —
+// site.js → corner: { checkin: 'scan' } draws the QR-scan sign with "Check in" under it (blue on white), and
+// corner.login is a picture for the log-in button (Havana: his chef, white on blue). The Hungry Fork keeps its own.
+var HF_SCAN_SVG = '<svg class="hf-badge hf-scan" viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true" focusable="false">'
++ '<circle cx="50" cy="50" r="48" class="hf-s-face" stroke-width="2"/>'
++ '<g class="hf-s-ink" fill="none" stroke-width="5" stroke-linejoin="round">'
++   '<rect x="31.5" y="16.5" width="14" height="14" rx="3.5"/><rect x="54.5" y="16.5" width="14" height="14" rx="3.5"/><rect x="31.5" y="39.5" width="14" height="14" rx="3.5"/></g>'
++ '<g class="hf-s-dot"><rect x="52" y="37" width="5" height="19" rx="2.5"/><rect x="52" y="44.5" width="14" height="5" rx="2.5"/>'
++   '<rect x="64" y="37" width="5" height="7" rx="2.5"/><rect x="64" y="51" width="5" height="5" rx="1.8"/></g>'
++ '<text x="50" y="79" text-anchor="middle" class="hf-s-text">Check in</text></svg>';
+var HF_CORNER_SITE = (window.HF_SITE && window.HF_SITE.corner) || {};
 var HF_CORNER_HTML =
   '<div class="hf-corner" id="hf-corner">'
 +   '<div class="hf-corner-bar">'
-+     '<button class="hf-checkin" id="hf-checkin" type="button" aria-label="Check in: show your visit code to the waiter" hidden>'+HF_CHECKIN_SVG+'</button>'
++     '<button class="hf-checkin'+(HF_CORNER_SITE.checkin === 'scan' ? ' hf-checkin-scan' : '')+'" id="hf-checkin" type="button" aria-label="Check in: show your visit code to the waiter" hidden>'
++       (HF_CORNER_SITE.checkin === 'scan' ? HF_SCAN_SVG : HF_CHECKIN_SVG)+'</button>'
 +     '<button class="hf-bell" id="hf-bell" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="hf-bell-panel" hidden>'
 +       '<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
 +         '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2.1H4.4z"/><path d="M9.8 20.6a2.4 2.4 0 0 0 4.4 0"/></svg>'
@@ -519,7 +531,8 @@ var HF_CORNER_HTML =
 +     '<button class="hf-corner-toggle" id="hf-corner-toggle" type="button" aria-label="Account menu" aria-expanded="false" aria-controls="hf-corner-items">'
 +       '<span></span><span></span><span></span><i class="hf-corner-dot"></i>'
 +     '</button>'
-+     '<button class="hf-login" id="hf-login" type="button" aria-label="Log in">'+HF_CHEF_SVG+'</button>'
++     '<button class="hf-login'+(HF_CORNER_SITE.login ? ' hf-login-pic' : '')+'" id="hf-login" type="button" aria-label="Log in">'
++       (HF_CORNER_SITE.login ? '<img src="'+HF_CORNER_SITE.login+'" alt="" width="44" height="44" draggable="false">' : HF_CHEF_SVG)+'</button>'
 +   '</div>'
 +   '<div class="hf-bell-panel" id="hf-bell-panel" role="region" aria-label="Notifications" data-keep hidden></div>'
 +   '<div class="hf-corner-items" id="hf-corner-items"></div>'

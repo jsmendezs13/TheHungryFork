@@ -34,6 +34,7 @@ import { staffLoyalty, cleanLoyalty, visitFromTable, undoVisitFromTable } from '
 // r43 (Sebastian, 26 Oct 22:56): every change to the settings is a notification to the owners and managers.
 import { tellChange, describeRules, describeLoyalty, describeHours, dayWords, clock12 } from './changes.js';
 import { saveSocial, socialOf } from './social.js';                                   // r52: Settings → Social media
+import { saveGoogleRating, googleRatingOf, googleStale } from './google.js';          // r69: Settings → Google's Rating
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -130,6 +131,7 @@ export async function staff(req, res, body, action, helpers = {}) {
     case 'staff_grade_save': return saveGrade(req, res, body, tasterId);       // r34
     case 'staff_request_mail_save': return saveRequestMail(req, res, body, tasterId);   // r42
     case 'staff_social_save': return saveSocial(req, res, body, tasterId, { gate, tellChange, timezoneOf: socialZone });   // r52
+    case 'staff_google_save': return saveGoogleRating(req, res, body, tasterId, { gate, tellChange, timezoneOf: socialZone });   // r69
     default:                 return res.status(400).json({ error: 'Unknown action.' });
   }
 }
@@ -296,10 +298,12 @@ async function day(req, res, body, tasterId, helpers = {}) {
   if (canMessage && requestRows.length && typeof helpers.requestSummaries === 'function') {
     requestChats = await helpers.requestSummaries(requestRows.map((q) => q.id));
   }
+  // r69: Google's Rating not checked for 30 days or more: a reminder at the top of the day (managers and owners)
+  const googleCheck = who.canEdit ? await googleStale(who.rid).catch(() => null) : null;
   return res.status(200).json({
     success: true,
     today, date, timezone: s.timezone, now: new Date(now).toISOString(),
-    level: who.level, canEdit: who.canEdit,
+    level: who.level, canEdit: who.canEdit, googleCheck,
     // null: this account does not answer guests here, or migration 19 is not run.
     messages,
     settings: {
@@ -811,15 +815,16 @@ async function settingsRead(req, res, body, tasterId) {
   }), { tables: 0, people: 0, arrived: 0, noShows: 0, cancelled: 0 });
 
   const st = s.settings;
-  const [loyalty, grade, requestMail, social] = await Promise.all([
+  const [loyalty, grade, requestMail, social, googleRating] = await Promise.all([
     staffLoyalty(who.rid).catch(() => ({ ready: false })),
     gradeOf(who.rid, s.timezone).catch(() => ({ ready: false })),
     who.canEdit ? requestMailOut(who.rid, st).catch(() => null) : null,
     socialOf(who.rid, s.timezone).catch(() => ({ ready: false })),           // r52
+    googleRatingOf(who.rid, s.timezone).catch(() => ({ ready: false, place: false })),   // r69
   ]);
   return res.status(200).json({
     success: true, level: who.level, canEdit: who.canEdit, today, timezone: s.timezone, loyalty, grade,
-    requestMail, social,
+    requestMail, social, googleRating,
     restaurant: { id: s.loaded.restaurant.id, name: s.loaded.restaurant.name },
     rules: rulesOut(st),
     email: { ready: !!st.email_from_address, from: st.email_from_address || null },

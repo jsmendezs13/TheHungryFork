@@ -63,26 +63,19 @@ html[data-site="havana"].hv-has-video .vh-btn span:not(.hv-ico) { -webkit-text-f
 html[data-site="havana"] .hv-ratings { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 10px clamp(18px, 6vw, 46px); margin-top: .5rem; }
 html[data-site="havana"] .hv-rate { display: flex; flex-direction: column; align-items: center; }
 html[data-site="havana"] .hv-rate-google { text-decoration: none; }
-/* r68 (25 Nov, his pick "C1"): Google's own rating box (Places UI Kit), see-through, in Havana's letters. Google draws
-   its stars and its "Google Maps" credit (white, as its rules allow); we set the background, letters and corners.
-   Hidden until Google says it has loaded. */
-html[data-site="havana"] .hv-gbox { position: absolute; visibility: hidden; pointer-events: none; display: block; width: 200px; max-width: 100%; box-sizing: border-box;
-  border: 0; border-radius: 12px; overflow: hidden; color-scheme: dark; text-align: left;
-  --gmp-mat-color-surface: rgba(0,0,0,.45); --gmp-mat-color-on-surface: #fff; --gmp-mat-color-on-surface-variant: rgba(255,255,255,.88);
-  --gmp-mat-color-primary: #fff; --gmp-mat-color-outline-decorative: transparent; --gmp-mat-font-family: 'Lato', system-ui, sans-serif; }
-html[data-site="havana"] .hv-gbox.on { position: static; visibility: visible; pointer-events: auto; }
-html[data-site="havana"] .hv-rate-google.hv-g-box { padding-top: 0; align-self: center; }
-@media (max-width: 600px) { html[data-site="havana"] .hv-gbox { width: 184px; } }
+html[data-site="havana"] .hv-gstars { position: relative; display: block; }
+html[data-site="havana"] .hv-gstars .hv-g-fill { position: absolute; left: 0; right: 0; top: 0; }
 /* Fork's own stars on the video: light grey under, Fork's red over (24 Nov 22:56: "the red ones … the yellow are Google")
    — the fill keeps the stars' own red gradients, as on The Hungry Fork */
 html[data-site="havana"].hv-has-video .vh-stars > svg.fork-stars path { fill: rgba(255,255,255,.38); stroke: rgba(0,0,0,.25); }
 html[data-site="havana"].hv-has-video .vh-stars.stars-scored > .fork-stars { filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)) !important; }
 html[data-site="havana"].hv-has-video .vh-stars .fork-stars-fill svg path { stroke: rgba(255,255,255,.7); stroke-width: 5; }   /* r64: the dark reds stand out on the photo */
 html[data-site="havana"] .hv-rate-google { padding-top: .35rem; }
-/* before Google's box has loaded (or with none): "Rate us on Google" */
+/* r64: before Google's numbers arrive (or with none): "Rate us on Google", no stars */
 html[data-site="havana"] .hv-g-plain { justify-content: center; min-height: 3.2rem; }
 html[data-site="havana"] .hv-g-plain .hv-rate-cap { margin-top: .15rem; }
-/* 25 Nov (r66): Fork's line in Lato and Havana's letters, "Fork's Rating · 5.0 (3)", on one line. */
+/* 25 Nov (r66): one line each — "Fork's Rating · 5.0 (3)" and (r69) "Google's Rating · 4.2 (504)", the names in Lato,
+   the numbers in Havana's letters. */
 html[data-site="havana"] .hv-rate-name { font-family: 'Lato', system-ui, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0; text-transform: none;
   color: #fff; white-space: nowrap; }
 html[data-site="havana"] .hv-rate-num, html[data-site="havana"] #vh-rating-num.hv-rate-num { letter-spacing: .08em; opacity: 1; white-space: nowrap; margin-left: .35em; }   /* the space before "·" (a line laid out in a row drops it) */
@@ -305,3 +298,31 @@ html[data-site="havana"] .hf-b-face { fill:#fff; stroke:#1E2A5A; } html[data-sit
 html[data-site="havana"] .hf-b-ink, html[data-site="havana"] .hf-b-band { fill:#1E2A5A; }
 html[data-site="havana"] .hf-b-text { font-family:'Lato', system-ui, sans-serif; font-weight:900; }
 
+
+/* r69 (25 Nov 2026, Sebastian 04:07: "B Havana Sky"): Manager → Menu → the carousels in small (food and drinks) in Havana's
+   sky blue — white caves, light blue inside, navy and purple words — instead of The Hungry Fork's brown stone. */
+html[data-site="havana"] .co-strip-card { background: linear-gradient(180deg, #8ACCEF 0%, #5FAFE0 100%); }
+html[data-site="havana"] .co-strip-head { color: #16203A; }
+html[data-site="havana"] .co-hint { color: #1F3555; } html[data-site="havana"] .co-hint b { color: #16203A; }
+html[data-site="havana"] .co-err { color: #B01015; }
+html[data-site="havana"] .co-arch-in { background: linear-gradient(160deg, #FFFFFF 0%, #EAF5FC 55%, #D3E9F7 100%);
+  box-shadow: inset 0 0 0 3px rgba(22,32,58,.08), 0 8px 16px rgba(22,60,100,.28); }
+html[data-site="havana"] .co-arch-title, html[data-site="havana"] .co-arch-title span { color: #2D0077; }
+html[data-site="havana"] .co-arch-open { background: radial-gradient(80% 55% at 50% 42%, #CFEAFB 0%, #A9D8F4 55%, #86C4EA 100%); box-shadow: inset 0 0 12px rgba(22,60,100,.35); }
+html[data-site="havana"] .co-arch-open::before { background: radial-gradient(closest-side, rgba(255,255,255,.7) 0%, rgba(255,255,255,.25) 50%, rgba(255,255,255,0) 100%); }
+html[data-site="havana"] .co-arch-open .m-dish-thumb { filter: drop-shadow(0 4px 6px rgba(22,50,90,.35)); }
+html[data-site="havana"] .co-arch-off { color: #B01015; }
+html[data-site="havana"] .co-strip-card.editing .co-arch-in { box-shadow: inset 0 0 0 3px rgba(22,32,58,.08), 0 0 0 2px rgba(45,0,119,.55), 0 8px 16px rgba(22,60,100,.28); }
+html[data-site="havana"] .co-bar::before { background: rgba(22,32,58,.15); }
+html[data-site="havana"] .co-bar-thumb::before { background: rgba(22,32,58,.55); }
+html[data-site="havana"] .co-bar:hover .co-bar-thumb::before, html[data-site="havana"] .co-bar.held .co-bar-thumb::before,
+html[data-site="havana"] .co-bar-thumb:focus-visible::before { background: rgba(22,32,58,.8); }
+
+/* r69 (25 Nov 2026, his pick B "Little caves"): the parts of the menu on the wheel at the bottom of the food's dish page —
+   white little caves with Havana's sky inside, yellow rings, the names in Havana's letters; the part's name on top */
+html[data-site="havana"] #cave.cave-secw .cave-wname { font-family: var(--hv-label); font-size: 1.15rem; font-weight: 400; letter-spacing: .2em; color: var(--hv-purple); }
+html[data-site="havana"] .sw-arch { background: linear-gradient(160deg, #FFFFFF 0%, #EAF5FC 55%, #D3E9F7 100%); box-shadow: 0 0 0 3px var(--hv-yellow), 0 4px 10px rgba(22,32,58,.15); }
+html[data-site="havana"] .sw-open { background: radial-gradient(80% 60% at 50% 45%, #CFEAFB 0%, #A9D8F4 55%, #86C4EA 100%); }
+html[data-site="havana"] .sw-cave.on .sw-arch { box-shadow: 0 0 0 4px #fff, 0 8px 18px rgba(45,0,119,.35); }
+html[data-site="havana"] .sw-name { font-family: var(--hv-label); font-size: .86rem; font-weight: 400; letter-spacing: .12em; color: #16203A; background: #fff; box-shadow: 0 2px 6px rgba(22,32,58,.25); }
+html[data-site="havana"] .sw-cave.on .sw-name { background: var(--hv-yellow); }

@@ -53,14 +53,16 @@ html[data-site="havana"] .vh-rating-caption { color:#16203A; text-shadow:0 1px 8
 html[data-site="havana"] .vh-btn span { background:linear-gradient(180deg,#F6D919 0%,#F6D919 45%,#F6D919 100%); }
 html[data-site="havana"] .cs-overlay { background:rgba(138,204,239,0.72); }
 html[data-site="havana"] .cs-close { background:#8ACCEF; color:#16203A; }
-html[data-site="havana"] .fi-sort.active { background:#F6D919; border-color:#F6D919; color:#16203A; }
-html[data-site="havana"] .fi-c { border-left:2px solid #F6D919; }
+/* r69 (25 Nov 02:11, "make it red … the same red in The Hungry Fork"): in "What is Fork's Rating?", the chosen order,
+   the line beside each guest's words and the bars are Fork's red, as on The Hungry Fork */
+html[data-site="havana"] .fi-sort.active { background:#B01015; border-color:#B01015; color:#fff; }
+html[data-site="havana"] .fi-c { border-left:2px solid #B01015; }
 html[data-site="havana"] .fi-more { color:#2D0077; }
 html[data-site="havana"] .so-overlay { background:rgba(138,204,239,0.72); }
 html[data-site="havana"] .so-link.google { border-color:rgba(22,32,58,0.9); }
 html[data-site="havana"] .so-ic { color:#2D0077; }
 html[data-site="havana"] .fi-name { color:#2D0077; }
-html[data-site="havana"] .fi-bar-fill { background:linear-gradient(90deg,#F6D919,#F6D919); }
+html[data-site="havana"] .fi-bar-fill { background:linear-gradient(90deg,#C01108,#E02414); }
 html[data-site="havana"] .fi-win.active { box-shadow:0 1px 2px rgba(185,225,245,0.14); }
 html[data-site="havana"] .fi-label { color:#2D0077; }
 html[data-site="havana"] .cat-row.active { color:#2D0077; }

@@ -10,7 +10,10 @@
 // change by the team #dish=… or #go=team|menu|settings); anything
 // else opens the manager page itself.
 
-const ICON = '/staff-icon-192.png';
+// r69 (25 Nov 2026): each restaurant's own Staff app — Havana's website shows Havana's icon and name.
+const HAVANA = /(^|\.)(havana-social\.vercel\.app|havanasocialnyc\.com)$/.test(self.location.hostname);
+const ICON = HAVANA ? '/havana/staff-icon-192.png' : '/staff-icon-192.png';
+const APP = HAVANA ? 'Havana Staff' : 'HF Staff';
 const SAFE = /^\/manager(#(chat|reqchat|request|dish)=\d+(&at=\d+)?|#day=\d{4}-\d{2}-\d{2}(&b=\d+)?(&at=\d+)?|#go=(team|menu|settings)(&at=\d+)?)?$/;
 
 self.addEventListener('install', function () { self.skipWaiting(); });
@@ -24,7 +27,7 @@ function safeUrl(url) {
 self.addEventListener('push', function (event) {
   let m = {};
   try { m = event.data ? event.data.json() : {}; } catch (e) { m = { body: event.data ? event.data.text() : '' }; }
-  const title = String(m.title || 'HF Staff').slice(0, 80);
+  const title = String(m.title && !(HAVANA && m.title === 'HF Staff') ? m.title : APP).slice(0, 80);
   const options = {
     body: String(m.body || '').slice(0, 200),
     icon: ICON,

@@ -10,11 +10,13 @@
      ⋮ → Add to Home screen / Install app (Android) puts the "HF Staff" icon on the phone; it opens this page full
      screen, without the browser's bars. Only this page offers it: the guests' pages stay as they are. The clock
      bar on top stays black (it never covers the page). staff-app.json says the rest (name, icons, colors). -->
-<link rel="manifest" href="/staff-app.json">
-<link rel="apple-touch-icon" href="/staff-icon-180.png">
+<!-- r69 (25 Nov 2026, Sebastian 02:14: Havana's Manager page put The Hungry Fork's eagle and "HF Staff" on the
+     Home Screen): each restaurant's own Staff app (site.js → staffApp: its manifest, icon and name). -->
+<script>(function(){var A=(window.HF_SITE&&window.HF_SITE.staffApp)||{};
+document.write('<link rel="manifest" href="'+(A.manifest||'/staff-app.json')+'"><link rel="apple-touch-icon" href="'+(A.icon||'/staff-icon-180.png')+'">'
++'<meta name="apple-mobile-web-app-title" content="'+(A.name||'HF Staff')+'">');})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="HF Staff">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1300,6 +1302,21 @@
   .so-f.bad input { border-color:var(--red); }
   .so-err { color:var(--red); font-size:.76rem; margin-top:.3rem; }
   .so-note { font-size:.74rem; color:var(--muted); margin-top:.5rem; line-height:1.45; }
+
+  /* ── r69 · Settings → Google's Rating (typed from Google Maps) ── */
+  .gr-go { display:inline-flex; align-items:center; gap:.4rem; margin-top:.75rem; padding:.55rem .9rem; border-radius:999px; border:1px solid var(--border);
+           background:#fff; color:var(--text); font-size:.8rem; font-weight:600; text-decoration:none; }
+  .gr-go svg { flex:none; }
+  .gr-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:.75rem; }
+  .gr-row label { display:block; font-size:.72rem; font-weight:600; margin-bottom:.25rem; }
+  .gr-row input { width:100%; border:1px solid var(--border); border-radius:10px; padding:.6rem .7rem; font-family:var(--sans); font-size:1rem; background:#fff; color:var(--text);
+                  font-variant-numeric:lining-nums tabular-nums; }
+  .gr-row input:disabled { background:var(--off-white); color:var(--muted); }
+  .gr-sees { margin-top:.8rem; font-size:.82rem; display:flex; align-items:center; flex-wrap:wrap; gap:.35rem; }
+  .gr-stars { position:relative; display:inline-block; font-size:1rem; letter-spacing:1px; color:#D9D2C7; line-height:1; }
+  .gr-stars i { position:absolute; left:0; top:0; overflow:hidden; white-space:nowrap; color:#E2B400; font-style:normal; }
+  .gr-old { margin-top:.7rem; padding:.6rem .75rem; border-radius:10px; background:var(--amber-light); border:1px solid #E6D2A8; color:var(--amber); font-size:.8rem; line-height:1.45; }
+  .gr-btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:.8rem; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -3243,6 +3260,7 @@ function rvRender(){
     root.innerHTML = rvSettingsHtml();
     rvFoldCards(root);                               // r48: each title opens and closes its part
     rvPutBack(kept);
+    rvShowGoogle();                                  // r69: from the reminder, open at Google's Rating
     supAfterPaint();
     return;
   }
@@ -3541,6 +3559,11 @@ function rvPaintTop(){
       + (q.length>1 ? ' · +'+(q.length-1)+' more' : '')
       + (unread ? ' · <em>'+unread+' new message'+(unread===1?'':'s')+'</em>' : '')+'</span>'
       + '<button type="button" class="rv-act no" style="background:#fff;flex:none;" onclick="rvOpenRequests()">'+(d.canEdit?'Answer':'See')+'</button></div>';
+  }
+  // r69: Google's Rating not checked for 30 days (managers and owners)
+  if(d.googleCheck && d.googleCheck.days){
+    html += '<div class="rv-banner" id="gr-remind"><span>Google’s Rating was last updated <b>'+d.googleCheck.days+' days ago</b>. Check it on Google Maps.</span>'
+      + '<button type="button" class="rv-act no" style="background:#fff;flex:none;" onclick="rvGoToGoogle()">Check</button></div>';
   }
   html += evDayHtml(d.date);                       // r50: the day's events (tap: who has tickets, who is in)
   if(!d.settings.enabled){
@@ -4135,7 +4158,7 @@ function rvSettingsHtml(){
     + (RV.settingsNote ? '<div class="m-err" style="background:var(--amber-light);border-color:#E6D2A8;color:var(--amber);">'+RV.settingsNote+'</div>' : '')
     + dvCardHtml()                                     // r43: you and your devices (everyone, crew too)
     + rvNumbersHtml(S) + rvSwitchesHtml(S) + rvRequestMailHtml(S) + sqCardHtml() + rvLoyaltyHtml(S) + rvHoursHtml(S) + rvHolidaysHtml(S)
-    + rvGradeHtml(S) + rvSocialHtml(S) + rvSupportHtml()
+    + rvGradeHtml(S) + rvSocialHtml(S) + rvGoogleHtml(S) + rvSupportHtml()
     // r48 (Sebastian, 30 Oct 16:42): the Rules and the Rooms are on the Map now
     + '<div class="rv-moved">The rules and the rooms are on the <button type="button" class="rv-link" onclick="rvOpenMap()">Map</button> now.</div>';
 }
@@ -4536,6 +4559,92 @@ async function rvSocialSave(btn){
     RV.socialDraft = links;
   }
   rvRender();
+}
+
+// ── r69: GOOGLE'S RATING (Sebastian, 25 Nov 03:29: "make the stars as we had them but set "Google's Rating" and
+// create the system inside the manager settings to change it manually") ──
+// The two numbers Google Maps shows (the rating and the number of reviews), typed here by a manager or the owner; the
+// home page shows them with its own yellow stars: "Google's Rating · 4.2 (504)". Nothing is asked from Google.
+// Both empty: the home page says "Rate us on Google" without numbers. After 30 days without a save, a reminder (here
+// and at the top of the day); "Still the same" saves the same numbers to say they were checked. Crew see the card.
+function grStars(score){
+  const w = Math.max(0, Math.min(100, Number(score) / 5 * 100)).toFixed(1);
+  return '<span class="gr-stars" aria-hidden="true">★★★★★<i style="width:'+w+'%">★★★★★</i></span>';
+}
+function grDraft(G){ return RV.googleDraft || { score: G.score === null ? '' : Number(G.score).toFixed(1), count: G.count === null ? '' : String(G.count) }; }
+function rvGoogleHtml(S){
+  const G = S.googleRating, edit = S.canEdit;
+  if(!G || !G.place) return '';
+  const head = '<div class="m-eyebrow">Google’s Rating</div>';
+  if(!G.ready) return '<div class="m-card" id="rv-google">'+head+'<div class="m-sub">Not set up yet: migration 46 has not been run.</div></div>';
+  const d = grDraft(G), dis = edit ? '' : ' disabled';
+  const c0 = String(d.count).trim(), sc = String(d.score).trim().replace(',', '.'), ct = /^\d{1,3}([,.\s]\d{3})+$/.test(c0) ? c0.replace(/[,.\s]/g, '') : c0;
+  const okNow = /^\d(\.\d)?$/.test(sc) && Number(sc) >= 1 && Number(sc) <= 5 && /^\d{1,8}$/.test(ct);
+  const empty = !sc && !ct;
+  const savedSc = G.score === null ? '' : Number(G.score).toFixed(1), savedCt = G.count === null ? '' : String(G.count);
+  const changed = (okNow ? Number(sc).toFixed(1) : sc) !== savedSc || ct !== savedCt;
+  const sees = empty ? '<strong>Rate us on Google</strong> (no numbers)'
+    : okNow ? grStars(sc)+' <strong>Google’s Rating · '+Number(sc).toFixed(1)+' ('+Number(ct).toLocaleString('en-US')+')</strong>'
+    : '<span style="color:var(--muted)">type both numbers</span>';
+  const pin = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>';
+  const out = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>';
+  const name = (S.restaurant && S.restaurant.name) || 'your restaurant';
+  return '<div class="m-card" id="rv-google">'+head
+    + '<div class="m-sub">The Google rating your home page shows next to Fork’s Rating. Copy both numbers <strong>exactly</strong> as Google Maps shows them, and update them when they change.</div>'
+    + (G.mapsLink ? '<a class="gr-go" id="gr-go" href="'+esc(G.mapsLink)+'" target="_blank" rel="noopener">'+pin+' See '+esc(name)+' on Google Maps '+out+'</a>' : '')
+    + '<div class="gr-row">'
+    +   '<div><label for="gr-score">Rating</label><input id="gr-score" type="text" inputmode="decimal" autocomplete="off" placeholder="4.2" maxlength="3" value="'+esc(d.score)+'"'+dis+' oninput="rvGoogleType()"></div>'
+    +   '<div><label for="gr-count">Reviews</label><input id="gr-count" type="text" inputmode="numeric" autocomplete="off" placeholder="504" maxlength="10" value="'+esc(d.count)+'"'+dis+' oninput="rvGoogleType()"></div>'
+    + '</div>'
+    + '<div class="gr-sees" id="gr-sees">Guests see: '+sees+'</div>'
+    + (G.stale ? '<div class="gr-old" id="gr-old">Last updated <strong>'+G.days+' days ago</strong>. Open Google Maps and check the two numbers. If they changed, type the new ones; if not, tap <strong>Still the same</strong>.</div>' : '')
+    + (G.changedOn ? '<div class="rv-g-note">Last updated '+esc(G.changedOn)+(G.changedBy ? ' by '+esc(G.changedBy) : '')+'.</div>' : '')
+    + '<div class="so-note">Leave both empty to show “Rate us on Google” without numbers. Never round the numbers up: guests can compare them with Google Maps.</div>'
+    + (edit ? '<div class="gr-btns"><button type="button" class="m-save" id="gr-save"'+(changed && (okNow || empty) ? '' : ' disabled')+' onclick="rvGoogleSave(this,false)">Save Google’s Rating</button>'
+        + (G.stale && G.score !== null && !changed ? '<button type="button" class="m-revert" id="gr-same" onclick="rvGoogleSave(this,true)">Still the same</button>' : '')
+        + '</div>' : '')
+    + '</div>';
+}
+function rvGoogleType(){
+  const s = document.getElementById('gr-score'), c = document.getElementById('gr-count');
+  RV.googleDraft = { score: s ? s.value : '', count: c ? c.value : '' };
+  const el = document.getElementById('rv-google');
+  if(!el || !RV.settings) return;
+  // redraw only the card, keeping the cursor where it was
+  const focus = document.activeElement && document.activeElement.id, pos = document.activeElement && document.activeElement.selectionStart;
+  const tmp = document.createElement('div'); tmp.innerHTML = rvGoogleHtml(RV.settings);
+  const fresh = tmp.firstChild;
+  el.querySelector('#gr-sees').outerHTML = fresh.querySelector('#gr-sees').outerHTML;
+  const b = el.querySelector('#gr-save'), nb = fresh.querySelector('#gr-save'); if(b && nb) b.disabled = nb.disabled;
+  const same = el.querySelector('#gr-same'); if(same && !fresh.querySelector('#gr-same')) same.remove();
+  if(focus){ const f = document.getElementById(focus); if(f && typeof pos === 'number'){ try{ f.setSelectionRange(pos, pos); }catch(e){} } }
+}
+async function rvGoogleSave(btn, same){
+  const S = RV.settings;
+  if(!S || !S.googleRating || !S.googleRating.ready) return;
+  const G = S.googleRating, d = same ? { score: G.score === null ? '' : Number(G.score).toFixed(1), count: G.count === null ? '' : String(G.count) } : grDraft(G);
+  if(btn) btn.disabled = true;
+  try{
+    const data = await rvApi({ action:'staff_google_save', score: d.score, count: d.count });
+    S.googleRating = data.googleRating; RV.googleDraft = null;
+    if(RV.day) RV.day.googleCheck = null;
+    showToast(same ? 'Checked. The numbers stay the same.' : 'Google’s Rating is saved.');
+  }catch(e){ if(e.status !== 401) showToast(e.message); if(btn) btn.disabled = false; return; }
+  rvRender();
+}
+// From the reminder at the top of the day: Settings, at Google's Rating.
+function rvGoToGoogle(){
+  RV.wantGoogle = true;
+  if(RV.view !== 'settings') rvOpenSettings();
+  else rvShowGoogle();
+}
+function rvShowGoogle(){
+  if(!RV.wantGoogle) return;
+  const el = document.getElementById('rv-google');
+  if(!el) return;
+  RV.wantGoogle = false;
+  if(el.dataset.fold && !el.classList.contains('open')) rvFoldTap(el.dataset.fold, true);
+  el.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 // ── r34: SUPPORT — WRITE TO SEB'S ANALYTICS ──

@@ -172,13 +172,26 @@
               'waze.com': 'https://waze.com/ul?q=45%20Stone%20Street%20New%20York%20NY&navigate=yes' };
     Object.keys(M).forEach(function (k) { document.querySelectorAll('#maps-modal a[href*="' + k + '"]').forEach(function (a) { a.href = M[k]; }); });
   }
-  // The Google rating next to Fork's Rating. r64–r67: our own stars, with Google's numbers asked by the server.
-  // r68 (25 Nov 2026 01:55, his pick "C1": "let's delete what we did before and use C1"): Google's own rating box
-  // (Places UI Kit, Place Details Compact: the rating and Google's "Google Maps" credit), see-through, in Havana's
-  // letters. Google draws it in the visitor's browser and keeps it up to date; a tap opens Google's "write a review" for
-  // Havana. The browser key comes from Vercel through google_box (never in the code). Until Google's box has loaded
-  // (or with no key, or when Google can't be reached within 10 seconds): only "Rate us on Google".
-
+  // The Google rating next to Fork's Rating. r64 (24 Nov 22:56: "put Google's stars there now, and if the person taps it,
+  // take them to rate the restaurant directly"). r69 (25 Nov 03:29: "make the stars as we had them but set "Google's
+  // Rating" and create the system inside the manager settings to change it manually"): our own yellow stars and
+  // "Google's Rating · 4.2 (504)", with the two numbers the restaurant typed in Settings → Google's Rating (copied from
+  // Google Maps; api/_lib/google.js). Nothing is asked from Google. A tap opens Google's "write a review" for Havana.
+  // Nothing typed yet: only "Rate us on Google", never made-up numbers.
+  // Google's stars: the same five stars as Fork's Rating (a copy of its drawing), grey under, yellow over up to the score
+  function stars(score) {
+    var base = document.querySelector('.vh-rating-live svg.fork-stars');
+    if (!base) return '';
+    var copy = function (fill, cls) {
+      var c = base.cloneNode(true); c.removeAttribute('id');
+      var d = c.querySelector('defs'); if (d) d.remove();
+      c.querySelectorAll('path').forEach(function (p) { p.setAttribute('fill', fill); });
+      c.setAttribute('class', 'fork-stars ' + cls); return c.outerHTML;
+    };
+    var cut = (100 - Math.max(0, Math.min(100, Number(score) / 5 * 100))).toFixed(1);   // a 4.5 shows four and a half
+    return '<span class="hv-gstars" aria-hidden="true">' + copy('rgba(255,255,255,.38)', 'hv-g-base')
+      + copy('#F6D919', 'hv-g-fill').replace('<svg', '<svg style="clip-path:inset(0 ' + cut + '% 0 0)"') + '</span>';
+  }
   // Fork's line in Google's letters (25 Nov 01:00: "use the same font for Fork's Rating 5.0 (3)"): the name in Lato,
   // the score in Havana's letters, and the count as Google's, "(3)" instead of "(3 ratings)".
   function forkLine(cap) {
@@ -205,41 +218,18 @@
     row.insertAdjacentHTML('beforeend', '<a class="hv-rate hv-rate-google hv-g-plain" href="' + esc(g.review) + '" target="_blank" rel="noopener"'
       + ' aria-label="Rate ' + esc(S.name) + ' on Google"><span class="hv-rate-cap">Rate us on Google</span></a>');
     try {
-      fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'google_box' }) })
+      fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'google_rating' }) })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           var a = row.querySelector('.hv-rate-google'); if (!a || !d) return;
           if (d.review) a.href = d.review;
-          if (d.ready && d.key && d.place) googleBox(a, d);
+          if (!d.ready || !(Number(d.score) > 0)) return;
+          var s = Number(d.score), n = Number(d.count) || 0, num = s.toFixed(1), cnt = n ? n.toLocaleString('en-US') : '';
+          a.classList.remove('hv-g-plain');
+          a.setAttribute('aria-label', 'Google\'s Rating ' + num + ' out of 5' + (n ? ' from ' + cnt + ' reviews' : '') + '. Tap to write a review on Google.');
+          a.innerHTML = stars(s) + '<span class="hv-rate-cap"><span class="hv-rate-name">Google\'s Rating</span><span class="hv-rate-num"> · ' + num + (n ? ' (' + cnt + ')' : '') + '</span></span>';
         }).catch(function () {});
     } catch (e) {}
-  }
-  // Google's box: Google's script (once), then the element; shown only when Google says it has loaded ("gmp-load").
-  function googleBox(a, d) {
-    var done = false, el = null;
-    var build = function () {
-      if (el) return;
-      el = document.createElement('gmp-place-details-compact');
-      el.className = 'hv-gbox'; el.setAttribute('orientation', 'horizontal');
-      var rq = document.createElement('gmp-place-details-place-request'); rq.setAttribute('place', d.place);
-      var at = document.createElement('gmp-place-attribution'); at.setAttribute('light-scheme-color', 'white'); at.setAttribute('dark-scheme-color', 'white');
-      el.appendChild(rq); el.appendChild(document.createElement('gmp-place-rating')); el.appendChild(at);
-      el.addEventListener('gmp-load', function () {
-        if (done) return; done = true;
-        var c = a.querySelector('.hv-rate-cap'); if (c) c.remove();
-        a.classList.remove('hv-g-plain'); a.classList.add('hv-g-box'); el.classList.add('on');
-        a.setAttribute('aria-label', 'Google rating for ' + (S.name || 'the restaurant') + ', from Google Maps. Tap to write a review on Google.');
-      });
-      a.appendChild(el);
-    };
-    setTimeout(function () { if (!done && el) { el.remove(); el = null; } done = true; }, 10000);
-    window.hvGoogleReady = function () {
-      try { window.google.maps.importLibrary('places').then(build, function () {}); } catch (e) {}   // window.google: "google" here is our function
-    };
-    if (window.google && window.google.maps && window.google.maps.importLibrary) { window.hvGoogleReady(); return; }
-    var s = document.createElement('script'); s.async = true;
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(d.key) + '&v=weekly&libraries=places&loading=async&callback=hvGoogleReady';
-    document.head.appendChild(s);
   }
 
   function start() { hero(); google(); sections(); maps(); }   // 24 Nov: the dishes' section is off (food() stays for later)
