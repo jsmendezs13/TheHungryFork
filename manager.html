@@ -1147,6 +1147,10 @@
   .rw-turn { font-size:.78rem; line-height:1.45; margin-bottom:.3rem; white-space:pre-wrap; word-break:break-word; }
   .rw-turn b { font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; color:var(--red); margin-right:.3rem; }
   .rw-turn.guest b { color:var(--text); }
+  .rw-edited { font-size:.7rem; color:var(--muted); }
+  .rw-turn-ctl { display:inline-flex; gap:.3rem; margin-left:.4rem; vertical-align:middle; }
+  .rw-turn-ctl button { font-size:.66rem; font-weight:700; border:1px solid var(--border); background:#fff; border-radius:999px; padding:.12rem .55rem; cursor:pointer; color:var(--text); }
+  .rw-turn textarea { width:100%; min-height:60px; margin-top:.25rem; border:1px solid var(--border); border-radius:10px; padding:.45rem .6rem; font:inherit; font-size:.82rem; }
   .rw-acts { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.55rem; }
   .rw-act { border:1px solid var(--border); background:#fff; border-radius:999px; padding:.35rem .8rem; font-family:var(--sans); font-size:.74rem; font-weight:500;
             color:var(--text); cursor:pointer; text-decoration:none; display:inline-block; }
@@ -1971,8 +1975,9 @@ const DISH_GROUPS = [['chefs-pick', "Chef's Pick"], ['starters', 'Appetizers'], 
 const dishKeyOf = d => String(d.restaurant_category || '').trim().toLowerCase();
 // r40 (Sebastian, 19 Oct 22:14: "separate drinks and food"): the food in its parts, the drinks in theirs — Wines,
 // Cocktails, Beers, Spirits (gin, whiskey, tequila, vodka, rum, other) — as the menu's drinks' carousel shows them.
-const DRINK_GROUPS = [['drinks:wines', 'Wines', ['wine']], ['drinks:cocktails', 'Cocktails', ['cocktail']], ['drinks:beers', 'Beers', ['beer']],
-                      ['drinks:spirits', 'Spirits', ['gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit']], ['drinks:shots', 'Shots', ['shot']]];   // r40: Shots
+const DRINK_GROUPS = [['drinks:wines', 'Wines', ['wine']], ['drinks:cocktails', 'Cocktails', ['cocktail']], ['drinks:frozen', 'Frozen Drinks', ['frozen']], ['drinks:beers', 'Beers', ['beer']],
+                      ['drinks:spirits', 'Spirits', ['gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit']], ['drinks:shots', 'Shots', ['shot']],
+                      ['drinks:party', 'Party Drinks', ['party']]];   // r40: Shots; r61: Frozen, Party Drinks
 const SPIRIT_ORDER = ['gin', 'whiskey', 'tequila', 'vodka', 'rum', 'spirit'];
 function menuGroups(rows){
   const known = DISH_GROUPS.map(g => g[0]);
@@ -2090,9 +2095,9 @@ function mgFoldTap(key){
 // and drag it to its place (the arrow keys too); Done saves. A cave taken off the menu shows dimmed here.
 const CAVE_LABEL = { 'chefs-pick':"Chef's Pick", starters:'Appetizers', appetizers:'Appetizers', entree:'Entrées', salads:'Salads', sides:'Sides', desserts:'Desserts',
   drinks:'Drinks', 'top-starters':'Top Rated Appetizers', 'top-entree':'Top Rated Entrées', 'top-salads':'Top Rated Salads', 'bartenders-pick':"Bartender's Pick",
-  wines:'Wines', cocktails:'Cocktails', beers:'Beers', spirits:'Spirits', shots:'Shots', 'drinks-other':'More Drinks', 'top-drinks':'Top Rated Drinks', 'happy-hour':'Happy Hour' };
+  wines:'Wines', cocktails:'Cocktails', frozen:'Frozen Drinks', beers:'Beers', spirits:'Spirits', shots:'Shots', party:'Party Drinks', 'drinks-other':'More Drinks', 'top-drinks':'Top Rated Drinks', 'happy-hour':'Happy Hour' };
 const CAVE_EMOJI = { 'chefs-pick':'👨‍🍳', drinks:'🍸', 'bartenders-pick':'🍸', 'happy-hour':'🍻', 'top-starters':'⭐', 'top-entree':'⭐', 'top-salads':'⭐', 'top-drinks':'⭐' };
-const CAVE_HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'beers', 'spirits', 'shots', 'drinks-other'];
+const CAVE_HIDEABLE = ['starters', 'entree', 'salads', 'sides', 'desserts', 'wines', 'cocktails', 'frozen', 'beers', 'spirits', 'shots', 'party', 'drinks-other'];
 let CAVE_ORDER = { food:[], drinks:[] };               // what the manager saved (empty: the menu's own order)
 let CAVE_HIDDEN = [];                                   // the caves taken off the menu
 let CO_READY = false;                                   // migration 27 is in: the order and the switches can change
@@ -2546,7 +2551,7 @@ function textFields(d){
 // and the menu shows it in that cave of the drinks' carousel. A dish's pairings are chosen from the drinks on the
 // menu, as photos in a row you slide (option B): the Sommelier's Recommendation from the wines, the Suggested
 // Cocktail from the cocktails; "None" leaves it empty. Each choice saves at once, like the switches.
-const DRINK_KIND_LABEL = { wine:'Wine', cocktail:'Cocktail', beer:'Beer', shot:'Shot', gin:'Gin', whiskey:'Whiskey', tequila:'Tequila', vodka:'Vodka', rum:'Rum', spirit:'Other spirit' };
+const DRINK_KIND_LABEL = { wine:'Wine', cocktail:'Cocktail', frozen:'Frozen', beer:'Beer', shot:'Shot', party:'Party Drink', gin:'Gin', whiskey:'Whiskey', tequila:'Tequila', vodka:'Vodka', rum:'Rum', spirit:'Other spirit' };
 const SPIRITS = [['gin','Gin'],['whiskey','Whiskey'],['tequila','Tequila'],['vodka','Vodka'],['rum','Rum'],['spirit','Other']];
 function isDrinkRow(d){ return dishKeyOf(d) === 'drinks'; }
 function isSpiritKind(k){ return SPIRITS.some(s => s[0] === k); }
@@ -2563,9 +2568,9 @@ function kindField(d){
   const k = d.drink_kind || '', spirit = isSpiritKind(k);
   const pill = (val, label, on) => '<button type="button" class="pk-pill'+(on?' on':'')+'" aria-pressed="'+(on?'true':'false')+'" onclick="setKind('+d.id+',\''+val+'\')">'+label+'</button>';
   return '<div class="m-field" id="kind-'+d.id+'"><div class="m-field-label">Kind of drink</div>'
-    + '<div class="pk-seg">'+pill('wine','Wine',k==='wine')+pill('cocktail','Cocktail',k==='cocktail')+pill('beer','Beer',k==='beer')+(PRICES_READY||k==='shot'?pill('shot','Shot',k==='shot'):'')+pill(spirit?k:'spirit','Spirit',spirit)+'</div>'
+    + '<div class="pk-seg">'+pill('wine','Wine',k==='wine')+pill('cocktail','Cocktail',k==='cocktail')+pill('frozen','Frozen',k==='frozen')+pill('beer','Beer',k==='beer')+(PRICES_READY||k==='shot'?pill('shot','Shot',k==='shot'):'')+pill('party','Party Drink',k==='party')+pill(spirit?k:'spirit','Spirit',spirit)+'</div>'
     + (spirit ? '<div class="pk-seg sub">'+SPIRITS.map(s => pill(s[0], s[1], k===s[0])).join('')+'</div>' : '')
-    + '<div class="pk-note">'+(k ? 'The menu shows it with the '+(spirit?'spirits':DRINK_KIND_LABEL[k].toLowerCase()+'s')+'.' : 'Choose one: the menu shows each drink under its kind.')+'</div></div>';
+    + '<div class="pk-note">'+(k ? 'The menu shows it with the '+(spirit?'spirits':k==='frozen'?'frozen drinks':DRINK_KIND_LABEL[k].toLowerCase()+'s')+'.' : 'Choose one: the menu shows each drink under its kind.')+'</div></div>';
 }
 async function setKind(id, kind){
   const d = rowFor(id); if(!d || d.drink_kind === kind) return;
@@ -2578,7 +2583,7 @@ function pairField(d, which){
   const title = which==='wine' ? 'Sommelier\'s Recommendation' : 'Suggested Cocktail';
   if(!DRINKS_READY) return '<div class="m-field"><div class="m-field-label">'+title+'</div><div class="pk-note">Choosing from your drinks is not set up yet: Seb\'s Analytics has to run migration 26.</div></div>';
   const chosen = d[col] ? String(d[col]) : '';
-  const drinks = DISHES_ROWS.filter(x => isDrinkRow(x) && x.drink_kind === which && (!x.is_hidden || String(x.id) === chosen));
+  const drinks = DISHES_ROWS.filter(x => isDrinkRow(x) && (x.drink_kind === which || (which === 'cocktail' && x.drink_kind === 'frozen')) && (!x.is_hidden || String(x.id) === chosen));   // r61: a frozen drink is a cocktail to pair
   const tile = (x) => {
     const on = String(x.id) === chosen;
     const file = String(x.image || '');
@@ -8054,8 +8059,8 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && MSG.o
 // Managers and owners (crew do not see this tab). Moderation comes in r53.
 // ════════════════════════════════════════════════════════════════════════════
 const RW_FOOD = [['starters','Appetizers'], ['entree','Entrées'], ['salads','Salads'], ['sides','Sides'], ['desserts','Desserts']];
-const RW_DRINK = [['wine','Wines',['wine']], ['cocktail','Cocktails',['cocktail']], ['beer','Beers',['beer']],
-                  ['spirit','Spirits',['gin','whiskey','tequila','vodka','rum','spirit']], ['shot','Shots',['shot']]];
+const RW_DRINK = [['wine','Wines',['wine']], ['cocktail','Cocktails',['cocktail']], ['frozen','Frozen Drinks',['frozen']], ['beer','Beers',['beer']],
+                  ['spirit','Spirits',['gin','whiskey','tequila','vodka','rum','spirit']], ['shot','Shots',['shot']], ['party','Party Drinks',['party']]];   // r61
 const RW_STEP = 40;
 const RW_KIND_WORDS = { dish:'Dishes', drink:'Drinks', room:'Restaurant' };
 let RW = rwFresh(null);
@@ -8266,11 +8271,47 @@ function rwListHtml(){
   return h;
 }
 function rwTurn(r){ const n = r.replies.length; return n === 0 ? 'restaurant' : n === 1 ? 'guest' : n === 2 ? 'restaurant' : null; }
-function rwThreadHtml(r){
+function rwThreadHtml(r, key){
   if(!r.replies.length) return '';
+  key = String(key || '');
   return '<div class="rw-thread">'+r.replies.map(function(x){
-    return '<div class="rw-turn'+(x.side === 'guest' ? ' guest' : '')+'"><b>'+(x.side === 'guest' ? 'The guest' : esc(x.by || 'The restaurant'))+'</b>'+esc(x.text)+'</div>';
+    // r62: Edited; Edit / Delete on a reply in the restaurant's name for whoever may change it (the server said so)
+    const ed = RW.edit && RW.edit.id === r.id && RW.edit.turn === x.turn && RW.edit.card === key;   // only the card it was opened on
+    const ctl = x.side === 'restaurant' && (x.canEdit || x.canDelete) && !ed
+      ? '<span class="rw-turn-ctl">'+(x.canEdit ? '<button type="button" onclick="rwTurnEdit('+Number(r.id)+',\''+x.turn+'\',\''+esc(key)+'\')">Edit</button>' : '')
+        + (x.canDelete ? '<button type="button" onclick="rwTurnDelete('+Number(r.id)+',\''+x.turn+'\')">Delete</button>' : '')+'</span>' : '';
+    if(ed) return '<div class="rw-turn"><b>'+esc(x.by || 'The restaurant')+'</b><textarea id="rw-turn-text" maxlength="1500">'+esc(x.text)+'</textarea>'
+      + '<div class="rw-acts" style="margin-top:.3rem"><button type="button" class="m-save" onclick="rwTurnSave()"'+(RW.sending ? ' disabled' : '')+'>Save</button>'
+      + '<button type="button" class="rw-act" onclick="rwTurnEdit(null)">Cancel</button></div></div>';
+    return '<div class="rw-turn'+(x.side === 'guest' ? ' guest' : '')+'"><b>'+(x.side === 'guest' ? 'The guest' : esc(x.by || 'The restaurant'))+'</b>'+esc(x.text)
+      + (x.edited ? ' <em class="rw-edited">Edited</em>' : '') + ctl + '</div>';
   }).join('')+'</div>';
+}
+// r62: change a reply in the restaurant's name (api/_lib/reviewedit.js: reply_edit, reply_delete)
+function rwTurnEdit(id, turn, card){ RW.edit = id == null ? null : { id: id, turn: turn, card: String(card || '') }; const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml(); const t = document.getElementById('rw-turn-text'); if(t) t.focus(); }
+async function rwTurnCall(body, okMsg){
+  RW.sending = true;
+  try{
+    const { res, data } = await callApi('/api/reservations', { method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+currentSession }, body:JSON.stringify(body) });
+    if(!res.ok) throw new Error((data && data.error) || 'Could not change it. Please try again.');
+    RW.edit = null; RW.sending = false; showToast(okMsg);
+    await rwLoad();
+    return;
+  }catch(e){ showToast(e.message); }
+  RW.sending = false;
+  const l = document.getElementById('rw-list'); if(l) l.innerHTML = rwListHtml();
+}
+function rwTurnSave(){
+  const t = document.getElementById('rw-turn-text'); if(!t || !RW.edit || RW.sending) return;
+  const text = t.value.trim(); if(!text){ showToast('Write the reply, or delete it instead.'); return; }
+  rwTurnCall({ action:'reply_edit', reviewId: RW.edit.id, turn: RW.edit.turn, text: text }, 'The reply is changed.');
+}
+function rwTurnDelete(id, turn){
+  if(RW.sending) return;
+  if(RW.askDel !== id+':'+turn){ RW.askDel = id+':'+turn; showToast('Tap Delete again to delete this reply (a private copy is kept).'); setTimeout(() => { if(RW.askDel === id+':'+turn) RW.askDel = null; }, 5000); return; }
+  RW.askDel = null;
+  rwTurnCall({ action:'reply_delete', reviewId: id, turn: turn }, 'The reply is deleted.');
 }
 function rwActsHtml(it){
   const r = it.r, turn = rwTurn(r), acts = [];
@@ -8288,7 +8329,7 @@ function rwActsHtml(it){
 function rwReplyHtml(it){
   if(RW.reply !== it.key) return '';
   return '<div class="rw-reply"><textarea id="rw-reply-text" maxlength="1500" placeholder="Write your answer…"></textarea>'
-    + '<div class="rw-hint">Everyone can read it under the review. It can\'t be changed or taken back once it\'s posted.</div>'
+    + '<div class="rw-hint">Everyone can read it under the review.'+(RW.data && RW.data.editReady ? ' You can edit it later.' : ' It can\'t be changed or taken back once it\'s posted.')+'</div>'
     + '<div class="rw-acts" style="margin-top:0"><button type="button" class="m-save" id="rw-reply-send"'+(RW.sending ? ' disabled' : '')+' onclick="rwReplySend(\''+it.key+'\')">Post the answer</button>'
     + '<button type="button" class="rw-act" onclick="rwReplyOpen(null)">Cancel</button></div></div>';
 }
@@ -8304,7 +8345,7 @@ function rwCardHtml(it){
       + (it.comments.length ? it.comments.map(c => '<div class="rw-text">'+esc(c)+'</div>').join('') : '<div class="rw-none">No comment, only stars.</div>')
       + '<div class="rw-small">'+esc(rwWhen(it.at))+' · '+(it.reviews.length === 1 ? 'rated 1 '+(it.dishList[0].dish && it.dishList[0].dish.category === 'drinks' ? 'drink' : 'dish') : 'rated '+it.reviews.length+' dishes and drinks')+'</div>'
       + rwVisitLine(it.visit) + rwDeletedBox(it) + (it.deleted ? '' : rwHiddenBox(it))
-      + rwThreadHtml(r) + rwActsHtml(it) + see + rwReplyHtml(it)
+      + rwThreadHtml(r, it.key) + rwActsHtml(it) + see + rwReplyHtml(it)
       + '</div>';
   }
   const d = it.dish;
@@ -8316,7 +8357,7 @@ function rwCardHtml(it){
     +   '<span>Flavor '+(r.dishStars[0]||'–')+' · Worth Every Bite '+(r.dishStars[1]||'–')+' · Signature Style '+(r.dishStars[2]||'–')+'</span></div>'
     + (r.dishComment ? '<div class="rw-text">'+esc(r.dishComment)+'</div>' : '<div class="rw-none">No comment, only stars.</div>')
     + rwVisitLine(it.visit) + rwDeletedBox(it) + (it.deleted ? '' : rwHiddenBox(it))
-    + rwThreadHtml(r) + rwActsHtml(it) + rwReplyHtml(it)
+    + rwThreadHtml(r, it.key) + rwActsHtml(it) + rwReplyHtml(it)
     + '</div>';
 }
 function rwFind(key){ return RW.items.find(x => x.key === key) || (RW.waits || []).find(x => x.key === key); }   // r54: waiting ones too
@@ -8399,7 +8440,8 @@ async function rwReplySend(key){
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+currentSession },
       body:JSON.stringify({ reviewId: it.r.id, text: text }) });
     if(!res.ok) throw new Error((data && data.error) || 'Could not post the answer. Please try again.');
-    it.r.replies.push({ side:'restaurant', text:text, at:new Date().toISOString(), by:(ACCESS && ACCESS.firstName) || null });
+    const er = !!(RW.data && RW.data.editReady);                                                    // r62: the writer can change it
+    it.r.replies.push({ side:'restaurant', turn: it.r.replies.length ? 'reply2' : 'reply', text:text, at:new Date().toISOString(), by:(ACCESS && ACCESS.firstName) || null, canEdit: er, canDelete: er });
     RW.items.forEach(x => { if(x.r === it.r) x._hay = null; });
     RW.reply = null;
     showToast('Your answer is posted.');

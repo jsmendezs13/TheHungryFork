@@ -60,7 +60,8 @@ import { socialPublic } from './_lib/social.js';                     // r52
 import { siteRestaurant } from './_lib/sites.js';                   // Havana: the website's restaurant
 import { reviewsStaff } from './_lib/reviewlist.js';
 import { reviewTalk, talkBell } from './_lib/reviewtalk.js';        // r53c: delete by the author; the conversation about a hidden review
-import { moderation, reviewBell } from './_lib/moderation.js';                // r53: moderation                // r52: the Reviews tab
+import { moderation, reviewBell } from './_lib/moderation.js';
+import { reviewEdit, ACTIONS as EDIT_ACTIONS } from './_lib/reviewedit.js';        // r62: Edit                // r53: moderation                // r52: the Reviews tab
 import { floor } from './_lib/floor.js';      // r46: the table map (Reservations → Map)
 import { forgetOldFiles } from './_lib/files.js';
 import { notifyStaff, line } from './_lib/push.js';     // r43: notifications on the staff's phones
@@ -169,6 +170,7 @@ export default async function handler(req, res) {
   if (action.startsWith('mod_')) return moderation(req, res, body, action);
   // r53c: the author deletes a review (kept for the record); the author ⇄ the restaurant about a hidden review.
   if (action === 'my_review_delete' || action.startsWith('rvc_')) return reviewTalk(req, res, body, action);
+  if (EDIT_ACTIONS.includes(action)) return reviewEdit(req, res, body, action);                 // r62: Edit (each person their own words)
   if (action.startsWith('staff_')) return staff(req, res, body, action, { confirmByEmail, requestSummaries, moveToTable });
   return res.status(400).json({ error: 'Unknown action.' });
 }

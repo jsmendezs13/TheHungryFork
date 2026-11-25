@@ -961,6 +961,7 @@ function hfHiddenNote(why,restaurantId,reviewId){
 // managers who moderate answer; the bell says when they did. Read every few seconds while it is open on the screen.
 var HF_TALK_READY=null, HF_TALKS={}, HF_TALK={}, HF_TALK_LINKS={}, HF_TALK_PEND={}, HF_TALK_TIMER=null;
 var HF_TASTE=null;   // r60: each review's dish and restaurant by name (another restaurant's dishes too)
+var HF_EDIT_READY=null;   // r62: Edit is there (migration 45)
 var HF_TALK_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
 var HF_TALK_CLIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.5 3.5 0 0 1 5 5l-8.6 8.6a2 2 0 0 1-2.8-2.8l7.9-7.9"/></svg>';
 var HF_TALK_SEND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
@@ -974,7 +975,7 @@ function hfRv(body){
 // Which of this account's reviews have a conversation (and how many answers wait). Also says whether migration 38 is in.
 function hfTalksLoad(){
   return hfRv({action:'rvc_mine'}).then(function(d){
-    if(d.__status===200){HF_TALK_READY=d.ready===true;HF_TALKS=d.threads||{};HF_TASTE=d.places||null;}
+    if(d.__status===200){HF_TALK_READY=d.ready===true;HF_TALKS=d.threads||{};HF_TASTE=d.places||null;HF_EDIT_READY=d.editReady===true;}
     hfTalkMarks();
     return HF_TALKS;
   });

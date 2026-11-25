@@ -90,6 +90,26 @@ async function list(req, res, body, tasterId) {
     (got.ok && Array.isArray(got.data) ? got.data : []).forEach((l) => { if (!why[l.review_id]) why[l.review_id] = l; });
   }
   const dots = canModerate ? await visitDots(who.rid, rows, timezone) : {};
+  // r62 (migration 45): when each part was edited, and who may change each reply in the restaurant's name — the writer,
+  // an owner (a reply whose writer is below owner), Sebastian (any), a manager (a crew member's). reviewedit.js decides.
+  const ed = await sb(`/reviews?restaurant_id=eq.${who.rid}&order=created_at.desc,id.desc&limit=${MAX_REVIEWS}` +
+                      '&select=id,reply_by,reply2_by,edited_at,reply_edited_at,taster_reply_edited_at,reply2_edited_at');
+  const editReady = ed.ok && Array.isArray(ed.data);
+  const edOf = {};
+  (editReady ? ed.data : []).forEach((x) => { edOf[x.id] = x; });
+  const writers = [...new Set(Object.values(edOf).flatMap((x) => [x.reply_by, x.reply2_by]).filter(Boolean).map(Number))];
+  const wl = {};
+  if (writers.length) {
+    const [wr, wa] = await Promise.all([
+      sb(`/restaurant_roles?restaurant_id=eq.${who.rid}&taster_id=in.(${writers.join(',')})&select=taster_id,role`),
+      sb(`/tasters?id=in.(${writers.join(',')})&is_platform_admin=eq.true&select=id`),
+    ]);
+    (wr.ok && Array.isArray(wr.data) ? wr.data : []).forEach((x) => { wl[x.taster_id] = Math.max(wl[x.taster_id] || 0, LEVEL[x.role] || 0); });
+    (wa.ok && Array.isArray(wa.data) ? wa.data : []).forEach((x) => { wl[x.id] = LEVEL.platform; });
+  }
+  const lvlOf = (by) => (by && wl[by] != null ? wl[by] : LEVEL.manager);
+  const mayChange = (by) => editReady && who.level >= LEVEL.manager && (who.level >= LEVEL.platform || (!!by && Number(by) === Number(tasterId))
+    || (who.level >= LEVEL.owner ? lvlOf(by) < LEVEL.owner : lvlOf(by) < LEVEL.manager));
   return res.status(200).json({
     success: true,
     restaurant: who.rid,
@@ -97,6 +117,7 @@ async function list(req, res, body, tasterId) {
     max: MAX_REVIEWS,
     more: rows.length >= MAX_REVIEWS,
     repliesReady: rv.withReplies,
+    editReady,                                                                                                       // r62
     moderation: { ready: sw.ready, on: sw.on, at: sw.at || null, by: sw.by || null, canModerate, platform: who.level >= LEVEL.platform,
                   reasons: REASONS, deletedReady: rv.withDeleted === true, waitReady: rv.withWait === true },          // r54
     now: new Date(nowMs).toISOString(),                                                                              // r54: the server's clock
@@ -126,10 +147,16 @@ async function list(req, res, body, tasterId) {
         // r54: still waiting its 48 hours (not approved, not hidden, not deleted): only here, never on the public pages
         ...(r.waiting_until && !r.approved_at && !r.hidden_at && !r.deleted_at && Date.parse(r.waiting_until) > nowMs ? { waiting: { until: r.waiting_until } } : {}),
         ...(canModerate && r.phone_ok === true && !r.deleted_at && phones.get(Number(r.taster_id)) ? { phone: phones.get(Number(r.taster_id)) } : {}),
+        ...(edOf[r.id] && edOf[r.id].edited_at ? { edited: edOf[r.id].edited_at } : {}),                                 // r62
         replies: [
-          text(r.reply_text) ? { side: 'restaurant', text: r.reply_text, at: r.reply_created_at || null, by: text(r.reply_by_name) } : null,
-          text(r.taster_reply_text) ? { side: 'guest', text: r.taster_reply_text, at: r.taster_reply_created_at || null } : null,
-          text(r.reply2_text) ? { side: 'restaurant', text: r.reply2_text, at: r.reply2_created_at || null, by: text(r.reply2_by_name) } : null,
+          text(r.reply_text) ? { side: 'restaurant', turn: 'reply', text: r.reply_text, at: r.reply_created_at || null, by: text(r.reply_by_name),
+            edited: !!(edOf[r.id] && edOf[r.id].reply_edited_at), canEdit: mayChange(edOf[r.id] && edOf[r.id].reply_by),
+            canDelete: mayChange(edOf[r.id] && edOf[r.id].reply_by) && !text(r.taster_reply_text) } : null,
+          text(r.taster_reply_text) ? { side: 'guest', turn: 'answer', text: r.taster_reply_text, at: r.taster_reply_created_at || null,
+            edited: !!(edOf[r.id] && edOf[r.id].taster_reply_edited_at) } : null,
+          text(r.reply2_text) ? { side: 'restaurant', turn: 'reply2', text: r.reply2_text, at: r.reply2_created_at || null, by: text(r.reply2_by_name),
+            edited: !!(edOf[r.id] && edOf[r.id].reply2_edited_at), canEdit: mayChange(edOf[r.id] && edOf[r.id].reply2_by),
+            canDelete: mayChange(edOf[r.id] && edOf[r.id].reply2_by) } : null,
         ].filter(Boolean),
       };
     }),

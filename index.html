@@ -591,6 +591,7 @@
 <script src="/taster.js"></script>
 <script src="/dishes.js"></script>
 <script src="/stars.js"></script>
+<script src="/tastings.js"></script>
 
 <script>
 // ── SUPABASE CLIENT ──
@@ -876,78 +877,10 @@ function tastingThumbErr(img,emoji){if(hfImgBack(img))return;const d=document.cr
 // r53c: after the author deletes a review here, the list is drawn again; the bell's link may open one conversation.
 var HF_TALK_AT=null;
 function hfAfterDelete(){loadMyTastings();}
-async function loadMyTastings(){
-  const list=document.getElementById('tastings-list');
-  list.innerHTML='<div class="no-reviews">Loading…</div>';
-  try{
-    // r53c: which reviews have a conversation with the restaurant (and whether deleting is there: migration 38)
-    await hfTalksLoad().catch(()=>null);
-    const{ok,data}=await hfKept(sbFetch,`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
-    if(!ok||!data.length){
-      list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
-      return;
-    }
-    const pins=getPins();
-    // r53: a review the restaurant hid shows here with why; the bell's notices about it are read now
-    const hid=data.some(r=>r.hidden_at)?await hfMyHidden(true):{};
-    hfHiddenSeen();
-    if(!DISHES.length&&typeof HF_DISHES_P!=='undefined'&&HF_DISHES_P)await HF_DISHES_P.catch(()=>null);   // r58: the dishes' names first (they may still be on their way)
-    // r60 (24 Nov): a dish rated at another restaurant shows with its own name, photo and restaurant (not "Dish #8"),
-    // and opens that restaurant's menu; this website's dishes as before.
-    const T=HF_TASTE||{dishes:{},restaurants:{}};
-    const siteId=(window.HF_SITE&&HF_SITE.id)||1;
-    const rows=data.map(r=>{
-      const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const here=r.restaurant_id==null||Number(r.restaurant_id)===Number(siteId);
-      const dishEntry=here?Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id):null;
-      const known=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
-      const far=T.dishes[r.dish_id]||null;
-      const dishInfo=known||(far?{name:far.name,img:far.img,emoji:far.emoji||'🍽️'}:null);
-      const dishId=dishEntry?dishEntry[0]:null;
-      const place=(T.restaurants[r.restaurant_id]&&T.restaurants[r.restaurant_id].name)||(here?((window.HF_SITE&&HF_SITE.name)||'The restaurant'):'Another restaurant');
-      const away=!dishId&&far&&far.slug?tastingAwayLink(r.restaurant_id,far.slug):null;
-      return{r,score,dishInfo,dishId,place,away,pinned:!!(dishId&&pins.includes(dishId))};
-    });
-    rows.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
-    list.innerHTML=rows.map(({r,score,dishInfo,dishId,place,away,pinned})=>{
-      const rawName=dishInfo?dishInfo.name:('Dish #'+r.dish_id), dishName=hfEsc(rawName);
-      const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-      const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:away?` onclick="window.location.href=this.dataset.away" data-away="${hfEsc(away)}" style="cursor:pointer;"`:'';
-      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${hfEsc(dishInfo.img)}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
-      const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
-      // r53c: a conversation about a review shown again (or the team's): it can still be read from here
-      const talkOnly=!r.hidden_at||(hid[r.id]&&hid[r.id].team)?(HF_TALKS[r.id]?`<div onclick="event.stopPropagation()">${hfTalkButton(r.id,'Messages with '+place)}<div class="hf-talk" id="hf-talk-${r.id}" hidden></div></div>`:''):'';
-      // r53c: only the author deletes their review (kept for the record; the window says so). After migration 38.
-      const del=HF_TALK_READY===true?hfDeleteButton(r.id,JSON.stringify({dish:rawName,img:dishInfo&&dishInfo.img?hfImgSrc(dishInfo.img,96):null,score:Number(score),date:new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})})):'';
-      return`<div class="review-item tasting-item"${clickAttr}>
-        ${pinBtn}
-        <div class="tasting-main">
-          <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
-          <div class="review-text brand-red-text tasting-place">${hfEsc(place)}</div>
-          <div class="review-date">${date}</div>
-          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):hfWaiting(r)?hfWaitNote(r):''}
-          ${talkOnly}
-          ${del}
-        </div>
-      </div>`;
-    }).join('');
-    // r53c: the bell's link opens that conversation
-    if(HF_TALK_AT&&document.getElementById('hf-talk-'+HF_TALK_AT)){hfTalkToggle(HF_TALK_AT,true);}
-    HF_TALK_AT=null;
-  }catch(e){
-    list.innerHTML='<div class="no-reviews">Could not load your tastings.</div>';
-  }
-}
+// r62 (24 Nov 2026): My Tastings is drawn by tastings.js — design C (Sebastian's choice, 08:38) and Edit — the same as on the menu page.
+async function loadMyTastings(){ return hfLoadTastings({ open: viewTastingDish }); }
 function viewTastingDish(dishId){
   window.location.href='/menu?dish='+encodeURIComponent(dishId);
-}
-// r60: a dish of another restaurant opens on that restaurant's own website (the test bench: ?site= on this one)
-function tastingAwayLink(rid, slug){
-  const key=window.HF_SITE_KEYS&&HF_SITE_KEYS[rid];
-  const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  if(local&&key)return '/menu?site='+encodeURIComponent(key)+'&dish='+encodeURIComponent(slug);
-  const site=HF_TASTE&&HF_TASTE.restaurants[rid]&&HF_TASTE.restaurants[rid].site;
-  return site?site+'/menu?dish='+encodeURIComponent(slug):null;
 }
 
 // ── LUCKY BITE ──

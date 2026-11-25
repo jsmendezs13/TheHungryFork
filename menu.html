@@ -655,11 +655,15 @@
   /* r53c: every rating of this dish by this account, each with Delete */
   .rv-your-many { text-align:left; }
   .rv-your-many .rv-your-label { text-align:center; }
-  .rv-your-row { display:flex; align-items:center; gap:.6rem; padding:.42rem 0; border-top:1px solid var(--border); }
+  .rv-your-row { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .6rem; padding:.42rem 0; border-top:1px solid var(--border); }
+  .rv-your-btns { display:inline-flex; gap:.35rem; flex:none; margin-left:auto; }   /* r62: Edit | Delete; on a narrow phone they go under the date */
   .rv-your-row:first-of-type { border-top:none; }
   .rv-your-row .rv-your-stars { justify-content:flex-start; gap:2px; }
+  .rv-your-row .rv-your-edit { font-family:var(--sans,system-ui); font-size:.72rem; font-weight:600; background:none; border:1px solid #B01015; color:#B01015; border-radius:999px; padding:.28rem .75rem; display:inline-flex; gap:.35rem; align-items:center; cursor:pointer; }
+  .rv-your-row .rv-your-edit svg { width:13px; height:13px; }
+  html[data-site="havana"] .rv-your-row .rv-your-edit { color:#2D0077; border-color:#2D0077; }
   .rv-your-row .rv-your-stars svg { width:15px; height:15px; }
-  .rv-your-row .review-date { flex:1; margin:0; white-space:nowrap; }
+  .rv-your-row .review-date { flex:1 1 auto; margin:0; white-space:nowrap; }
   .rv-your-row .review-date { min-width:0; }
   .rv-your-wait { display:block; white-space:normal; font-size:.72rem; line-height:1.3; color:#8A6A12; }   /* r54: on its own line, so Delete stays in the box */
   .rv-your-hint { font-family:var(--sans); font-size:.72rem; color:var(--muted,#8A7B6E); text-align:center; margin-top:.35rem; }
@@ -1385,6 +1389,7 @@
 <script src="/taster.js"></script>
 <script src="/dishes.js"></script>
 <script src="/stars.js"></script>
+<script src="/tastings.js"></script>
 
 <script>
 // ── SUPABASE CLIENT ──
@@ -1416,14 +1421,14 @@ const CATEGORIES=[{key:'starters',label:'Appetizers'},{key:'entree',label:'Entr�
 const MENU_BASE=['chefs-pick','starters','entree','salads','sides','desserts'];
 const TOP_KEYS={'top-starters':'starters','top-entree':'entree','top-salads':'salads','top-drinks':'drinks'};
 const MAIN_TOPS=['top-starters','top-entree','top-salads'];
-const DRINK_CAVES={'wines':['wine'],'cocktails':['cocktail'],'beers':['beer'],'spirits':['gin','whiskey','tequila','vodka','rum','spirit'],'shots':['shot']};   // r40: Shots
-const DRINK_KIND_ORDER=['wine','cocktail','beer','gin','whiskey','tequila','vodka','rum','spirit','shot'];
-const KIND_LABEL={wine:'Wine',cocktail:'Cocktail',beer:'Beer',gin:'Gin',whiskey:'Whiskey',tequila:'Tequila',vodka:'Vodka',rum:'Rum',spirit:'Spirit',shot:'Shot'};
+const DRINK_CAVES={'wines':['wine'],'cocktails':['cocktail'],'frozen':['frozen'],'beers':['beer'],'spirits':['gin','whiskey','tequila','vodka','rum','spirit'],'shots':['shot'],'party':['party']};   // r40: Shots; r61 (24 Nov, Sebastian: "separar los frozen de los cócteles … las torres, la cubeta y la pitcher … party drinks")
+const DRINK_KIND_ORDER=['wine','cocktail','frozen','beer','gin','whiskey','tequila','vodka','rum','spirit','shot','party'];
+const KIND_LABEL={wine:'Wine',cocktail:'Cocktail',frozen:'Frozen',beer:'Beer',gin:'Gin',whiskey:'Whiskey',tequila:'Tequila',vodka:'Vodka',rum:'Rum',spirit:'Spirit',shot:'Shot',party:'Party Drink'};
 let RING='main';
 let CATEGORY_ORDER=MENU_BASE.concat(MAIN_TOPS);
 const WARP_META={'chefs-pick':{label:"Chef's Pick",emoji:'\u{1F468}\u200D\u{1F373}'},'starters':{label:'Appetizers',emoji:'\u{1F357}'},'entree':{label:'Entr\u00e9es',emoji:'\u{1F969}'},'salads':{label:'Salads',emoji:'\u{1F957}'},'sides':{label:'Sides',emoji:'\u{1F35F}'},'drinks':{label:'Drinks',emoji:'\u{1F964}'},
   'desserts':{label:'Desserts',emoji:'\u{1F370}'},'bartenders-pick':{label:"Bartender's Pick",emoji:'\u{1F378}'},'wines':{label:'Wines',emoji:'\u{1F377}'},
-  'happy-hour':{label:'Happy Hour',emoji:'\u{1F37B}'},'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'shots':{label:'Shots',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},
+  'happy-hour':{label:'Happy Hour',emoji:'\u{1F37B}'},'cocktails':{label:'Cocktails',emoji:'\u{1F379}'},'beers':{label:'Beers',emoji:'\u{1F37A}'},'spirits':{label:'Spirits',emoji:'\u{1F943}'},'shots':{label:'Shots',emoji:'\u{1F943}'},'drinks-other':{label:'More Drinks',emoji:'\u{1F964}'},'frozen':{label:'Frozen Drinks',emoji:'\u{1F9CA}'},'party':{label:'Party Drinks',emoji:'\u{1F37E}'},
   'top-starters':{label:'Top Rated Appetizers',short:'Appetizers',emoji:'\u{1F357}',top:true},'top-entree':{label:'Top Rated Entr\u00e9es',short:'Entr\u00e9es',emoji:'\u{1F969}',top:true},
   'top-salads':{label:'Top Rated Salads',short:'Salads',emoji:'\u{1F957}',top:true},'top-drinks':{label:'Top Rated Drinks',short:'Drinks',emoji:'\u{1F964}',top:true}};
 // Havana (19 Nov): a restaurant's own names for the parts of its menu (site.js), e.g. "Aperitivos" for the appetizers.
@@ -2382,12 +2387,9 @@ function warpInit(){
   caveCatInit();
 }
 
-// r39: in the drinks' carousel, the arrow at the top goes back to the menu's carousel (not to the home page).
-document.addEventListener('click',e=>{
-  const a=e.target.closest&&e.target.closest('.menu-home');
-  if(!a||RING!=='drinks'||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
-  e.preventDefault();closeDrinksRing();
-});
+// r39 had the arrow at the top of the drinks' carousel go back to the food's carousel. r61 (24 Nov 2026, Sebastian: "when I
+// go back from the drinks it takes me to the food menu and I don't like it — let it take me to the home page, as the food
+// menu does"): the arrow goes home from the drinks too; "Back to the menu" under the drinks still brings the food.
 
 // ── THE MENU'S DESIGN (23 Nov 2026, Sebastian 03:58 … 04:41) ──
 // Manager → Menu → Menu design: how guests look through the food menu and the drinks, each chosen apart.
@@ -2966,7 +2968,7 @@ async function submitRating(){
 //   4. the restaurant has the last word, once
 //   ── closed ──
 //
-// Nothing here can be edited or taken down once it is posted. There are no
+// (r62: each turn can now be edited by its writer — tastings.js, api/_lib/reviewedit.js.) Before r62: there are no
 // Edit buttons and no way to save an empty reply over one already written —
 // /api/review-reply refuses both, and this screen does not offer either.
 //
@@ -2989,14 +2991,37 @@ function nextTurn(r){
 // reviewerLabel(), which escapes the name and the handle itself and returns
 // markup (the handle is a <span>), so escaping it a second time here would
 // print the tags as text.
-function replyBlock(text,at,whoHtml,cls){
+function replyBlock(text,at,whoHtml,cls,edited,ctl){
   if(!filledText(text)) return '';
   let when='';
   try{ when = at ? new Date(at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''; }catch(e){}
   return `<div class="review-reply ${cls}">
-    <div class="review-reply-who">${whoHtml}${when?`<span class="review-reply-when">${when}</span>`:''}</div>
-    ${hfEsc(text)}
+    <div class="review-reply-who">${whoHtml}${when?`<span class="review-reply-when">${when}${edited?' · Edited':''}</span>`:edited?'<span class="review-reply-when">Edited</span>':''}</div>
+    <div class="rr-text">${hfEsc(text)}</div>${ctl||''}
   </div>`;
+}
+// r62 (24 Nov 2026): Edit / Delete under a turn, for whoever may change it (the server decides; this only draws).
+//   a reply in the restaurant's name: the team who can reply here — the owner and Sebastian any, a manager their own
+//   (and a crew member's); the guest's answer: the guest. Delete only while nobody has answered after it.
+//   Nothing before migration 45 (the review has no edited_at).
+function replyCtl(r, part, ctx){
+  if(!ctx || !('edited_at' in r)) return '';
+  const me = currentTaster ? String(currentTaster.id) : '';
+  let can = false, del = false;
+  if(part === 'answer'){ can = !!ctx.isGuest; del = !filledText(r.reply2_text); }
+  else {
+    const by = part === 'reply' ? r.reply_by : r.reply2_by;
+    del = part === 'reply2' || !filledText(r.taster_reply_text);
+    if(!ctx.canReply) return '';
+    // the writer and Sebastian: at once; an owner or a manager: the server says whose replies (hfRrAsk, tastings.js)
+    if(!(MY_LEVEL >= 4 || (!!me && String(by) === me)))
+      return `<div class="rr-ctl" data-review="${Number(r.id)}" data-part="${part}" data-ask="1" hidden><button type="button" onclick="hfReplyEditOpen(this)">Edit</button>`
+        + (del ? '<button type="button" onclick="hfReplyDeleteAsk(this)">Delete</button>' : '') + '</div>';
+    can = true;
+  }
+  if(!can) return '';
+  return `<div class="rr-ctl" data-review="${Number(r.id)}" data-part="${part}"><button type="button" onclick="hfReplyEditOpen(this)">Edit</button>`
+    + (del ? '<button type="button" onclick="hfReplyDeleteAsk(this)">Delete</button>' : '') + '</div>';
 }
 
 // Turns 2, 3 and 4 in order.
@@ -3007,11 +3032,11 @@ function replyBlock(text,at,whoHtml,cls){
 // (Javiera_I)" at the top became "JAVIERA CABEZAS" in her reply: no handle,
 // different case, and it read as a second person. One function now, so the
 // two can never drift apart again.
-function replyBlocks(r){
+function replyBlocks(r, ctx){
   const restaurant = hfEsc(RESTAURANT_NAME);
-  return replyBlock(r.reply_text,        r.reply_created_at,        restaurant,       'from-restaurant')
-       + replyBlock(r.taster_reply_text, r.taster_reply_created_at, reviewerLabel(r), 'from-guest')
-       + replyBlock(r.reply2_text,       r.reply2_created_at,       restaurant,       'from-restaurant');
+  return replyBlock(r.reply_text,        r.reply_created_at,        restaurant,       'from-restaurant', r.reply_edited_at,        replyCtl(r, 'reply', ctx))
+       + replyBlock(r.taster_reply_text, r.taster_reply_created_at, reviewerLabel(r), 'from-guest',      r.taster_reply_edited_at, replyCtl(r, 'answer', ctx))
+       + replyBlock(r.reply2_text,       r.reply2_created_at,       restaurant,       'from-restaurant', r.reply2_edited_at,       replyCtl(r, 'reply2', ctx));
 }
 
 // The reply box, for whoever's turn it is — and nothing at all for anyone
@@ -3036,7 +3061,7 @@ function replyTail(r, canReply, isGuest, idPrefix, onclick){
   return `<div class="review-reply-form">
     <textarea class="reply-textarea" id="${idPrefix}-${r.id}" placeholder="${hint}"></textarea>
     <button class="reply-btn" id="${idPrefix}-btn-${r.id}" onclick="${onclick}">${label}</button>
-    <div class="rv-reply-cap">Once posted this cannot be changed or removed.</div>
+    <div class="rv-reply-cap">${'edited_at' in r ? 'You can edit it later.' : 'Once posted this cannot be changed or removed.'}</div>
   </div>`;
 }
 
@@ -3054,6 +3079,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
     const hidMine=(ok&&Array.isArray(data)&&data.some(r=>r.hidden_at))?await hfMyHidden():{};
     const list=document.getElementById(listId);
     const label=document.getElementById(labelId);
+    HF_REPLY_RELOAD = () => loadReviews(dishId,restaurantId,listId,labelId);        // r62: after an edit
     if(!ok||!data.length){
       label.textContent='Reviews (0)';
       list.innerHTML='<div class="no-reviews">No reviews yet. Be the first!</div>';
@@ -3067,18 +3093,35 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
       const name=reviewerLabel(r);
       const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       const isGuest = !!(currentTaster && String(r.taster_id) === String(currentTaster.id));
-      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId, r.id) : hfWaiting(r) ? hfWaitNote(r) : replyBlocks(r)
+      HF_REVIEW_ROWS[r.id] = r;
+      const replyHtml = r.hidden_at ? hfHiddenNote(hidMine[r.id], restaurantId, r.id) : hfWaiting(r) ? hfWaitNote(r) : replyBlocks(r, { canReply, isGuest })
         + replyTail(r, canReply, isGuest, 'reply-input',
             `postReply(${r.id},'${dishId}',${restaurantId},'${listId}','${labelId}')`);
       return`<div class="review-item${r.hidden_at?' hf-hidden':''}${hfWaiting(r)?' hf-waiting':''}">
         <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
-        <div class="review-date">${date}</div>
+        <div class="review-date">${date}${r.edited_at?' · Edited':''}</div>
+        ${isGuest && ('edited_at' in r) ? `<button type="button" class="rr-mine-edit" onclick="hfTcEditRow(${Number(r.id)})">Edit my rating</button>` : ''}
         ${replyHtml}
       </div>`;
     }).join('');
+    if(typeof hfRrAsk === 'function') hfRrAsk();                                                     // r62
   }catch(e){}
 }
+
+// r62: a review changed (Edit, or a reply edited / deleted): the panel's copy takes the new one; the lists draw again.
+var HF_REVIEW_ROWS = {}, HF_REPLY_RELOAD = null;
+function hfReviewChanged(row){
+  if(row && row.id != null){
+    const i = rvData.findIndex(x => String(x.id) === String(row.id));
+    if(i >= 0) rvData[i] = Object.assign({}, rvData[i], row);
+    HF_REVIEW_ROWS[row.id] = Object.assign({}, HF_REVIEW_ROWS[row.id] || {}, row);
+  }
+  const panel = document.getElementById('rv-list');
+  if(panel && panel.offsetParent) rvRenderList();
+  if(typeof HF_REPLY_RELOAD === 'function') HF_REPLY_RELOAD();
+}
+function hfAfterEdit(row){ hfReviewChanged(row); }
 
 // ── TAKING A TURN ──
 async function postReply(reviewId,dishId,restaurantId,listId,labelId){
@@ -3294,6 +3337,7 @@ function rvRender(){
   // r53c: every rating of this dish by this account (rating again adds one), newest first, each with Delete
   const mineAll=currentTaster?rvData.filter(r=>r.taster_id===currentTaster.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)):[];
   const mine=mineAll[0]||null;
+  mineAll.forEach(m=>{ HF_REVIEW_ROWS[m.id] = m; });                                    // r62: Edit starts from it
   if(mineAll.length>1||(mine&&HF_TALK_READY===true)){
     const dishName=(DISHES.find(d=>d.id===currentDishId)||{}).name||'This dish';
     const img=(DISHES.find(d=>d.id===currentDishId)||{}).img||null;
@@ -3301,7 +3345,9 @@ function rvRender(){
       +mineAll.map(m=>{
         const day=new Date(m.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
         return `<div class="rv-your-row"><span class="rv-your-stars">${rvStarsInline(Math.round(rvScore(m)))}</span><span class="review-date">${day}${m.hidden_at?' · hidden':hfWaiting(m)?'<span class="rv-your-wait">waiting to appear</span>':''}</span>`
-          +(HF_TALK_READY===true?`<button type="button" class="hf-del-btn" onclick="event.stopPropagation();hfReviewDelete(${Number(m.id)},${hfEsc(JSON.stringify({dish:dishName,img:img?hfImgSrc(img,96):null,score:Number(rvScore(m).toFixed(1)),date:day}))},hfAfterDelete)">${HF_TRASH}Delete</button>`:'')+'</div>';
+          +'<span class="rv-your-btns">'                                                          // r62: Edit beside Delete
+          +(('edited_at' in m)?`<button type="button" class="rv-your-edit" onclick="event.stopPropagation();hfTcEditRow(${Number(m.id)})">${HF_TC_PENCIL}Edit</button>`:'')
+          +(HF_TALK_READY===true?`<button type="button" class="hf-del-btn" onclick="event.stopPropagation();hfReviewDelete(${Number(m.id)},${hfEsc(JSON.stringify({dish:dishName,img:img?hfImgSrc(img,96):null,score:Number(rvScore(m).toFixed(1)),date:day}))},hfAfterDelete)">${HF_TRASH}Delete</button>`:'')+'</span></div>';
       }).join('')
       +(mineAll.length>1?'<div class="rv-your-hint">Rating again adds a new rating. Every rating counts.</div>':'')+'</div>';
   }else if(mine){
@@ -3326,6 +3372,7 @@ function rvRenderList(){
   // which is where anyone actually reads them, saw no way to answer.
   const canReply = MY_LEVEL >= 2;
 
+  arr.forEach(r=>{ HF_REVIEW_ROWS[r.id] = r; });                                    // r62
   list.innerHTML=arr.map(r=>{
     const name=reviewerLabel(r);
     const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
@@ -3334,16 +3381,18 @@ function rvRenderList(){
     return`<div class="review-item${r.hidden_at?' hf-hidden':''}${hfWaiting(r)?' hf-waiting':''}">
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
       ${(!rvFull&&r.dish_comment)?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
-      <div class="review-date">${date}</div>
+      <div class="review-date">${date}${r.edited_at?' · Edited':''}</div>
+      ${isGuest && ('edited_at' in r) ? `<button type="button" class="rr-mine-edit" onclick="hfTcEditRow(${Number(r.id)})">Edit my rating</button>` : ''}
       ${rvFull?rvFullBlock(r):''}
-      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID, r.id):hfWaiting(r)?hfWaitNote(r):replyBlocks(r)+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
+      ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID, r.id):hfWaiting(r)?hfWaitNote(r):replyBlocks(r, { canReply, isGuest })+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
     </div>`;
   }).join('');
+  if(typeof hfRrAsk === 'function') hfRrAsk();                                                       // r62
 }
 
 // Taking a turn from the panel. An empty box does nothing — the API refuses an
 // empty reply, because "save nothing over it" would be a way to delete
-// something already said, and nothing here can be taken back.
+// something already said (r62: Edit and Delete do that openly, and keep the earlier version).
 async function rvPostReply(reviewId){
   const box=document.getElementById('rv-reply-'+reviewId);
   const btn=document.getElementById('rv-reply-btn-'+reviewId);
@@ -3411,75 +3460,11 @@ function togglePin(e,id){
 }
 function tastingThumbErr(img,emoji){if(hfImgBack(img))return;const d=document.createElement('div');d.className='tasting-thumb tasting-thumb-emoji';d.textContent=emoji;img.replaceWith(d);}
 
-async function loadMyTastings(){
-  const list=document.getElementById('tastings-list');
-  list.innerHTML='<div class="no-reviews">Loading…</div>';
-  try{
-    // r53c: which reviews have a conversation with the restaurant (and whether deleting is there: migration 38)
-    await hfTalksLoad().catch(()=>null);
-    const{ok,data}=await hfKept(sbFetch,`/rest/v1/reviews?taster_id=eq.${currentTaster.id}&select=*&order=created_at.desc`);
-    if(!ok||!data.length){
-      list.innerHTML='<div class="no-reviews">No tastings yet — go rate a dish!</div>';
-      return;
-    }
-    const pins=getPins();
-    // r53: a review the restaurant hid shows here with why; the bell's notices about it are read now
-    const hid=data.some(r=>r.hidden_at)?await hfMyHidden(true):{};
-    hfHiddenSeen();
-    if(!DISHES.length&&typeof HF_DISHES_P!=='undefined'&&HF_DISHES_P)await HF_DISHES_P.catch(()=>null);   // the dishes' names first
-    // r60b (24 Nov 07:44, his My Tastings on the menu page): the same as the home page — another restaurant's dish by its
-    // own name, photo and restaurant (not "Dish #32"), a tap opens that restaurant's menu; this website's dishes as before.
-    const T=HF_TASTE||{dishes:{},restaurants:{}};
-    const siteId=(window.HF_SITE&&HF_SITE.id)||1;
-    const rows=data.map(r=>{
-      const score=((r.flavor+r.worth_every_bite+r.signature_style)/3).toFixed(1);
-      const here=r.restaurant_id==null||Number(r.restaurant_id)===Number(siteId);
-      const dishEntry=here?Object.entries(DISH_ID_MAP).find(([k,v])=>v===r.dish_id):null;
-      const known=dishEntry?DISHES.find(d=>d.id===dishEntry[0]):null;
-      const far=T.dishes[r.dish_id]||null;
-      const dishInfo=known||(far?{name:far.name,img:far.img,emoji:far.emoji||'🍽️'}:null);
-      const dishId=dishEntry?dishEntry[0]:null;
-      const place=(T.restaurants[r.restaurant_id]&&T.restaurants[r.restaurant_id].name)||(here?((window.HF_SITE&&HF_SITE.name)||'The restaurant'):'Another restaurant');
-      const away=!dishId&&far&&far.slug?tastingAwayLink(r.restaurant_id,far.slug):null;
-      return{r,score,dishInfo,dishId,place,away,pinned:!!(dishId&&pins.includes(dishId))};
-    });
-    rows.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
-    list.innerHTML=rows.map(({r,score,dishInfo,dishId,place,away,pinned})=>{
-      const rawName=dishInfo?dishInfo.name:('Dish #'+r.dish_id), dishName=hfEsc(rawName);
-      const date=new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-      const clickAttr=dishId?` onclick="viewTastingDish('${dishId}')" style="cursor:pointer;"`:away?` onclick="window.location.href=this.dataset.away" data-away="${hfEsc(away)}" style="cursor:pointer;"`:'';
-      const thumb=dishInfo&&dishInfo.img?`<img class="tasting-thumb" src="${hfImgSrc(dishInfo.img,48)}" data-orig="${hfEsc(dishInfo.img)}" alt="" onerror="tastingThumbErr(this,'${dishInfo.emoji}')">`:`<div class="tasting-thumb tasting-thumb-emoji">${dishInfo?dishInfo.emoji:'🍽️'}</div>`;
-      const pinBtn=dishId?`<button class="pin-btn${pinned?' pinned':''}" onclick="togglePin(event,'${dishId}')" title="Save this dish" aria-label="Pin">${PIN_SVG}</button>`:'';
-      // r53c: a conversation about a review shown again (or the team's) can still be read from here; Delete (the author)
-      const talkOnly=!r.hidden_at||(hid[r.id]&&hid[r.id].team)?(HF_TALKS[r.id]?`<div onclick="event.stopPropagation()">${hfTalkButton(r.id,'Messages with '+place)}<div class="hf-talk" id="hf-talk-${r.id}" hidden></div></div>`:''):'';
-      const del=HF_TALK_READY===true?hfDeleteButton(r.id,JSON.stringify({dish:rawName,img:dishInfo&&dishInfo.img?hfImgSrc(dishInfo.img,96):null,score:Number(score),date:new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})})):'';
-      return`<div class="review-item tasting-item"${clickAttr}>
-        ${pinBtn}
-        <div class="tasting-main">
-          <div class="review-header"><span class="reviewer-name">${dishName}</span>${thumb}<span class="review-stars">${TASTING_STAR} ${score}</span></div>
-          <div class="review-text brand-red-text tasting-place">${hfEsc(place)}</div>
-          <div class="review-date">${date}</div>
-          ${r.hidden_at?hfHiddenNote(hid[r.id], r.restaurant_id, r.id):hfWaiting(r)?hfWaitNote(r):''}
-          ${talkOnly}
-          ${del}
-        </div>
-      </div>`;
-    }).join('');
-  }catch(e){
-    list.innerHTML='<div class="no-reviews">Could not load your tastings.</div>';
-  }
-}
+// r62 (24 Nov 2026): My Tastings is drawn by tastings.js — design C (Sebastian's choice, 08:38) and Edit — the same as on the home page.
+async function loadMyTastings(){ return hfLoadTastings({ open: viewTastingDish }); }
 function viewTastingDish(dishId){
   closeMyTastings();
   caveOpenDish(dishId);
-}
-// r60b: a dish of another restaurant opens on that restaurant's own website (the test bench: ?site= on this one)
-function tastingAwayLink(rid, slug){
-  const key=window.HF_SITE_KEYS&&HF_SITE_KEYS[rid];
-  const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  if(local&&key)return '/menu?site='+encodeURIComponent(key)+'&dish='+encodeURIComponent(slug);
-  const site=HF_TASTE&&HF_TASTE.restaurants[rid]&&HF_TASTE.restaurants[rid].site;
-  return site?site+'/menu?dish='+encodeURIComponent(slug):null;
 }
 
 // ── MAPS ──

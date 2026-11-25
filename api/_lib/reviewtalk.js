@@ -198,8 +198,10 @@ export async function tastingPlaces(tasterId) {
 async function mine(res, tasterId) {
   if (!(await allow(guestRead, keyFor('m' + tasterId), { failOpen: true }))) return res.status(429).json({ error: 'Too many requests. Wait a moment.' });
   const places = await tastingPlaces(tasterId).catch(() => null);                         // r60
+  const ed = await sb('/reviews?select=edited_at&limit=1');                                   // r62: Edit is there from migration 45
+  const editReady = ed.ok;
   const t = await sb(`/review_threads?taster_id=eq.${Number(tasterId)}&select=review_id,closed_at&limit=500`);
-  if (!t.ok) return res.status(200).json({ success: true, ready: false, threads: {}, places });      // before migration 38
+  if (!t.ok) return res.status(200).json({ success: true, ready: false, threads: {}, places, editReady });      // before migration 38
   const rows = Array.isArray(t.data) ? t.data : [];
   const out = {};
   if (rows.length) {
@@ -212,7 +214,7 @@ async function mine(res, tasterId) {
       if (!x.from_guest && !x.read_at) o.unread += 1;
     });
   }
-  return res.status(200).json({ success: true, ready: true, threads: out, places });
+  return res.status(200).json({ success: true, ready: true, threads: out, places, editReady });
 }
 
 function guestView(r, thread, list, place, dish, handles, fileOf) {
