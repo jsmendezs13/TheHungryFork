@@ -178,9 +178,10 @@
   }
   // The Google rating next to Fork's Rating. r64 (24 Nov 22:56: "put Google's stars there now, and if the person taps it,
   // take them to rate the restaurant directly"): live from Google (api/_lib/google.js), and a tap opens Google's "write a
-  // review" for Havana. 23:14 "say Google rating instead": the label is "Google rating"; Google's rules still want its
-  // numbers credited with the words "Google Maps" (exactly so: not in capitals, one line, 12–16 px, white), so they sit
-  // small under it. Until Google answers (or with no key in Vercel): only "Rate us on Google", never made-up numbers.
+  // review" for Havana. Google's rules want its numbers credited with the words "Google Maps" (exactly so: not in
+  // capitals, one line, 12–16 px, white). 25 Nov 01:00 (his pick "C"): one line, "Google Maps · 4.2 (504)", and Fork's
+  // in the same letters, "Fork's Rating · 5.0 (3)". Until Google answers (or with no key in Vercel): only "Rate us on
+  // Google", never made-up numbers.
   // Google's stars: the same five stars as Fork's Rating (a copy of its drawing), grey under, yellow over up to the score
   function stars(score) {
     var base = document.querySelector('.vh-rating-live svg.fork-stars');
@@ -195,6 +196,21 @@
     return '<span class="hv-gstars" aria-hidden="true">' + copy('rgba(255,255,255,.38)', 'hv-g-base')
       + copy('#F6D919', 'hv-g-fill').replace('<svg', '<svg style="clip-path:inset(0 ' + cut + '% 0 0)"') + '</span>';
   }
+  // Fork's line in Google's letters (25 Nov 01:00: "use the same font for Fork's Rating 5.0 (3)"): the name in Lato,
+  // the score in Havana's letters, and the count as Google's, "(3)" instead of "(3 ratings)".
+  function forkLine(cap) {
+    if (cap.querySelector('.hv-rate-name')) return;
+    var first = cap.firstChild;
+    if (first && first.nodeType === 3 && /Fork/.test(first.nodeValue)) {
+      var nm = document.createElement('span'); nm.className = 'hv-rate-name'; nm.textContent = first.nodeValue.trim();
+      cap.replaceChild(nm, first);
+    }
+    var num = cap.querySelector('#vh-rating-num'); if (!num) return;
+    num.classList.add('hv-rate-num');
+    var tidy = function () { var t = num.textContent, u = t.replace(/\s*ratings?\)/i, ')'); if (u !== t) num.textContent = u; };
+    tidy();
+    try { new MutationObserver(tidy).observe(num, { childList: true, characterData: true, subtree: true }); } catch (e) {}
+  }
   function google() {
     var g = S.google; if (!g || !g.review) return;
     var live = document.querySelector('.vh-rating-live'), cap = document.querySelector('.vh-rating-caption');
@@ -202,6 +218,7 @@
     var row = document.createElement('div'); row.className = 'hv-ratings';
     var fork = document.createElement('div'); fork.className = 'hv-rate hv-rate-fork';
     live.parentNode.insertBefore(row, live); fork.appendChild(live); fork.appendChild(cap); row.appendChild(fork);
+    forkLine(cap);
     row.insertAdjacentHTML('beforeend', '<a class="hv-rate hv-rate-google hv-g-plain" href="' + esc(g.review) + '" target="_blank" rel="noopener"'
       + ' aria-label="Rate ' + esc(S.name) + ' on Google"><span class="hv-rate-cap">Rate us on Google</span></a>');
     try {
@@ -214,8 +231,7 @@
           var s = Number(d.score), n = Number(d.count) || 0, num = s.toFixed(1), cnt = n ? n.toLocaleString('en-US') : '';
           a.classList.remove('hv-g-plain');
           a.setAttribute('aria-label', 'Google rating ' + num + ' out of 5' + (n ? ' from ' + cnt + ' reviews' : '') + ', from Google Maps. Tap to write a review on Google.');
-          a.innerHTML = stars(s) + '<span class="hv-rate-cap">Google rating<span> · ' + num + (n ? ' (' + cnt + ')' : '') + '</span></span>'
-            + '<span class="hv-g-attr">Google Maps</span>';
+          a.innerHTML = stars(s) + '<span class="hv-rate-cap"><span class="hv-rate-name">Google Maps</span><span class="hv-rate-num"> · ' + num + (n ? ' (' + cnt + ')' : '') + '</span></span>';
         }).catch(function () {});
     } catch (e) {}
   }

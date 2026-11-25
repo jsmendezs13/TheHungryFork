@@ -74,10 +74,14 @@ html[data-site="havana"] .hv-rate-google { padding-top: .35rem; }
 /* r64: before Google's numbers arrive (or with none): "Rate us on Google", no stars */
 html[data-site="havana"] .hv-g-plain { justify-content: center; min-height: 3.2rem; }
 html[data-site="havana"] .hv-g-plain .hv-rate-cap { margin-top: .15rem; }
-/* Google's credit for its numbers, as its rules ask: the words "Google Maps", as written (never in capitals), one line,
-   12–16 px, white (so not in Bebas, which has capitals only) */
-html[data-site="havana"] .hv-g-attr { font-family: 'Lato', system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none;
-  color: #fff; white-space: nowrap; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,.75); }
+/* 25 Nov (his pick "C"): one line each — "Google Maps · 4.2 (504)" and "Fork's Rating · 5.0 (3)". The names in Lato:
+   Google's rules want "Google Maps" as written (never in capitals), on one line, 12–16 px, white — Bebas has capitals only. */
+html[data-site="havana"] .hv-rate-name { font-family: 'Lato', system-ui, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0; text-transform: none;
+  color: #fff; white-space: nowrap; }
+html[data-site="havana"] .hv-rate-num, html[data-site="havana"] #vh-rating-num.hv-rate-num { letter-spacing: .08em; opacity: 1; white-space: nowrap; margin-left: .35em; }   /* the space before "·" (a line laid out in a row drops it) */
+html[data-site="havana"] .hv-ratings .hv-rate-name { letter-spacing: 0; }
+html[data-site="havana"] .hv-ratings .vh-rating-caption, html[data-site="havana"] .hv-rate-google .hv-rate-cap { display: flex; align-items: baseline; justify-content: center; white-space: nowrap; }
+@media (max-width: 600px) { html[data-site="havana"] .hv-rate-name { font-size: 14px; } }
 html[data-site="havana"] .hv-rate-cap { font-family: var(--hv-label); font-size: 1.05rem; letter-spacing: .2em; text-transform: uppercase; margin-top: .45rem;
   color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 12px rgba(0,0,0,.55); white-space: nowrap; }
 html[data-site="havana"] .hv-rate-cap span { letter-spacing: .08em; }
