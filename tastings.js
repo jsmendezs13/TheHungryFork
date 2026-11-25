@@ -70,7 +70,10 @@
     + '.tce-save[disabled]{opacity:.6;}'
     + '.tce-cancel{background:#fff;color:#2B211A;border:1.5px solid #D9CFC2;}'
     + 'html[data-site="havana"] .tce-save{background:#2D0077;border-color:#2D0077;}'
-    + 'html[data-site="havana"] .tce-stars button.on path{fill:#F6C915;}';
+    + 'html[data-site="havana"] .tce-stars button.on path{fill:#F6C915;}'
+    + '.tce-words{background:#F7F3EC;border-radius:12px;padding:9px 12px;font-size:.88rem;margin:4px 0 8px;white-space:pre-line;overflow-wrap:anywhere;}'   // r63
+    + 'html[data-site="havana"] .tce-words{background:#F5FAFE;}'
+    + '.tce-save.tce-del{background:#B01015;border-color:#B01015;}';
   try { var s = document.createElement('style'); s.id = 'hf-tastings-css'; s.textContent = css; (document.head || document.documentElement).appendChild(s); } catch (e) {}
 })();
 
@@ -295,6 +298,68 @@ async function hfRrAsk() {
   });
 }
 function hfRrForget(id) { if (id != null) delete HF_RR_ASKED[Number(id)]; else HF_RR_ASKED = {}; }
+// ── r63: the restaurant's rating — what the author said about the restaurant (Sebastian 22:22 → "only the restaurant part") ──
+// g = one entry of the list: { ids: [the evening's ratings], h, a, words }. Edit: Hospitality, Atmosphere & Vibe and the
+// words, for every rating of that evening; Delete: takes those away, the dish ratings stay.
+function hfRoomPlace() { return (window.HF_SITE && HF_SITE.name) || 'the restaurant'; }
+function hfRoomOver() {
+  var over = document.getElementById('tce-over');
+  if (!over) { over = document.createElement('div'); over.id = 'tce-over'; over.className = 'tce-over'; over.setAttribute('role', 'dialog'); over.setAttribute('aria-modal', 'true');
+    over.addEventListener('click', function (e) { if (e.target === over) hfTcEditClose(); }); document.body.appendChild(over); }
+  return over;
+}
+function hfRoomEdit(g) {
+  if (!g) return;
+  var over = hfRoomOver();
+  HF_TC.edit = { room: g.ids.slice(), scores: { hospitality: g.h || null, atmosphere_vibe: g.a || null } };
+  var star = '<svg viewBox="0 0 100 100"><path d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg>';
+  var html = '<div class="tce-box"><div class="tce-hd"><h3>Edit what you said</h3><button type="button" class="tce-x" aria-label="Close" onclick="hfTcEditClose()">✕</button></div><div class="tce-bd">'
+    + '<div class="tce-dish">' + hfEsc(hfRoomPlace()) + '</div>'
+    + '<div class="tce-note">' + (g.ids.length > 1 ? 'This changes it on the ' + g.ids.length + ' dishes you rated that day. ' : '')
+    + 'Your dish ratings stay as they are. It shows “Edited”, and the earlier version is kept privately.</div>'
+    + '<div class="tce-grp"><h4>About the restaurant</h4>';
+  [['hospitality', 'Hospitality', g.h], ['atmosphere_vibe', 'Atmosphere & Vibe', g.a]].forEach(function (k) {
+    var v = Number(k[2]) || 0;
+    html += '<div class="tce-row"><span>' + k[1] + '</span><div class="tce-stars" data-k="' + k[0] + '" role="radiogroup" aria-label="' + k[1] + '">';
+    for (var i = 1; i <= 5; i++) html += '<button type="button" class="' + (i <= v ? 'on' : '') + '" data-v="' + i + '" aria-label="' + i + ' star' + (i > 1 ? 's' : '') + '" onclick="hfTcStar(\'' + k[0] + '\',' + i + ')">' + star + '</button>';
+    html += '</div></div>';
+  });
+  html += '<textarea id="tce-restaurant_comment" maxlength="1500" placeholder="How was the restaurant?">' + hfEsc(g.words || '') + '</textarea></div>'
+    + '<div class="tce-err" id="tce-err"></div><div class="tce-btns"><button type="button" class="tce-cancel" onclick="hfTcEditClose()">Cancel</button>'
+    + '<button type="button" class="tce-save" id="tce-save" onclick="hfRoomSave()">Save</button></div></div></div>';
+  over.innerHTML = html; over.hidden = false;
+}
+async function hfRoomSave() {
+  var e = HF_TC.edit; if (!e || !e.room) return;
+  var btn = document.getElementById('tce-save'), err = document.getElementById('tce-err');
+  btn.disabled = true; btn.textContent = 'Saving…'; err.textContent = '';
+  var d = await hfRv({ action: 'my_room_edit', reviewIds: e.room, scores: { hospitality: e.scores.hospitality || null, atmosphere_vibe: e.scores.atmosphere_vibe || null },
+    restaurant_comment: document.getElementById('tce-restaurant_comment').value });
+  if (d.__status === 200 && d.success) { hfTcEditClose(); if (typeof hfRoomAfter === 'function') hfRoomAfter(); return; }
+  btn.disabled = false; btn.textContent = 'Save';
+  err.textContent = d.error || 'Could not save. Please try again.';
+}
+function hfRoomDeleteAsk(g) {
+  if (!g) return;
+  var over = hfRoomOver();
+  HF_TC.edit = { room: g.ids.slice(), scores: {} };
+  over.innerHTML = '<div class="tce-box"><div class="tce-hd"><h3>Delete what you said?</h3><button type="button" class="tce-x" aria-label="Close" onclick="hfTcEditClose()">✕</button></div><div class="tce-bd">'
+    + '<div class="tce-dish">' + hfEsc(hfRoomPlace()) + '</div>'
+    + '<div class="tce-words">“' + hfEsc(g.words || '') + '”</div>'
+    + '<div class="tce-note">Your words and your Hospitality and Atmosphere &amp; Vibe stars leave the page and stop counting'
+    + (g.ids.length > 1 ? ', on the ' + g.ids.length + ' dishes you rated that day' : '') + '. Your dish ratings stay. A private copy is kept.</div>'
+    + '<div class="tce-err" id="tce-err"></div><div class="tce-btns"><button type="button" class="tce-cancel" onclick="hfTcEditClose()">Keep it</button>'
+    + '<button type="button" class="tce-save tce-del" id="tce-save" onclick="hfRoomDelete()">Delete</button></div></div></div>';
+  over.hidden = false;
+}
+async function hfRoomDelete() {
+  var e = HF_TC.edit; if (!e || !e.room) return;
+  var btn = document.getElementById('tce-save'), err = document.getElementById('tce-err');
+  btn.disabled = true; err.textContent = '';
+  var d = await hfRv({ action: 'my_room_delete', reviewIds: e.room });
+  if (d.__status === 200 && d.success) { hfTcEditClose(); if (typeof hfRoomAfter === 'function') hfRoomAfter(); return; }
+  btn.disabled = false; err.textContent = d.error || 'Could not delete it. Please try again.';
+}
 // the author's own rating, from a dish's reviews
 function hfTcEditRow(id) {
   var r = window.HF_REVIEW_ROWS && HF_REVIEW_ROWS[id]; if (!r) return;

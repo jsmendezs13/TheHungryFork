@@ -11,6 +11,9 @@
 //   my_answer_delete  the author      …while the restaurant hasn't answered after it
 //   reply_edit        the team        a reply in the restaurant's name (turn 2 'reply' or 4 'reply2'), by the rule below
 //   reply_delete      the team        …while nobody has answered after it (the turn opens again)
+//   reply_rights      the team        which replies on screen this person may change (the menu page asks)
+//   my_room_edit      the author      r63: only what they said about the restaurant (two stars, the words), every rating of that evening
+//   my_room_delete    the author      r63: takes those away; the dish ratings stay
 //
 // Who may change a restaurant's reply (the restaurant's level comes from roles.js, this website's restaurant only):
 //   the writer, while they can still reply for the restaurant (manager and up)
@@ -40,7 +43,7 @@ const PARTS = {
   reply2:       { text: 'reply2_text',       at: 'reply2_created_at',       by: 'reply2_by', name: 'reply2_by_name', edited: 'reply2_edited_at' },
 };
 const filled = (v) => !!(v && String(v).trim());
-export const ACTIONS = ['my_review_edit', 'my_answer_edit', 'my_answer_delete', 'reply_edit', 'reply_delete', 'reply_rights'];
+export const ACTIONS = ['my_review_edit', 'my_answer_edit', 'my_answer_delete', 'reply_edit', 'reply_delete', 'reply_rights', 'my_room_edit', 'my_room_delete'];
 
 function cleanText(v, what) {
   if (v === null || v === undefined) return { value: null };
@@ -63,7 +66,7 @@ async function load(id) {
 // Keep the earlier version first; then change the review. Returns the saved row, or { status, error }.
 async function keepThenSave(row, part, action, old, patch, who) {
   const kept = await sb('/review_versions', {
-    method: 'POST', headers: { Prefer: 'return=minimal' },
+    method: 'POST', headers: { Prefer: 'return=representation' },
     body: JSON.stringify({ review_id: Number(row.id), restaurant_id: Number(row.restaurant_id), part, action,
                            by_id: Number(who.id), by_name: who.name || null, old }),
   });
@@ -71,7 +74,12 @@ async function keepThenSave(row, part, action, old, patch, who) {
   const saved = await sb(`/reviews?id=eq.${Number(row.id)}&deleted_at=is.null`, {
     method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(patch),
   });
-  if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) return { status: 502, error: 'Could not save that change. Please try again.' };
+  if (!saved.ok || !Array.isArray(saved.data) || !saved.data.length) {
+    // r63: nothing changed, so the kept copy goes too (a version only stands for a change that happened)
+    const vid = Array.isArray(kept.data) && kept.data[0] && kept.data[0].id;
+    if (vid) await sb(`/review_versions?id=eq.${Number(vid)}`, { method: 'DELETE' });
+    return { status: 502, error: 'Could not save that change. Please try again.' };
+  }
   const out = {};
   COLS.split(',').forEach((c) => { out[c] = saved.data[0][c]; });
   return { row: out };
@@ -127,6 +135,66 @@ async function replyRights(req, res, body, tasterId) {
   return res.status(200).json({ rights });
 }
 
+// r63 (24 Nov 2026, Sebastian 22:22: "in the restaurant rating there are no options, but we need them" → "Only the
+// restaurant part"): the restaurant's rating shows a guest's words once for an evening ("rated 3 dishes"), so these
+// take every rating of that evening. my_room_edit: Hospitality, Atmosphere & Vibe and the words; my_room_delete: takes
+// those three away and leaves the dish ratings. Each rating keeps its earlier version, as any edit.
+const ROOM = ['hospitality', 'atmosphere_vibe', 'restaurant_comment'];
+const MAX_ROOM = 20;
+async function roomChange(req, res, body, tasterId, action) {
+  const ids = [...new Set((Array.isArray(body.reviewIds) ? body.reviewIds : []).map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+  if (!ids.length) return res.status(400).json({ error: 'Which rating?' });
+  if (ids.length > MAX_ROOM) return res.status(400).json({ error: 'Too many ratings at once.' });
+  const rows = [];
+  for (const id of ids) {
+    const got = await load(id);
+    if (got.error) return res.status(got.status).json({ error: got.error });
+    if (Number(got.row.taster_id) !== Number(tasterId)) return res.status(403).json({ error: 'Only the person who wrote this can change it.' });
+    rows.push(got.row);
+  }
+  const rid = Number(rows[0].restaurant_id);
+  if (rows.some((r) => Number(r.restaurant_id) !== rid)) return res.status(400).json({ error: 'Those ratings are from different restaurants.' });
+  const want = {};
+  // the team's rule (migration 37): crew can't rate the restaurant where they work, and the database refuses any change
+  // to such a rating; deleting the whole rating (My Tastings) still works.
+  const crew = await sb(`/restaurant_roles?taster_id=eq.${Number(tasterId)}&restaurant_id=eq.${rid}&role=eq.crew&select=id&limit=1`);
+  if (crew.ok && Array.isArray(crew.data) && crew.data.length) {
+    return res.status(403).json({ error: 'You can\'t change a rating of the restaurant where you work while you\'re on its team. You can delete the whole rating in My Tastings.' });
+  }
+  if (action === 'my_room_edit') {
+    const scores = body.scores && typeof body.scores === 'object' ? body.scores : {};
+    for (const k of ['hospitality', 'atmosphere_vibe']) {
+      if (!(k in scores)) continue;
+      const v = scores[k];
+      if (v !== null && (!Number.isInteger(v) || v < 1 || v > 5)) return res.status(400).json({ error: 'Each rating is 1 to 5 stars.' });
+      want[k] = v;
+    }
+    if ('restaurant_comment' in body) {
+      const c = cleanText(body.restaurant_comment, 'What you say about the restaurant');
+      if (c.error) return res.status(400).json({ error: c.error });
+      want.restaurant_comment = c.value;
+    }
+  } else {
+    ROOM.forEach((k) => { want[k] = null; });
+  }
+  const now = new Date().toISOString(), who = { id: tasterId, name: null }, out = [];
+  let changed = 0;
+  for (const row of rows) {
+    const patch = {}, old = {};
+    for (const k of Object.keys(want)) {
+      const was = k === 'restaurant_comment' ? (row[k] || null) : (row[k] === null || row[k] === undefined ? null : Number(row[k]));
+      if (was !== want[k]) { patch[k] = want[k]; old[k] = row[k]; }
+    }
+    if (!Object.keys(patch).length) { out.push(row); continue; }
+    patch.edited_at = now;
+    const saved = await keepThenSave(row, 'review', 'edit', old, patch, who);
+    if (saved.error) return res.status(saved.status).json({ error: saved.error, done: changed });
+    out.push(saved.row); changed++;
+  }
+  console.log('[reviewedit] taster', tasterId, action === 'my_room_edit' ? 'edited' : 'took away', 'the restaurant part of', ids.join(','));
+  return res.status(200).json({ success: true, changed, reviews: out });
+}
+
 export async function reviewEdit(req, res, body, action) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
@@ -134,6 +202,7 @@ export async function reviewEdit(req, res, body, action) {
   if (!(await allow(editLimiter, keyFor('e' + tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many changes in a few minutes. Wait a moment and try again.' });
   }
+  if (action === 'my_room_edit' || action === 'my_room_delete') return roomChange(req, res, body, tasterId, action);   // r63
   const got = await load(body.reviewId);
   if (got.error) return res.status(got.status).json({ error: got.error });
   const row = got.row;

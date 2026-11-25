@@ -656,6 +656,9 @@
   .rv-your-many { text-align:left; }
   .rv-your-many .rv-your-label { text-align:center; }
   .rv-your-row { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .6rem; padding:.42rem 0; border-top:1px solid var(--border); }
+  .rr-mine { display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; margin:.35rem 0 .2rem; }   /* r63 */
+  .rr-mine .rr-mine-edit { margin:0; }
+  .rr-mine .rr-mine-del { padding:.28rem .8rem; }
   .rv-your-btns { display:inline-flex; gap:.35rem; flex:none; margin-left:auto; }   /* r62: Edit | Delete; on a narrow phone they go under the date */
   .rv-your-row:first-of-type { border-top:none; }
   .rv-your-row .rv-your-stars { justify-content:flex-start; gap:2px; }
@@ -3101,7 +3104,7 @@ async function loadReviews(dishId,restaurantId=RESTAURANT_ID,listId='reviews-lis
         <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars"><svg class="star-inline" viewBox="0 0 100 100"><path fill="currentColor" d="M50 4 L62 38 L98 38 L69 60 L80 95 L50 73 L20 95 L31 60 L2 38 L38 38 Z"/></svg> ${score}</span></div>
         ${r.dish_comment?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
         <div class="review-date">${date}${r.edited_at?' · Edited':''}</div>
-        ${isGuest && ('edited_at' in r) ? `<button type="button" class="rr-mine-edit" onclick="hfTcEditRow(${Number(r.id)})">Edit my rating</button>` : ''}
+        ${isGuest ? rvMineBtns(r, dishId) : ''}
         ${replyHtml}
       </div>`;
     }).join('');
@@ -3326,7 +3329,21 @@ function rvRenderSummary(){
 }
 
 // r53c: after the author deletes a rating here, the dish's ratings are read again.
+// r63 (Sebastian 22:22: "the option to edit exists, but not the option to delete; we need both"): under the author's own
+// review, Edit my rating and Delete side by side (Delete as in "Your rating" and My Tastings).
+function rvMineBtns(r, dishId){
+  const edit = ('edited_at' in r) ? `<button type="button" class="rr-mine-edit" onclick="hfTcEditRow(${Number(r.id)})">Edit my rating</button>` : '';
+  let del = '';
+  if(HF_TALK_READY === true){
+    const d = DISHES.find(x => x.id === dishId) || {};
+    const day = new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const sum = JSON.stringify({ dish: d.name || 'This dish', img: d.img ? hfImgSrc(d.img, 96) : null, score: Number(rvScore(r).toFixed(1)), date: day });
+    del = `<button type="button" class="hf-del-btn rr-mine-del" onclick="event.stopPropagation();hfReviewDelete(${Number(r.id)},${hfEsc(sum)},hfAfterDelete)">${HF_TRASH}Delete</button>`;
+  }
+  return edit || del ? `<div class="rr-mine">${edit}${del}</div>` : '';
+}
 function hfAfterDelete(){
+  if(typeof HF_REPLY_RELOAD === 'function') HF_REPLY_RELOAD();                                  // r63: the dish's own list too
   if(document.getElementById('reviews-modal')&&document.getElementById('reviews-modal').classList.contains('open'))openReviewsPanel();
   if(document.getElementById('tastings-modal')&&document.getElementById('tastings-modal').classList.contains('open'))loadMyTastings();
   caveRatings={};if(document.getElementById('cave').classList.contains('open'))renderCave();
@@ -3382,7 +3399,7 @@ function rvRenderList(){
       <div class="review-header"><span class="reviewer-name">${name}</span><span class="review-stars">${rvStarsInline(Math.round(rvScore(r)))}</span></div>
       ${(!rvFull&&r.dish_comment)?`<div class="review-text">${hfEsc(r.dish_comment)}</div>`:''}
       <div class="review-date">${date}${r.edited_at?' · Edited':''}</div>
-      ${isGuest && ('edited_at' in r) ? `<button type="button" class="rr-mine-edit" onclick="hfTcEditRow(${Number(r.id)})">Edit my rating</button>` : ''}
+      ${isGuest ? rvMineBtns(r, currentDishId) : ''}
       ${rvFull?rvFullBlock(r):''}
       ${r.hidden_at?hfHiddenNote(rvHidMine[r.id], RESTAURANT_ID, r.id):hfWaiting(r)?hfWaitNote(r):replyBlocks(r, { canReply, isGuest })+replyTail(r, canReply, isGuest, 'rv-reply', `rvPostReply(${r.id})`)}
     </div>`;

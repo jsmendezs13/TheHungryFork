@@ -249,6 +249,13 @@
   .fi-c-h .rv-srow { width:70px; height:auto; flex:none; }
   .fi-c-t { font-size:.8rem; line-height:1.5; color:var(--text); margin-top:.15rem; white-space:pre-wrap; word-break:break-word; }
   .fi-c-d { font-size:.66rem; color:var(--quiet); margin-top:.15rem; }
+  .fi-c-btns { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-top:.45rem; }   /* r63: the author's Edit | Delete */
+  .fi-c-btns button { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; border-radius:999px; padding:.38rem .5rem; font-family:var(--sans); font-weight:700; font-size:.74rem; cursor:pointer; background:#fff; }
+  .fi-c-btns button svg { width:13px; height:13px; }
+  .fi-c-btns .fi-edit { border:1.5px solid var(--red); color:var(--red); }
+  .fi-c-btns .fi-del { border:1.5px solid #D9CFC2; color:#6B5F55; }
+  html[data-site="havana"] .fi-c-btns .fi-edit { border-color:#2D0077; color:#2D0077; }
+  html[data-site="havana"] .fi-c-btns .fi-del { border-color:#C9CFD8; color:#5A6478; }
   .fi-more { background:none; border:none; color:var(--red); font-family:var(--sans); font-weight:600; font-size:.76rem; cursor:pointer; padding:.2rem 0; }
   .fi-none { font-family:var(--sans); font-size:.78rem; color:var(--quiet); }
 
@@ -981,8 +988,12 @@ async function fiSayLoad(){
   if(FI_SAY.rows || FI_SAY.loading) { fiSayRender(); return; }
   FI_SAY.loading = true;
   try{
-    const{ok,data}=await hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&restaurant_comment=not.is.null`   // r53: shown ones only
-      +'&select=id,taster_id,hospitality,atmosphere_vibe,restaurant_comment,reviewer_name,reviewer_username,created_at&order=created_at.desc&limit=600');
+    const q = (cols) => hfShown(sbFetch,`/rest/v1/reviews?restaurant_id=eq.${RESTAURANT_ID}&restaurant_comment=not.is.null`   // r53: shown ones only
+      +'&select='+cols+'&order=created_at.desc&limit=600');
+    const base = 'id,taster_id,hospitality,atmosphere_vibe,restaurant_comment,reviewer_name,reviewer_username,created_at';
+    let{ok,data}=await q(base+',edited_at');                                  // r63: Edit / Delete need migration 45
+    FI_SAY.editReady = !!ok;
+    if(!ok) ({ok,data}=await q(base));
     if(ok && Array.isArray(data)){
       // one entry per guest, visit day and words
       const seen = new Map();
@@ -991,17 +1002,25 @@ async function fiSayLoad(){
         if(!words) return;
         const key = r.taster_id + '|' + fiSayDay(r.created_at) + '|' + words.toLowerCase();
         const had = seen.get(key);
-        if(had){ had.n += 1; return; }
+        if(had){ had.n += 1; had.ids.push(Number(r.id)); if(r.edited_at) had.edited = true; return; }
         const h = Number(r.hospitality), a = Number(r.atmosphere_vibe);
         const both = [h, a].filter(x => Number.isFinite(x) && x >= 1);
         seen.set(key, { words:words, at:r.created_at, n:1, score: both.length ? both.reduce((x,y)=>x+y,0)/both.length : 0,
-                        name: r.reviewer_name || 'A guest', handle: r.reviewer_username || '' });
+                        name: r.reviewer_name || 'A guest', handle: r.reviewer_username || '',
+                        ids:[Number(r.id)], taster:Number(r.taster_id), h: h >= 1 ? h : null, a: a >= 1 ? a : null, edited: !!r.edited_at });   // r63
       });
       FI_SAY.rows = [...seen.values()];
     }
   }catch(e){}
   FI_SAY.loading = false;
   fiSayRender();
+}
+// r63: after an edit or a delete of the restaurant part: the words, the score and My Tastings read again
+function hfRoomAfter(){
+  FI_SAY.rows = null; fiRows = null;
+  fiSayLoad();
+  loadRestaurantRatings().then(function(){ if(typeof fiRender === 'function') fiRender(); if(typeof loadOverallRating === 'function') loadOverallRating(); });
+  const tm = document.getElementById('tastings-modal'); if(tm && tm.classList.contains('open') && typeof loadMyTastings === 'function') loadMyTastings();
 }
 function fiSaySort(k){
   FI_SAY.sort = k; FI_SAY.shown = 3;
@@ -1018,12 +1037,20 @@ function fiSayRender(){
   if(FI_SAY.sort === 'high') rows.sort((a,b) => b.score - a.score || Date.parse(b.at) - Date.parse(a.at));
   else if(FI_SAY.sort === 'low') rows.sort((a,b) => a.score - b.score || Date.parse(b.at) - Date.parse(a.at));
   if(!rows.length){ list.innerHTML = '<div class="fi-none">No words about the restaurant yet. Rate a dish and tell us about the place too.</div>'; return; }
+  const me = (typeof currentTaster !== 'undefined' && currentTaster) ? Number(currentTaster.id) : null;
+  FI_SAY.byKey = {};
   const out = rows.slice(0, FI_SAY.shown).map(function(r){
     const date = new Date(r.at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-    return '<div class="fi-c"><div class="fi-c-h"><span>'+hfEsc(r.name)+(r.handle ? ' <span class="reviewer-handle">('+hfEsc(r.handle)+')</span>' : '')+'</span>'
+    // r63: the author's own words: Edit and Delete (only what they said about the restaurant; their dish ratings stay)
+    const mine = FI_SAY.editReady && me !== null && r.taster === me;
+    const key = r.ids.join('-'); if(mine) FI_SAY.byKey[key] = r;
+    return '<div class="fi-c'+(mine ? ' mine' : '')+'" data-ids="'+key+'"><div class="fi-c-h"><span>'+hfEsc(r.name)+(r.handle ? ' <span class="reviewer-handle">('+hfEsc(r.handle)+')</span>' : '')+'</span>'
       + forkStarRow(r.score)+'</div>'
       + '<div class="fi-c-t">'+hfEsc(r.words)+'</div>'
-      + '<div class="fi-c-d">'+date+(r.n > 1 ? ' · rated '+r.n+' dishes' : '')+'</div></div>';
+      + '<div class="fi-c-d">'+date+(r.n > 1 ? ' · rated '+r.n+' dishes' : '')+(r.edited ? ' · Edited' : '')+'</div>'
+      + (mine ? '<div class="fi-c-btns"><button type="button" class="fi-edit" onclick="hfRoomEdit(FI_SAY.byKey[\''+key+'\'])">'+HF_TC_PENCIL+'Edit</button>'
+              + '<button type="button" class="fi-del" onclick="hfRoomDeleteAsk(FI_SAY.byKey[\''+key+'\'])">'+HF_TRASH+'Delete</button></div>' : '')
+      + '</div>';
   }).join('');
   list.innerHTML = out + (rows.length > FI_SAY.shown ? '<button class="fi-more" onclick="fiSayMore()">Show more ('+(rows.length - FI_SAY.shown)+')</button>' : '');
 }
