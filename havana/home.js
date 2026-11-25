@@ -2,7 +2,7 @@
 // site.js loads it on Havana's website only. The top stays the system's (the stars, Fork's Rating, the round
 // buttons, the account menu); this file gives it Havana's photo, logo and buttons, and adds Havana's own parts,
 // in the colors of havanasocialnyc.com: Specials (yellow), Food (purple), Events (sky blue), Reserve (pink),
-// Parties (black) and Visit us.
+// Parties (black). (25 Nov 2026: the "Visit us" part is off; the address and hours stay at the bottom of the page.)
 (function () {
   var S = window.HF_SITE || {};
   var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -27,7 +27,7 @@
     { name: 'Drinks', ico: 'drink' },
     { name: 'Reserve', ico: 'book' },
     { name: 'Social', ico: 'camera' },
-    { name: 'Visit Us', ico: 'pin', go: '#hv-visit' },
+    { name: 'Visit Us', ico: 'pin', maps: true },   // 25 Nov 01:14: the "Visit us" part is off; the button opens "Open location in…"
     { name: 'Call', ico: 'phone', tel: true }
   ];
   var PLACE = { Menu: { menu: 1 }, Drinks: { drinks: 1 }, Reserve: { book: 1 }, Social: { social: 1 } };
@@ -49,7 +49,8 @@
       delete b.dataset.menu; delete b.dataset.drinks; delete b.dataset.book; delete b.dataset.social;
       var p = PLACE[r.name]; if (p) Object.keys(p).forEach(function (k) { b.dataset[k] = '1'; });
       if (r.go) b.dataset.hvGo = r.go; else delete b.dataset.hvGo;
-      if (r.tel) b.dataset.hvTel = '1';
+      if (r.tel) b.dataset.hvTel = '1'; else delete b.dataset.hvTel;
+      if (r.maps) b.dataset.hvMaps = '1'; else delete b.dataset.hvMaps;
       var label = b.querySelector('span'); if (label) label.textContent = r.name;
       // every button shows Havana's glossy palm (21 Nov: "I love the first one, Glossy palm"), as The Hungry Fork's show its steak
       var img = b.querySelector('img');
@@ -59,7 +60,8 @@
     // 24 Nov: one round button fewer (Parties): the page's extra button goes, and the ring starts on Menu again
     for (var k = buttons.length - 1; k >= RAIL.length; k--) buttons[k].remove();
     try { var mi = RAIL.map(function (r) { return r.name; }).indexOf('Menu'); railPos = railIdx = mi; railRender(); } catch (e) {}
-    // Specials, Events, Parties and Visit Us go down the page; Call calls. (Before the page's own click.)
+    // Specials and Events go down the page; Visit Us opens "Open location in…" (Google Maps, Waze, Apple Maps, with
+    // Havana's address: maps() below); Call calls. (Before the page's own click.)
     var rail = document.getElementById('vh-btn-rail');
     if (rail && !rail.dataset.hv) {
       rail.dataset.hv = '1';
@@ -67,6 +69,7 @@
         var b = e.target.closest('.vh-btn'); if (!b) return;
         if (b.dataset.hvGo) { e.stopPropagation(); var t = document.querySelector(b.dataset.hvGo); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
         else if (b.dataset.hvTel) { e.stopPropagation(); window.location.href = 'tel:' + S.tel; }
+        else if (b.dataset.hvMaps) { e.stopPropagation(); var m = document.getElementById('maps-modal'); if (m) { e.preventDefault(); m.classList.add('open'); } }
       }, true);
     }
   }
@@ -137,16 +140,9 @@
       +   '<figure class="hv-pic hv-weekly">' + pic(WEEKLY_PIC, WEEKLY_ALT, 1352, 1163)
       +     '<figcaption>Sponsored by NÜTRL and Casamigos</figcaption></figure>'   // 24 Nov 22:56: the mariachi has its picture in Specials
       + '</div></section>'
-      + '<section class="hv-sec hv-visit" id="hv-visit"><div class="hv-wrap">'
-      +   '<h2 class="hv-title">Visit us</h2>'
-      +   '<div class="hv-cols">'
-      +     '<div class="hv-card"><span class="hv-label">Where</span><p>' + esc(S.address) + '<br>On cobblestoned Stone Street, Financial District</p></div>'
-      +     '<div class="hv-card"><span class="hv-label">Hours</span><p class="hf-hours" data-hf-hours="foot"></p></div>'
-      +     '<div class="hv-card"><span class="hv-label">Call or write</span><p><a href="tel:' + esc(S.tel) + '">' + esc(S.phone) + '</a></p></div>'
-      +     '<div class="hv-card"><span class="hv-label">Follow us</span><p><a href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram · @havanasocialnyc</a></p></div>'
-      +   '</div>'
-      +   '<div class="hv-btns"><a class="hv-btn" href="https://www.google.com/maps/search/?api=1&amp;query=Havana+Social+45+Stone+Street+New+York+NY+10004" target="_blank" rel="noopener">Directions</a></div>'
-      + '</div></section>';
+      // 25 Nov 01:14 ("Delete this as well please"): the "Visit us" part (Where, Hours, Call or write, Follow us,
+      // Directions) is off. The address and hours stay at the bottom of the page; Visit Us, Call and Social are round buttons.
+      + '';
     anchor.insertAdjacentHTML('afterend', html);
     if (typeof hfHoursLoad === 'function') try { hfHoursLoad(); } catch (e) {}
   }
