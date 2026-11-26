@@ -1317,6 +1317,122 @@ document.write('<link rel="manifest" href="'+(A.manifest||'/staff-app.json')+'">
   .gr-stars i { position:absolute; left:0; top:0; overflow:hidden; white-space:nowrap; color:#E2B400; font-style:normal; }
   .gr-old { margin-top:.7rem; padding:.6rem .75rem; border-radius:10px; background:var(--amber-light); border:1px solid #E6D2A8; color:var(--amber); font-size:.8rem; line-height:1.45; }
   .gr-btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:.8rem; }
+  /* ── r70: Team → People · Schedule (the team's schedule, positions) ── */
+  .sc-seg { display:flex; background:var(--white); border:1px solid var(--border); border-radius:999px; padding:4px; margin-bottom:1rem; box-shadow:var(--shadow-sm); }
+  .sc-seg button { flex:1; border:none; background:none; border-radius:999px; padding:.62rem .4rem; font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--text); cursor:pointer; }
+  .sc-seg button.on { background:var(--ink); color:var(--white); }
+  .sc-badge { display:inline-block; min-width:1.15rem; padding:0 .3rem; border-radius:999px; background:var(--red); color:#fff; font-size:.6rem; letter-spacing:0; line-height:1.15rem; margin-left:.3rem; vertical-align:1px; }
+  .sc-sub { display:flex; gap:.4rem; margin:-.2rem 0 .9rem; }
+  .sc-sub button { border:1px solid var(--border); background:var(--white); color:var(--text); border-radius:999px; padding:.4rem .95rem; font-family:var(--sans); font-size:.74rem; font-weight:600; cursor:pointer; }
+  .sc-sub button.on { background:var(--red-light); border-color:var(--red); color:var(--red-dark); }
+  .sc-wk { padding:1rem 1rem 1.1rem; }
+  .sc-wk-row { display:flex; align-items:center; justify-content:space-between; gap:.6rem; text-align:center; }
+  .sc-arr { flex:none; width:2.3rem; height:2.3rem; border-radius:50%; border:1px solid var(--border); background:#fff; color:var(--text); font-size:1.25rem; line-height:1; cursor:pointer; }
+  .sc-wk-label { font-family:var(--serif); font-size:1.45rem; font-weight:600; line-height:1.15; }
+  .sc-wk-state { display:flex; justify-content:space-between; align-items:center; gap:.5rem; margin-top:.75rem; flex-wrap:wrap; }
+  .sc-chip { display:inline-block; font-size:.68rem; font-weight:600; border-radius:999px; padding:.22rem .65rem; background:var(--off-white); color:var(--muted); border:1px solid var(--border); white-space:nowrap; }
+  .sc-chip.draft, .sc-chip.wait { background:#FFF4C2; color:#7A5A00; border-color:#F1DC8A; }
+  .sc-chip.ok { background:#E3F3E8; color:#1F6B3A; border-color:#BFE3CB; }
+  .sc-chip.no { background:var(--red-light); color:var(--red-dark); border-color:rgba(176,16,21,.25); }
+  .sc-link { border:none; background:none; color:var(--red-dark); font-weight:700; font-size:.8rem; cursor:pointer; text-decoration:underline; font-family:var(--sans); padding:0; }
+  .sc-btns { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-top:.8rem; }
+  .sc-btns .mp-opt:disabled { opacity:.5; cursor:not-allowed; }
+  .sc-grid-card { padding:.7rem .45rem .9rem; }
+  .sc-grid { width:100%; }
+  .sc-row { display:grid; grid-template-columns:62px repeat(7, minmax(0,1fr)); border-top:1px solid var(--border); min-height:2.15rem; }
+  .sc-row.sc-head { border-top:none; }
+  .sc-name { font-size:.7rem; font-weight:600; display:flex; flex-direction:column; justify-content:center; line-height:1.15; padding:0 .2rem 0 .15rem; overflow:hidden; word-break:break-word; }
+  .sc-name small { font-weight:400; color:var(--muted); font-size:.6rem; }
+  .sc-row.me { background:color-mix(in srgb, var(--red) 6%, transparent); border-radius:8px; }
+  .sc-day { display:flex; flex-direction:column; align-items:center; padding:.1rem 0 .35rem; line-height:1.2; }
+  .sc-day b { font-size:.6rem; color:var(--muted); font-weight:600; } .sc-day em { font-style:normal; font-size:.92rem; font-weight:700; }
+  .sc-day small { font-size:.56rem; font-weight:700; color:var(--ink); background:var(--off-white); border:1px solid var(--border); border-radius:6px; padding:0 .25rem; }
+  .sc-day.busy small { background:#F6D919; border-color:#E6C800; color:#2D0077; } .sc-day.today em { color:var(--red); }
+  .sc-c { display:flex; flex-direction:column; gap:2px; justify-content:center; padding:2px 1px; min-width:0; font-size:.72rem; font-weight:700; text-align:center; }
+  .sc-c.tap { cursor:pointer; border-radius:6px; } .sc-c.tap:hover { background:rgba(0,0,0,.035); }
+  .sc-sh { position:relative; display:block; width:100%; border-radius:7px; font-family:var(--sans); font-size:.6rem; font-weight:800; text-align:center; padding:.3rem 0; line-height:1.1; color:var(--c); background:color-mix(in srgb, var(--c) 15%, #fff); border:1px solid color-mix(in srgb, var(--c) 38%, #fff); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sc-sh.open { background:#fff; border:1.5px dashed var(--c); white-space:normal; }
+  .sc-sh.chg::after { content:''; position:absolute; top:2px; right:2px; width:5px; height:5px; border-radius:50%; background:var(--red); }
+  .sc-off { display:block; border-radius:7px; font-size:.58rem; font-weight:800; color:var(--muted); padding:.3rem 0; background:repeating-linear-gradient(135deg,#E6E9EE 0 4px,#F4F6F8 4px 8px); border:1px solid #D7DCE2; }
+  .sc-cant { display:block; color:#B0B6BF; font-size:.8rem; }
+  .sc-sec { font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--c); padding:.5rem 0 .1rem .15rem; border-top:1px solid var(--border); }
+  .sc-tot .sc-name, .sc-tot .sc-c { font-size:.7rem; font-weight:700; color:var(--ink); }
+  .sc-legend { display:flex; flex-wrap:wrap; gap:.35rem .8rem; font-size:.66rem; color:var(--muted); margin-top:.6rem; padding:0 .3rem; }
+  .sc-legend span { display:flex; align-items:center; gap:.3rem; }
+  .sc-legend .lg { display:inline-block; width:14px; height:10px; border-radius:3px; }
+  .sc-legend .lg.off { background:repeating-linear-gradient(135deg,#D7DCE2 0 3px,#F4F6F8 3px 6px); } .sc-legend .lg.cant { background:#F0F2F5; border:1px solid #DDE1E6; }
+  .sc-legend .lg.open { border:1.5px dashed var(--muted); } .sc-legend .lg.chg { width:7px; height:7px; border-radius:50%; background:var(--red); }
+  .sc-gnum { font-size:.56rem; color:var(--ink); background:var(--off-white); border:1px solid var(--border); border-radius:6px; padding:0 .25rem; }
+  .sc-hint { font-size:.72rem; margin-top:.5rem; padding:0 .3rem; }
+  .sc-pill { display:inline-block; border-radius:999px; padding:.08rem .5rem; font-size:.64rem; font-weight:700; letter-spacing:.02em; color:var(--c); background:color-mix(in srgb, var(--c) 13%, #fff); border:1px solid color-mix(in srgb, var(--c) 38%, #fff); vertical-align:2px; white-space:nowrap; }
+  .sc-sheet .sc-form { display:flex; flex-direction:column; gap:.7rem; margin-bottom:1rem; }
+  .sc-f { display:flex; flex-direction:column; gap:.3rem; font-size:.66rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--red-dark); }
+  .sc-f .m-input, .sc-f .m-select { font-size:.92rem; letter-spacing:0; text-transform:none; font-weight:400; }
+  .sc-opt { font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); }
+  .sc-two { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; } .sc-two .sc-f { min-width:0; }
+  .sc-rq { background:#fff; border:1px solid var(--border); border-radius:14px; padding:.8rem .85rem; margin-bottom:.6rem; font-size:.86rem; line-height:1.45; }
+  .sc-rq .sc-btns { margin-top:.6rem; } .sc-rq-s { font-size:.78rem; color:var(--muted); margin-top:.15rem; } .sc-rq-s.warn { color:var(--red-dark); font-weight:600; }
+  .sc-next .sc-big { font-family:var(--serif); font-size:1.55rem; font-weight:600; line-height:1.15; }
+  .sc-when { font-size:.95rem; font-weight:600; margin-top:.25rem; }
+  .sc-note { font-size:.76rem; color:var(--muted); margin-top:.6rem; grid-column:1 / -1; }
+  .sc-list .sc-li { display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.55rem 0; border-top:1px solid var(--border); }
+  .sc-list .m-eyebrow + .sc-li, .sc-list .m-eyebrow + .m-sub { border-top:none; }
+  .sc-li.past { opacity:.5; } .sc-li > span:first-child { min-width:0; } .sc-li b { font-size:.88rem; font-weight:600; } .sc-li small { display:block; font-size:.76rem; color:var(--muted); }
+  .sc-st { display:flex; align-items:center; gap:.4rem; flex:none; }
+  .sc-mini { flex:none; border:1px solid var(--border); background:#fff; color:var(--text); border-radius:999px; padding:.38rem .8rem; font-family:var(--sans); font-size:.7rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .sc-mini.main { background:var(--ink); border-color:var(--ink); color:var(--white); }
+  .sc-av { display:flex; flex-direction:column; gap:.45rem; margin-bottom:1rem; }
+  .sc-av-row { display:grid; grid-template-columns:6.2rem 1fr 6.4rem; gap:.4rem; align-items:center; font-size:.86rem; }
+  .sc-av-row .m-select, .sc-av-row .m-input { padding:.5rem .55rem; font-size:.86rem; }
+  .sc-av-t { min-width:0; } .sc-av-t .us-box, .sc-av-t .m-select { width:100%; }
+  .sc-pr { display:flex; align-items:center; gap:.7rem; width:100%; background:none; border:none; border-top:1px solid var(--border); padding:.7rem 0; text-align:left; cursor:pointer; font-family:var(--sans); color:var(--text); }
+  .sc-pr b { font-size:.92rem; font-weight:600; flex:none; min-width:4.5rem; } .sc-pr small { flex:1; font-size:.74rem; color:var(--muted); }
+  .sc-dot { flex:none; width:14px; height:14px; border-radius:50%; } .sc-go { font-size:1.2rem; color:var(--muted); }
+  .sc-newpos { width:100%; margin-top:.7rem; }
+  .sc-colors { display:flex; flex-wrap:wrap; gap:.55rem; }
+  .sc-color { width:2rem; height:2rem; border-radius:50%; border:none; cursor:pointer; }
+  .sc-color.on { box-shadow:0 0 0 3px var(--white), 0 0 0 5px var(--ink); }
+  .sc-tg { display:flex; justify-content:space-between; align-items:center; gap:.8rem; padding:.55rem 0; border-top:1px solid var(--border); font-size:.88rem; cursor:pointer; }
+  .sc-tg.lock { cursor:default; color:var(--muted); }
+  .sc-tg input { position:absolute; opacity:0; pointer-events:none; }
+  .sc-sw { flex:none; position:relative; width:42px; height:25px; border-radius:13px; background:var(--border); transition:background .2s; }
+  .sc-sw::after { content:''; position:absolute; left:3px; top:3px; width:19px; height:19px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .sc-tg input:checked + .sc-sw, .sc-sw.on { background:var(--ink); } .sc-tg input:checked + .sc-sw::after, .sc-sw.on::after { left:20px; }
+  .sc-tg.lock .sc-sw.on { opacity:.45; }
+  .sc-tg input:focus-visible + .sc-sw { outline:2px solid var(--red); outline-offset:2px; }
+  .sc-possel { width:auto; max-width:9.5rem; padding:.35rem .55rem; font-size:.78rem; margin-top:.3rem; }
+  @media (min-width:700px){ .sc-row { grid-template-columns:96px repeat(7, minmax(0,1fr)); min-height:2.45rem; } .sc-name { font-size:.8rem; } .sc-sh { font-size:.7rem; padding:.36rem 0; } .sc-day em { font-size:1.05rem; } }
+  /* ── r71: clocking in and out (My shifts · Who's in · Hours) ── */
+  .sc-btns.one { grid-template-columns:1fr; }
+  .ck-card .ck-top, .ck-head-row { display:flex; gap:.8rem; align-items:flex-start; }
+  .ck-head-row { justify-content:space-between; }
+  .ck-ic { flex:none; width:2.5rem; height:2.5rem; border-radius:12px; background:var(--off-white); border:1px solid var(--border); display:grid; place-items:center; color:var(--ink); }
+  .ck-dot { flex:none; width:.8rem; height:.8rem; margin:.35rem .2rem 0 .3rem; border-radius:50%; background:#1F9D55; box-shadow:0 0 0 5px rgba(31,157,85,.16); }
+  .ck-card.in { border-color:#BFE3CB; }
+  .ck-big { font-family:var(--serif); font-size:1.35rem; font-weight:600; line-height:1.2; margin:.1rem 0 .15rem; }
+  .ck-code { text-align:center; }
+  .ck-qr svg { width:min(76vw, 290px); height:auto; display:block; margin:.3rem auto .5rem; }
+  .ck-name { font-weight:700; font-size:1rem; }
+  .ck-ok { text-align:center; padding:.3rem 0 .2rem; }
+  .ck-check { display:inline-grid; place-items:center; width:3.3rem; height:3.3rem; border-radius:50%; background:#E3F3E8; color:#1F6B3A; font-size:1.6rem; font-weight:800; margin-bottom:.45rem; }
+  .ck-scan { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; }
+  .ck-li > span:first-child { flex:1; }
+  .ck-acts { display:flex; gap:.35rem; flex:none; flex-wrap:wrap; justify-content:flex-end; }
+  .ck-warn { color:var(--red-dark) !important; font-weight:700; }
+  .ck-add { display:block; width:100%; margin:0 0 1rem; border:1.5px dashed var(--border); background:var(--white); color:var(--text); border-radius:14px; padding:.8rem; font-family:var(--sans); font-size:.82rem; font-weight:700; cursor:pointer; }
+  .ck-tm { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:.35rem; } .ck-tm .m-select { min-width:0; padding:.55rem .5rem; }
+  .ck-fixes { margin-top:.9rem; border-top:1px solid var(--border); padding-top:.5rem; }
+  .ck-fx { font-size:.84rem; padding:.35rem 0; border-top:1px solid var(--border); } .ck-fixes .m-eyebrow + .ck-fx { border-top:none; }
+  .ck-fx small { display:block; color:var(--muted); font-size:.74rem; }
+  .ck-ranges { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.3rem; }
+  .ck-tbl { margin-top:.5rem; font-size:.82rem; }
+  .ck-tr { display:grid; grid-template-columns:minmax(0,1fr) 2.6rem 3.6rem 4.1rem 3.2rem; gap:.3rem; align-items:center; padding:.45rem 0; border-top:1px solid var(--border); }
+  .ck-tr > span:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; }
+  .ck-tr small { display:block; color:var(--muted); font-size:.7rem; } .ck-tr b { font-weight:700; }
+  .ck-th { border-top:none; font-size:.6rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .ck-tt { font-weight:700; border-top:2px solid var(--ink); }
+  .ck-ot { color:var(--red-dark); font-weight:700; }
+  .ck-let { flex:1 1 100%; display:flex; flex-wrap:wrap; align-items:center; gap:.3rem .5rem; font-size:.76rem; color:var(--text); } .ck-let > span { white-space:nowrap; }
 </style>
 <link rel="stylesheet" href="/taster.css">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
@@ -1494,7 +1610,11 @@ async function boot(){
       '<div class="m-card">'
     // A table's QR opens this page: say what it is, to staff and to a guest
     // who scanned their own.
-    + (evTicketToken()
+    + (ckHashToken()
+       ? '<div class="m-eyebrow">A clock-in code</div>'
+         + '<div class="m-h">Log in to clock them in</div>'
+         + '<div class="m-sub">If you are a manager here, log in with your phone number and PIN and they are clocked in. If this is your own code, show it to a manager.</div>'
+       : evTicketToken()
        ? '<div class="m-eyebrow">An event ticket</div>'
          + '<div class="m-h">Log in to let them in</div>'
          + '<div class="m-sub">If you work at the restaurant, log in with your phone number and PIN and the ticket opens. If this is your own ticket, there is nothing to do here: show this QR code at the door.</div>'
@@ -1580,6 +1700,7 @@ async function boot(){
   if(await rvTakeScan() === 'out') return;
   mountPage();
   evTakeTicket();                                               // r50: a ticket's QR at the door
+  ckTakeHash();                                                 // r71: a team member's clock-in code
   // The role icon in the header, with guest messages waiting, comes here.
   if(window.location.hash === '#messages') msgOpenFromHash();
   if(/^#support/.test(window.location.hash)) supFromHash();     // r34: the link in a support email
@@ -1618,14 +1739,14 @@ function mountPage(){
   if(TAB==='reservations') rvStart();
   else if(TAB==='menu' && !DISHES_LOADED) loadDishes();
   if(TAB==='menu' && TR.rid!==RESTAURANT.id) trLoad();          // r36: the Top Rated caves
-  else if(TAB==='team') loadPeople();
+  else if(TAB==='team') teamMount();                            // r70: the people (managers) and the schedule
   if(TAB==='events') evStart();                                // r50: the events
   if(TAB==='reviews') rwStart();                               // r52: every review in one list
 }
 
 function levelHere(){ return RESTAURANT ? Number(RESTAURANT.level)||0 : 0; }
-// Crew (1) see Reservations only; everyone above sees all three.
-function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team','events','reviews'] : ['reservations']; }
+// Crew (1) see Reservations and (r70) Team, with the schedule only; everyone above sees every tab.
+function allowedTabs(){ return levelHere() >= 2 ? ['reservations','menu','team','events','reviews'] : ['reservations','team']; }   // r70: crew see Team → Schedule
 
 function switchTab(t){
   if(!allowedTabs().includes(t) || t===TAB) return;
@@ -1730,7 +1851,7 @@ function render(){
   document.body.classList.toggle('rv-mode', TAB==='reservations' && RV.view==='day');
   const top = header() + tabsBar();
   if(TAB==='team'){
-    wrap().innerHTML = top + peopleSection();
+    wrap().innerHTML = top + teamHtml();                          // r70: People · Schedule
     return;
   }
   if(TAB==='menu'){
@@ -2780,14 +2901,18 @@ function peopleSection(){
       + '<div class="m-person-id">'
       +   '<div class="m-person-name">'+whoHtml(p.name, p.username)+' <span class="m-role'+(p.role==='owner'?' owner':'')+'">'+esc(ROLE_LABEL[p.role]||p.role)+'</span></div>'
       +   '<div class="m-person-sub">'+(p.username?esc(p.username)+' · ':'')+(p.phoneEnds?'ends '+esc(p.phoneEnds):'')+'</div>'
+      +   positionSelect(p)                                                                             // r70: the position (migration 47)
       +   (p.role==='crew' && p.canMessage !== undefined
             ? '<div class="m-crew">'
-              + '<select class="m-select" aria-label="What '+esc(whoText(p.name, p.username))+' does" onchange="setJob('+Number(p.id)+',this.value)">'
-              +   '<option value="">Job…</option>'
-              +   CREW_JOBS.map(j => '<option value="'+j+'"'+(p.job===j?' selected':'')+'>'+CREW_JOB_LABEL[j]+'</option>').join('')
-              + '</select>'
-              + '<label class="m-codes"><input type="checkbox"'+(p.canMessage?' checked':'')
-              +   ' onchange="setAnswers('+Number(p.id)+',this.checked,this)"> Answers guest messages</label>'
+              + (p.positionId === undefined
+                  ? '<select class="m-select" aria-label="What '+esc(whoText(p.name, p.username))+' does" onchange="setJob('+Number(p.id)+',this.value)">'
+                    + '<option value="">Job…</option>'
+                    + CREW_JOBS.map(j => '<option value="'+j+'"'+(p.job===j?' selected':'')+'>'+CREW_JOB_LABEL[j]+'</option>').join('')
+                    + '</select>'
+                  : '')
+              + '<label class="m-codes"><input type="checkbox"'+((p.ownMessage !== undefined ? p.ownMessage : p.canMessage)?' checked':'')
+              +   ' onchange="setAnswers('+Number(p.id)+',this.checked,this)"> <span>Answers guest messages'+positionFrom(p, 'canMessage')+'</span></label>'
+              + ckDelegateSelect(p)                                                                       // r71
               + '</div>'
             : '')
       +   (p.role==='manager' && p.canModerate !== undefined                                         // r53
@@ -2796,9 +2921,9 @@ function peopleSection(){
               + (p.canSetModerate ? '' : ' <span style="opacity:.7;">(the owner chooses)</span>')+'</span></label>'
             : '')
       +   (p.role==='crew'
-            ? '<label class="m-codes"><input type="checkbox"'+(p.canIssueCodes?' checked':'')
+            ? '<label class="m-codes"><input type="checkbox"'+((p.ownCodes !== undefined ? p.ownCodes : p.canIssueCodes)?' checked':'')
               + ' onchange="setCodes('+p.id+',this.checked)"> <span>Can give rewards '
-              + '<span style="opacity:.7;">(Lucky Bite, full cards, invites)</span></span></label>'
+              + '<span style="opacity:.7;">(Lucky Bite, full cards, invites)</span>'+positionFrom(p, 'canRewards')+'</span></label>'
             : '')
       + '</div>'
       + '<button class="m-person-x" onclick="removePerson('+Number(p.id)+')"'
@@ -2812,6 +2937,9 @@ function peopleSection(){
       + '<select class="m-select" id="add-role">'
       +   grantable.map(r=>'<option value="'+r+'">'+ROLE_LABEL[r]+'</option>').join('')
       + '</select>'
+      + (Array.isArray(PEOPLE.positions) && PEOPLE.positions.length                                   // r70
+          ? '<select class="m-select" id="add-pos" aria-label="Position"><option value="">No position</option>'
+            + PEOPLE.positions.map(x => '<option value="'+x.id+'">'+esc(x.name)+'</option>').join('') + '</select>' : '')
       + '<button class="m-btn" id="add-btn" onclick="addPerson()">Add</button>'
       + '</div>'
       + '<div class="m-sub" style="margin-top:.6rem;font-size:.76rem;">'
@@ -2838,7 +2966,8 @@ async function addPerson(){
     const {res, data} = await callApi('/api/roles', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
-      body:JSON.stringify({action:'grant', restaurantId:RESTAURANT.id, phone, role:roleEl.value})
+      body:JSON.stringify({action:'grant', restaurantId:RESTAURANT.id, phone, role:roleEl.value,
+                           positionId: (document.getElementById('add-pos')||{}).value || null})   // r70
     });
     if(!res.ok){ showToast(data.error||'Could not add that person.'); }
     else {
@@ -2916,6 +3045,825 @@ async function setCodes(roleId, on){
     });
     if(!res.ok) showToast(data.error||'Could not save that.');
   }catch(e){ showToast(e.message||'Network error.'); }
+}
+
+// ── r70: THE TEAM'S SCHEDULE AND THE POSITIONS (Team → People · Schedule) ──
+// Sebastian, 25 Nov 2026: "I want to build a scheduling system for the team"; "The manager's week make it A please";
+// "set the schedule inside the team, instead of create a new one". Crew see Team too now, with the Schedule only.
+// The server decides everything again (api/_lib/schedule.js, api/roles.js); this page only draws what it is told.
+let TEAM_VIEW = null;                           // 'people' | 'schedule' (crew: always the schedule)
+const SC = { rid:null, mode:null, week:null, data:null, mine:null, err:null, busy:false, sheet:null, reqs:null, want:null, clock:null };   // r71: clock
+const SC_WD = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const SC_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const SC_MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SC_COLORS = ['#3160CF','#7B3FC4','#E0731F','#16946A','#D6336C','#0E8C9B','#B8860B','#5B6472'];
+function scDow(d){ return (new Date(d+'T00:00:00Z').getUTCDay()+6)%7; }
+function scAddDays(d, n){ const x = new Date(d+'T00:00:00Z'); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); }
+function scDayLabel(d){ const x = new Date(d+'T00:00:00Z'); return SC_WD[scDow(d)]+', '+SC_MO[x.getUTCMonth()]+' '+x.getUTCDate(); }
+function scLongDay(d){ const x = new Date(d+'T00:00:00Z'); return SC_DAYS[scDow(d)]+', '+SC_MO[x.getUTCMonth()]+' '+x.getUTCDate(); }
+function scH(clock){ const p = String(clock||'00:00').split(':').map(Number); const h = p[0]%12||12; return p[1] ? h+':'+String(p[1]).padStart(2,'0') : String(h); }
+function scShort(s){ return scH(s.from)+'–'+scH(s.to); }
+function scHours(min){ return Math.round(min/6)/10; }
+function scPos(id){ const P = (SC.data && SC.data.positions) || (SC.mine && SC.mine.positions) || []; return P.find(p => p.id === id) || null; }
+function scPill(id){ const p = scPos(id); return p ? '<span class="sc-pill" style="--c:'+esc(p.color)+'">'+esc(p.name)+'</span>' : ''; }
+function scWhen(ts){ try{ return new Date(ts).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZone: (SC.data && SC.data.timezone) || 'America/New_York' }); }catch(e){ return ''; } }
+
+function teamView(){ return levelHere() < 2 ? 'schedule' : (TEAM_VIEW || 'people'); }
+function teamSeg(){
+  if(levelHere() < 2) return '';
+  const n = SC.data && SC.data.toApprove ? SC.data.toApprove : 0;
+  const b = (v, label) => '<button type="button" role="tab" aria-selected="'+(teamView()===v)+'" class="'+(teamView()===v?'on':'')+'" onclick="teamTap(\''+v+'\')">'+label+'</button>';
+  return '<div class="sc-seg" role="tablist">' + b('people', 'People') + b('schedule', 'Schedule' + (n ? ' <b class="sc-badge" aria-label="'+n+' to approve">'+n+'</b>' : '')) + '</div>';
+}
+function teamTap(v){
+  if(v === teamView()) return;
+  TEAM_VIEW = v; scCloseSheet(); render();
+  if(v === 'schedule') scLoad(); else loadPeople();
+}
+function teamHtml(){
+  return teamSeg() + (teamView() === 'people' ? peopleSection() + positionsCard() : '<div id="sc-root">'+scHtml()+'</div>');
+}
+function teamMount(){
+  if(levelHere() >= 2) loadPeople();
+  scLoad(teamView() !== 'schedule');                // builders: the count of requests, for the badge
+}
+
+// ── loading ──
+async function scLoad(quiet){
+  if(!RESTAURANT) return;
+  if(SC.rid !== RESTAURANT.id){ Object.assign(SC, { rid:RESTAURANT.id, mode:null, week:null, data:null, mine:null, err:null, clock:null }); CK.board = null; CK.boardErr = null; }
+  const rid = RESTAURANT.id, want = SC.week;
+  try{
+    const [w, m, k] = await Promise.all([ rvApi({ action:'staff_sched_week', week: want || undefined }), rvApi({ action:'staff_sched_mine' }),
+      rvApi({ action:'staff_clock_code' }).catch(e => e.status === 401 ? Promise.reject(e) : null) ]);      // r71: null before migration 48
+    if(!RESTAURANT || RESTAURANT.id !== rid) return;
+    SC.data = w; SC.mine = m; SC.clock = k; SC.err = null; SC.week = w.week.start;
+    if(!SC.mode) SC.mode = w.canBuild ? 'week' : 'mine';
+    if(!w.canBuild && SC.mode === 'week') SC.mode = 'everyone';
+    if(w.canBuild && SC.mode === 'everyone') SC.mode = 'week';
+    if(SC.mode === 'in' && !(k && k.powers && k.powers.board)) SC.mode = w.canBuild ? 'week' : 'mine';      // r71: Who's in
+  }catch(e){
+    if(e.status === 401) return;
+    SC.err = e.status === 409 ? 'The schedule is not set up yet: migration 47 has not been run.' : e.message;
+  }
+  if(TAB === 'team') { if(teamView() === 'schedule') scPaint(); else if(!quiet || SC.data) render(); }
+  if(TAB === 'team' && teamView() === 'schedule' && SC.mode === 'in') ckBoardLoad();
+}
+function scPaint(){ const el = document.getElementById('sc-root'); if(el) el.innerHTML = scHtml(); else if(TAB === 'team') render(); }
+
+function scHtml(){
+  if(SC.err) return '<div class="m-card"><div class="m-eyebrow">Schedule</div><div class="m-err" style="margin:0;">'+esc(SC.err)+'</div></div>';
+  if(!SC.data || !SC.mine) return '<div class="m-skel"></div><div class="m-skel"></div>';
+  const D = SC.data;
+  const board = !!(SC.clock && SC.clock.powers && SC.clock.powers.board);                                   // r71
+  const modes = D.canBuild ? [['week','Week']].concat(board ? [['in','Who’s in']] : [], [['mine','My shifts']])
+                           : [['mine','My shifts']].concat(board ? [['in','Who’s in']] : [], [['everyone','Everyone']]);
+  const sub = '<div class="sc-sub" role="tablist">' + modes.map(m => '<button type="button" role="tab" aria-selected="'+(SC.mode===m[0])+'" class="'+(SC.mode===m[0]?'on':'')+'" onclick="scMode(\''+m[0]+'\')">'+m[1]+'</button>').join('') + '</div>';
+  if(SC.mode === 'mine') return sub + scMineHtml(SC.mine);
+  if(SC.mode === 'in') return sub + ckBoardHtml();
+  return sub + scWeekCard(D) + scGridHtml(D);
+}
+function scMode(m){ SC.mode = m; if(m === 'in') ckBoardLoad(); else clearTimeout(CK.timer); scPaint(); window.scrollTo(0, 0); }
+function scWeekGo(n){ if(SC.busy || !SC.data) return; SC.week = scAddDays(SC.data.week.start, 7*n); SC.data = Object.assign({}, SC.data, { loadingWeek:true }); scLoad(); }
+
+// ── the week card ──
+function scWeekCard(D){
+  let state = '';
+  if(D.canBuild){
+    const chip = D.changes ? '<span class="sc-chip draft">Draft · '+D.changes+' change'+(D.changes===1?'':'s')+' not published</span>'
+      : D.publishedAt ? '<span class="sc-chip ok">Published · '+esc(scWhen(D.publishedAt))+(D.publishedBy ? ' by '+esc(D.publishedBy) : '')+'</span>'
+      : '<span class="sc-chip">No shifts published yet</span>';
+    const appr = D.toApprove ? '<button type="button" class="sc-link" onclick="scReqsOpen()">'+D.toApprove+' to approve</button>' : '';
+    state = '<div class="sc-wk-state">'+chip+appr+'</div>'
+      + '<div class="sc-btns"><button type="button" class="mp-opt" onclick="scCopy()">Copy last week</button>'
+      + '<button type="button" class="mp-opt main" onclick="scPublish()"'+(D.changes?'':' disabled')+'>Publish'+(D.changes?' ('+D.changes+')':'')+'</button></div>';
+  } else {
+    state = '<div class="sc-wk-state">'+(D.publishedAt ? '<span class="sc-chip ok">Published · '+esc(scWhen(D.publishedAt))+'</span>' : '<span class="sc-chip">Not published yet</span>')+'</div>';
+  }
+  return '<div class="m-card sc-wk"><div class="sc-wk-row"><button type="button" class="sc-arr" aria-label="Week before" onclick="scWeekGo(-1)">‹</button>'
+    + '<div class="sc-wk-mid"><div class="m-eyebrow" style="margin:0;">Week</div><div class="sc-wk-label">'+esc(D.week.label)+'</div></div>'
+    + '<button type="button" class="sc-arr" aria-label="Week after" onclick="scWeekGo(1)">›</button></div>' + state + '</div>';
+}
+
+// ── the grid (A): everyone × 7 days ──
+function scGridHtml(D){
+  const days = D.week.days;
+  const build = D.canBuild;
+  const byPerson = {}, open = {};
+  D.shifts.forEach(s => {
+    if(s.tasterId === null){ (open[s.date] = open[s.date] || []).push(s); return; }
+    ((byPerson[s.tasterId] = byPerson[s.tasterId] || {})[s.date] = byPerson[s.tasterId][s.date] || []).push(s);
+  });
+  const off = (t, d) => D.timeOff.some(o => o.tasterId === t && o.from <= d && o.to >= d);
+  const cant = (t, d) => D.unavailable.some(u => u.tasterId === t && u.weekday === scDow(d) && u.kind === 'none');
+  const chip = s => {
+    const p = scPos(s.positionId), c = p ? p.color : '#5B6472';
+    return '<button type="button" class="sc-sh'+(s.tasterId===null?' open':'')+(build && s.changed?' chg':'')+'" style="--c:'+esc(c)+'"'
+      + ' aria-label="'+esc(scDayLabel(s.date)+' '+s.fromWords+' to '+s.toWords)+'"'
+      + (build ? ' onclick="event.stopPropagation();scEdit('+s.id+')"' : ' onclick="event.stopPropagation();scInfo('+s.id+')"') + '>'
+      + esc(scShort(s)) + (s.tasterId===null && p ? '<br>'+esc(p.name) : '') + '</button>';
+  };
+  let h = '<div class="sc-row sc-head"><div class="sc-name"></div>' + days.map(d => '<div class="sc-day'+(d.guests>=80?' busy':'')+(d.date===D.today?' today':'')+'"><b>'+d.weekday.charAt(0)+'</b><em>'+d.day+'</em><small title="Guests booked">'+d.guests+'</small></div>').join('') + '</div>';
+  const anyOpen = Object.keys(open).length > 0;
+  if(build || anyOpen){
+    h += '<div class="sc-row sc-open"><div class="sc-name"><b>OPEN</b></div>' + days.map(d => '<div class="sc-c'+(build && !d.past?' tap':'')+'"'+(build && !d.past ? ' onclick="scAdd(null,\''+d.date+'\')"' : '')+'>'+(open[d.date]||[]).map(chip).join('')+'</div>').join('') + '</div>';
+  }
+  let last = undefined;
+  // the positions in their order; then crew with no position; then the managers and owners with no position
+  const boss = p => p.role === 'manager' || p.role === 'owner' || p.role === 'platform';
+  const group = p => p.positionId != null ? 'p'+p.positionId : (boss(p) ? 'mgr' : 'none');
+  const rank = {}; D.positions.forEach((p, i) => { rank['p'+p.id] = i; }); rank.none = 900; rank.mgr = 901;
+  const people = D.people.slice().sort((a, b) => rank[group(a)] - rank[group(b)]);
+  people.forEach(p => {
+    const g = group(p);
+    if(g !== last){
+      const P = scPos(p.positionId);
+      h += '<div class="sc-sec" style="--c:'+(P ? esc(P.color) : 'var(--muted)')+'">'+(P ? esc(P.name) : g === 'mgr' ? 'Managers' : 'No position')+'</div>';
+      last = g;
+    }
+    const mins = Object.values(byPerson[p.tasterId] || {}).flat().reduce((a, s) => a + s.minutes, 0);
+    h += '<div class="sc-row'+(p.tasterId===D.me?' me':'')+'"><div class="sc-name">'+esc(p.name)+'<small>'+scHours(mins)+' h</small></div>'
+      + days.map(d => {
+          const list = (byPerson[p.tasterId] || {})[d.date] || [];
+          const tap = build && !d.past;
+          let inner = list.map(chip).join('');
+          if(!list.length && off(p.tasterId, d.date)) inner = '<span class="sc-off">OFF</span>';
+          else if(!list.length && cant(p.tasterId, d.date)) inner = '<span class="sc-cant" title="Can\'t work">—</span>';
+          return '<div class="sc-c'+(tap?' tap':'')+'"'+(tap ? ' onclick="scAdd('+p.tasterId+',\''+d.date+'\')"' : '')+'>'+inner+'</div>';
+        }).join('') + '</div>';
+  });
+  const per = days.map(d => new Set(D.shifts.filter(s => s.date === d.date && s.tasterId !== null).map(s => s.tasterId)).size);
+  h += '<div class="sc-row sc-tot"><div class="sc-name">People</div>' + per.map(n => '<div class="sc-c">'+n+'</div>').join('') + '</div>';
+  const legend = '<div class="sc-legend"><span><i class="lg off"></i>Time off</span><span><i class="lg cant"></i>Can\'t work</span>'
+    + '<span><i class="lg open"></i>Open shift</span>' + (build ? '<span><i class="lg chg"></i>Not published</span>' : '') + '<span><b class="sc-gnum">86</b>Guests booked</span></div>';
+  const empty = !D.people.length ? '<div class="m-sub" style="padding:.6rem .3rem;">Nobody is on the team yet. Add people in People.</div>' : '';
+  return '<div class="m-card sc-grid-card"><div class="sc-grid" role="table" aria-label="The week">' + h + '</div>' + empty + legend
+    + (build ? '<div class="m-sub sc-hint">Tap a free spot to add a shift, or a shift to change it.</div>' : '') + '</div>';
+}
+
+// ── a shift: add or change (builders) ──
+function scSheetHost(){ let h = document.getElementById('sc-sheet-host'); if(!h){ h = document.createElement('div'); h.id = 'sc-sheet-host'; document.body.appendChild(h); } return h; }
+function scCloseSheet(){ SC.sheet = null; const h = document.getElementById('sc-sheet-host'); if(h) h.innerHTML = ''; }
+function scSheet(inner, label){
+  SC.sheet = label;
+  scSheetHost().innerHTML = '<div class="rv-scrim" onclick="scCloseSheet()"></div><div class="rv-sheet mp-sheet sc-sheet" role="dialog" aria-label="'+esc(label)+'"><div class="rv-grab"></div>'+inner+'</div>';
+}
+function scPeopleOptions(sel){
+  const D = SC.data;
+  return '<option value=""'+(sel===null?' selected':'')+'>Open shift (nobody yet)</option>'
+    + D.people.map(p => '<option value="'+p.tasterId+'"'+(p.tasterId===sel?' selected':'')+'>'+esc(p.name)+(scPos(p.positionId)?' · '+esc(scPos(p.positionId).name):'')+'</option>').join('');
+}
+function scPosOptions(sel){
+  return '<option value="">No position</option>' + SC.data.positions.map(p => '<option value="'+p.id+'"'+(p.id===sel?' selected':'')+'>'+esc(p.name)+'</option>').join('');
+}
+function scShiftForm(s, title){
+  SC.editDate = s.date;
+  return '<div class="mp-sheet-t">'+esc(title)+'</div><div class="mp-sheet-s">'+esc(scLongDay(s.date))+'</div>'
+    + '<div class="sc-form">'
+    + '<label class="sc-f">Who<select class="m-select" id="sc-who" onchange="scWhoChanged()">'+scPeopleOptions(s.tasterId)+'</select></label>'
+    + '<div class="sc-two"><label class="sc-f">From<input class="m-input" id="sc-from" type="time" step="900" value="'+esc(s.from)+'"></label>'
+    + '<label class="sc-f">To<input class="m-input" id="sc-to" type="time" step="900" value="'+esc(s.to)+'"></label></div>'
+    + '<label class="sc-f">Position<select class="m-select" id="sc-pos">'+scPosOptions(s.positionId)+'</select></label>'
+    + '<label class="sc-f">Note <span class="sc-opt">(optional)</span><input class="m-input" id="sc-note" maxlength="120" value="'+esc(s.note||'')+'" placeholder="Patio, closing, training…"></label>'
+    + '</div><div class="mp-opts">'
+    + '<button type="button" class="mp-opt main" id="sc-save" onclick="scSave('+(s.id||'null')+')">Save</button>'
+    + (s.id ? '<button type="button" class="mp-opt red" onclick="scRemove('+s.id+')">Remove the shift</button>' : '')
+    + '<button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>';
+}
+function scWhoChanged(){
+  const who = document.getElementById('sc-who'), pos = document.getElementById('sc-pos');
+  if(!who || !pos || !SC.data) return;
+  const p = SC.data.people.find(x => String(x.tasterId) === who.value);
+  if(p && p.positionId) pos.value = String(p.positionId);
+}
+function scAdd(tasterId, date){
+  if(!SC.data || !SC.data.canBuild) return;
+  const p = tasterId === null ? null : SC.data.people.find(x => x.tasterId === tasterId);
+  scSheet(scShiftForm({ id:null, date, tasterId, positionId: p ? p.positionId : null, from:'17:00', to:'23:00', note:'' }, 'Add a shift'), 'Add a shift');
+}
+function scEdit(id){
+  const s = SC.data && SC.data.shifts.find(x => x.id === id);
+  if(!s) return;
+  scSheet(scShiftForm(s, 'Change the shift'), 'Change the shift');
+}
+function scInfo(id){
+  const s = SC.data && SC.data.shifts.find(x => x.id === id);
+  if(!s) return;
+  const who = s.tasterId === null ? 'Open shift' : ((SC.data.people.find(p => p.tasterId === s.tasterId) || {}).name || 'Someone');
+  scSheet('<div class="mp-sheet-t">'+esc(who)+'</div><div class="mp-sheet-s">'+esc(scLongDay(s.date))+'</div>'
+    + '<div class="mp-sheet-line">'+esc(s.fromWords+' – '+s.toWords)+' · '+scHours(s.minutes)+' h '+scPill(s.positionId)+(s.note ? '<br>'+esc(s.note) : '')+'</div>'
+    + '<div class="mp-opts">'+(s.tasterId === null ? '<button type="button" class="mp-opt main" onclick="scCloseSheet();scMode(\'mine\')">See it in My shifts</button>' : '')
+    + '<button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>', 'Shift');
+}
+async function scSave(id){
+  const v = x => (document.getElementById(x) || {}).value || '';
+  const btn = document.getElementById('sc-save');
+  const shift = { id: id || undefined, date: SC.editDate, from: v('sc-from'), to: v('sc-to'),
+    tasterId: v('sc-who') ? Number(v('sc-who')) : null, positionId: v('sc-pos') ? Number(v('sc-pos')) : null, note: v('sc-note') };
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  try{
+    const out = await rvApi({ action:'staff_sched_save', shift });
+    scCloseSheet();
+    showToast(out.warn && out.warn.length ? 'Saved. ' + out.warn.join(' ') : 'Saved. It goes to the team when you publish.');
+    await scLoad();
+  }catch(e){
+    if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+    showToast(e.message);
+  }
+}
+async function scRemove(id){
+  if(!confirm('Remove this shift?')) return;
+  try{ await rvApi({ action:'staff_sched_save', shiftId:id, remove:true }); scCloseSheet(); showToast('Removed. The team sees it until you publish.'); await scLoad(); }
+  catch(e){ showToast(e.message); }
+}
+async function scCopy(){
+  if(SC.busy) return;
+  SC.busy = true;
+  try{ const out = await rvApi({ action:'staff_sched_copy', week: SC.data.week.start }); showToast('Copied '+out.copied+' shift'+(out.copied===1?'':'s')+' from last week. Publish when it is ready.'); await scLoad(); }
+  catch(e){ showToast(e.message); }
+  SC.busy = false;
+}
+async function scPublish(){
+  if(SC.busy || !SC.data || !SC.data.changes) return;
+  if(!confirm('Publish the week of '+SC.data.week.label+'? Everyone whose shifts changed gets a notification.')) return;
+  SC.busy = true;
+  try{ const out = await rvApi({ action:'staff_sched_publish', week: SC.data.week.start }); showToast('Published. '+out.people+' '+(out.people===1?'person':'people')+' told.'); await scLoad(); }
+  catch(e){ showToast(e.message); }
+  SC.busy = false;
+}
+
+// ── what the builders approve ──
+async function scReqsOpen(){
+  scSheet('<div class="mp-sheet-t">To approve</div><div class="m-skel"></div>', 'To approve');
+  try{ const out = await rvApi({ action:'staff_sched_requests' }); SC.reqs = out.requests; scReqsPaint(); }
+  catch(e){ scSheet('<div class="mp-sheet-t">To approve</div><div class="m-err">'+esc(e.message)+'</div>', 'To approve'); }
+}
+function scReqsPaint(){
+  const L = SC.reqs || [];
+  const one = r => {
+    let what, more = '';
+    if(r.kind === 'timeoff'){ what = '<b>'+esc(r.who)+'</b> asks for time off'; more = '<div class="sc-rq-s">'+esc(r.days)+(r.note ? ' · “'+esc(r.note)+'”' : '')+'</div>' + (r.warn ? '<div class="sc-rq-s warn">'+esc(r.warn)+'</div>' : ''); }
+    else {
+      what = r.kind === 'swap' ? '<b>'+esc(r.from)+'</b> offers a shift → <b>'+esc(r.who)+'</b> takes it' : '<b>'+esc(r.who)+'</b> picks up the open shift';
+      more = '<div class="sc-rq-s">'+esc(scDayLabel(r.shift.date)+' · '+r.shift.fromWords+' – '+r.shift.toWords+(r.shift.position ? ' · '+r.shift.position : ''))+'</div>'
+        + '<div class="sc-rq-s'+(r.over40?' warn':'')+'">'+esc(r.who)+': '+r.hours+' h that week with it'+(r.over40?' (over 40)':'')+'</div>';
+    }
+    const k = r.kind === 'timeoff' ? 'timeoff' : 'shift';
+    return '<div class="sc-rq"><div>'+what+'</div>'+more+'<div class="sc-btns"><button type="button" class="mp-opt" onclick="scDecide(\''+k+'\','+r.id+',false)">Decline</button>'
+      + '<button type="button" class="mp-opt main" onclick="scDecide(\''+k+'\','+r.id+',true)">Approve</button></div></div>';
+  };
+  scSheet('<div class="mp-sheet-t">To approve</div><div class="mp-sheet-s">Each answer reaches the person as a notification.</div>'
+    + (L.length ? L.map(one).join('') : '<div class="mp-sheet-line">Nothing waiting.</div>')
+    + '<div class="mp-opts"><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>', 'To approve');
+}
+async function scDecide(kind, id, approve){
+  try{ await rvApi({ action:'staff_sched_decide', kind, id, approve }); showToast(approve ? 'Approved.' : 'Declined.'); }
+  catch(e){ showToast(e.message); }
+  await scLoad();
+  if(SC.sheet === 'To approve') scReqsOpen();
+}
+
+// ── My shifts (everyone) ──
+function scMineHtml(M){
+  const up = M.shifts.filter(s => !s.past);
+  const next = up[0];
+  const shiftLine = s => '<div class="sc-li'+(s.past?' past':'')+'"><span><b>'+esc(scDayLabel(s.date))+'</b><small>'+esc(s.fromWords+' – '+s.toWords)+(s.note ? ' · '+esc(s.note) : '')+'</small></span>'+scPill(s.positionId)+'</div>';
+  const offerBtn = s => s.offered
+    ? (s.takenBy ? '<div class="sc-note">'+esc(s.takenBy)+' wants it · a manager decides.</div>' : '<div class="sc-note">Offered to the team · nobody yet.</div>')
+      + '<button type="button" class="mp-opt" onclick="scReqCancel('+s.requestId+')">Take back the offer</button>'
+    : '<button type="button" class="mp-opt" onclick="scOffer('+s.id+')">Offer this shift</button>';
+  let h = ckCardHtml();                                                              // r71: clock in / out
+  if(next){
+    h += '<div class="m-card sc-next"><div class="m-eyebrow">Next shift</div><div class="sc-big">'+esc(scLongDay(next.date))+'</div>'
+      + '<div class="sc-when">'+esc(next.fromWords+' – '+next.toWords)+' '+scPill(next.positionId)+'</div>'
+      + (next.note ? '<div class="m-sub">'+esc(next.note)+'</div>' : '')
+      + '<div class="sc-btns">'+offerBtn(next)+'<button type="button" class="mp-opt main" onclick="scTimeOffOpen()">Ask for time off</button></div></div>';
+  } else {
+    h += '<div class="m-card"><div class="m-eyebrow">Next shift</div><div class="m-sub">No shifts published for you yet.</div>'
+      + '<div class="sc-btns"><button type="button" class="mp-opt main" onclick="scTimeOffOpen()">Ask for time off</button><button type="button" class="mp-opt" onclick="scAvailOpen()">My availability</button></div></div>';
+  }
+  const thisWeek = M.shifts.filter(s => s.date >= M.weekStart && s.date <= scAddDays(M.weekStart, 6));
+  const later = up.filter(s => s.date > scAddDays(M.weekStart, 6));
+  h += '<div class="m-card sc-list"><div class="m-eyebrow">This week · '+M.weekHours+' h</div>'
+    + (thisWeek.length ? thisWeek.map(shiftLine).join('') : '<div class="m-sub">No shifts this week.</div>')
+    + (later.length ? '<div class="m-eyebrow" style="margin-top:1rem;">Coming up</div>' + later.map(shiftLine).join('') : '')
+    + '</div>';
+  const otherOffers = up.filter(s => next && s.id !== next.id);
+  if(otherOffers.length){
+    h += '<div class="m-card sc-list"><div class="m-eyebrow">Offer a shift</div>'
+      + otherOffers.map(s => '<div class="sc-li"><span><b>'+esc(scDayLabel(s.date))+'</b><small>'+esc(s.fromWords+' – '+s.toWords)+(s.offered ? (s.takenBy ? ' · '+esc(s.takenBy)+' wants it' : ' · offered') : '')+'</small></span>'
+        + (s.offered ? '<button type="button" class="sc-mini" onclick="scReqCancel('+s.requestId+')">Take back</button>' : '<button type="button" class="sc-mini" onclick="scOffer('+s.id+')">Offer</button>')+'</div>').join('')
+      + '</div>';
+  }
+  if(M.open.length || M.offered.length){
+    h += '<div class="m-card sc-list"><div class="m-eyebrow">Shifts you can take</div>'
+      + M.open.map(s => '<div class="sc-li"><span><b>'+esc(scDayLabel(s.date))+'</b><small>'+esc(s.fromWords+' – '+s.toWords)+' · open shift</small></span>'
+          + (s.asked ? '<button type="button" class="sc-mini" onclick="scReqCancel('+s.requestId+')">Asked ✓ · take back</button>'
+             : s.someoneAsked ? '<span class="sc-note">Someone asked</span>' : '<button type="button" class="sc-mini main" onclick="scTake('+s.id+')">Pick up</button>')+'</div>').join('')
+      + M.offered.map(s => '<div class="sc-li"><span><b>'+esc(scDayLabel(s.date))+'</b><small>'+esc(s.fromWords+' – '+s.toWords)+' · '+esc(s.by)+' offers it</small></span>'
+          + (s.asked ? '<button type="button" class="sc-mini" onclick="scReqCancel('+s.requestId+')">Asked ✓ · take back</button>' : '<button type="button" class="sc-mini main" onclick="scTake('+s.id+')">Take it</button>')+'</div>').join('')
+      + '<div class="m-sub" style="margin-top:.5rem;">A manager approves it.</div></div>';
+  }
+  const offs = M.timeOff || [];
+  const STATUS = { waiting:['Waiting','wait'], approved:['Approved','ok'], declined:['Declined','no'] };
+  h += '<div class="m-card sc-list"><div class="m-eyebrow">Time off</div>'
+    + (offs.length ? offs.map(o => '<div class="sc-li"><span><b>'+esc(o.from===o.to ? scDayLabel(o.from) : scDayLabel(o.from)+' – '+scDayLabel(o.to))+'</b><small>'+esc(o.note||'')+'</small></span>'
+        + '<span class="sc-st"><span class="sc-chip '+(STATUS[o.status]||['',''])[1]+'">'+(STATUS[o.status]||[o.status])[0]+'</span>'
+        + ((o.status === 'waiting' || o.status === 'approved') && o.to >= M.today ? '<button type="button" class="sc-mini" onclick="scTimeOffCancel('+o.id+')">Cancel</button>' : '')+'</span></div>').join('')
+      : '<div class="m-sub">No requests.</div>')
+    + '<div class="sc-btns"><button type="button" class="mp-opt" onclick="scTimeOffOpen()">Ask for time off</button><button type="button" class="mp-opt" onclick="scAvailOpen()">My availability</button></div></div>';
+  const R = (M.requests || []).filter(r => r.shift);
+  if(R.length){
+    const W = { open:'Offered', taken:'Waiting for a manager', approved:'Approved', declined:'Declined', cancelled:'Cancelled' };
+    h += '<div class="m-card sc-list"><div class="m-eyebrow">My shift requests</div>'
+      + R.slice(0, 8).map(r => '<div class="sc-li"><span><b>'+esc(scDayLabel(r.shift.date))+'</b><small>'+esc(r.shift.fromWords+' – '+r.shift.toWords)+' · '
+        + (r.mine === 'offer' ? 'you offered it'+(r.other ? ' · '+esc(r.other) : '') : (r.kind === 'pickup' ? 'open shift' : 'from '+esc(r.other||'someone')))+'</small></span><span class="sc-chip">'+esc(W[r.status]||r.status)+'</span></div>').join('')
+      + '</div>';
+  }
+  return h;
+}
+async function scOffer(id){
+  if(!confirm('Offer this shift to the team? It stays yours until a manager approves someone.')) return;
+  try{ await rvApi({ action:'staff_shift_offer', shiftId:id }); showToast('Offered. The others in your position were told.'); }catch(e){ showToast(e.message); }
+  scLoad();
+}
+async function scTake(id){
+  try{ await rvApi({ action:'staff_shift_take', shiftId:id }); showToast('Asked. A manager decides.'); }catch(e){ showToast(e.message); }
+  scLoad();
+}
+async function scReqCancel(id){
+  try{ await rvApi({ action:'staff_shift_request_cancel', id }); showToast('Taken back.'); }catch(e){ showToast(e.message); }
+  scLoad();
+}
+
+// ── time off and availability ──
+function scTimeOffOpen(){
+  const t = (SC.mine && SC.mine.today) || '';
+  scSheet('<div class="mp-sheet-t">Ask for time off</div><div class="mp-sheet-s">The managers get it as a notification.</div><div class="sc-form">'
+    + '<label class="sc-f">First day<input class="m-input" id="sc-off-from" type="date" aria-label="First day" min="'+esc(t)+'" value="'+esc(t)+'"></label>'
+    + '<label class="sc-f">Last day<input class="m-input" id="sc-off-to" type="date" aria-label="Last day" min="'+esc(t)+'" value="'+esc(t)+'"></label>'
+    + '<label class="sc-f">Why <span class="sc-opt">(only managers see it)</span><input class="m-input" id="sc-off-note" maxlength="200" placeholder="Family trip, a doctor\'s visit…"></label></div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="sc-off-send" onclick="scTimeOffSend()">Send to the managers</button>'
+    + '<button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>', 'Ask for time off');
+}
+async function scTimeOffSend(){
+  const v = x => (document.getElementById(x) || {}).value || '';
+  const btn = document.getElementById('sc-off-send');
+  if(btn) btn.disabled = true;
+  try{ await rvApi({ action:'staff_timeoff_ask', from:v('sc-off-from'), to:v('sc-off-to'), note:v('sc-off-note') }); scCloseSheet(); showToast('Sent. You will get the answer as a notification.'); scLoad(); }
+  catch(e){ if(btn) btn.disabled = false; showToast(e.message); }
+}
+async function scTimeOffCancel(id){
+  if(!confirm('Cancel this time off?')) return;
+  try{ await rvApi({ action:'staff_timeoff_cancel', id }); showToast('Cancelled.'); }catch(e){ showToast(e.message); }
+  scLoad();
+}
+function scAvailOpen(){
+  const A = (SC.mine && SC.mine.availability) || [];
+  const row = a => '<div class="sc-av-row"><b>'+SC_DAYS[a.weekday]+'</b><select class="m-select" id="sc-av-k'+a.weekday+'" onchange="scAvailKind('+a.weekday+')">'
+    + [['all','All day'],['from','From'],['until','Until'],['none','Can\'t work']].map(k => '<option value="'+k[0]+'"'+(a.kind===k[0]?' selected':'')+'>'+k[1]+'</option>').join('')
+    + '</select><span class="sc-av-t" id="sc-av-w'+a.weekday+'"'+(a.kind==='from'||a.kind==='until'?'':' style="visibility:hidden"')+'>'
+    + '<input class="m-input" id="sc-av-t'+a.weekday+'" type="time" step="900" aria-label="'+SC_DAYS[a.weekday]+': time" value="'+esc(a.at || (a.kind==='until'?'18:00':'16:00'))+'"></span></div>';
+  scSheet('<div class="mp-sheet-t">My availability</div><div class="mp-sheet-s">Every week. The managers see it while they build the schedule.</div>'
+    + '<div class="sc-av">'+A.map(row).join('')+'</div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="sc-av-save" onclick="scAvailSave()">Save</button><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>', 'My availability');
+}
+function scAvailKind(i){
+  const k = document.getElementById('sc-av-k'+i), w = document.getElementById('sc-av-w'+i);
+  if(k && w) w.style.visibility = (k.value === 'from' || k.value === 'until') ? '' : 'hidden';
+}
+async function scAvailSave(){
+  const days = [0,1,2,3,4,5,6].map(i => { const k = document.getElementById('sc-av-k'+i).value; return { weekday:i, kind:k, at: (k==='from'||k==='until') ? document.getElementById('sc-av-t'+i).value : null }; });
+  try{ await rvApi({ action:'staff_availability_save', days }); scCloseSheet(); showToast('Saved.'); scLoad(); }
+  catch(e){ showToast(e.message); }
+}
+
+// ── positions (People) ──
+function positionsCard(){
+  if(!PEOPLE || PEOPLE.error || !Array.isArray(PEOPLE.positions)) return '';
+  const fns = p => [p.canMessage ? 'answers guest messages' : null, p.canRewards ? 'gives rewards' : null, p.canSchedule ? 'builds the schedule' : null].filter(Boolean);
+  return '<div class="m-card"><div class="m-eyebrow">Positions</div>'
+    + '<div class="m-sub" style="margin-bottom:.4rem;">Each position chooses what it can do in the app.</div>'
+    + (PEOPLE.positions.length ? PEOPLE.positions.map(p => '<button type="button" class="sc-pr" onclick="posSheet('+p.id+')"><i class="sc-dot" style="background:'+esc(p.color)+'"></i>'
+        + '<b>'+esc(p.name)+'</b><small>'+esc((fns(p).join(', ') || 'the schedule only') + ' · ' + p.people + (p.people===1?' person':' people'))+'</small><span class="sc-go">›</span></button>').join('')
+      : '<div class="m-sub">No positions yet.</div>')
+    + '<button type="button" class="mp-opt sc-newpos" onclick="posSheet(null)">+ New position</button></div>';
+}
+function posSheet(id, forRole){
+  const p = id ? (PEOPLE.positions || []).find(x => x.id === id) : { name:'', color: SC_COLORS[(PEOPLE.positions || []).length % SC_COLORS.length], canMessage:false, canRewards:false, canSchedule:false };
+  if(!p) return;
+  SC.posFor = forRole || null;
+  const sw = (key, label, on) => '<label class="sc-tg"><span>'+label+'</span><input type="checkbox" id="pos-'+key+'"'+(on?' checked':'')+'><i class="sc-sw"></i></label>';
+  const always = l => '<div class="sc-tg lock"><span>'+l+'</span><i class="sc-sw on"></i></div>';
+  scSheet('<div class="mp-sheet-t">'+(id ? esc(p.name) : 'New position')+'</div>'
+    + '<div class="sc-form"><label class="sc-f">Name<input class="m-input" id="pos-name" maxlength="30" value="'+esc(p.name)+'" placeholder="Busser, Bartender, Shift lead…"></label>'
+    + '<div class="sc-f">Color<div class="sc-colors">'+SC_COLORS.map(c => '<button type="button" class="sc-color'+(c.toUpperCase()===String(p.color).toUpperCase()?' on':'')+'" style="background:'+c+'" aria-label="Color '+c+'" onclick="posColor(this,\''+c+'\')"></button>').join('')+'</div></div>'
+    + '<div class="sc-f">What '+(id ? 'a '+esc(p.name) : 'it')+' can do in the app</div>'
+    + always('See the schedule and their shifts') + always('See the reservations') + always('Scan guests’ check-ins')
+    + sw('msg', 'Answer guest messages', p.canMessage) + sw('rew', 'Give rewards (Lucky Bite, full cards, invites)', p.canRewards)
+    + sw('sch', 'Build the schedule and approve requests', p.canSchedule)
+    + '</div><div class="mp-opts"><button type="button" class="mp-opt main" id="pos-save" onclick="posSave('+(id||'null')+')">Save the position</button>'
+    + (id ? '<button type="button" class="mp-opt red" onclick="posRemove('+id+')">Remove the position</button>' : '')
+    + '<button type="button" class="mp-opt quiet" onclick="scCloseSheet();render();">Close</button></div>', id ? 'Position' : 'New position');
+  SC.posColor = p.color;
+}
+function posColor(btn, c){ SC.posColor = c; document.querySelectorAll('.sc-color').forEach(b => b.classList.toggle('on', b === btn)); }
+async function posSave(id){
+  const btn = document.getElementById('pos-save');
+  const position = { id: id || undefined, name:(document.getElementById('pos-name')||{}).value || '', color: SC.posColor,
+    canMessage: !!document.getElementById('pos-msg').checked, canRewards: !!document.getElementById('pos-rew').checked, canSchedule: !!document.getElementById('pos-sch').checked };
+  if(btn) btn.disabled = true;
+  try{
+    const {res, data} = await callApi('/api/roles', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({ action:'position_save', restaurantId:RESTAURANT.id, position }) });
+    if(!res.ok){ showToast(data.error || 'Could not save the position.'); if(btn) btn.disabled = false; return; }
+    const forRole = SC.posFor;
+    scCloseSheet();
+    if(forRole) await setPosition(forRole, String(data.position.id));
+    showToast(id ? 'Saved.' : 'Added '+data.position.name+'.');
+    await loadPeople(); SC.data = null; scLoad(true);
+  }catch(e){ showToast(e.message || 'Network error.'); if(btn) btn.disabled = false; }
+}
+async function posRemove(id){
+  const p = (PEOPLE.positions || []).find(x => x.id === id);
+  if(!p || !confirm('Remove the position '+p.name+'?'+(p.people ? ' '+p.people+(p.people===1?' person':' people')+' will have no position.' : ''))) return;
+  try{
+    const {res, data} = await callApi('/api/roles', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({ action:'position_archive', restaurantId:RESTAURANT.id, positionId:id }) });
+    if(!res.ok){ showToast(data.error || 'Could not remove it.'); return; }
+    scCloseSheet(); showToast('Removed.'); await loadPeople(); SC.data = null; scLoad(true);
+  }catch(e){ showToast(e.message || 'Network error.'); }
+}
+async function setPosition(roleId, value){
+  if(value === '__new'){ posSheet(null, roleId); return; }
+  try{
+    const {res, data} = await callApi('/api/roles', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({ action:'position', restaurantId:RESTAURANT.id, roleId, positionId: value ? Number(value) : null }) });
+    if(!res.ok){ showToast(data.error || 'Could not save that.'); }
+  }catch(e){ showToast(e.message || 'Network error.'); }
+  await loadPeople(); SC.data = null; scLoad(true);
+}
+function positionSelect(p){
+  if(!PEOPLE || !Array.isArray(PEOPLE.positions) || p.positionId === undefined) return '';
+  const opts = '<option value="">No position</option>' + PEOPLE.positions.map(x => '<option value="'+x.id+'"'+(x.id===p.positionId?' selected':'')+'>'+esc(x.name)+'</option>').join('')
+    + (PEOPLE.myLevel >= 2 ? '<option value="__new">+ New position…</option>' : '');
+  return '<select class="m-select sc-possel" aria-label="Position of '+esc(whoText(p.name, p.username))+'"'+(p.canSetPosition?'':' disabled')
+    + ' onchange="setPosition('+Number(p.id)+',this.value)">'+opts+'</select>';
+}
+function positionFrom(p, key){
+  if(!PEOPLE || !Array.isArray(PEOPLE.positions) || p.role !== 'crew') return '';
+  const x = PEOPLE.positions.find(q => q.id === p.positionId);
+  return x && x[key] ? ' <span style="opacity:.75;">(also from '+esc(x.name)+')</span>' : '';
+}
+
+// ── r71: CLOCKING IN AND OUT (Team → Schedule: My shifts · Who's in) ──
+// Sebastian, 25 Nov 2026: "Clock in with a QR code that manager or owner reads, he can clock someone out and see who is
+// in and who isn't"; "Manager, owner and me only can make clock ins; clock out everyone by theirself and manager, owner
+// or me can clock someone out anytime"; "Add the option that let someone have the option for clock in others"; "download
+// an excel document with the information of the hours". The server decides everything (api/_lib/clock.js).
+const CK = { timer:0, codeTimer:0, codeUntil:0, lastToken:null, board:null, boardErr:null, loading:false, hours:null, range:'this',
+             from:null, to:null, scanSeq:0, fix:null };
+const CK_SHEET = 'My clock-in code';
+const CK_QR = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3M21 14v.01M17 21h4v-3M14 18v3"/></svg>';
+function ckPowers(){ return (SC.clock && SC.clock.powers) || { scan:false, board:false }; }
+function ckZone(){ return (SC.data && SC.data.timezone) || (CK.board && CK.board.timezone) || 'America/New_York'; }
+function ckClock(ts){ try{ return new Date(ts).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone: ckZone() }); }catch(e){ return ''; } }
+function ckPill(name){
+  if(!name) return '';
+  const P = (SC.data && SC.data.positions) || [], p = P.find(x => x.name === name);
+  return '<span class="sc-pill" style="--c:'+esc(p ? p.color : '#5B6472')+'">'+esc(name)+'</span>';
+}
+function ckMin(m){ m = Math.max(0, Math.round(m)); return m < 60 ? m+' min' : Math.floor(m/60)+' h'+(m%60 ? ' '+(m%60)+' min' : ''); }
+async function ckReload(){
+  try{ SC.clock = await rvApi({ action:'staff_clock_code' }); }catch(e){ if(e.status === 409) SC.clock = null; }
+  if(TAB === 'team' && teamView() === 'schedule') scPaint();
+}
+
+// ── My shifts: the clock-in card ──
+function ckCardHtml(){
+  const K = SC.clock;
+  if(!K || !K.me) return '';
+  if(K.open){
+    return '<div class="m-card ck-card in"><div class="ck-top"><span class="ck-dot" aria-hidden="true"></span><div>'
+      + '<div class="m-eyebrow" style="margin:0;">Clocked in</div><div class="ck-big">Since '+esc(K.open.inWords)+'</div>'
+      + '<div class="m-sub" style="margin:0;">'+esc(K.open.day)+' · '+K.open.hours+' h so far'+(K.shift ? ' · shift '+esc(K.shift.fromWords+' – '+K.shift.toWords) : '')+'</div></div></div>'
+      + '<div class="sc-btns one"><button type="button" class="mp-opt main" onclick="ckOutMeOpen()">Clock out</button></div></div>';
+  }
+  return '<div class="m-card ck-card"><div class="ck-top"><span class="ck-ic" aria-hidden="true">'+CK_QR+'</span><div>'
+    + '<div class="m-eyebrow" style="margin:0;">Clock in</div><div class="ck-big">'+(K.shift ? 'Shift '+esc(K.shift.fromWords+' – '+K.shift.toWords) : 'Not clocked in')+'</div>'
+    + '<div class="m-sub" style="margin:0;">Show your code to a manager: they scan it to clock you in.</div></div></div>'
+    + '<div class="sc-btns one"><button type="button" class="mp-opt main" onclick="ckCodeOpen()">Show my code</button></div></div>';
+}
+
+// ── the code: a QR that changes every 30 seconds; the sheet sees the clock-in come ──
+function ckCodeOpen(){
+  CK.lastToken = null; CK.codeUntil = Date.now() + 5*60*1000;
+  scSheet('<div class="mp-sheet-t">My clock-in code</div><div id="ck-code" class="ck-code"><div class="m-skel" style="height:280px;"></div></div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt quiet" onclick="ckCodeClose()">Close</button></div>', CK_SHEET);
+  ckCodeTick();
+}
+function ckCodeClose(){ clearTimeout(CK.codeTimer); scCloseSheet(); }
+async function ckCodeTick(){
+  clearTimeout(CK.codeTimer);
+  const box = () => SC.sheet === CK_SHEET ? document.getElementById('ck-code') : null;
+  if(!box()) return;
+  if(Date.now() > CK.codeUntil){
+    box().innerHTML = '<div class="m-sub" style="margin:1rem 0;">The code stopped after 5 minutes.</div><button type="button" class="mp-opt main" style="width:100%;" onclick="ckCodeOpen()">Show it again</button>';
+    return;
+  }
+  if(document.visibilityState !== 'visible'){ CK.codeTimer = setTimeout(ckCodeTick, 2000); return; }
+  try{
+    const K = await rvApi({ action:'staff_clock_code' });
+    if(!box()) return;
+    SC.clock = K;
+    if(K.open){
+      if(navigator.vibrate) try{ navigator.vibrate([40, 60, 40]); }catch(e){}
+      box().innerHTML = '<div class="ck-ok"><span class="ck-check" aria-hidden="true">✓</span><div class="mp-sheet-t">You’re in</div><div class="mp-sheet-s">Since '+esc(K.open.inWords)+'</div></div>';
+      const host = document.querySelector('#sc-sheet-host .mp-opts'); if(host) host.innerHTML = '<button type="button" class="mp-opt main" onclick="ckCodeClose()">Done</button>';
+      scPaint();
+      return;
+    }
+    if(K.code && K.code.token !== CK.lastToken){
+      CK.lastToken = K.code.token;
+      box().innerHTML = '<div class="ck-qr">'+K.code.svg+'</div><div class="ck-name">'+esc(K.name || '')+'</div>'
+        + '<div class="m-sub" style="margin:.2rem 0 .8rem;">Show it to a manager. It changes every 30 seconds, so a photo of it does not work. If it does not scan, turn the screen brighter.</div>';
+    }
+  }catch(e){
+    if(e.status === 401 || !box()) return;
+    box().innerHTML = '<div class="m-err" style="margin:.8rem 0;">'+esc(e.message)+'</div><button type="button" class="mp-opt" style="width:100%;" onclick="ckCodeOpen()">Try again</button>';
+    return;
+  }
+  CK.codeTimer = setTimeout(ckCodeTick, 4000);
+}
+
+// ── clocking out ──
+function ckOutMeOpen(){
+  const K = SC.clock; if(!K || !K.open) return;
+  scSheet('<div class="mp-sheet-t">Clock out now?</div><div class="mp-sheet-s">In since '+esc(K.open.inWords)+' · '+K.open.hours+' h</div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="ck-out-go" onclick="ckOutGo(null)">Clock out</button><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Cancel</button></div>', 'Clock out');
+}
+function ckOutOpen(clockId){
+  const x = CK.board && CK.board.in.find(r => r.clockId === clockId); if(!x) return;
+  scSheet('<div class="mp-sheet-t">Clock '+esc(x.name)+' out now?</div><div class="mp-sheet-s">In since '+esc(x.inWords)+' · '+x.hours+' h. They get a notification.</div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="ck-out-go" onclick="ckOutGo('+clockId+')">Clock out</button><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Cancel</button></div>', 'Clock out');
+}
+async function ckOutGo(clockId){
+  const b = document.getElementById('ck-out-go'); if(b) b.disabled = true;
+  try{
+    const out = await rvApi(clockId ? { action:'staff_clock_out', clockId } : { action:'staff_clock_out' });
+    scCloseSheet(); showToast('Clocked out at '+out.outWords+' · '+out.hours+' h.');
+  }catch(e){ scCloseSheet(); showToast(e.message); }
+  if(clockId) ckBoardLoad(); else ckReload();
+}
+
+// ── scanning someone's code (the camera, or the phone's own camera app → manager#clock=…) ──
+function ckHashToken(){ const m = /^#clock=(\d{1,9}\.\d{1,12}\.\d{5,12}\.[0-9a-f]{32})$/.exec(window.location.hash || ''); return m ? m[1] : null; }
+function ckTakeHash(){
+  const t = ckHashToken(); if(!t) return false;
+  if(history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search + '#' + TAB);
+  ckScan(t); return true;
+}
+window.addEventListener('hashchange', function(){
+  if(!ckHashToken()) return;
+  if(!currentSession){ boot(); return; }
+  if(!ACCESS || !RESTAURANT) return;
+  ckTakeHash();
+});
+async function ckScan(token){
+  const mine = ++CK.scanSeq;
+  scSheet('<div class="mp-sheet-t">Clocking in…</div><div class="m-skel"></div>', 'Clock in');
+  const rid = Number(String(token).split('.')[0]);
+  const at = ACCESS && ACCESS.restaurants.some(r => Number(r.id) === rid) ? rid : undefined;
+  try{
+    const d = await rvApi(Object.assign({ action:'staff_clock_scan', token }, at ? { restaurantId: at } : {}));
+    if(mine !== CK.scanSeq) return;
+    const c = d.clock, late = c.late !== null && c.late > 5;
+    if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){}
+    scSheet('<div class="ck-ok"><span class="ck-check" aria-hidden="true">✓</span><div class="mp-sheet-t">'+esc(c.name)+' is in</div>'
+      + '<div class="mp-sheet-s">'+esc(c.inWords)+(c.shift ? ' · '+(c.shift.position ? esc(c.shift.position)+' ' : '')+esc(c.shift.fromWords+' – '+c.shift.toWords) : '')+'</div>'
+      + '<span class="sc-chip '+(late ? 'no' : c.late === null ? '' : 'ok')+'">'+esc(c.timing)+'</span></div>'
+      + '<div class="mp-opts" style="margin-top:1rem;"><button type="button" class="mp-opt main" onclick="ckScanNext()">Scan the next</button>'
+      + '<button type="button" class="mp-opt" id="ck-undo" onclick="ckUndo('+c.id+')">Undo (a mistake)</button>'
+      + '<button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Done</button></div>', 'Clock in');
+  }catch(e){
+    if(e.status === 401 || mine !== CK.scanSeq) return;
+    const t = e.data && e.data.already ? 'Already in' : e.data && e.data.old ? 'That code is old' : 'Not clocked in';
+    scSheet('<div class="mp-sheet-t">'+t+'</div><div class="mp-sheet-s">'+esc(e.message)+'</div>'
+      + '<div class="mp-opts"><button type="button" class="mp-opt main" onclick="ckScanNext()">Scan again</button><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>', 'Clock in');
+  }
+  ckAfter();
+}
+function ckScanNext(){ scCloseSheet(); camOpen('clock'); }
+async function ckUndo(id){
+  const b = document.getElementById('ck-undo'); if(b) b.disabled = true;
+  try{ await rvApi({ action:'staff_clock_undo', clockId:id }); scCloseSheet(); showToast('Undone: not clocked in.'); }
+  catch(e){ showToast(e.message); if(b) b.disabled = false; }
+  ckAfter();
+}
+function ckAfter(){ if(TAB === 'team' && teamView() === 'schedule' && SC.mode === 'in') ckBoardLoad(); }
+
+// ── Who's in ──
+async function ckBoardLoad(){
+  if(CK.loading || !RESTAURANT) return;
+  CK.loading = true;
+  const rid = RESTAURANT.id;
+  try{ const B = await rvApi({ action:'staff_clock_board' }); if(RESTAURANT && RESTAURANT.id === rid){ CK.board = B; CK.boardErr = null; } }
+  catch(e){ if(e.status !== 401) CK.boardErr = e.message; }
+  CK.loading = false;
+  if(TAB === 'team' && teamView() === 'schedule' && SC.mode === 'in' && !SC.sheet) scPaint();
+  ckBoardTimer();
+}
+function ckBoardTimer(){
+  clearTimeout(CK.timer);
+  if(!(TAB === 'team' && teamView() === 'schedule' && SC.mode === 'in')) return;
+  CK.timer = setTimeout(function(){
+    if(document.visibilityState === 'visible' && !SC.sheet) ckBoardLoad(); else ckBoardTimer();
+  }, 20000);
+}
+function ckBoardHtml(){
+  if(CK.boardErr && !CK.board) return '<div class="m-card"><div class="m-eyebrow">Who’s in</div><div class="m-err" style="margin:0;">'+esc(CK.boardErr)+'</div></div>';
+  const B = CK.board;
+  if(!B || (RESTAURANT && SC.rid !== RESTAURANT.id)) return '<div class="m-skel"></div><div class="m-skel"></div>';
+  const P = B.powers;
+  const btns = (P.scan ? '<button type="button" class="mp-opt main ck-scan" onclick="camOpen(\'clock\')">'+MP_ICON.camera+' Scan a code</button>' : '')
+    + (P.hours ? '<button type="button" class="mp-opt" onclick="ckHoursOpen()">Hours · Excel</button>' : '');
+  let h = '<div class="m-card ck-head"><div class="ck-head-row"><div><div class="m-eyebrow" style="margin:0;">Who’s in · '+esc(B.dayLabel)+'</div>'
+    + '<div class="ck-big">'+B.in.length+' in now</div><div class="m-sub" style="margin:0;">'+esc(B.nowWords)
+    + (B.late.length ? ' · <b class="ck-warn">'+B.late.length+' late</b>' : '')+(B.notYet.length ? ' · '+B.notYet.length+' not yet' : '')+'</div></div>'
+    + '<button type="button" class="sc-mini" onclick="ckBoardLoad()">Refresh</button></div>'
+    + (btns ? '<div class="sc-btns'+(P.scan && P.hours ? '' : ' one')+'">'+btns+'</div>' : '')
+    + (!P.fix && P.scan ? '<div class="m-sub" style="margin:.6rem 0 0;">A manager let you clock the others in'+(P.until ? ', until '+esc(ckClock(P.until)) : '')+'. Clocking out and fixing times stay with the managers.</div>' : '')
+    + '</div>';
+  const acts = x => '<span class="ck-acts">'+(P.clockOut && !x.tooLong ? '<button type="button" class="sc-mini" onclick="ckOutOpen('+x.clockId+')">Clock out</button>' : '')
+    + (P.fix ? '<button type="button" class="sc-mini" onclick="ckFixOpen('+x.clockId+')">Fix</button>' : '')+'</span>';
+  const sec = (title, list, row) => list.length ? '<div class="m-card sc-list"><div class="m-eyebrow">'+title+' · '+list.length+'</div>'+list.map(row).join('')+'</div>' : '';
+  h += sec('In now', B.in, x => '<div class="sc-li ck-li"><span><b>'+esc(x.name)+'</b> '+ckPill(x.position)
+      + '<small>In since '+esc(x.inWords)+(x.sinceDay ? ' ('+esc(x.sinceDay)+')' : '')+' · '+x.hours+' h'+(x.shift ? ' · shift '+esc(x.shift) : '')+'</small>'
+      + (x.tooLong ? '<small class="ck-warn">In for more than 24 hours: fix the time.</small>' : x.overMinutes >= 15 ? '<small class="ck-warn">'+ckMin(x.overMinutes)+' past the shift</small>' : '')
+      + '</span>'+acts(x)+'</div>');
+  h += sec('Late', B.late, x => '<div class="sc-li ck-li"><span><b>'+esc(x.name)+'</b> '+ckPill(x.position)
+      + '<small>Shift '+esc(x.shift)+' · <b class="ck-warn">'+(x.missed ? 'missed' : ckMin(x.minutes)+' late')+'</b></small></span>'
+      + (P.fix ? '<span class="ck-acts"><button type="button" class="sc-mini" onclick="ckAddOpen('+x.tasterId+')">Add the time</button></span>' : '')+'</div>');
+  h += sec('Not yet', B.notYet, x => '<div class="sc-li ck-li"><span><b>'+esc(x.name)+'</b> '+ckPill(x.position)+'<small>Due '+esc(x.due)+' · shift '+esc(x.shift)+'</small></span></div>');
+  h += sec('Done today', B.done, x => '<div class="sc-li ck-li"><span><b>'+esc(x.name)+'</b> '+ckPill(x.position)
+      + '<small>'+esc(x.inWords+' – '+x.outWords)+' · '+x.hours+' h'+(x.fixed ? ' · changed' : '')+'</small></span>'
+      + (P.fix ? '<span class="ck-acts"><button type="button" class="sc-mini" onclick="ckFixOpen('+x.clockId+')">Fix</button></span>' : '')+'</div>');
+  if(!B.in.length && !B.late.length && !B.notYet.length && !B.done.length)
+    h += '<div class="m-card"><div class="m-sub" style="margin:0;">Nobody has clocked in today, and nobody has a published shift today.</div></div>';
+  if(P.fix) h += '<button type="button" class="ck-add" onclick="ckAddOpen(null)">+ Add a missed time</button>';
+  return h;
+}
+
+// ── Fix a time; add a missed one (managers, owners, Seb) ──
+function ckTimeHtml(id, v, blank){
+  const m = /^(\d{2}):(\d{2})$/.exec(v || ''), H = m ? Number(m[1]) : null, M = m ? Number(m[2]) : 0;
+  const h12 = H === null ? '' : String(H % 12 || 12), ap = H === null ? 'PM' : H < 12 ? 'AM' : 'PM';
+  return '<span class="ck-tm" id="'+id+'" data-no-us><select class="m-select ck-h" aria-label="Hour"><option value=""'+(H === null ? ' selected' : '')+'>'+esc(blank || 'Hour')+'</option>'
+    + Array.from({ length:12 }, (_, i) => String(i + 1)).map(x => '<option'+(x === h12 ? ' selected' : '')+'>'+x+'</option>').join('')+'</select>'
+    + '<select class="m-select ck-m" aria-label="Minutes">'+Array.from({ length:60 }, (_, i) => String(i).padStart(2, '0')).map(x => '<option'+(Number(x) === M ? ' selected' : '')+'>'+x+'</option>').join('')+'</select>'
+    + '<select class="m-select ck-ap" aria-label="AM or PM"><option'+(ap === 'AM' ? ' selected' : '')+'>AM</option><option'+(ap === 'PM' ? ' selected' : '')+'>PM</option></select></span>';
+}
+function ckTimeVal(id){
+  const box = document.getElementById(id); if(!box) return null;
+  const h = box.querySelector('.ck-h').value; if(!h) return null;
+  let H = Number(h) % 12; if(box.querySelector('.ck-ap').value === 'PM') H += 12;
+  return String(H).padStart(2, '0') + ':' + box.querySelector('.ck-m').value;
+}
+function ckDays(today, sel){
+  const out = [];
+  for(let i = 0; i <= 31; i++){ const d = scAddDays(today, -i); out.push('<option value="'+d+'"'+(d === sel ? ' selected' : '')+'>'+(i === 0 ? 'Today · ' : i === 1 ? 'Yesterday · ' : '')+esc(scDayLabel(d))+'</option>'); }
+  if(sel && sel < scAddDays(today, -31)) out.push('<option value="'+sel+'" selected>'+esc(scDayLabel(sel))+'</option>');
+  return out.join('');
+}
+async function ckFixOpen(clockId){
+  scSheet('<div class="mp-sheet-t">Fix a time</div><div class="m-skel"></div>', 'Fix a time');
+  try{
+    const H = await rvApi({ action:'staff_clock_history', clockId });
+    ckFixPaint({ clockId, name:H.clock.name, date:H.clock.date, in:H.clock.in, out:H.clock.out, open:!H.clock.out, fixes:H.fixes, inBy:H.clock.inBy, outBy:H.clock.outBy, how:H.clock.how });
+  }catch(e){ if(e.status !== 401) scSheet('<div class="mp-sheet-t">Fix a time</div><div class="m-err">'+esc(e.message)+'</div><div class="mp-opts"><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>', 'Fix a time'); }
+}
+function ckAddOpen(tasterId){ ckFixPaint({ clockId:null, tasterId:tasterId, date:(CK.board && CK.board.today) || null, in:null, out:null, open:false, fixes:[] }); }
+function ckFixPaint(F){
+  CK.fix = F;
+  const today = (CK.board && CK.board.today) || F.date;
+  const people = (CK.board && CK.board.people) || [];
+  const HOW = { self:'by themselves', manager:'by a manager', fixed:'fixed' };
+  const who = F.clockId ? '<div class="mp-sheet-s">'+esc(F.name)+(F.inBy ? ' · clocked in by '+esc(F.inBy) : '')+(F.outBy && F.how ? ' · out '+esc(HOW[F.how] || '') : '')+'</div>'
+    : '<label class="sc-f">Who<select class="m-select" id="ck-who"><option value="">Pick someone…</option>'
+      + people.map(p => '<option value="'+p.tasterId+'"'+(p.tasterId === F.tasterId ? ' selected' : '')+'>'+esc(p.name)+'</option>').join('')+'</select></label>';
+  const hist = F.fixes && F.fixes.length ? '<div class="ck-fixes"><div class="m-eyebrow" style="margin:.2rem 0 .3rem;">Changes</div>'
+    + F.fixes.map(f => '<div class="ck-fx">'+(f.added ? '<b>Added</b> '+esc(f.now) : esc(f.was)+' → <b>'+esc(f.now)+'</b>')+'<small>“'+esc(f.reason)+'”'+(f.by ? ' · '+esc(f.by) : '')+(f.at ? ' · '+esc(scWhen(f.at)) : '')+'</small></div>').join('')+'</div>' : '';
+  scSheet('<div class="mp-sheet-t">'+(F.clockId ? 'Fix a time' : 'Add a missed time')+'</div>' + (F.clockId ? who : '')
+    + '<div class="sc-form">' + (F.clockId ? '' : who)
+    + '<label class="sc-f">Day<select class="m-select" id="ck-day">'+ckDays(today, F.date)+'</select></label>'
+    + '<div class="sc-f">In'+ckTimeHtml('ck-in', F.in)+'</div>'
+    + '<div class="sc-f">Out'+ckTimeHtml('ck-out', F.out, F.clockId && F.open ? 'Still in' : 'Hour')+'</div>'
+    + '<label class="sc-f">Why<input class="m-input" id="ck-why" maxlength="200" placeholder="For example: forgot to clock out" autocomplete="off"></label>'
+    + '<div class="mp-add-err" id="ck-err" role="alert"></div></div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="ck-save" onclick="ckFixSave()">Save</button><button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Cancel</button></div>'
+    + '<div class="m-sub" style="margin-top:.7rem;">They get a notification with the new times and why. Every change is kept with the record.</div>' + hist, 'Fix a time');
+}
+async function ckFixSave(){
+  const F = CK.fix, err = document.getElementById('ck-err'), btn = document.getElementById('ck-save');
+  const say = t => { if(err) err.textContent = t; };
+  const date = (document.getElementById('ck-day') || {}).value, tin = ckTimeVal('ck-in'), tout = ckTimeVal('ck-out');
+  const why = ((document.getElementById('ck-why') || {}).value || '').trim();
+  const who = F.clockId ? null : Number((document.getElementById('ck-who') || {}).value || 0);
+  if(!F.clockId && !who) return say('Pick who.');
+  if(!tin) return say('Pick the time in.');
+  if(!F.clockId && !tout) return say('Pick the time out.');
+  if(F.clockId && !F.open && !tout) return say('Pick the time out.');
+  if(why.length < 3) return say('Write why (for example: forgot to clock out).');
+  if(btn) btn.disabled = true; say('');
+  try{
+    await rvApi(Object.assign({ action:'staff_clock_fix', date, in:tin, out:tout, reason:why }, F.clockId ? { clockId:F.clockId } : { tasterId:who }));
+    scCloseSheet(); showToast('Saved. The change is kept with the record.');
+    ckBoardLoad();
+  }catch(e){ say(e.message); if(btn) btn.disabled = false; }
+}
+
+// ── the hours, and the Excel file ──
+function ckRangeDates(k){
+  const today = (CK.board && CK.board.today) || (SC.data && SC.data.today);
+  const mon = scAddDays(today, -scDow(today));
+  const first = today.slice(0, 8) + '01';
+  const lastMonthEnd = scAddDays(first, -1), lastMonthFirst = lastMonthEnd.slice(0, 8) + '01';
+  if(k === 'last') return { from:scAddDays(mon, -7), to:scAddDays(mon, -1) };
+  if(k === 'two') return { from:scAddDays(mon, -14), to:scAddDays(mon, -1) };
+  if(k === 'month') return { from:first, to:today };
+  if(k === 'lastmonth') return { from:lastMonthFirst, to:lastMonthEnd };
+  if(k === 'pick') return { from:CK.from || mon, to:CK.to || today };
+  return { from:mon, to:scAddDays(mon, 6) };
+}
+const CK_RANGES = [['this','This week'],['last','Last week'],['two','Last 2 weeks'],['month','This month'],['lastmonth','Last month'],['pick','Pick days']];
+function ckHoursOpen(){ CK.hours = null; ckHoursLoad(); }
+function ckRangeTap(k){ CK.range = k; if(k === 'pick'){ const r = ckRangeDates('pick'); CK.from = r.from; CK.to = r.to; } ckHoursLoad(); }
+function ckPickGo(){
+  const a = (document.getElementById('ck-from') || {}).value, b = (document.getElementById('ck-to') || {}).value;
+  if(!a || !b){ showToast('Pick both days.'); return; }
+  CK.from = a; CK.to = b; ckHoursLoad();
+}
+function ckHoursFrame(inner){
+  const r = ckRangeDates(CK.range);
+  return '<div class="mp-sheet-t">Hours</div><div class="ck-ranges" role="group" aria-label="Which days">'
+    + CK_RANGES.map(x => '<button type="button" class="sc-mini'+(CK.range === x[0] ? ' main' : '')+'" onclick="ckRangeTap(\''+x[0]+'\')">'+x[1]+'</button>').join('')+'</div>'
+    + (CK.range === 'pick' ? '<div class="sc-two" style="margin:.6rem 0;"><label class="sc-f">From<input class="m-input" type="date" id="ck-from" value="'+esc(r.from)+'"></label>'
+      + '<label class="sc-f">To<input class="m-input" type="date" id="ck-to" value="'+esc(r.to)+'"></label></div><button type="button" class="mp-opt" style="width:100%;margin-bottom:.6rem;" onclick="ckPickGo()">Show these days</button>' : '')
+    + inner;
+}
+async function ckHoursLoad(){
+  scSheet(ckHoursFrame('<div class="m-skel" style="margin-top:.8rem;"></div>'), 'Hours');
+  const r = ckRangeDates(CK.range);
+  try{ CK.hours = await rvApi({ action:'staff_clock_hours', from:r.from, to:r.to }); ckHoursPaint(); }
+  catch(e){ if(e.status !== 401 && SC.sheet === 'Hours') scSheet(ckHoursFrame('<div class="m-err" style="margin-top:.8rem;">'+esc(e.message)+'</div>'), 'Hours'); }
+}
+function ckHoursPaint(){
+  const D = CK.hours; if(!D || SC.sheet !== 'Hours') return;
+  const open = D.people.filter(p => p.open);
+  const rows = D.people.filter(p => p.minutes > 0 || !p.open);
+  const tbl = rows.length ? '<div class="ck-tbl" role="table" aria-label="Hours"><div class="ck-tr ck-th" role="row"><span role="columnheader">Name</span><span role="columnheader">Days</span><span role="columnheader">Regular</span><span role="columnheader">Overtime</span><span role="columnheader">Total</span></div>'
+    + rows.map(p => '<div class="ck-tr" role="row"><span role="cell"><b>'+esc(p.name)+'</b>'+(p.position ? '<small>'+esc(p.position)+'</small>' : '')+'</span><span role="cell">'+p.days+'</span><span role="cell">'+p.regularHours+'</span><span role="cell"'+(p.overtimeHours ? ' class="ck-ot"' : '')+'>'+p.overtimeHours+'</span><span role="cell"><b>'+p.hours+'</b></span></div>').join('')
+    + '<div class="ck-tr ck-tt" role="row"><span role="cell">Total</span><span role="cell"></span><span role="cell">'+Math.round(rows.reduce((s, p) => s + p.regular, 0)/6)/10+'</span><span role="cell">'+Math.round(rows.reduce((s, p) => s + p.overtime, 0)/6)/10+'</span><span role="cell"><b>'+D.totalHours+'</b></span></div></div>'
+    : '<div class="m-sub" style="margin:.8rem 0;">Nobody clocked in on these days.</div>';
+  scSheet(ckHoursFrame('<div class="mp-sheet-s" style="margin-top:.7rem;">'+esc(D.label)+'</div>' + tbl
+    + (open.length ? '<div class="m-sub" style="margin:.5rem 0 0;">Still clocked in (counted once they clock out): '+open.map(p => esc(p.name)).join(', ')+'.</div>' : '')
+    + '<div class="m-sub" style="margin:.5rem 0 .8rem;">Overtime: the hours over 40 in a Monday–Sunday week.</div>'
+    + '<div class="mp-opts"><button type="button" class="mp-opt main" id="ck-xl" onclick="ckXlsx()"'+(D.clocks.length ? '' : ' disabled')+'>Download Excel</button>'
+    + '<button type="button" class="mp-opt quiet" onclick="scCloseSheet()">Close</button></div>'), 'Hours');
+}
+async function ckXlsx(){
+  const D = CK.hours, b = document.getElementById('ck-xl'); if(!D) return;
+  if(b){ b.disabled = true; b.textContent = 'Making the file…'; }
+  try{
+    const out = await rvApi({ action:'staff_clock_xlsx', from:D.from, to:D.to });
+    const bin = atob(out.base64), bytes = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    const a = document.createElement('a'); a.href = url; a.download = out.filename; a.rel = 'noopener';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 60000);
+    showToast('Downloaded: '+out.filename);
+  }catch(e){ if(e.status !== 401) showToast(e.message); }
+  if(b){ b.disabled = false; b.textContent = 'Download Excel'; }
+}
+
+// ── People: letting someone clock the others in (crew; managers and owners clock people in already) ──
+function ckDelegateSelect(p){
+  if(p.role !== 'crew' || p.clockOthers === undefined) return '';
+  const tonight = p.clockOthers === 'tonight' && p.clockOthersUntil ? 'Tonight only (until '+ckClock(p.clockOthersUntil)+')' : 'Tonight only';
+  const o = (v, w) => '<option value="'+v+'"'+(p.clockOthers === v ? ' selected' : '')+'>'+esc(w)+'</option>';
+  return '<label class="ck-let"><span>Clocks the others in</span><select class="m-select" aria-label="'+esc(whoText(p.name, p.username))+' clocks the others in"'
+    + ' onchange="ckDelegate('+Number(p.id)+',this.value,this)">'+o('off','No')+o('tonight', tonight)+o('always','Until I turn it off')+'</select></label>';
+}
+async function ckDelegate(roleId, mode, el){
+  if(el) el.disabled = true;
+  try{
+    const {res, data} = await callApi('/api/roles', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentSession},
+      body:JSON.stringify({ action:'clock_delegate', restaurantId:RESTAURANT.id, roleId, mode }) });
+    if(!res.ok) showToast(data.error || 'Could not save that.');
+    else showToast(mode === 'off' ? 'Switched off.' : mode === 'tonight' ? 'Until 5 AM. They get a notification.' : 'Until you turn it off. They get a notification.');
+  }catch(e){ showToast(e.message || 'Network error.'); }
+  await loadPeople();
 }
 
 // ── INTERACTION ──
@@ -4179,6 +5127,7 @@ const DV_KINDS = [
   ['bookings', 'New online bookings', 'A table booked on the website'],
   ['cancellations', 'Cancellations', 'A guest cancels a table'],
   ['changes', 'Changes by the team', 'Who changed the menu, prices, hours, team or settings, and when'],
+  ['schedule', 'Schedule', 'Your shifts, open shifts, and the answers to your requests'],                 // r70
 ];
 const DV = { loaded:false, loading:false, error:null, devices:null, trustDays:30, off:false,
              push:{ ready:false, key:null, allowed:[], on:false, kinds:[], busy:false } };
@@ -4400,12 +5349,12 @@ async function dvResync(){
 // at= is the restaurant, for someone at more than one.
 let NF_DAY = null, NF_DISH = null, NF_SETTINGS = false, NF_MAP = false;
 function nfParse(){
-  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map|reviews)((?:&(?:b|at|talk)=\d+)*)$/.exec(window.location.hash || '');
+  const m = /^#(chat|reqchat|day|dish|go)=(\d+|\d{4}-\d{2}-\d{2}|team|menu|settings|map|reviews|schedule)((?:&(?:b|at|talk|wk|in)=\d+)*)$/.exec(window.location.hash || '');
   if(!m) return null;
   const out = { kind:m[1], value:m[2], at:null, b:null };
   m[3].split('&').filter(Boolean).forEach(function(p){ const kv = p.split('='); out[kv[0]] = Number(kv[1]); });
-  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings|map|reviews)$/.test(m[2]) : /^\d+$/.test(m[2]);
-  if(!ok || (out.b && m[1] !== 'day') || (out.talk && m[2] !== 'reviews')) return null;
+  const ok = m[1] === 'day' ? /^\d{4}-\d{2}-\d{2}$/.test(m[2]) : m[1] === 'go' ? /^(team|menu|settings|map|reviews|schedule)$/.test(m[2]) : /^\d+$/.test(m[2]);
+  if(!ok || (out.b && m[1] !== 'day') || (out.talk && m[2] !== 'reviews') || (out.wk && m[2] !== 'schedule') || (out.in && m[2] !== 'schedule')) return null;
   return out;
 }
 // Where a change notification goes: the tab (Team, Menu), Settings, or one dish open on the Menu.
@@ -4414,6 +5363,11 @@ function nfPlace(n){
   if(n.value === 'settings'){ TAB = 'reservations'; NF_SETTINGS = true; return; }      // rvStart opens Settings
   if(n.value === 'map'){ TAB = 'reservations'; NF_MAP = true; return; }                // r48: rvStart opens the Map
   if(n.value === 'reviews' && n.talk) RVT_AT = Number(n.talk);                          // r53c: the author wrote about a hidden review
+  if(n.value === 'schedule'){                                                            // r70: Team → Schedule, at that week
+    TEAM_VIEW = 'schedule'; SC.mode = n.in ? 'in' : null; SC.data = null; SC.rid = RESTAURANT ? RESTAURANT.id : null;   // r71: &in=1 → Who's in
+    const w = String(n.wk || ''); SC.week = /^\d{8}$/.test(w) ? w.slice(0,4)+'-'+w.slice(4,6)+'-'+w.slice(6,8) : null;
+    TAB = 'team'; return;
+  }
   TAB = allowedTabs().includes(n.value) ? n.value : 'reservations';
 }
 function nfShowDish(){
@@ -6332,16 +7286,20 @@ function camWhat(text){
   if(/^\/manager(\.html)?$/.test(u.pathname) && arrive) return { kind: 'arrive', token: arrive[1].toLowerCase() };
   const ticket = /^#ticket=([0-9a-fA-F]{32})$/.exec(u.hash || '');                    // r50: an event ticket
   if(/^\/manager(\.html)?$/.test(u.pathname) && ticket) return { kind: 'ticket', token: ticket[1].toLowerCase() };
+  const clock = /^#clock=(\d{1,9}\.\d{1,12}\.\d{5,12}\.[0-9a-f]{32})$/.exec(u.hash || '');          // r71: a team member's clock-in code
+  if(/^\/manager(\.html)?$/.test(u.pathname) && clock) return { kind: 'clock', token: clock[1] };
   const t = u.searchParams.get('t');
   if(/^\/checkin(\.html)?$/.test(u.pathname) && t && /^[A-Za-z0-9_-]{8,128}$/.test(t)) return { kind: 'checkin', token: t };
   return null;
 }
-async function camOpen(){
+async function camOpen(kind){
+  CAM.kind = kind === 'clock' ? 'clock' : null;                    // r71: 'clock' = a team member's clock-in code
+  const title = CAM.kind ? 'Scan a team member’s code' : 'Scan a guest’s QR code';
   const host = camHost();
-  host.innerHTML = '<div class="cam" role="dialog" aria-label="Scan a guest’s QR code">'
+  host.innerHTML = '<div class="cam" role="dialog" aria-label="'+title+'">'
     + '<video id="cam-video" playsinline muted autoplay></video><div class="cam-frame" aria-hidden="true"></div>'
-    + '<div class="cam-top"><b>Scan a guest’s QR code</b><span id="cam-say">Opening the camera…</span></div>'
-    + '<div class="cam-foot"><a class="cam-btn" href="/checkin">Type the code</a><button type="button" class="cam-btn main" onclick="camClose()">Close</button></div></div>';
+    + '<div class="cam-top"><b>'+title+'</b><span id="cam-say">Opening the camera…</span></div>'
+    + '<div class="cam-foot">'+(CAM.kind ? '' : '<a class="cam-btn" href="/checkin">Type the code</a>')+'<button type="button" class="cam-btn main" onclick="camClose()">Close</button></div></div>';
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ camNoCamera('This browser cannot open the camera here.'); return; }
   try{
     CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
@@ -6355,7 +7313,7 @@ async function camOpen(){
   const v = document.getElementById('cam-video');
   v.srcObject = CAM.stream;
   try{ await v.play(); }catch(e){}
-  camSay('Point it at the QR code on the guest’s phone or in their email.');
+  camSay(CAM.kind ? 'Point it at the code on their phone (Team → Schedule → My shifts → Show my code).' : 'Point it at the QR code on the guest’s phone or in their email.');
   try{
     if('BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats()).includes('qr_code')) CAM.detector = new BarcodeDetector({ formats: ['qr_code'] });
   }catch(e){ CAM.detector = null; }
@@ -6379,12 +7337,15 @@ function camNoCamera(why){
   camStop();
   const host = camHost();
   host.innerHTML = '<div class="rv-scrim" onclick="camClose()"></div>'
-    + '<div class="rv-sheet mp-sheet" role="dialog" aria-label="Scan a guest’s QR code"><div class="rv-grab"></div>'
-    + '<div class="mp-sheet-t">Scan a guest’s QR code</div>'
+    + '<div class="rv-sheet mp-sheet" role="dialog" aria-label="'+(CAM.kind ? 'Scan a team member’s code' : 'Scan a guest’s QR code')+'"><div class="rv-grab"></div>'
+    + '<div class="mp-sheet-t">'+(CAM.kind ? 'Scan a team member’s code' : 'Scan a guest’s QR code')+'</div>'
     + '<div class="mp-add-err" role="alert" style="margin-bottom:.6rem;">'+esc(why)+'</div>'
-    + '<ol class="mp-steps"><li>Open your phone’s <b>Camera</b> app.</li><li>Point it at the QR code on the guest’s phone or in their email.</li>'
-    + '<li>Tap the link that appears: this page opens with their table and an <b>Arrived</b> button.</li></ol>'
-    + '<div class="mp-opts"><button type="button" class="mp-opt" onclick="camOpen()">Try again</button><button type="button" class="mp-opt quiet" onclick="camClose()">Close</button></div></div>';
+    + (CAM.kind                                                                  // r71: a clock-in code
+       ? '<ol class="mp-steps"><li>Open your phone’s <b>Camera</b> app.</li><li>Point it at the code on their phone.</li>'
+         + '<li>Tap the link that appears: this page opens and clocks them in.</li></ol>'
+       : '<ol class="mp-steps"><li>Open your phone’s <b>Camera</b> app.</li><li>Point it at the QR code on the guest’s phone or in their email.</li>'
+         + '<li>Tap the link that appears: this page opens with their table and an <b>Arrived</b> button.</li></ol>')
+    + '<div class="mp-opts"><button type="button" class="mp-opt" onclick="camOpen(CAM.kind)">Try again</button><button type="button" class="mp-opt quiet" onclick="camClose()">Close</button></div></div>';
 }
 function camLoop(){
   clearTimeout(CAM.timer);
@@ -6431,13 +7392,15 @@ function camFound(text){
   if(!w){
     if(Date.now() - CAM.said > 2500){
       CAM.said = Date.now();
-      if(camPoster(text)) camSay('This is the event’s poster. Ask for the guest’s ticket QR (in their email).', true);
+      if(CAM.kind) camSay('That is not a clock-in code. Ask them to open Team → Schedule → My shifts → Show my code.', true);
+      else if(camPoster(text)) camSay('This is the event’s poster. Ask for the guest’s ticket QR (in their email).', true);
       else camSay('That QR code is not a table, a visit or a reward here.', true);
     }
     return false;
   }
   if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){}
   camClose();
+  if(w.kind === 'clock'){ ckScan(w.token); return true; }                         // r71
   if(w.kind === 'checkin'){ window.location.assign('/checkin?t=' + encodeURIComponent(w.token)); return true; }
   const hash = (w.kind === 'ticket' ? '#ticket=' : '#arrive=') + w.token;
   if(window.location.hash === hash) window.dispatchEvent(new HashChangeEvent('hashchange'));

@@ -26,7 +26,7 @@
 import crypto from 'node:crypto';
 import { sb } from './roles.js';
 
-export const KINDS = ['messages', 'requests', 'bookings', 'cancellations', 'changes'];
+export const KINDS = ['messages', 'requests', 'bookings', 'cancellations', 'changes', 'schedule'];   // r70: schedule (everyone on the team)
 const SEND_TIMEOUT_MS = 3000;
 const b64u = (buf) => Buffer.from(buf).toString('base64url');
 const unb64u = (s) => Buffer.from(String(s || ''), 'base64url');
@@ -106,7 +106,7 @@ export async function sendOne(sub, message, { urgency = 'normal', ttl = 12 * 360
 // Who may get which kind, at one restaurant. role: 'platform' | 'owner' | 'manager' | 'crew'.
 export function allowedKinds(role, canMessage) {
   if (role === 'platform' || role === 'owner' || role === 'manager') return KINDS.slice();
-  if (role === 'crew') return (canMessage ? ['messages'] : []).concat(['bookings', 'cancellations']);   // never "changes"
+  if (role === 'crew') return (canMessage ? ['messages'] : []).concat(['bookings', 'cancellations', 'schedule']);   // never "changes"
   return [];
 }
 

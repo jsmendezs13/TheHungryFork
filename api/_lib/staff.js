@@ -35,6 +35,11 @@ import { staffLoyalty, cleanLoyalty, visitFromTable, undoVisitFromTable } from '
 import { tellChange, describeRules, describeLoyalty, describeHours, dayWords, clock12 } from './changes.js';
 import { saveSocial, socialOf } from './social.js';                                   // r52: Settings → Social media
 import { saveGoogleRating, googleRatingOf, googleStale } from './google.js';          // r69: Settings → Google's Rating
+// r70 (Sebastian, 25 Nov: "I want to build a scheduling system for the team"): Team → Schedule (api/_lib/schedule.js).
+import { schedWeek, schedSave, schedCopy, schedPublish, schedMine, schedRequests, schedDecide, timeOffAsk, timeOffCancel,
+         availabilitySave, shiftOffer, shiftTake, shiftRequestCancel } from './schedule.js';
+// r71 (Sebastian, 25 Nov: "Clock in with a QR code that manager or owner reads"): clocking in and out (api/_lib/clock.js).
+import { clockCode, clockScan, clockUndo, clockOut, clockBoard, clockFix, clockHistory, clockHours, clockXlsx } from './clock.js';
 
 // Staff are signed in, and a dashboard left open all evening asks often. These
 // only stop a runaway script; they fail OPEN, because a Redis hiccup in the
@@ -111,7 +116,8 @@ export async function staff(req, res, body, action, helpers = {}) {
   const tasterId = tasterIdFromRequest(req);
   if (!tasterId) return res.status(401).json({ error: 'Please log in again.' });
 
-  const writes = !['staff_days', 'staff_day', 'staff_settings', 'staff_scan'].includes(action);
+  const writes = !['staff_days', 'staff_day', 'staff_settings', 'staff_scan', 'staff_sched_week', 'staff_sched_mine', 'staff_sched_requests',
+                   'staff_clock_code', 'staff_clock_board', 'staff_clock_history', 'staff_clock_hours', 'staff_clock_xlsx'].includes(action);
   if (!(await allow(writes ? staffWriteLimiter : staffReadLimiter, keyFor(tasterId), { failOpen: true }))) {
     return res.status(429).json({ error: 'Too many taps in a few minutes. Wait a moment and try again.' });
   }
@@ -132,6 +138,30 @@ export async function staff(req, res, body, action, helpers = {}) {
     case 'staff_request_mail_save': return saveRequestMail(req, res, body, tasterId);   // r42
     case 'staff_social_save': return saveSocial(req, res, body, tasterId, { gate, tellChange, timezoneOf: socialZone });   // r52
     case 'staff_google_save': return saveGoogleRating(req, res, body, tasterId, { gate, tellChange, timezoneOf: socialZone });   // r69
+    // r70: the team's schedule
+    case 'staff_sched_week':     return schedWeek(req, res, body, tasterId, { gate });
+    case 'staff_sched_save':     return schedSave(req, res, body, tasterId, { gate });
+    case 'staff_sched_copy':     return schedCopy(req, res, body, tasterId, { gate });
+    case 'staff_sched_publish':  return schedPublish(req, res, body, tasterId, { gate });
+    case 'staff_sched_mine':     return schedMine(req, res, body, tasterId, { gate });
+    case 'staff_sched_requests': return schedRequests(req, res, body, tasterId, { gate });
+    case 'staff_sched_decide':   return schedDecide(req, res, body, tasterId, { gate });
+    case 'staff_timeoff_ask':    return timeOffAsk(req, res, body, tasterId, { gate });
+    case 'staff_timeoff_cancel': return timeOffCancel(req, res, body, tasterId, { gate });
+    case 'staff_availability_save': return availabilitySave(req, res, body, tasterId, { gate });
+    case 'staff_shift_offer':    return shiftOffer(req, res, body, tasterId, { gate });
+    case 'staff_shift_take':     return shiftTake(req, res, body, tasterId, { gate });
+    case 'staff_shift_request_cancel': return shiftRequestCancel(req, res, body, tasterId, { gate });
+    // r71: clocking in and out
+    case 'staff_clock_code':     return clockCode(req, res, body, tasterId, { gate });
+    case 'staff_clock_scan':     return clockScan(req, res, body, tasterId, { gate });
+    case 'staff_clock_undo':     return clockUndo(req, res, body, tasterId, { gate });
+    case 'staff_clock_out':      return clockOut(req, res, body, tasterId, { gate });
+    case 'staff_clock_board':    return clockBoard(req, res, body, tasterId, { gate });
+    case 'staff_clock_fix':      return clockFix(req, res, body, tasterId, { gate });
+    case 'staff_clock_history':  return clockHistory(req, res, body, tasterId, { gate });
+    case 'staff_clock_hours':    return clockHours(req, res, body, tasterId, { gate });
+    case 'staff_clock_xlsx':     return clockXlsx(req, res, body, tasterId, { gate });
     default:                 return res.status(400).json({ error: 'Unknown action.' });
   }
 }
